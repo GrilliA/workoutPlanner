@@ -13,6 +13,12 @@ How to use:
 
 | Date | Decision | Why |
 | --- | --- | --- |
+| 2026-06-24 | Home page = the "Dashboard" from the Figma reference (TRACCIA app) | The reference's main screen is the dashboard; that is what we build as `/`. |
+| 2026-06-24 | Build the home **mobile-first** and fluid (CSS `auto-fit` grids, no JS breakpoints) | One component tree reflows 1→2→3→4 columns; less code, more control. |
+| 2026-06-24 | Mobile/tablet nav = `BottomNav`; reuse `Sidebar` on desktop (≥1024px) | Thumb-friendly on phones; sidebar already built and styled. |
+| 2026-06-24 | Build the home against **mock data first**, wire to API incrementally | Current DB only has `workouts`/`exercises`; volume/RIR/TUT/streak need new tables later. |
+| 2026-06-24 | UI copy in **Italian** to match the reference ("OGGI", "AVVIA WORKOUT", "ULTIMI ALLENAMENTI") | Keep parity with the approved design. |
+| 2026-06-24 | Reference design tokens already align with repo (`--bg #16171d`, `--accent` lime, Barlow Condensed) | No token overhaul needed; reuse existing CSS variables. |
 | 2026-06-24 | Use Vite dev proxy for `/api` → `http://localhost:3005` (Phase A, Option 1) | Frontend can call relative `/api/...` URLs in dev without CORS; no extra backend middleware. |
 | 2026-06-24 | Use Zod in the frontend API layer to encode requests and decode responses (Phase B) | Runtime validation catches backend shape drift early; shared schemas keep request/response types accurate. |
 | 2026-06-24 | Use Docker Compose Postgres (`docker-compose.yml`) as the dev database | Already shipped in the repo via `npm run db:up`; keeps the documented workflow intact. |
@@ -24,23 +30,36 @@ How to use:
 
 ## What we did
 
-- 2026-06-24 — Added `Card` compound component (`Card.Root`, `Card.Title`, `Card.Time`) and refactored Home CSS to nested `& .item` / `& .title` pattern like Login page.
-- 2026-06-24 — Phase C/D: wired Home page to the workouts API with list, create form, and loading/empty/error states.
-- 2026-06-24 — Phase B: added `fe/src/api/` with Zod schemas and a typed client for workouts (`getWorkouts`, `getWorkout`, `createWorkout`).
-- 2026-06-24 — Phase A: added Vite dev proxy (`/api` → `http://localhost:3005`) so the frontend can call the backend without CORS in local dev.
+- 2026-06-24 — Rebuilt Home as TRACCIA Figma dashboard (C0–C4): AppShell, TopBar, WeekStrip, TodayCard, StatCard grid, WorkoutRow list. Mock data + Italian copy.
+- 2026-06-24 — Added `Card` compound component and API wiring (Phases A–B); kept `@api` client for later C6 integration.
 - 2026-06-24 — Set up and verified the dev environment: installed `be/` and `fe/` deps, started Postgres via Docker Compose, applied schema, ran both dev servers, and confirmed the API can create/read a workout. Documented startup caveats in `AGENTS.md`.
 
 ---
 
-## Next steps
+## Home page — chunked roadmap
 
-- [x] Wire the frontend to the backend API (currently the Login form only calls `preventDefault`; Home page has no data fetching).
-  - [x] Phase A — Vite dev proxy for `/api`
-  - [x] Phase B — API client with Zod encode/decode
-  - [x] Phase C — Home page UI (workout list + create form)
-  - [x] Phase D — Loading, empty, and error states
+Legend: ⬜ todo · 🟡 in progress · ✅ done
+
+### Frontend track
+
+- **C0 — Responsive AppShell + home route** ✅
+- **C1 — TopBar + WeekStrip** ✅
+- **C2 — TodayCard ("OGGI")** ✅
+- **C3 — Stat grid (Volume / Workout / Streak / Record)** ✅
+- **C4 — Recent workouts list ("ULTIMI ALLENAMENTI")** ✅
+- **C5 — Empty + loading states** ⬜
+- **C6 — Wire home to real `workouts` API** ⬜ (needs B1)
+- **C7 — Analytics (charts) v2** ⬜ (needs B2/B3)
+
+### Backend track
+
+- **B1 — `exercises` router + counts** ⬜
+- **B2 — Session logging schema** ⬜
+- **B3 — Stats endpoints** ⬜
+
+## Other next steps
+
 - [ ] Implement authentication (Login/Logout routes exist in the UI but have no backend auth).
-- [ ] Add API routes + schema usage for `exercises` (table exists in `be/src/db/schema/exercises.ts` but has no router).
 - [ ] Add the missing FE routes referenced in the UI (`/forgot-password`, `/settings`, `/logout`).
 - [ ] Add real migration files via `npm run db:generate` once the schema stabilizes (instead of relying on `db:push`).
 - [ ] Add automated tests (backend currently has no test script; `npm test` is a placeholder).

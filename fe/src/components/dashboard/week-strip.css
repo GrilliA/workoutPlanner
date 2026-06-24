@@ -1,0 +1,49 @@
+.week-strip {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+  margin-bottom: 1.5rem;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  & .day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    min-width: 3rem;
+    padding: 0.55rem 0.45rem;
+    border: 1px solid var(--border);
+    border-radius: 0.85rem;
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    flex-shrink: 0;
+
+    & .label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    & .number {
+      font-size: 1rem;
+      color: var(--text-h);
+      font-weight: 600;
+    }
+
+    &.today {
+      border-color: var(--accent-border);
+      background: var(--accent-bg);
+      color: var(--accent);
+
+      & .number {
+        color: var(--accent);
+      }
+    }
+  }
+}

@@ -1,0 +1,120 @@
+.app-shell {
+  --text: #8b8bb8;
+  --text-h: #e8e8ff;
+  --bg: #16171d;
+  --surface: #1f2028;
+  --surface-elevated: #262833;
+  --border: #2e303a;
+  --accent: #c4ff4d;
+  --accent-bg: rgba(196, 255, 77, 0.12);
+  --accent-border: rgba(196, 255, 77, 0.35);
+
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  grid-template-rows: 1fr auto;
+  min-height: 100dvh;
+  color: var(--text);
+  background: var(--bg);
+  color-scheme: dark;
+
+  & .sidebar {
+    grid-row: 1 / -1;
+    display: none;
+    flex-direction: column;
+    gap: 2rem;
+    padding: 1.5rem 1rem;
+    background: #0b0b12;
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+
+    & .brand {
+      padding: 0 0.75rem;
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: var(--accent);
+    }
+
+    & .nav {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    & .item {
+      text-decoration: none;
+      color: var(--text);
+      padding: 0.65rem 0.9rem;
+      border-radius: 0.65rem;
+      transition: background-color 0.2s;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      &.active {
+        color: var(--accent);
+        background: var(--accent-bg);
+        border: 1px solid var(--accent-border);
+      }
+    }
+  }
+
+  & .content {
+    min-width: 0;
+    padding: 1rem 1rem 5.5rem;
+  }
+
+  & .bottom-nav {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 10;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.25rem;
+    padding: 0.5rem 0.75rem calc(0.75rem + env(safe-area-inset-bottom));
+    background: rgba(15, 16, 22, 0.96);
+    border-top: 1px solid var(--border);
+    backdrop-filter: blur(12px);
+
+    & .item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.2rem;
+      text-decoration: none;
+      color: var(--text);
+      padding: 0.35rem 0.25rem;
+      border-radius: 0.65rem;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+
+      & .icon {
+        width: 1.25rem;
+        height: 1.25rem;
+      }
+
+      &.active {
+        color: var(--accent);
+        background: var(--accent-bg);
+      }
+    }
+  }
+
+  @media (min-width: 1024px) {
+    grid-template-columns: 220px 1fr;
+
+    & .sidebar {
+      display: flex;
+    }
+
+    & .content {
+      padding: 1.5rem 2rem 2rem;
+    }
+
+    & .bottom-nav {
+      display: none;
+    }
+  }
+}
