@@ -24,6 +24,7 @@ How to use:
 
 ## What we did
 
+- 2026-06-24 — Phase C/D: wired Home page to the workouts API with list, create form, and loading/empty/error states.
 - 2026-06-24 — Phase B: added `fe/src/api/` with Zod schemas and a typed client for workouts (`getWorkouts`, `getWorkout`, `createWorkout`).
 - 2026-06-24 — Phase A: added Vite dev proxy (`/api` → `http://localhost:3005`) so the frontend can call the backend without CORS in local dev.
 - 2026-06-24 — Set up and verified the dev environment: installed `be/` and `fe/` deps, started Postgres via Docker Compose, applied schema, ran both dev servers, and confirmed the API can create/read a workout. Documented startup caveats in `AGENTS.md`.
@@ -32,11 +33,11 @@ How to use:
 
 ## Next steps
 
-- [ ] Wire the frontend to the backend API (currently the Login form only calls `preventDefault`; Home page has no data fetching).
+- [x] Wire the frontend to the backend API (currently the Login form only calls `preventDefault`; Home page has no data fetching).
   - [x] Phase A — Vite dev proxy for `/api`
   - [x] Phase B — API client with Zod encode/decode
-  - [ ] Phase C — Home page UI (workout list + create form)
-  - [ ] Phase D — Loading, empty, and error states
+  - [x] Phase C — Home page UI (workout list + create form)
+  - [x] Phase D — Loading, empty, and error states
 - [ ] Implement authentication (Login/Logout routes exist in the UI but have no backend auth).
 - [ ] Add API routes + schema usage for `exercises` (table exists in `be/src/db/schema/exercises.ts` but has no router).
 - [ ] Add the missing FE routes referenced in the UI (`/forgot-password`, `/settings`, `/logout`).

@@ -1,10 +1,15 @@
 import { Link } from "wouter";
+import { WorkoutsPanel } from "./WorkoutsPanel";
 import "./home.css";
+
 export default function HomePage() {
   return (
-    <>
+    <div className="home">
       <Sidebar />
-    </>
+      <main className="home-main">
+        <WorkoutsPanel />
+      </main>
+    </div>
   );
 }
 
