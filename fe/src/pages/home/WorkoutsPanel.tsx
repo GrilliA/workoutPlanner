@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type SubmitEvent } from "react";
 import { ApiError, createWorkout, getWorkouts, type Workout } from "@api";
 import { Button } from "@components/button";
+import { Card } from "@components/card";
 import { Input } from "@components/input";
 
 function formatCreatedAt(date: Date) {
@@ -92,15 +93,13 @@ export function WorkoutsPanel() {
   };
 
   return (
-    <section className="workouts-panel">
-      <header className="workouts-panel__header">
-        <h1 className="workouts-panel__title">Workouts</h1>
-        <p className="workouts-panel__subtitle">
-          Plan and track your training sessions.
-        </p>
+    <section className="workouts">
+      <header className="header">
+        <h1 className="title">Workouts</h1>
+        <p className="subtitle">Plan and track your training sessions.</p>
       </header>
 
-      <form className="workouts-panel__form" onSubmit={handleSubmit}>
+      <form className="form" onSubmit={handleSubmit}>
         <Input.Root error={formError ?? undefined}>
           <Input.Label>New workout</Input.Label>
           <Input.Field
@@ -125,13 +124,11 @@ export function WorkoutsPanel() {
         </Button.Root>
       </form>
 
-      <div className="workouts-panel__list" aria-live="polite">
-        {loading ? (
-          <p className="workouts-panel__status">Loading workouts...</p>
-        ) : null}
+      <div className="list" aria-live="polite">
+        {loading ? <p className="status">Loading workouts...</p> : null}
 
         {!loading && error ? (
-          <div className="workouts-panel__error" role="alert">
+          <div className="error" role="alert">
             <p>{error}</p>
             <Button.Root type="button" variant="secondary" onClick={loadWorkouts}>
               <Button.Label>Retry</Button.Label>
@@ -140,23 +137,18 @@ export function WorkoutsPanel() {
         ) : null}
 
         {!loading && !error && workouts.length === 0 ? (
-          <p className="workouts-panel__status">
-            No workouts yet. Create your first one above.
-          </p>
+          <p className="status">No workouts yet. Create your first one above.</p>
         ) : null}
 
         {!loading && !error && workouts.length > 0 ? (
           <ul className="workout-list">
             {workouts.map((workout) => (
-              <li key={workout.id} className="workout-card">
-                <span className="workout-card__name">{workout.name}</span>
-                <time
-                  className="workout-card__date"
-                  dateTime={workout.createdAt.toISOString()}
-                >
+              <Card.Root key={workout.id} as="li" className="item">
+                <Card.Title>{workout.name}</Card.Title>
+                <Card.Time dateTime={workout.createdAt.toISOString()}>
                   {formatCreatedAt(workout.createdAt)}
-                </time>
-              </li>
+                </Card.Time>
+              </Card.Root>
             ))}
           </ul>
         ) : null}

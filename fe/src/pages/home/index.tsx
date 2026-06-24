@@ -6,7 +6,7 @@ export default function HomePage() {
   return (
     <div className="home">
       <Sidebar />
-      <main className="home-main">
+      <main className="main">
         <WorkoutsPanel />
       </main>
     </div>
@@ -37,9 +37,7 @@ const Sidebar = () => {
       {sidebarItems.map((item) => (
         <Link
           href={item.href}
-          className={(active) =>
-            active ? "sidebar-item active" : "sidebar-item"
-          }
+          className={(active) => (active ? "item active" : "item")}
           key={item.label}
         >
           {item.label}

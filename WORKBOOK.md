@@ -24,6 +24,7 @@ How to use:
 
 ## What we did
 
+- 2026-06-24 — Added `Card` compound component (`Card.Root`, `Card.Title`, `Card.Time`) and refactored Home CSS to nested `& .item` / `& .title` pattern like Login page.
 - 2026-06-24 — Phase C/D: wired Home page to the workouts API with list, create form, and loading/empty/error states.
 - 2026-06-24 — Phase B: added `fe/src/api/` with Zod schemas and a typed client for workouts (`getWorkouts`, `getWorkout`, `createWorkout`).
 - 2026-06-24 — Phase A: added Vite dev proxy (`/api` → `http://localhost:3005`) so the frontend can call the backend without CORS in local dev.
