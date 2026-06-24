@@ -5,6 +5,8 @@ A workout planner monorepo:
 - `be/` — Express 5 + Drizzle ORM + PostgreSQL API (TypeScript, runs on port `3005`).
 - `fe/` — React 19 + Vite frontend (TypeScript, dev server on port `5173`).
 
+> Project log: see `WORKBOOK.md` for the running log of decisions made and next steps. Update it whenever a meaningful decision is made or work is completed.
+
 ## Cursor Cloud specific instructions
 
 ### Services overview
