@@ -1,2 +1,2 @@
-export { CardProvider, useCardContext } from "./card-context";
-export type { CardContextValue } from "./card-context";
+export { CardProvider, useCardContext } from "./context";
+export type { CardContextValue } from "./context";

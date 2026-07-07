@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "wouter";
-import "./app-shell.css";
+import "./style.css";
 
 type AppShellProps = {
   children: ReactNode;

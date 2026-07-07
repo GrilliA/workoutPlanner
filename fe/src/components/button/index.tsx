@@ -1,4 +1,4 @@
-import "./button.css";
+import "./style.css";
 
 import {
   ButtonRoot,

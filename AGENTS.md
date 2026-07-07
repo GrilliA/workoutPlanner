@@ -1,0 +1,293 @@
+# AGENTS.md — workoutPlanner
+
+Guida per agenti e contributor. Leggere prima di modificare codice.
+
+---
+
+## Dev environment
+
+```bash
+# Database
+npm run db:up          # Postgres via Docker Compose
+npm run db:push        # sync schema (no migration files yet)
+
+# Backend (port 3005)
+cd be && npm run dev
+
+# Frontend (Vite, proxy /api → localhost:3005)
+cd fe && npm run dev
+```
+
+- `be/.env` credentials: `postgres:postgres` (must match `docker-compose.yml`)
+- Frontend calls relative `/api/...` URLs; Vite proxies in dev
+- UI copy in **Italian** (reference: TRACCIA Figma dashboard)
+- Project log and roadmap: `WORKBOOK.md`
+
+---
+
+## Repository layout
+
+```
+workoutPlanner/
+├── be/          # Express + Drizzle + Postgres
+├── fe/          # React + Vite + TypeScript
+├── WORKBOOK.md  # decisions, done, next steps
+└── AGENTS.md    # this file
+```
+
+### Frontend (`fe/src/`)
+
+| Path | Purpose |
+| --- | --- |
+| `api/` | HTTP client, Zod schemas, typed request/response |
+| `components/` | **Shared** UI primitives only (`button/`, `input/`, `card/`, `skeleton/`, `appshell/`) |
+| `pages/` | Route entry points — each page can host its feature folder |
+| `utils/` | Small shared helpers |
+
+**Rule:** a screen/feature (e.g. dashboard) lives **under its page**, not in `components/`.
+
+```
+pages/home/
+├── index.tsx              # thin shell: AppShell + Dashboard
+└── dashboard/             # home feature (all dashboard code here)
+    ├── api.ts
+    ├── useDashboard.ts
+    ├── types.ts
+    ├── mappers/mapDashboard.ts
+    ├── dashboard/         # root component
+    ├── todaycard/
+    └── …
+```
+
+`pages/home/index.tsx` wires layout only — no business logic.
+
+---
+
+## Module folder structure
+
+### Folders → always lowercase
+
+**All folders** use lowercase — including React component folders. No PascalCase, no kebab-case.
+
+```
+todaycard/
+├── TodayCard.tsx    # React component file (PascalCase)
+├── style.css
+└── index.tsx
+```
+
+```tsx
+// todaycard/index.tsx
+export { TodayCard } from "./TodayCard";
+
+// todaycard/TodayCard.tsx
+import "./style.css";
+```
+
+Import from outside the feature: `import { Dashboard } from "@dashboard/dashboard"`
+
+Import **inside** the feature: use **relative paths** between siblings:
+
+```tsx
+// pages/home/dashboard/dashboard/Dashboard.tsx
+import { useDashboard } from "../useDashboard";
+import { TodayCard } from "../todaycard";
+
+// pages/home/dashboard/todaycard/TodayCard.tsx
+import type { TodayWorkout } from "../types";
+```
+
+The `@dashboard` alias points to `pages/home/dashboard/` (for imports from outside the feature).
+
+### Non-component code → lowercase files at feature root
+
+Hooks, types, API helpers, mappers — flat lowercase files or lowercase subfolders:
+
+```
+pages/home/dashboard/
+├── api.ts
+├── useDashboard.ts
+├── types.ts
+├── mappers/
+│   └── mapDashboard.ts
+├── dashboard/
+│   ├── Dashboard.tsx
+│   ├── style.css
+│   └── index.tsx
+└── todaycard/
+```
+
+Compound primitives (`button/`, `input/`, `card/`) follow the same folder pattern under `components/`, with `primitives/` and `context/` subfolders.
+
+| Kind | Naming | Example |
+| --- | --- | --- |
+| Folder | lowercase | `todaycard/`, `button/`, `mappers/` |
+| React component file | PascalCase `.tsx` | `TodayCard.tsx` |
+| Hook, types, api, mappers | lowercase `.ts` | `useDashboard.ts`, `mappers/mapDashboard.ts` |
+| CSS inside component | lowercase | `style.css` |
+| Backend routes | lowercase | `routes/workouts.ts` |
+
+### Rules
+
+| Rule | Detail |
+| --- | --- |
+| Public API for components | Always through `index.tsx` |
+| Styles | `style.css` co-located in the component folder, imported only inside the `.tsx` |
+| No kebab-case | Never `today-card/`, `use-dashboard.ts` |
+| Imports inside feature | relative | `../types`, `./api`, `../todaycard` |
+| Imports outside feature | `@dashboard/*` alias | `@dashboard/dashboard` from `pages/home/index.tsx` |
+| Shared components | `@components/*` | `@components/button` |
+
+---
+
+## Naming conventions
+
+### PascalCase — React component files only
+
+| OK | Avoid |
+| --- | --- |
+| `todaycard/TodayCard.tsx` | `todaycard/todaycard.tsx` |
+| `button/Button.tsx` | `button/button.tsx` |
+
+### lowercase — folders and non-component files
+
+| OK | Avoid |
+| --- | --- |
+| `todaycard/` | `TodayCard/` |
+| `components/skeleton/` | `components/Skeleton/` |
+| `useDashboard.ts` | `UseDashboard.ts` |
+| `mappers/mapDashboard.ts` | `MapDashboard/MapDashboard.ts` |
+| `style.css` | `Style.css`, `today-card.css` |
+| `routes/workouts.ts` | `routes/Workouts.ts` |
+
+### Code identifiers
+
+- **Components / types / classes:** PascalCase (`TodayCard`, `DashboardData`)
+- **Functions / variables / hooks:** camelCase (`buildDashboardData`, `useDashboard`)
+- **Constants:** UPPER_SNAKE_CASE when truly constant (`EMPTY_STAT_PLACEHOLDERS`)
+- **CSS class names:** kebab-case in CSS is fine (`.today-card`, `.stat-grid`) — this is DOM/CSS convention, not file naming
+
+### Path aliases
+
+Prefer aliases over deep relative imports:
+
+- `@api`, `@api/*`
+- `@components/*`
+- `@dashboard`, `@dashboard/*`
+- `@pages/*`
+- `@utils/*`
+
+---
+
+## Programming style: functional first
+
+Write **functional** code. React components are functions; business logic should be pure functions composed together.
+
+### Do
+
+- **Pure functions** for data transformation and mapping (no I/O, no mutation)
+- **Immutable data** — spread/copy instead of `.push()`, `.sort()` in place, or property assignment on shared objects
+- **Composition** — small functions combined (`sortByNewest` → `mapRecentWorkouts` → `buildDashboardData`)
+- **Named exports** — one main export per file when practical
+- **Thin hooks** — `useDashboard` orchestrates fetch + state; mapping lives in `mappers/mapDashboard.ts`
+- **Separate components** instead of mutating function properties (`StatCardSkeleton` as its own export, not `StatCard.Skeleton = …`)
+- **`const` over `let`** — reassign only when unavoidable (e.g. cancellation flags in effects)
+
+### Avoid
+
+- Classes for domain logic (HTTP `ApiError` is an acceptable exception for `instanceof` checks)
+- Compound-component mutation (`Component.Sub = SubComponent`)
+- Business logic inside JSX or large `useEffect` blocks
+- Cross-layer imports (e.g. feature components importing hooks from `pages/`)
+- Imperative loops when `map` / `filter` / `reduce` express intent clearly
+
+### React patterns
+
+```ts
+// OK — pure mapper
+export function mapRecentWorkouts(workouts: Workout[]): RecentWorkout[] {
+  return sortByNewest(workouts).map(toRecentWorkout);
+}
+
+// OK — thin hook
+export function useDashboard() {
+  const [state, setState] = useState(initialState);
+  useEffect(() => { void loadDashboard(setState); }, [fetchId]);
+  return state;
+}
+
+// Avoid — mapper mixed with fetch inside the hook body
+// Avoid — StatCard.Skeleton = StatCardSkeleton
+```
+
+### Backend
+
+- Route handlers may have side effects (DB, HTTP) — keep them thin
+- Extract validation and query building into pure helpers where it helps readability
+- File names **lowercase**: `routes/workouts.ts`, `routes/exercises.ts`
+
+---
+
+## CSS conventions
+
+- One `style.css` per component folder — imported only inside the component `.tsx`
+- Single root block class per component (`.today-card`, `.stat-card`) — kebab-case in CSS is fine
+- Nest selectors under the root block; use CSS variables from the design tokens (`--bg`, `--accent`, `--surface`, `--border`, `--text`, `--text-h`)
+- Mobile-first, fluid grids (`auto-fit` / `minmax`) — avoid JS breakpoints for layout
+- Never import a component's `style.css` from outside its folder
+
+---
+
+## API layer (frontend)
+
+- All requests go through `@api` (`apiRequest` + Zod decode)
+- Request/response shapes live in `api/schemas/`
+- Feature code imports from `@api`, never raw `fetch` in components
+
+---
+
+## Dashboard feature (current)
+
+The home screen is the TRACCIA dashboard at `/`.
+
+```
+fe/src/pages/home/dashboard/
+├── api.ts
+├── useDashboard.ts
+├── types.ts
+├── mappers/
+│   └── mapDashboard.ts
+├── dashboard/
+├── todaycard/
+├── statcard/
+├── workoutrow/
+├── topbar/
+└── weekstrip/
+```
+
+`@dashboard` alias → `pages/home/dashboard/`
+
+`pages/home/index.tsx` → `<AppShell><Dashboard /></AppShell>` via `@dashboard/dashboard`.
+
+---
+
+## Git / commits
+
+- Conventional Commits: `feat(fe): …`, `feat(be): …`, `fix(fe): …`
+- One concern per commit when possible
+- Update `WORKBOOK.md` when completing a roadmap chunk (C*, B*)
+- Do not commit unless explicitly asked
+
+---
+
+## Roadmap snapshot
+
+See `WORKBOOK.md` for full detail.
+
+| Chunk | Status |
+| --- | --- |
+| C0–C6 (dashboard UI + API wire) | ✅ done |
+| B1 (exercises API) | ✅ done |
+| B2 (session logging) | ⬜ |
+| B3 (stats endpoints) | ⬜ |
+| C7 (analytics) | ⬜ |

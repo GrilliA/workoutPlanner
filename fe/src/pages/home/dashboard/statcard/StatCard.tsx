@@ -1,7 +1,7 @@
-import { Skeleton } from "@components/skeleton/Skeleton";
-import "./stat-card.css";
+import { Skeleton } from "@components/skeleton";
+import "./style.css";
 
-type StatCardProps = {
+export type StatCardProps = {
   label: string;
   value: string;
   unit: string;
@@ -11,7 +11,7 @@ type StatCardProps = {
 
 type StatCardPlaceholder = StatCardProps & { id: string };
 
-function StatCardSkeleton() {
+export function StatCardSkeleton() {
   return (
     <article className="stat-card loading" aria-hidden="true">
       <Skeleton variant="text" width="50%" />
@@ -21,7 +21,13 @@ function StatCardSkeleton() {
   );
 }
 
-export function StatCard({ label, value, unit, trend, isEmpty = false }: StatCardProps) {
+export function StatCard({
+  label,
+  value,
+  unit,
+  trend,
+  isEmpty = false,
+}: StatCardProps) {
   return (
     <article className={`stat-card${isEmpty ? " empty" : ""}`}>
       <span className="label">{label}</span>
@@ -33,8 +39,6 @@ export function StatCard({ label, value, unit, trend, isEmpty = false }: StatCar
     </article>
   );
 }
-
-StatCard.Skeleton = StatCardSkeleton;
 
 export const EMPTY_STAT_PLACEHOLDERS = [
   { id: "volume", label: "Volume", value: "—", unit: "kg", trend: "Nessun dato" },

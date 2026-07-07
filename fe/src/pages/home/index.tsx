@@ -1,6 +1,5 @@
-import { AppShell } from "@components/layout/AppShell";
-import { Dashboard } from "@components/dashboard/Dashboard";
-import "@components/layout/app-shell.css";
+import { AppShell } from "@components/appshell";
+import { Dashboard } from "@dashboard/dashboard";
 
 export default function HomePage() {
   return (

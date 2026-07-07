@@ -1,14 +1,14 @@
-import { Skeleton } from "@components/skeleton/Skeleton";
-import "./workout-row.css";
+import { Skeleton } from "@components/skeleton";
+import "./style.css";
 
-type WorkoutRowProps = {
+export type WorkoutRowProps = {
   name: string;
   dateLabel: string;
   durationMin: number;
   volumeKg: number;
 };
 
-function WorkoutRowSkeleton() {
+export function WorkoutRowSkeleton() {
   return (
     <div className="workout-row loading" aria-hidden="true">
       <Skeleton variant="block" width={40} height={40} className="icon-skeleton" />
@@ -69,5 +69,3 @@ export function WorkoutRow({
     </button>
   );
 }
-
-WorkoutRow.Skeleton = WorkoutRowSkeleton;

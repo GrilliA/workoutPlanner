@@ -1,4 +1,4 @@
-import "./week-strip.css";
+import "./style.css";
 
 const dayLabels = ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"];
 

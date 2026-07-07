@@ -1,11 +1,11 @@
 export {
   ButtonProvider,
   useButtonContext,
-} from "./button-context";
+} from "./context";
 
 export type {
   ButtonContextValue,
   ButtonVariant,
   ButtonSize,
   ButtonIconPosition,
-} from "./button-context";
+} from "./context";

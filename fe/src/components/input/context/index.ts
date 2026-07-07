@@ -3,6 +3,9 @@ export {
   InputControlProvider,
   useInputContext,
   useInputControlContext,
-} from "./input-context";
+} from "./context";
 
-export type { InputContextValue, InputControlContextValue } from "./input-context";
+export type {
+  InputContextValue,
+  InputControlContextValue,
+} from "./context";

@@ -1,13 +1,11 @@
-import { useDashboard } from "../../pages/home/use-dashboard";
-import type { DashboardStat } from "../../pages/home/mock-data";
-import { TopBar } from "./TopBar";
-import { WeekStrip } from "./WeekStrip";
-import { TodayCard } from "./TodayCard";
-import { StatCard, EMPTY_STAT_PLACEHOLDERS } from "./StatCard";
-import { WorkoutRow } from "./WorkoutRow";
-import "./dashboard.css";
-import "./stat-card.css";
-import "./workout-row.css";
+import { useDashboard } from "../useDashboard";
+import type { DashboardStat } from "../types";
+import { TopBar } from "../topbar";
+import { WeekStrip } from "../weekstrip";
+import { TodayCard } from "../todaycard";
+import { StatCard, StatCardSkeleton, EMPTY_STAT_PLACEHOLDERS } from "../statcard";
+import { WorkoutRow, WorkoutRowSkeleton } from "../workoutrow";
+import "./style.css";
 
 const STAT_SKELETON_COUNT = 4;
 const WORKOUT_SKELETON_COUNT = 3;
@@ -43,7 +41,7 @@ export function Dashboard() {
       <div className="stat-grid" aria-busy={isLoading || undefined}>
         {isLoading
           ? Array.from({ length: STAT_SKELETON_COUNT }, (_, index) => (
-              <StatCard.Skeleton key={index} />
+              <StatCardSkeleton key={index} />
             ))
           : stats.map((stat) => (
               <StatCard
@@ -70,7 +68,7 @@ export function Dashboard() {
         <div className="list" aria-busy={isLoading || undefined}>
           {isLoading ? (
             Array.from({ length: WORKOUT_SKELETON_COUNT }, (_, index) => (
-              <WorkoutRow.Skeleton key={index} />
+              <WorkoutRowSkeleton key={index} />
             ))
           ) : recentWorkouts.length === 0 ? (
             <p className="empty-message" aria-live="polite">

@@ -1,9 +1,9 @@
 import { Button } from "@components/button";
-import { Skeleton } from "@components/skeleton/Skeleton";
-import type { TodayWorkout } from "../../pages/home/mock-data";
-import "./today-card.css";
+import { Skeleton } from "@components/skeleton";
+import type { TodayWorkout } from "../types";
+import "./style.css";
 
-type TodayCardProps = {
+export type TodayCardProps = {
   workout: TodayWorkout | null;
   isLoading?: boolean;
 };
