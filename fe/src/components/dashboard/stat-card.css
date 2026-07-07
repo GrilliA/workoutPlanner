@@ -38,6 +38,14 @@
     font-size: 0.8rem;
     color: var(--accent);
   }
+
+  &.empty .trend {
+    color: var(--text);
+  }
+
+  &.loading {
+    gap: 0.5rem;
+  }
 }
 
 .stat-grid {

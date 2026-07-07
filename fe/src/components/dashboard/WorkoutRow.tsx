@@ -1,3 +1,4 @@
+import { Skeleton } from "@components/skeleton/Skeleton";
 import "./workout-row.css";
 
 type WorkoutRowProps = {
@@ -6,6 +7,19 @@ type WorkoutRowProps = {
   durationMin: number;
   volumeKg: number;
 };
+
+function WorkoutRowSkeleton() {
+  return (
+    <div className="workout-row loading" aria-hidden="true">
+      <Skeleton variant="block" width={40} height={40} className="icon-skeleton" />
+      <span className="copy">
+        <Skeleton variant="text" width="60%" />
+        <Skeleton variant="text" width="80%" />
+      </span>
+      <Skeleton variant="block" width={16} height={16} className="chevron-skeleton" />
+    </div>
+  );
+}
 
 export function WorkoutRow({
   name,
@@ -49,3 +63,5 @@ export function WorkoutRow({
     </button>
   );
 }
+
+WorkoutRow.Skeleton = WorkoutRowSkeleton;

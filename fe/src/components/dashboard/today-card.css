@@ -59,4 +59,35 @@
     font-weight: 700;
     letter-spacing: 0.04em;
   }
+
+  &.empty {
+    border-color: var(--border);
+    background: var(--surface-elevated);
+    box-shadow: none;
+
+    & .title {
+      font-size: 1.35rem;
+    }
+
+    & .empty-message {
+      margin: 0;
+      color: var(--text);
+      line-height: 1.35;
+    }
+
+    & .cta {
+      color: var(--text-h);
+    }
+  }
+
+  &.loading {
+    & .chip-skeleton {
+      border-radius: 999px;
+    }
+
+    & .cta-skeleton {
+      margin-top: 0.25rem;
+      border-radius: 0.5rem;
+    }
+  }
 }

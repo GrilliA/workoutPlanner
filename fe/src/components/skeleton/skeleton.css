@@ -1,0 +1,26 @@
+.skeleton {
+  display: block;
+  border-radius: 0.4rem;
+  background: var(--surface);
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+
+  &.text {
+    height: 0.85rem;
+    border-radius: 0.25rem;
+  }
+
+  &.block {
+    width: 100%;
+  }
+}
+
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.45;
+  }
+}

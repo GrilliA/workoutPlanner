@@ -1,3 +1,10 @@
+export type TodayWorkout = {
+  name: string;
+  exercises: string[];
+  goal: string;
+  durationMin: number;
+};
+
 export type DashboardStat = {
   id: string;
   label: string;
@@ -51,4 +58,11 @@ export const dashboardMock = {
       volumeKg: 9100,
     },
   ] satisfies RecentWorkout[],
+};
+
+export const dashboardMockEmpty = {
+  userName: "Marco",
+  todayWorkout: null,
+  stats: [] as DashboardStat[],
+  recentWorkouts: [] as RecentWorkout[],
 };
