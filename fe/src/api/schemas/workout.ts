@@ -4,6 +4,7 @@ export const workoutSchema = z.object({
   id: z.number(),
   name: z.string(),
   createdAt: z.coerce.date(),
+  exerciseCount: z.number(),
 });
 
 export const workoutsSchema = z.array(workoutSchema);

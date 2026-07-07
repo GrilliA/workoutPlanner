@@ -1,12 +1,23 @@
 import { Router } from "express";
-import { eq } from "drizzle-orm";
+import { count, eq } from "drizzle-orm";
 import { db } from "../db";
-import { workouts } from "../db/schema";
+import { exercises, workouts } from "../db/schema";
+import { exercisesRouter } from "./exercises";
 
 export const workoutsRouter = Router();
 
 workoutsRouter.get("/", async (_req, res) => {
-  const all = await db.select().from(workouts);
+  const all = await db
+    .select({
+      id: workouts.id,
+      name: workouts.name,
+      createdAt: workouts.createdAt,
+      exerciseCount: count(exercises.id),
+    })
+    .from(workouts)
+    .leftJoin(exercises, eq(workouts.id, exercises.workoutId))
+    .groupBy(workouts.id, workouts.name, workouts.createdAt);
+
   res.json(all);
 });
 
@@ -19,9 +30,16 @@ workoutsRouter.get("/:id", async (req, res) => {
   }
 
   const [workout] = await db
-    .select()
+    .select({
+      id: workouts.id,
+      name: workouts.name,
+      createdAt: workouts.createdAt,
+      exerciseCount: count(exercises.id),
+    })
     .from(workouts)
-    .where(eq(workouts.id, id));
+    .leftJoin(exercises, eq(workouts.id, exercises.workoutId))
+    .where(eq(workouts.id, id))
+    .groupBy(workouts.id, workouts.name, workouts.createdAt);
 
   if (!workout) {
     res.status(404).json({ error: "Workout not found" });
@@ -40,5 +58,8 @@ workoutsRouter.post("/", async (req, res) => {
   }
 
   const [created] = await db.insert(workouts).values({ name }).returning();
-  res.status(201).json(created);
+
+  res.status(201).json({ ...created, exerciseCount: 0 });
 });
+
+workoutsRouter.use("/:workoutId/exercises", exercisesRouter);

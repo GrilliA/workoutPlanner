@@ -30,6 +30,8 @@ How to use:
 
 ## What we did
 
+- 2026-06-27 — B1 exercises router + counts: nested `GET/POST /api/workouts/:id/exercises`, `GET /api/exercises/:id`, `exerciseCount` on workout list/detail; FE Zod schemas + `@api` client.
+- 2026-06-27 — C5 empty + loading states: `Skeleton` primitive, `useDashboard` hook (mock delay + `?state=` dev toggle), section-level skeletons on TodayCard/StatCard/WorkoutRow, Italian empty copy.
 - 2026-06-24 — Rebuilt Home as TRACCIA Figma dashboard (C0–C4): AppShell, TopBar, WeekStrip, TodayCard, StatCard grid, WorkoutRow list. Mock data + Italian copy.
 - 2026-06-24 — Added `Card` compound component and API wiring (Phases A–B); kept `@api` client for later C6 integration.
 - 2026-06-24 — Set up and verified the dev environment: installed `be/` and `fe/` deps, started Postgres via Docker Compose, applied schema, ran both dev servers, and confirmed the API can create/read a workout. Documented startup caveats in `AGENTS.md`.
@@ -47,13 +49,13 @@ Legend: ⬜ todo · 🟡 in progress · ✅ done
 - **C2 — TodayCard ("OGGI")** ✅
 - **C3 — Stat grid (Volume / Workout / Streak / Record)** ✅
 - **C4 — Recent workouts list ("ULTIMI ALLENAMENTI")** ✅
-- **C5 — Empty + loading states** ⬜
+- **C5 — Empty + loading states** ✅
 - **C6 — Wire home to real `workouts` API** ⬜ (needs B1)
 - **C7 — Analytics (charts) v2** ⬜ (needs B2/B3)
 
 ### Backend track
 
-- **B1 — `exercises` router + counts** ⬜
+- **B1 — `exercises` router + counts** ✅
 - **B2 — Session logging schema** ⬜
 - **B3 — Stats endpoints** ⬜
 

@@ -59,6 +59,19 @@
       height: 1rem;
     }
   }
+
+  &.loading {
+    cursor: default;
+    pointer-events: none;
+
+    & .icon-skeleton {
+      border-radius: 0.75rem;
+    }
+
+    & .chevron-skeleton {
+      border-radius: 0.25rem;
+    }
+  }
 }
 
 .recent-workouts {
@@ -94,5 +107,15 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
     gap: 0.75rem;
+  }
+
+  & .empty-message {
+    margin: 0;
+    padding: 2rem 1rem;
+    border: 1px dashed var(--border);
+    border-radius: 0.9rem;
+    text-align: center;
+    color: var(--text);
+    font-size: 0.9rem;
   }
 }
