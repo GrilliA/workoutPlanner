@@ -30,6 +30,7 @@ How to use:
 
 ## What we did
 
+- 2026-07-07 — C6 wire home to API: `useDashboard` calls `getWorkouts` + `getExercisesByWorkout`, maps to dashboard shape, error banner with retry; stats/duration/volume stay placeholder until B2/B3.
 - 2026-06-27 — B1 exercises router + counts: nested `GET/POST /api/workouts/:id/exercises`, `GET /api/exercises/:id`, `exerciseCount` on workout list/detail; FE Zod schemas + `@api` client.
 - 2026-06-27 — C5 empty + loading states: `Skeleton` primitive, `useDashboard` hook (mock delay + `?state=` dev toggle), section-level skeletons on TodayCard/StatCard/WorkoutRow, Italian empty copy.
 - 2026-06-24 — Rebuilt Home as TRACCIA Figma dashboard (C0–C4): AppShell, TopBar, WeekStrip, TodayCard, StatCard grid, WorkoutRow list. Mock data + Italian copy.
@@ -50,7 +51,7 @@ Legend: ⬜ todo · 🟡 in progress · ✅ done
 - **C3 — Stat grid (Volume / Workout / Streak / Record)** ✅
 - **C4 — Recent workouts list ("ULTIMI ALLENAMENTI")** ✅
 - **C5 — Empty + loading states** ✅
-- **C6 — Wire home to real `workouts` API** ⬜ (needs B1)
+- **C6 — Wire home to real `workouts` API** ✅
 - **C7 — Analytics (charts) v2** ⬜ (needs B2/B3)
 
 ### Backend track

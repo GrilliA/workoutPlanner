@@ -44,7 +44,13 @@ export function WorkoutRow({
       <span className="copy">
         <span className="name">{name}</span>
         <span className="meta">
-          {dateLabel} · {durationMin} min · {(volumeKg / 1000).toFixed(1)}k kg
+          {[
+            dateLabel,
+            durationMin > 0 ? `${durationMin} min` : null,
+            volumeKg > 0 ? `${(volumeKg / 1000).toFixed(1)}k kg` : null,
+          ]
+            .filter(Boolean)
+            .join(" · ")}
         </span>
       </span>
 

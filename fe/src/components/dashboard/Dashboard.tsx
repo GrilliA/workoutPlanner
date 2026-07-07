@@ -13,9 +13,9 @@ const STAT_SKELETON_COUNT = 4;
 const WORKOUT_SKELETON_COUNT = 3;
 
 export function Dashboard() {
-  const { status, data } = useDashboard();
+  const { status, data, error, retry } = useDashboard();
   const isLoading = status === "loading";
-  const isEmpty = status === "empty";
+  const isEmpty = status === "empty" || status === "error";
   const userName = data?.userName ?? "Marco";
 
   const stats: DashboardStat[] = isEmpty || !data?.stats.length
@@ -28,6 +28,16 @@ export function Dashboard() {
     <div className="dashboard">
       <TopBar userName={userName} />
       <WeekStrip />
+
+      {status === "error" && (
+        <div className="dashboard-error" role="alert">
+          <p>{error ?? "Impossibile caricare la dashboard"}</p>
+          <button type="button" className="retry" onClick={retry}>
+            Riprova
+          </button>
+        </div>
+      )}
+
       <TodayCard workout={data?.todayWorkout ?? null} isLoading={isLoading} />
 
       <div className="stat-grid" aria-busy={isLoading || undefined}>

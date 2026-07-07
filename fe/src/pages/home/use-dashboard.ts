@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { ApiError, getExercisesByWorkout, getWorkouts } from "@api";
+import { buildDashboardData } from "./map-dashboard";
 import {
-  dashboardMock,
   dashboardMockEmpty,
+  type DashboardData,
   type DashboardStat,
   type RecentWorkout,
   type TodayWorkout,
@@ -9,20 +11,14 @@ import {
 
 export type DashboardStatus = "loading" | "success" | "empty" | "error";
 
-export type DashboardData = {
-  userName: string;
-  todayWorkout: TodayWorkout | null;
-  stats: DashboardStat[];
-  recentWorkouts: RecentWorkout[];
-};
+export type { DashboardData, DashboardStat, RecentWorkout, TodayWorkout };
 
 type UseDashboardResult = {
   status: DashboardStatus;
   data: DashboardData | null;
   error: string | null;
+  retry: () => void;
 };
-
-const MOCK_DELAY_MS = 500;
 
 function getDevPreviewState(): DashboardStatus | null {
   const param = new URLSearchParams(window.location.search).get("state");
@@ -34,49 +30,86 @@ function getDevPreviewState(): DashboardStatus | null {
   return null;
 }
 
-function resolveMockData(status: DashboardStatus): DashboardData {
-  if (status === "empty") {
+async function fetchDashboardData(): Promise<DashboardData> {
+  const workouts = await getWorkouts();
+
+  if (workouts.length === 0) {
     return dashboardMockEmpty;
   }
 
-  return dashboardMock;
+  const [newestWorkout] = [...workouts].sort(
+    (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+  );
+  const exercises = await getExercisesByWorkout(newestWorkout.id);
+
+  return buildDashboardData(workouts, exercises);
 }
 
 export function useDashboard(): UseDashboardResult {
   const previewState = getDevPreviewState();
+  const [fetchId, setFetchId] = useState(0);
   const [status, setStatus] = useState<DashboardStatus>(
     previewState ?? "loading",
   );
   const [data, setData] = useState<DashboardData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const retry = useCallback(() => {
+    setFetchId((current) => current + 1);
+  }, []);
+
   useEffect(() => {
     if (previewState === "loading") {
       return;
     }
 
-    if (previewState) {
-      setTimeout(() => {
-        setStatus(previewState);
-        setData(resolveMockData(previewState));
-        setError(null);
-      }, 0);
+    if (previewState === "empty") {
+      setStatus("empty");
+      setData(dashboardMockEmpty);
+      setError(null);
       return;
     }
 
-    setTimeout(() => {
+    let cancelled = false;
+
+    async function load() {
       setStatus("loading");
       setData(null);
       setError(null);
-    }, 0);
 
-    const timer = window.setTimeout(() => {
-      setStatus("success");
-      setData(dashboardMock);
-    }, MOCK_DELAY_MS);
+      try {
+        const result = await fetchDashboardData();
 
-    return () => window.clearTimeout(timer);
-  }, [previewState]);
+        if (cancelled) {
+          return;
+        }
 
-  return { status, data, error };
+        const isEmpty =
+          result.recentWorkouts.length === 0 && result.todayWorkout === null;
+
+        setStatus(isEmpty ? "empty" : "success");
+        setData(result);
+      } catch (err) {
+        if (cancelled) {
+          return;
+        }
+
+        setStatus("error");
+        setData(null);
+        setError(
+          err instanceof ApiError
+            ? err.message
+            : "Impossibile caricare la dashboard",
+        );
+      }
+    }
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [previewState, fetchId]);
+
+  return { status, data, error, retry };
 }
