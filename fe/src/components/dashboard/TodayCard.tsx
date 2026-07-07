@@ -76,7 +76,7 @@ export function TodayCard({ workout, isLoading = false }: TodayCardProps) {
 
       <div className="meta">
         <span className="chip">{goal}</span>
-        <span className="chip">{durationMin} min</span>
+        {durationMin > 0 && <span className="chip">{durationMin} min</span>}
       </div>
 
       <Button.Root variant="primary" className="cta">
