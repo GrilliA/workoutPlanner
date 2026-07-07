@@ -1,16 +1,15 @@
-import "./top-bar.css";
+import "./style.css";
 
-type TopBarProps = {
+export type TopBarProps = {
   userName: string;
 };
 
-function formatItalianDate(date: Date) {
-  return date.toLocaleDateString("it-IT", {
+const formatItalianDate = (date: Date) =>
+  date.toLocaleDateString("it-IT", {
     weekday: "long",
     day: "numeric",
     month: "long",
   });
-}
 
 export function TopBar({ userName }: TopBarProps) {
   const today = formatItalianDate(new Date());

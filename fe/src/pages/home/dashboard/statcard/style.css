@@ -47,10 +47,3 @@
     gap: 0.5rem;
   }
 }
-
-.stat-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
-  gap: 0.75rem;
-  margin-bottom: 2rem;
-}

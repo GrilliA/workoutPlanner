@@ -1,4 +1,4 @@
-import "./card.css";
+import "./style.css";
 
 import { CardRoot, CardTitle, CardMeta, CardTime } from "./primitives";
 

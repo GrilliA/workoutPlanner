@@ -1,8 +1,8 @@
 import type { CSSProperties } from "react";
 import { cx } from "@utils/cx";
-import "./skeleton.css";
+import "./style.css";
 
-type SkeletonProps = {
+export type SkeletonProps = {
   variant?: "block" | "text";
   width?: string | number;
   height?: string | number;
