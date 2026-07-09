@@ -6,9 +6,10 @@ import { Input } from "@components/input";
 import { Button } from "@components/button";
 import "@auth/authpage.css";
 
-const Login = () => {
-  const { login, status } = useAuth();
+const Register = () => {
+  const { register, status } = useAuth();
   const [, setLocation] = useLocation();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -26,10 +27,14 @@ const Login = () => {
     setSubmitting(true);
 
     try {
-      await login({ email, password });
+      await register({
+        email,
+        password,
+        name: name.trim() || undefined,
+      });
       setLocation("/");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Login failed");
+      setError(err instanceof ApiError ? err.message : "Registration failed");
     } finally {
       setSubmitting(false);
     }
@@ -44,6 +49,18 @@ const Login = () => {
       <div className="logo">LOGO</div>
       <form className="form" onSubmit={handleSubmit}>
         <Input.Root>
+          <Input.Label>Nome</Input.Label>
+          <Input.Field
+            type="text"
+            name="name"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            placeholder="Il tuo nome"
+            autoComplete="name"
+          />
+        </Input.Root>
+
+        <Input.Root>
           <Input.Label>Email</Input.Label>
           <Input.Field
             type="email"
@@ -56,23 +73,19 @@ const Login = () => {
           />
         </Input.Root>
 
-        <div className="password">
-          <Input.Root>
-            <Input.Label>Password</Input.Label>
-            <Input.Field
-              type="password"
-              name="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder="Password"
-              autoComplete="current-password"
-              required
-            />
-          </Input.Root>
-          <Link href="/forgot-password" className="forgot">
-            forgot password?
-          </Link>
-        </div>
+        <Input.Root>
+          <Input.Label>Password</Input.Label>
+          <Input.Field
+            type="password"
+            name="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder="Minimo 8 caratteri"
+            autoComplete="new-password"
+            minLength={8}
+            required
+          />
+        </Input.Root>
 
         {error ? <p className="form-error">{error}</p> : null}
 
@@ -83,15 +96,15 @@ const Login = () => {
           loading={submitting}
           disabled={submitting}
         >
-          <Button.Label>Login</Button.Label>
+          <Button.Label>Registrati</Button.Label>
         </Button.Root>
 
         <p className="footer-link">
-          Non hai un account? <Link href="/register">Registrati</Link>
+          Hai già un account? <Link href="/login">Accedi</Link>
         </p>
       </form>
     </main>
   );
 };
 
-export default Login;
+export default Register;

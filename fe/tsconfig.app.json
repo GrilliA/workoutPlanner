@@ -22,7 +22,9 @@
       "@components/*": ["./src/components/*"],
       "@dashboard": ["./src/pages/home/dashboard"],
       "@dashboard/*": ["./src/pages/home/dashboard/*"],
-      "@pages/*": ["./src/pages/*"]
+      "@pages/*": ["./src/pages/*"],
+      "@auth": ["./src/auth"],
+      "@auth/*": ["./src/auth/*"]
     },
 
     /* Linting */

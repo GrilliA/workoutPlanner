@@ -1,4 +1,4 @@
-.login {
+.auth-page {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -33,5 +33,23 @@
     color: var(--text);
     text-decoration: none;
     align-self: flex-end;
+  }
+
+  & .form-error {
+    margin: 0;
+    font-size: 14px;
+    color: var(--accent);
+  }
+
+  & .footer-link {
+    margin-top: 0.5rem;
+    font-size: 14px;
+    color: var(--text);
+    text-align: center;
+  }
+
+  & .footer-link a {
+    color: var(--text-h);
+    text-decoration: none;
   }
 }

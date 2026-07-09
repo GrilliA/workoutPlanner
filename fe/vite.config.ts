@@ -14,7 +14,11 @@ export default defineConfig({
       "@utils": path.resolve(__dirname, "./src/utils"),
       "@components": path.resolve(__dirname, "./src/components"),
       "@dashboard": path.resolve(__dirname, "./src/pages/home/dashboard"),
+      "@dashboard/*": path.resolve(__dirname, "./src/pages/home/dashboard/*"),
       "@pages": path.resolve(__dirname, "./src/pages"),
+      "@pages/*": path.resolve(__dirname, "./src/pages/*"),
+      "@auth": path.resolve(__dirname, "./src/auth"),
+      "@auth/*": path.resolve(__dirname, "./src/auth/*"),
     },
   },
   server: {
