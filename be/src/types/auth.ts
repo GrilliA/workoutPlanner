@@ -9,3 +9,7 @@ export type AuthUser = {
 export type AuthenticatedRequest = Request & {
   user: AuthUser;
 };
+
+export function getAuthUser(req: Request): AuthUser {
+  return (req as AuthenticatedRequest).user;
+}
