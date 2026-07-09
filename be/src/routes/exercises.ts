@@ -1,8 +1,10 @@
-import type { Response } from "express";
 import { Router } from "express";
 import { eq } from "drizzle-orm";
 import { db } from "../db";
-import { exercises, workouts } from "../db/schema";
+import { exercises } from "../db/schema";
+import { requireAuth } from "../middleware/requireAuth";
+import { findExerciseForUser } from "../services/workoutAccess";
+import { getAuthUser } from "../types/auth";
 
 export const exercisesRouter = Router({ mergeParams: true });
 
@@ -10,30 +12,11 @@ function parseWorkoutId(params: Record<string, string | undefined>) {
   return Number(params.workoutId);
 }
 
-async function getWorkoutOr404(workoutId: number, res: Response) {
-  const [workout] = await db
-    .select({ id: workouts.id })
-    .from(workouts)
-    .where(eq(workouts.id, workoutId));
-
-  if (!workout) {
-    res.status(404).json({ error: "Workout not found" });
-    return null;
-  }
-
-  return workout;
-}
-
 exercisesRouter.get("/", async (req, res) => {
   const workoutId = parseWorkoutId(req.params);
 
   if (Number.isNaN(workoutId)) {
     res.status(400).json({ error: "Invalid workout id" });
-    return;
-  }
-
-  const workout = await getWorkoutOr404(workoutId, res);
-  if (!workout) {
     return;
   }
 
@@ -69,11 +52,6 @@ exercisesRouter.post("/", async (req, res) => {
     return;
   }
 
-  const workout = await getWorkoutOr404(workoutId, res);
-  if (!workout) {
-    return;
-  }
-
   const [created] = await db
     .insert(exercises)
     .values({ name, sets, reps, workoutId })
@@ -84,7 +62,10 @@ exercisesRouter.post("/", async (req, res) => {
 
 export const exerciseByIdRouter = Router();
 
+exerciseByIdRouter.use(requireAuth);
+
 exerciseByIdRouter.get("/:id", async (req, res) => {
+  const user = getAuthUser(req);
   const id = Number(req.params.id);
 
   if (Number.isNaN(id)) {
@@ -92,10 +73,7 @@ exerciseByIdRouter.get("/:id", async (req, res) => {
     return;
   }
 
-  const [exercise] = await db
-    .select()
-    .from(exercises)
-    .where(eq(exercises.id, id));
+  const exercise = await findExerciseForUser(id, user.id);
 
   if (!exercise) {
     res.status(404).json({ error: "Exercise not found" });
