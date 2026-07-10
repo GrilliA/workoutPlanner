@@ -1,0 +1,22 @@
+#!/bin/sh
+# Strip Cursor attribution trailers — commits should list only the human author.
+MSG_FILE="$1"
+
+if [ ! -f "$MSG_FILE" ]; then
+  exit 0
+fi
+
+strip_line() {
+  pattern="$1"
+  if sed --version >/dev/null 2>&1; then
+    sed -i "/${pattern}/d" "$MSG_FILE"
+  else
+    sed -i '' "/${pattern}/d" "$MSG_FILE"
+  fi
+}
+
+strip_line 'cursoragent@cursor\.com'
+strip_line 'Co-authored-by: Cursor'
+strip_line 'Made-with: Cursor'
+
+exit 0

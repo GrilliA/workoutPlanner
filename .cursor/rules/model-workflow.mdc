@@ -21,6 +21,7 @@ alwaysApply: true
 4. Se l'utente dice "procedi" / "implementa" dopo un piano approvato → esegui con scope minimo (stile AGENTS.md).
 5. Non assumere il modello attivo: se il task è planning e sei in Agent, ricorda all'utente di usare **GPT 5.6 Terra** in Plan/Chat dedicata.
 6. **Commit** solo su richiesta esplicita dell'utente.
+7. **Mai attribuzione Cursor** nei commit: non usare `--trailer`, non appendere `Co-authored-by: Cursor`, `Made-with: Cursor` o simili. I commit devono risultare solo dell'utente.
 
 ## Piano minimo (template)
 

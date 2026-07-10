@@ -312,6 +312,18 @@ Before modifying code on a non-trivial task, propose **branch name + short plan*
 - One concern per commit when possible
 - Update `WORKBOOK.md` when completing a roadmap chunk (C*, B*)
 - Do not commit unless explicitly asked
+- **No Cursor attribution** in commit messages: never add `Co-authored-by: Cursor`, `Made-with: Cursor`, or similar trailers
+
+### Attribution setup (one-time per clone)
+
+1. **Cursor IDE:** Settings → Agents → Attribution → disable Commit Attribution and PR Attribution
+2. **CLI agent:** ensure `~/.cursor/cli-config.json` has `"commitAttribution": false` and `"prAttribution": false`
+3. **Git hook** (strips trailers even if Cursor adds them):
+
+```bash
+chmod +x .githooks/prepare-commit-msg
+ln -sf ../../.githooks/prepare-commit-msg .git/hooks/prepare-commit-msg
+```
 
 ---
 
