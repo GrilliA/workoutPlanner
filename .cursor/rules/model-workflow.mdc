@@ -1,0 +1,36 @@
+---
+description: Split planning (GPT 5.6 Terra) from implementation (Composer 2.5)
+alwaysApply: true
+---
+
+# Model workflow — workoutPlanner
+
+## Planning vs implementation
+
+| Phase | Model | Mode | Output |
+|-------|-------|------|--------|
+| **Plan** | GPT 5.6 Terra | Plan or Ask | Chunk, file list, dubbi, ordine — **no code** |
+| **Build** | Composer 2.5 | Agent | Codice, test, commit (solo se chiesto) |
+| **Review** | GPT 5.6 Terra | Ask | Review diff, rischi, incoerenze — **no code** |
+
+## Rules for the agent
+
+1. **Nuovo task non banale** → proponi **branch name** + piano breve e chiedi conferma prima di modificare file.
+2. Se il branch attivo non corrisponde al task (es. vecchio `cursor/...` o chunk diverso), proponi di creare/switchare sul branch corretto prima di procedere.
+3. Se l'utente dice "pianifica" / "plan" / "solo piano" → **non scrivere codice**; fermati al piano (branch name incluso nel piano).
+4. Se l'utente dice "procedi" / "implementa" dopo un piano approvato → esegui con scope minimo (stile AGENTS.md).
+5. Non assumere il modello attivo: se il task è planning e sei in Agent, ricorda all'utente di usare **GPT 5.6 Terra** in Plan/Chat dedicata.
+6. **Commit** solo su richiesta esplicita dell'utente.
+
+## Piano minimo (template)
+
+- Obiettivo (1 frase)
+- Branch proposto (es. `feat/B2-session-logging`)
+- Chunk ordinati (W*, B*, C* o nuovi ID)
+- File toccati (be/ vs fe/)
+- Dubbi da decidere insieme (non scegliere da solo su trade-off)
+- Test plan (2–3 bullet)
+
+## Git attribution
+
+Non aggiungere mai trailer `Made-with: Cursor`, `Co-authored-by: Cursor` o simili a commit/PR.

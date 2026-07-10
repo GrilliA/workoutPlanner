@@ -1,22 +1,26 @@
-import { Router, Route, Switch } from "wouter";
-import { AppLayout } from "@layouts/appLayout";
+import { Router, Route } from "wouter";
+import { RequireAuth } from "@auth";
 import HomePage from "@pages/home";
 import LoginPage from "@pages/login";
+import RegisterPage from "@pages/register";
+import NewWorkoutPage from "@pages/workouts/new";
 import "./App.css";
 
 function App() {
   return (
     <Router>
-      <Switch>
-        <Route path="/login" component={LoginPage} />
-        <Route>
-          <AppLayout>
-            <Switch>
-              <Route path="/" component={HomePage} />
-            </Switch>
-          </AppLayout>
-        </Route>
-      </Switch>
+      <Route path="/login" component={LoginPage} />
+      <Route path="/register" component={RegisterPage} />
+      <Route path="/workouts/new">
+        <RequireAuth>
+          <NewWorkoutPage />
+        </RequireAuth>
+      </Route>
+      <Route path="/">
+        <RequireAuth>
+          <HomePage />
+        </RequireAuth>
+      </Route>
     </Router>
   );
 }

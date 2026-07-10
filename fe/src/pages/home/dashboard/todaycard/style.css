@@ -1,0 +1,100 @@
+.today-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--accent-border);
+  border-radius: 1rem;
+  background:
+    radial-gradient(circle at top right, rgba(196, 255, 77, 0.14), transparent 45%),
+    var(--surface-elevated);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+
+  & .header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  & .eyebrow {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    color: var(--accent);
+  }
+
+  & .title {
+    margin: 0;
+    font-size: 1.75rem;
+    line-height: 1;
+    color: var(--text-h);
+  }
+
+  & .exercises {
+    margin: 0;
+    color: var(--text);
+    line-height: 1.35;
+  }
+
+  & .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  & .chip {
+    padding: 0.35rem 0.65rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.03);
+    font-size: 0.8rem;
+    color: var(--text-h);
+  }
+
+  & .cta {
+    width: 100%;
+    margin-top: 0.25rem;
+    color: #101014;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+
+  &.empty {
+    border-color: var(--border);
+    background: var(--surface-elevated);
+    box-shadow: none;
+
+    & .title {
+      font-size: 1.35rem;
+    }
+
+    & .empty-message {
+      margin: 0;
+      color: var(--text);
+      line-height: 1.35;
+    }
+
+    & .cta-link {
+      display: block;
+      margin-top: 0.25rem;
+      text-decoration: none;
+    }
+
+    & .cta {
+      width: 100%;
+      color: var(--text-h);
+    }
+  }
+
+  &.loading {
+    & .chip-skeleton {
+      border-radius: 999px;
+    }
+
+    & .cta-skeleton {
+      margin-top: 0.25rem;
+      border-radius: 0.5rem;
+    }
+  }
+}

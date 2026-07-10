@@ -1,4 +1,4 @@
-import "./input.css";
+import "./style.css";
 
 import {
   InputRoot,

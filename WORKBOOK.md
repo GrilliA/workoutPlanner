@@ -1,96 +1,68 @@
-# Workout Planner Workbook
+# workoutPlanner — Workbook
 
-Source of truth for project status, decisions, and change history. Update this before/with meaningful code changes.
+A living log of **decisions made**, **what we did**, and **what to do next**. Update this file whenever we make a meaningful decision or finish a piece of work, so we always remember the context.
 
-## Current Status
+How to use:
+- Add new entries to the top of each list (most recent first).
+- Keep entries short: what + why.
+- Move items from "Next steps" to "What we did" when completed.
 
-| Phase | Name | Status |
-|---|---|---|
-| 0 | Foundation | 🟡 In progress |
-| 1 | Workout CRUD | 🟡 In progress |
-| 2 | Exercise CRUD | ⏳ Pending |
-| 3 | Auth + user-owned data | ⏳ Pending |
-| 4 | Planner UX | ⏳ Pending |
-| 5 | Polish | ⏳ Pending |
+---
 
-## Project Snapshot
+## Decisions log
 
-- Backend: Express 5 + TypeScript + Drizzle ORM + Postgres.
-- Frontend: React 19 + Vite + Wouter + plain CSS.
-- Database: local Postgres via `docker-compose.yml`.
-- Current API: `/api/workouts` list/create and `/api/workouts/:id` read.
-- Current UI: home/sidebar shell and static login page.
+| Date | Decision | Why |
+| --- | --- | --- |
+| 2026-06-24 | Home page = the "Dashboard" from the Figma reference (TRACCIA app) | The reference's main screen is the dashboard; that is what we build as `/`. |
+| 2026-06-24 | Build the home **mobile-first** and fluid (CSS `auto-fit` grids, no JS breakpoints) | One component tree reflows 1→2→3→4 columns; less code, more control. |
+| 2026-06-24 | Mobile/tablet nav = `BottomNav`; reuse `Sidebar` on desktop (≥1024px) | Thumb-friendly on phones; sidebar already built and styled. |
+| 2026-06-24 | Build the home against **mock data first**, wire to API incrementally | Current DB only has `workouts`/`exercises`; volume/RIR/TUT/streak need new tables later. |
+| 2026-06-24 | UI copy in **Italian** to match the reference ("OGGI", "AVVIA WORKOUT", "ULTIMI ALLENAMENTI") | Keep parity with the approved design. |
+| 2026-06-24 | Reference design tokens already align with repo (`--bg #16171d`, `--accent` lime, Barlow Condensed) | No token overhaul needed; reuse existing CSS variables. |
+| 2026-06-24 | Use Vite dev proxy for `/api` → `http://localhost:3005` (Phase A, Option 1) | Frontend can call relative `/api/...` URLs in dev without CORS; no extra backend middleware. |
+| 2026-06-24 | Use Zod in the frontend API layer to encode requests and decode responses (Phase B) | Runtime validation catches backend shape drift early; shared schemas keep request/response types accurate. |
+| 2026-06-24 | Use Docker Compose Postgres (`docker-compose.yml`) as the dev database | Already shipped in the repo via `npm run db:up`; keeps the documented workflow intact. |
+| 2026-06-24 | `be/.env` uses `postgres:postgres` credentials (not the `user:password` in `.env.example`) | Must match the credentials in `docker-compose.yml` for the API to connect. |
+| 2026-06-24 | Use `npm run db:push` to sync schema (no migration files yet) | `be/drizzle/` is empty; Drizzle `push` syncs the schema directly during early development. |
+| 2026-06-24 | Update script only refreshes npm deps in `be/` and `fe/` | Docker/system deps and service startup are environment/AGENTS.md concerns, not the startup script. |
 
-## Decisions
+---
 
-| # | Date | Decision | Status | Reason |
-|---|---|---|---|---|
-| 1 | 2026-06-23 | Use Express + Drizzle + Postgres for the API | ✅ Current | Already scaffolded; simple typed SQL path. |
-| 2 | 2026-06-23 | Use React + Vite + Wouter for the frontend | ✅ Current | Already scaffolded; small router, no extra framework. |
-| 3 | 2026-06-23 | Use plain colocated CSS | ✅ Current | Keeps styling simple and matches existing files. |
-| 4 | 2026-06-23 | Avoid new dependencies unless they remove more code than they add | ✅ Locked | Keep the MVP small. |
-| 5 | 2026-06-23 | Route shells in `fe/src/layouts` (camelCase); sidebar in `components` | ✅ Current | Separates app chrome from page content and reusable nav UI. |
-| 6 | 2026-06-23 | Nested root-block CSS + functional React on the frontend | ✅ Current | Sidebar sets the default CSS pattern; named exports, const data, `.map()`. |
+## What we did
 
-## Change History
+- 2026-07-07 — C6 wire home to API: `useDashboard` calls `getWorkouts` + `getExercisesByWorkout`, maps to dashboard shape, error banner with retry; stats/duration/volume stay placeholder until B2/B3.
+- 2026-06-27 — B1 exercises router + counts: nested `GET/POST /api/workouts/:id/exercises`, `GET /api/exercises/:id`, `exerciseCount` on workout list/detail; FE Zod schemas + `@api` client.
+- 2026-06-27 — C5 empty + loading states: `Skeleton` primitive, `useDashboard` hook (mock delay + `?state=` dev toggle), section-level skeletons on TodayCard/StatCard/WorkoutRow, Italian empty copy.
+- 2026-06-24 — Rebuilt Home as TRACCIA Figma dashboard (C0–C4): AppShell, TopBar, WeekStrip, TodayCard, StatCard grid, WorkoutRow list. Mock data + Italian copy.
+- 2026-06-24 — Added `Card` compound component and API wiring (Phases A–B); kept `@api` client for later C6 integration.
+- 2026-06-24 — Set up and verified the dev environment: installed `be/` and `fe/` deps, started Postgres via Docker Compose, applied schema, ran both dev servers, and confirmed the API can create/read a workout. Documented startup caveats in `AGENTS.md`.
 
-| # | Date | Change | Reason |
-|---|---|---|---|
-| 1 | 2026-06-23 | Initialized `WORKBOOK.md` and `AGENTS.md` | Give future agents a project map and rules. |
-| 2 | 2026-06-23 | Added `appLayout` and extracted `Sidebar` component | Logged-in routes share one shell; login stays full-page. |
-| 3 | 2026-06-23 | Documented frontend CSS and functional React conventions in `AGENTS.md` | Lock in sidebar-style nesting and functional patterns for future UI. |
+---
 
-## Phase Details
+## Home page — chunked roadmap
 
-### Phase 0: Foundation 🟡 In progress
+Legend: ⬜ todo · 🟡 in progress · ✅ done
 
-- [x] Backend package scaffolded
-- [x] Frontend package scaffolded
-- [x] Docker Postgres configured
-- [x] Drizzle configured
-- [x] Basic Express app mounted at `/api`
-- [ ] Add a real backend health endpoint
-- [ ] Add one minimal backend check/test command
-- [ ] Add one minimal frontend check beyond build/lint if needed
+### Frontend track
 
-### Phase 1: Workout CRUD 🟡 In progress
+- **C0 — Responsive AppShell + home route** ✅
+- **C1 — TopBar + WeekStrip** ✅
+- **C2 — TodayCard ("OGGI")** ✅
+- **C3 — Stat grid (Volume / Workout / Streak / Record)** ✅
+- **C4 — Recent workouts list ("ULTIMI ALLENAMENTI")** ✅
+- **C5 — Empty + loading states** ✅
+- **C6 — Wire home to real `workouts` API** ✅
+- **C7 — Analytics (charts) v2** ⬜ (needs B2/B3)
 
-- [x] `workouts` table
-- [x] List workouts
-- [x] Read workout by id
-- [x] Create workout
-- [ ] Update workout
-- [ ] Delete workout
-- [ ] Show workouts in frontend
-- [ ] Create workout from frontend
+### Backend track
 
-### Phase 2: Exercise CRUD ⏳ Pending
+- **B1 — `exercises` router + counts** ✅
+- **B2 — Session logging schema** ⬜
+- **B3 — Stats endpoints** ⬜
 
-- [x] `exercises` table scaffolded
-- [ ] List exercises for workout
-- [ ] Add exercise to workout
-- [ ] Update exercise
-- [ ] Delete exercise
-- [ ] Show exercises in frontend
+## Other next steps
 
-### Phase 3: Auth + user-owned data ⏳ Pending
-
-- [ ] Pick auth approach
-- [ ] Add users table
-- [ ] Login/register API
-- [ ] Login/register UI wiring
-- [ ] Restrict workouts to owner
-
-### Phase 4: Planner UX ⏳ Pending
-
-- [ ] Workout detail page
-- [ ] Weekly/monthly planner shape
-- [ ] Empty/loading/error states
-- [ ] Mobile-friendly layout
-
-### Phase 5: Polish ⏳ Pending
-
-- [ ] Form validation cleanup
-- [ ] Accessibility pass
-- [ ] README setup instructions
-- [ ] Production build sanity check
+- [ ] Implement authentication (Login/Logout routes exist in the UI but have no backend auth).
+- [ ] Add the missing FE routes referenced in the UI (`/forgot-password`, `/settings`, `/logout`).
+- [ ] Add real migration files via `npm run db:generate` once the schema stabilizes (instead of relying on `db:push`).
+- [ ] Add automated tests (backend currently has no test script; `npm test` is a placeholder).

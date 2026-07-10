@@ -1,0 +1,49 @@
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.9rem;
+  background: var(--surface);
+  min-height: 6.5rem;
+
+  & .label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text);
+  }
+
+  & .value-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.25rem;
+  }
+
+  & .value {
+    font-size: 1.6rem;
+    line-height: 1;
+    font-weight: 700;
+    color: var(--text-h);
+  }
+
+  & .unit {
+    font-size: 0.85rem;
+    color: var(--text);
+  }
+
+  & .trend {
+    margin-top: auto;
+    font-size: 0.8rem;
+    color: var(--accent);
+  }
+
+  &.empty .trend {
+    color: var(--text);
+  }
+
+  &.loading {
+    gap: 0.5rem;
+  }
+}

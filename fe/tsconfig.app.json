@@ -16,10 +16,15 @@
     "jsx": "react-jsx",
 
     "paths": {
+      "@api": ["./src/api"],
+      "@api/*": ["./src/api/*"],
       "@utils/*": ["./src/utils/*"],
       "@components/*": ["./src/components/*"],
+      "@dashboard": ["./src/pages/home/dashboard"],
+      "@dashboard/*": ["./src/pages/home/dashboard/*"],
       "@pages/*": ["./src/pages/*"],
-      "@layouts/*": ["./src/layouts/*"]
+      "@auth": ["./src/auth"],
+      "@auth/*": ["./src/auth/*"]
     },
 
     /* Linting */

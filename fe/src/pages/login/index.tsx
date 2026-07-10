@@ -1,24 +1,58 @@
-import { type SubmitEvent } from "react";
-import { Link } from "wouter";
+import { useEffect, useState, type FormEvent } from "react";
+import { Link, useLocation } from "wouter";
+import { ApiError } from "@api";
+import { useAuth } from "@auth";
 import { Input } from "@components/input";
 import { Button } from "@components/button";
-import "./login.css";
+import "@auth/authpage.css";
 
 const Login = () => {
-  const handleSubmit = (event: SubmitEvent) => {
+  const { login, status } = useAuth();
+  const [, setLocation] = useLocation();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      setLocation("/");
+    }
+  }, [status, setLocation]);
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setError(null);
+    setSubmitting(true);
+
+    try {
+      await login({ email, password });
+      setLocation("/");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Login failed");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
+  if (status === "loading" || status === "authenticated") {
+    return null;
+  }
+
   return (
-    <main className="login">
+    <main className="auth-page">
       <div className="logo">LOGO</div>
       <form className="form" onSubmit={handleSubmit}>
         <Input.Root>
           <Input.Label>Email</Input.Label>
           <Input.Field
             type="email"
+            name="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
             placeholder="you@example.com"
             autoComplete="email"
+            required
           />
         </Input.Root>
 
@@ -27,8 +61,12 @@ const Login = () => {
             <Input.Label>Password</Input.Label>
             <Input.Field
               type="password"
+              name="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
               placeholder="Password"
               autoComplete="current-password"
+              required
             />
           </Input.Root>
           <Link href="/forgot-password" className="forgot">
@@ -36,9 +74,21 @@ const Login = () => {
           </Link>
         </div>
 
-        <Button.Root variant="primary" type="submit" className="submit">
+        {error ? <p className="form-error">{error}</p> : null}
+
+        <Button.Root
+          variant="primary"
+          type="submit"
+          className="submit"
+          loading={submitting}
+          disabled={submitting}
+        >
           <Button.Label>Login</Button.Label>
         </Button.Root>
+
+        <p className="footer-link">
+          Non hai un account? <Link href="/register">Registrati</Link>
+        </p>
       </form>
     </main>
   );

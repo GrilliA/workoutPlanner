@@ -1,3 +1,10 @@
+import { AppShell } from "@components/appshell";
+import { Dashboard } from "@dashboard/dashboard";
+
 export default function HomePage() {
-  return <h1>Home</h1>;
+  return (
+    <AppShell>
+      <Dashboard />
+    </AppShell>
+  );
 }

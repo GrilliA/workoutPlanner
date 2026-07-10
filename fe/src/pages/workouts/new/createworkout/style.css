@@ -1,0 +1,15 @@
+.create-workout {
+  width: 100%;
+  max-width: 640px;
+  margin-inline: auto;
+
+  & .add-exercise {
+    margin-bottom: 1.5rem;
+  }
+
+  & .form-error {
+    margin: 0 0 1rem;
+    font-size: 0.9rem;
+    color: var(--error, #f87171);
+  }
+}

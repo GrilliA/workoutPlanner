@@ -1,101 +1,328 @@
-# AGENTS.md
+# AGENTS.md — workoutPlanner
 
-Rules for coding agents in this repo.
+Guida per agenti e contributor. Leggere prima di modificare codice.
 
-## Start Here
+---
 
-1. Read `WORKBOOK.md` before planning meaningful changes.
-2. Update `WORKBOOK.md` when a decision, phase status, or notable change happens.
-3. Keep diffs small. Reuse existing code before adding new helpers or packages.
+## Dev environment
 
-## Project Shape
+```bash
+# Database
+npm run db:up          # Postgres via Docker Compose
+npm run db:push        # sync schema (no migration files yet)
 
-- `be/`: Express 5 + TypeScript + Drizzle ORM + Postgres.
-- `fe/`: React 19 + Vite + Wouter + plain CSS.
-- `docker-compose.yml`: local Postgres only.
+# Backend (port 3005)
+cd be && npm run dev
 
-## Commands
-
-Backend:
-
-```sh
-cd be
-npm run dev
-npm run db:up
-npm run db:generate
-npm run db:migrate
+# Frontend (Vite, proxy /api → localhost:3005)
+cd fe && npm run dev
 ```
 
-Frontend:
+- `be/.env` credentials: `postgres:postgres` (must match `docker-compose.yml`)
+- Frontend calls relative `/api/...` URLs; Vite proxies in dev
+- UI copy in **Italian** (reference: TRACCIA Figma dashboard)
+- Project log and roadmap: `WORKBOOK.md`
 
-```sh
-cd fe
-npm run dev
-npm run build
-npm run lint
+---
+
+## Repository layout
+
+```
+workoutPlanner/
+├── be/          # Express + Drizzle + Postgres
+├── fe/          # React + Vite + TypeScript
+├── WORKBOOK.md  # decisions, done, next steps
+└── AGENTS.md    # this file
 ```
 
-## Conventions
+### Frontend (`fe/src/`)
 
-- Backend routes live in `be/src/routes` and mount through `be/src/routes/index.ts`.
-- Drizzle schema lives in `be/src/db/schema` and exports through `be/src/db/schema/index.ts`.
-- Frontend pages live in `fe/src/pages`.
-- Frontend route shells live in `fe/src/layouts` (camelCase folder names, e.g. `appLayout`).
-- Frontend shared components live in `fe/src/components`.
-- Use existing path aliases: `@components/*`, `@layouts/*`, `@pages/*`, `@utils/*`.
-- Keep CSS colocated with the page/component that uses it.
-- Do not edit `node_modules`, commit `.env`, or add dependencies without a clear reason.
-- Prefer native browser features and existing installed packages over new libraries.
+| Path | Purpose |
+| --- | --- |
+| `api/` | HTTP client, Zod schemas, typed request/response |
+| `components/` | **Shared** UI primitives only (`button/`, `input/`, `card/`, `skeleton/`, `appshell/`) |
+| `pages/` | Route entry points — each page can host its feature folder |
+| `utils/` | Small shared helpers |
 
-## Frontend Style
+**Rule:** a screen/feature (e.g. dashboard) lives **under its page**, not in `components/`.
 
-### CSS (default approach)
+```
+pages/home/
+├── index.tsx              # thin shell: AppShell + Dashboard
+└── dashboard/             # home feature (all dashboard code here)
+    ├── api.ts
+    ├── useDashboard.ts
+    ├── types.ts
+    ├── mappers/mapDashboard.ts
+    ├── dashboard/         # root component
+    ├── todaycard/
+    └── …
+```
 
-Follow the sidebar pattern for new UI:
+`pages/home/index.tsx` wires layout only — no business logic.
 
-- One colocated `.css` file per component/page, imported in its `index.tsx`.
-- A single root block class on the wrapper (e.g. `.sidebar`, `.appLayout`).
-- Nest child and state rules under that root with native CSS nesting (`& .item`, `&:hover`, `&.active`).
-- Use short, local class names in JSX (`"item"`, `"item active"`) — not long BEM strings on every element.
-- Prefer CSS variables from `index.css` for colors and shared tokens.
+---
 
-Example:
+## Module folder structure
 
-```css
-.sidebar {
-  display: flex;
+### Folders → always lowercase
 
-  & .item {
-    color: var(--text);
+**All folders** use lowercase — including React component folders. No PascalCase, no kebab-case.
 
-    &:hover {
-      background-color: rgba(255, 255, 255, 0.08);
-    }
+```
+todaycard/
+├── TodayCard.tsx    # React component file (PascalCase)
+├── style.css
+└── index.tsx
+```
 
-    &.active {
-      color: var(--accent);
-    }
-  }
+```tsx
+// todaycard/index.tsx
+export { TodayCard } from "./TodayCard";
+
+// todaycard/TodayCard.tsx
+import "./style.css";
+```
+
+Import from outside the feature: `import { Dashboard } from "@dashboard/dashboard"`
+
+Import **inside** the feature: use **relative paths** between siblings:
+
+```tsx
+// pages/home/dashboard/dashboard/Dashboard.tsx
+import { useDashboard } from "../useDashboard";
+import { TodayCard } from "../todaycard";
+
+// pages/home/dashboard/todaycard/TodayCard.tsx
+import type { TodayWorkout } from "../types";
+```
+
+The `@dashboard` alias points to `pages/home/dashboard/` (for imports from outside the feature).
+
+### Non-component code → lowercase files at feature root
+
+Hooks, types, API helpers, mappers — flat lowercase files or lowercase subfolders:
+
+```
+pages/home/dashboard/
+├── api.ts
+├── useDashboard.ts
+├── types.ts
+├── mappers/
+│   └── mapDashboard.ts
+├── dashboard/
+│   ├── Dashboard.tsx
+│   ├── style.css
+│   └── index.tsx
+└── todaycard/
+```
+
+Compound primitives (`button/`, `input/`, `card/`) follow the same folder pattern under `components/`, with `primitives/` and `context/` subfolders.
+
+| Kind | Naming | Example |
+| --- | --- | --- |
+| Folder | lowercase | `todaycard/`, `button/`, `mappers/` |
+| React component file | PascalCase `.tsx` | `TodayCard.tsx` |
+| Hook, types, api, mappers | lowercase `.ts` | `useDashboard.ts`, `mappers/mapDashboard.ts` |
+| CSS inside component | lowercase | `style.css` |
+| Backend routes | lowercase | `routes/workouts.ts` |
+
+### Rules
+
+| Rule | Detail |
+| --- | --- |
+| Public API for components | Always through `index.tsx` |
+| Styles | `style.css` co-located in the component folder, imported only inside the `.tsx` |
+| No kebab-case | Never `today-card/`, `use-dashboard.ts` |
+| Imports inside feature | relative | `../types`, `./api`, `../todaycard` |
+| Imports outside feature | `@dashboard/*` alias | `@dashboard/dashboard` from `pages/home/index.tsx` |
+| Shared components | `@components/*` | `@components/button` |
+
+---
+
+## Naming conventions
+
+### PascalCase — React component files only
+
+| OK | Avoid |
+| --- | --- |
+| `todaycard/TodayCard.tsx` | `todaycard/todaycard.tsx` |
+| `button/Button.tsx` | `button/button.tsx` |
+
+### lowercase — folders and non-component files
+
+| OK | Avoid |
+| --- | --- |
+| `todaycard/` | `TodayCard/` |
+| `components/skeleton/` | `components/Skeleton/` |
+| `useDashboard.ts` | `UseDashboard.ts` |
+| `mappers/mapDashboard.ts` | `MapDashboard/MapDashboard.ts` |
+| `style.css` | `Style.css`, `today-card.css` |
+| `routes/workouts.ts` | `routes/Workouts.ts` |
+
+### Code identifiers
+
+- **Components / types / classes:** PascalCase (`TodayCard`, `DashboardData`)
+- **Functions / variables / hooks:** camelCase (`buildDashboardData`, `useDashboard`)
+- **Constants:** UPPER_SNAKE_CASE when truly constant (`EMPTY_STAT_PLACEHOLDERS`)
+- **CSS class names:** kebab-case in CSS is fine (`.today-card`, `.stat-grid`) — this is DOM/CSS convention, not file naming
+
+### Path aliases
+
+Prefer aliases over deep relative imports:
+
+- `@api`, `@api/*`
+- `@components/*`
+- `@dashboard`, `@dashboard/*`
+- `@pages/*`
+- `@utils/*`
+
+---
+
+## Programming style: functional first
+
+Write **functional** code. React components are functions; business logic should be pure functions composed together.
+
+### Do
+
+- **Pure functions** for data transformation and mapping (no I/O, no mutation)
+- **Immutable data** — spread/copy instead of `.push()`, `.sort()` in place, or property assignment on shared objects
+- **Composition** — small functions combined (`sortByNewest` → `mapRecentWorkouts` → `buildDashboardData`)
+- **Named exports** — one main export per file when practical
+- **Thin hooks** — `useDashboard` orchestrates fetch + state; mapping lives in `mappers/mapDashboard.ts`
+- **Separate components** instead of mutating function properties (`StatCardSkeleton` as its own export, not `StatCard.Skeleton = …`)
+- **`const` over `let`** — reassign only when unavoidable (e.g. cancellation flags in effects)
+
+### Avoid
+
+- Classes for domain logic (HTTP `ApiError` is an acceptable exception for `instanceof` checks)
+- Compound-component mutation (`Component.Sub = SubComponent`)
+- Business logic inside JSX or large `useEffect` blocks
+- Cross-layer imports (e.g. feature components importing hooks from `pages/`)
+- Imperative loops when `map` / `filter` / `reduce` express intent clearly
+
+### React patterns
+
+```ts
+// OK — pure mapper
+export function mapRecentWorkouts(workouts: Workout[]): RecentWorkout[] {
+  return sortByNewest(workouts).map(toRecentWorkout);
 }
+
+// OK — thin hook
+export function useDashboard() {
+  const [state, setState] = useState(initialState);
+  useEffect(() => { void loadDashboard(setState); }, [fetchId]);
+  return state;
+}
+
+// Avoid — mapper mixed with fetch inside the hook body
+// Avoid — StatCard.Skeleton = StatCardSkeleton
 ```
 
-Older components (e.g. button) may still use BEM-style classes; match the surrounding file when editing, use the nested root-block pattern for new work.
+### Backend
 
-### Functional React
+- Route handlers may have side effects (DB, HTTP) — keep them thin
+- Extract validation and query building into pure helpers where it helps readability
+- File names **lowercase**: `routes/workouts.ts`, `routes/exercises.ts`
 
-Prefer a functional style in the frontend:
+---
 
-- Named function exports (`export function Sidebar()`), not default exports for components.
-- Keep static config as `const` data (e.g. nav items) and render with `.map()` instead of repeating JSX.
-- Small, focused components; pass data in, return UI out.
-- Use `@utils/cx` when class names depend on props or state.
-- For reusable UI kits, use compound components (`Button.Root`, `Input.Field`) and primitives under a `primitives/` folder.
+## CSS conventions
 
-## Current MVP Bias
+- One `style.css` per component folder — imported only inside the component `.tsx`
+- Single root block class per component (`.today-card`, `.stat-card`) — kebab-case in CSS is fine
+- Nest selectors under the root block; use CSS variables from the design tokens (`--bg`, `--accent`, `--surface`, `--border`, `--text`, `--text-h`)
+- Mobile-first, fluid grids (`auto-fit` / `minmax`) — avoid JS breakpoints for layout
+- Never import a component's `style.css` from outside its folder
 
-Build the smallest working workout planner:
+---
 
-1. Finish workout CRUD.
-2. Add exercises per workout.
-3. Wire the frontend to the API.
-4. Add auth only when user-owned data is needed.
+## API layer (frontend)
+
+- All requests go through `@api` (`apiRequest` + Zod decode)
+- Request/response shapes live in `api/schemas/`
+- Feature code imports from `@api`, never raw `fetch` in components
+
+---
+
+## Dashboard feature (current)
+
+The home screen is the TRACCIA dashboard at `/`.
+
+```
+fe/src/pages/home/dashboard/
+├── api.ts
+├── useDashboard.ts
+├── types.ts
+├── mappers/
+│   └── mapDashboard.ts
+├── dashboard/
+├── todaycard/
+├── statcard/
+├── workoutrow/
+├── topbar/
+└── weekstrip/
+```
+
+`@dashboard` alias → `pages/home/dashboard/`
+
+`pages/home/index.tsx` → `<AppShell><Dashboard /></AppShell>` via `@dashboard/dashboard`.
+
+---
+
+## Git / branches
+
+`main` is the integration branch. Feature work happens on short-lived branches, one **chunk or concern** per branch.
+
+### Naming
+
+```
+<type>/<chunk>-<slug>
+```
+
+| Part | Values | Example |
+| --- | --- | --- |
+| `type` | `feat`, `fix`, `refactor`, `chore` | `feat` |
+| `chunk` | Roadmap ID when applicable (`C*`, `B*`, `A*`, `W*`) | `B2` |
+| `slug` | Short kebab-case description | `session-logging` |
+
+Examples: `feat/B2-session-logging`, `feat/A1-auth-backend`, `fix/auth-refresh-failure`, `refactor/dashboard-pages-layout`.
+
+Do **not** use auto-generated `cursor/...` branch names for ongoing work.
+
+### Workflow
+
+1. Update `main`: `git switch main && git pull`
+2. Create branch: `git switch -c feat/B2-session-logging`
+3. Implement one chunk (or one isolated fix)
+4. Open a PR → merge into `main`
+5. Delete the feature branch after merge
+6. Next task: repeat from step 1
+
+### Agent rule
+
+Before modifying code on a non-trivial task, propose **branch name + short plan** and wait for confirmation. If the user is still on a stale or unrelated branch, suggest switching or creating the correct one first.
+
+---
+
+## Git / commits
+
+- Conventional Commits: `feat(fe): …`, `feat(be): …`, `fix(fe): …`
+- One concern per commit when possible
+- Update `WORKBOOK.md` when completing a roadmap chunk (C*, B*)
+- Do not commit unless explicitly asked
+
+---
+
+## Roadmap snapshot
+
+See `WORKBOOK.md` for full detail.
+
+| Chunk | Status |
+| --- | --- |
+| C0–C6 (dashboard UI + API wire) | ✅ done |
+| B1 (exercises API) | ✅ done |
+| B2 (session logging) | ⬜ |
+| B3 (stats endpoints) | ⬜ |
+| C7 (analytics) | ⬜ |

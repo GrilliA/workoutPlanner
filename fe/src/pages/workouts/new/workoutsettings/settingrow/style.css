@@ -1,0 +1,44 @@
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  padding: 0.95rem 0;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:last-child {
+    border-bottom: 0;
+  }
+
+  & .label {
+    color: var(--text);
+    font-size: 0.95rem;
+  }
+
+  & .value-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-width: 0;
+  }
+
+  & .value {
+    color: var(--text-h);
+    font-size: 0.95rem;
+    white-space: nowrap;
+  }
+
+  & .chevron {
+    width: 1rem;
+    height: 1rem;
+    color: var(--text);
+    flex-shrink: 0;
+  }
+}

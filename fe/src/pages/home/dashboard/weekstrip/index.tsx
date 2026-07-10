@@ -1,0 +1,1 @@
+export { WeekStrip } from "./WeekStrip";
