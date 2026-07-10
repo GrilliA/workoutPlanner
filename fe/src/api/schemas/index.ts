@@ -2,7 +2,12 @@ export {
   workoutSchema,
   workoutsSchema,
   createWorkoutRequestSchema,
+  workoutSettingsSchema,
+  REST_SEC_OPTIONS,
+  WORKOUT_TYPE_OPTIONS,
+  FREQUENCY_OPTIONS,
   type Workout,
+  type WorkoutSettings,
   type CreateWorkoutInput,
 } from "./workout";
 export {

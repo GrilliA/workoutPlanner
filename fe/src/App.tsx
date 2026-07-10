@@ -3,6 +3,7 @@ import { RequireAuth } from "@auth";
 import HomePage from "@pages/home";
 import LoginPage from "@pages/login";
 import RegisterPage from "@pages/register";
+import NewWorkoutPage from "@pages/workouts/new";
 import "./App.css";
 
 function App() {
@@ -10,6 +11,11 @@ function App() {
     <Router>
       <Route path="/login" component={LoginPage} />
       <Route path="/register" component={RegisterPage} />
+      <Route path="/workouts/new">
+        <RequireAuth>
+          <NewWorkoutPage />
+        </RequireAuth>
+      </Route>
       <Route path="/">
         <RequireAuth>
           <HomePage />

@@ -75,7 +75,14 @@
       line-height: 1.35;
     }
 
+    & .cta-link {
+      display: block;
+      margin-top: 0.25rem;
+      text-decoration: none;
+    }
+
     & .cta {
+      width: 100%;
       color: var(--text-h);
     }
   }

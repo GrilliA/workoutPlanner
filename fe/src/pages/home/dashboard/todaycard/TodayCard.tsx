@@ -1,3 +1,4 @@
+import { Link } from "wouter";
 import { Button } from "@components/button";
 import { Skeleton } from "@components/skeleton";
 import type { TodayWorkout } from "../types";
@@ -45,9 +46,11 @@ function TodayCardEmpty() {
         Programma un workout per iniziare
       </p>
 
-      <Button.Root variant="secondary" className="cta">
-        <Button.Label>CREA WORKOUT</Button.Label>
-      </Button.Root>
+      <Link href="/workouts/new" className="cta-link">
+        <Button.Root variant="secondary" className="cta">
+          <Button.Label>CREA WORKOUT</Button.Label>
+        </Button.Root>
+      </Link>
     </section>
   );
 }

@@ -1,0 +1,63 @@
+.exercise-row {
+  display: grid;
+  grid-template-columns: 2rem 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface);
+
+  & .index {
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    background: var(--accent);
+    color: #101014;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  & .copy {
+    min-width: 0;
+  }
+
+  & .name {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-h);
+  }
+
+  & .meta {
+    margin: 0.2rem 0 0;
+    font-size: 0.85rem;
+    color: var(--text);
+  }
+
+  & .remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border: 0;
+    border-radius: 0.5rem;
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+
+    &:hover {
+      color: var(--text-h);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    & svg {
+      width: 1rem;
+      height: 1rem;
+    }
+  }
+}
