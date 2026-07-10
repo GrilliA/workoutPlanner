@@ -49,6 +49,7 @@ const refreshAccessTokenDirect = async (): Promise<string | null> => {
   });
 
   if (!response.ok) {
+    authStore.clear();
     return null;
   }
 
@@ -116,6 +117,8 @@ async function sendRequest<TResponse>(
     if (newToken) {
       return sendRequest(path, options, true);
     }
+
+    authStore.clear();
   }
 
   const json = await parseJsonBody(response);

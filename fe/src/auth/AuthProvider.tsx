@@ -68,6 +68,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  useEffect(() => {
+    return authStore.onSessionCleared(() => {
+      setState(anonymousState());
+    });
+  }, []);
+
   const login = useCallback(async (input: LoginInput) => {
     const { user, accessToken } = await authApi.login(input);
     authStore.setAccessToken(accessToken);

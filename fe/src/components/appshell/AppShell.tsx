@@ -1,15 +1,15 @@
 import type { ReactNode } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
+import { useAuth } from "@auth";
 import "./style.css";
 
 type AppShellProps = {
   children: ReactNode;
 };
 
-const sidebarItems = [
+const sidebarLinks = [
   { label: "Home", href: "/" },
   { label: "Impostazioni", href: "/settings" },
-  { label: "Logout", href: "/logout" },
 ];
 
 const bottomNavItems = [
@@ -20,12 +20,20 @@ const bottomNavItems = [
 ];
 
 export function AppShell({ children }: AppShellProps) {
+  const { logout } = useAuth();
+  const [, setLocation] = useLocation();
+
+  const handleLogout = async () => {
+    await logout();
+    setLocation("/login");
+  };
+
   return (
     <div className="app-shell">
       <aside className="sidebar">
         <div className="brand">TRACCIA</div>
         <nav className="nav">
-          {sidebarItems.map((item) => (
+          {sidebarLinks.map((item) => (
             <Link
               key={item.label}
               href={item.href}
@@ -34,6 +42,9 @@ export function AppShell({ children }: AppShellProps) {
               {item.label}
             </Link>
           ))}
+          <button type="button" className="item logout" onClick={() => void handleLogout()}>
+            Logout
+          </button>
         </nav>
       </aside>
 

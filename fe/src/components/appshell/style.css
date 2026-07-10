@@ -46,6 +46,11 @@
       padding: 0.65rem 0.9rem;
       border-radius: 0.65rem;
       transition: background-color 0.2s;
+      border: 1px solid transparent;
+      background: transparent;
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
 
       &:hover {
         background: rgba(255, 255, 255, 0.06);
@@ -54,8 +59,12 @@
       &.active {
         color: var(--accent);
         background: var(--accent-bg);
-        border: 1px solid var(--accent-border);
+        border-color: var(--accent-border);
       }
+    }
+
+    & .logout {
+      width: 100%;
     }
   }
 
