@@ -4,10 +4,29 @@ import { db } from "../db";
 import { exercises, workouts } from "../db/schema";
 import { requireAuth } from "../middleware/requireAuth";
 import { findWorkoutForUser } from "../services/workoutAccess";
+import { validateCreateWorkoutInput } from "../services/workoutValidation";
 import { getAuthUser } from "../types/auth";
 import { exercisesRouter } from "./exercises";
 
 export const workoutsRouter = Router();
+
+const workoutColumns = {
+  id: workouts.id,
+  name: workouts.name,
+  defaultRestSec: workouts.defaultRestSec,
+  workoutType: workouts.workoutType,
+  frequency: workouts.frequency,
+  createdAt: workouts.createdAt,
+};
+
+const workoutGroupBy = [
+  workouts.id,
+  workouts.name,
+  workouts.defaultRestSec,
+  workouts.workoutType,
+  workouts.frequency,
+  workouts.createdAt,
+] as const;
 
 workoutsRouter.use(requireAuth);
 
@@ -16,15 +35,13 @@ workoutsRouter.get("/", async (req, res) => {
 
   const all = await db
     .select({
-      id: workouts.id,
-      name: workouts.name,
-      createdAt: workouts.createdAt,
+      ...workoutColumns,
       exerciseCount: count(exercises.id),
     })
     .from(workouts)
     .leftJoin(exercises, eq(workouts.id, exercises.workoutId))
     .where(eq(workouts.userId, user.id))
-    .groupBy(workouts.id, workouts.name, workouts.createdAt);
+    .groupBy(...workoutGroupBy);
 
   res.json(all);
 });
@@ -40,15 +57,13 @@ workoutsRouter.get("/:id", async (req, res) => {
 
   const [workout] = await db
     .select({
-      id: workouts.id,
-      name: workouts.name,
-      createdAt: workouts.createdAt,
+      ...workoutColumns,
       exerciseCount: count(exercises.id),
     })
     .from(workouts)
     .leftJoin(exercises, eq(workouts.id, exercises.workoutId))
     .where(and(eq(workouts.id, id), eq(workouts.userId, user.id)))
-    .groupBy(workouts.id, workouts.name, workouts.createdAt);
+    .groupBy(...workoutGroupBy);
 
   if (!workout) {
     res.status(404).json({ error: "Workout not found" });
@@ -60,16 +75,18 @@ workoutsRouter.get("/:id", async (req, res) => {
 
 workoutsRouter.post("/", async (req, res) => {
   const user = getAuthUser(req);
-  const { name } = req.body;
+  const parsed = validateCreateWorkoutInput(req.body);
 
-  if (!name || typeof name !== "string") {
-    res.status(400).json({ error: "name is required" });
+  if (!parsed.ok) {
+    res.status(400).json({ error: parsed.error });
     return;
   }
 
+  const { name, defaultRestSec, workoutType, frequency } = parsed.value;
+
   const [created] = await db
     .insert(workouts)
-    .values({ name, userId: user.id })
+    .values({ name, defaultRestSec, workoutType, frequency, userId: user.id })
     .returning();
 
   res.status(201).json({ ...created, exerciseCount: 0 });

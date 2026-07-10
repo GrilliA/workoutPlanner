@@ -7,5 +7,8 @@ export const workouts = pgTable("workouts", {
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
+  defaultRestSec: integer("default_rest_sec").notNull().default(90),
+  workoutType: text("workout_type").notNull().default("Forza + Ipertrofia"),
+  frequency: text("frequency").notNull().default("3× a settimana"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
