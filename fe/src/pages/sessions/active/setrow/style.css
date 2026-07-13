@@ -1,0 +1,127 @@
+.set-row {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr) minmax(4.5rem, 5.5rem) auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid transparent;
+  border-radius: 0.75rem;
+
+  & .index {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text);
+    text-align: center;
+  }
+
+  & .value {
+    font-size: 0.95rem;
+    color: var(--text-h);
+  }
+
+  & .status {
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    background: var(--accent-bg);
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  & .set-input {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 0.55rem 0.65rem;
+    border: 1px solid var(--border);
+    border-radius: 0.65rem;
+    background: var(--bg);
+    color: var(--text-h);
+    font: inherit;
+    font-size: 0.95rem;
+
+    &:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+      border-color: var(--accent-border);
+    }
+
+    &:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+  }
+
+  & .weight-field {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: stretch;
+    min-width: 0;
+    border: 1px solid var(--border);
+    border-radius: 0.65rem;
+    overflow: hidden;
+    background: var(--bg);
+
+    & .set-input {
+      border: 0;
+      border-radius: 0;
+    }
+
+    & .suffix {
+      display: grid;
+      place-items: center;
+      padding: 0 0.65rem;
+      border-left: 1px solid var(--border);
+      background: var(--code-bg);
+      color: var(--text);
+      font-size: 0.85rem;
+    }
+  }
+
+  & .reps-field {
+    min-width: 0;
+  }
+
+  & .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  & .log {
+    min-width: 4.5rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+
+  & .placeholder {
+    width: 4.5rem;
+  }
+
+  &.set-row--active {
+    border-color: var(--accent-border);
+    background: var(--accent-bg);
+  }
+
+  &.set-row--pending {
+    opacity: 0.55;
+  }
+
+  &.set-row--completed {
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  @media (min-width: 480px) {
+    gap: 0.75rem;
+    padding: 0.65rem 0.85rem;
+  }
+}

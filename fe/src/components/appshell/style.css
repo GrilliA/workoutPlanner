@@ -126,4 +126,14 @@
       display: none;
     }
   }
+
+  &.app-shell--focus {
+    & .content {
+      padding-bottom: 1.25rem;
+    }
+
+    & .bottom-nav {
+      display: none;
+    }
+  }
 }

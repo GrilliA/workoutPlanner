@@ -1,0 +1,106 @@
+.exercise-card {
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface);
+  overflow: hidden;
+  transition: border-color 0.2s, opacity 0.2s;
+
+  & .header {
+    display: grid;
+    grid-template-columns: 2rem 1fr auto;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.9rem 1rem;
+    border: 0;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+    color: inherit;
+    font: inherit;
+  }
+
+  & .index {
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    background: var(--accent);
+    color: #101014;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  & .copy {
+    min-width: 0;
+  }
+
+  & .name {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-h);
+  }
+
+  & .meta {
+    margin: 0.2rem 0 0;
+    font-size: 0.85rem;
+    color: var(--text);
+  }
+
+  & .done {
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    background: var(--accent-bg);
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  & .sets {
+    padding: 0 0.75rem 0.85rem;
+  }
+
+  & .sets-header {
+    display: grid;
+    grid-template-columns: 2rem minmax(0, 1fr) minmax(4.5rem, 5.5rem) auto;
+    gap: 0.5rem;
+    padding: 0 0.65rem 0.35rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--text);
+  }
+
+  & .sets-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+
+  &.exercise-card--active {
+    border-color: var(--accent-border);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+  }
+
+  &.exercise-card--done {
+    border-color: rgba(196, 255, 77, 0.25);
+  }
+
+  &.exercise-card--collapsed {
+    opacity: 0.72;
+  }
+
+  @media (min-width: 480px) {
+    & .sets {
+      padding-inline: 1rem;
+    }
+
+    & .sets-header {
+      gap: 0.75rem;
+    }
+  }
+}

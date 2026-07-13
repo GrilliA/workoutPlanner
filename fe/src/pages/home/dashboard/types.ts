@@ -1,4 +1,5 @@
 export type TodayWorkout = {
+  workoutId: number;
   name: string;
   exercises: string[];
   goal: string;

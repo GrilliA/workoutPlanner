@@ -5,6 +5,7 @@ import "./style.css";
 
 type AppShellProps = {
   children: ReactNode;
+  hideBottomNav?: boolean;
 };
 
 const sidebarLinks = [
@@ -19,7 +20,7 @@ const bottomNavItems = [
   { label: "Profilo", href: "/profile", icon: "profile" },
 ];
 
-export function AppShell({ children }: AppShellProps) {
+export function AppShell({ children, hideBottomNav = false }: AppShellProps) {
   const { logout } = useAuth();
   const [, setLocation] = useLocation();
 
@@ -29,7 +30,7 @@ export function AppShell({ children }: AppShellProps) {
   };
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${hideBottomNav ? "app-shell--focus" : ""}`}>
       <aside className="sidebar">
         <div className="brand">TRACCIA</div>
         <nav className="nav">

@@ -60,6 +60,12 @@
     letter-spacing: 0.04em;
   }
 
+  & .start-error {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--error, #f87171);
+  }
+
   &.empty {
     border-color: var(--border);
     background: var(--surface-elevated);

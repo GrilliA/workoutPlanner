@@ -23,6 +23,7 @@ export const mapTodayWorkout = (
   workout: Workout,
   exercises: Exercise[],
 ): TodayWorkout => ({
+  workoutId: workout.id,
   name: workout.name,
   exercises: exercises.map((exercise) => exercise.name),
   goal:

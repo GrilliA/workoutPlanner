@@ -336,5 +336,6 @@ See `WORKBOOK.md` for full detail.
 | C0–C6 (dashboard UI + API wire) | ✅ done |
 | B1 (exercises API) | ✅ done |
 | B2 (session logging) | ✅ |
+| W3 (active workout UI) | ✅ |
 | B3 (stats endpoints) | ⬜ |
 | C7 (analytics) | ⬜ |
