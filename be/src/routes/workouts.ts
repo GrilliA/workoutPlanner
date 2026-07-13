@@ -7,6 +7,7 @@ import { findWorkoutForUser } from "../services/workoutAccess";
 import { validateCreateWorkoutInput } from "../services/workoutValidation";
 import { getAuthUser } from "../types/auth";
 import { exercisesRouter } from "./exercises";
+import { workoutSessionsRouter } from "./sessions";
 
 export const workoutsRouter = Router();
 
@@ -110,3 +111,22 @@ workoutsRouter.use("/:workoutId/exercises", async (req, res, next) => {
 
   next();
 }, exercisesRouter);
+
+workoutsRouter.use("/:workoutId/sessions", async (req, res, next) => {
+  const user = getAuthUser(req);
+  const workoutId = Number(req.params.workoutId);
+
+  if (Number.isNaN(workoutId)) {
+    res.status(400).json({ error: "Invalid workout id" });
+    return;
+  }
+
+  const workout = await findWorkoutForUser(workoutId, user.id);
+
+  if (!workout) {
+    res.status(404).json({ error: "Workout not found" });
+    return;
+  }
+
+  next();
+}, workoutSessionsRouter);

@@ -27,7 +27,36 @@ export {
   type AuthUser,
   type LoginInput,
   type RegisterInput,
+  loggedSetSchema,
+  workoutSessionSchema,
+  workoutSessionWithSetsSchema,
+  workoutSessionSummarySchema,
+  workoutSessionsSchema,
+  workoutSessionSummariesSchema,
+  logSetRequestSchema,
+  patchSessionRequestSchema,
+  patchLoggedSetRequestSchema,
+  SESSION_STATUSES,
+  type LoggedSet,
+  type WorkoutSession,
+  type WorkoutSessionWithSets,
+  type WorkoutSessionSummary,
+  type LogSetInput,
+  type PatchSessionInput,
+  type PatchLoggedSetInput,
 } from "./schemas";
 export { getWorkouts, getWorkout, createWorkout } from "./workouts";
 export { getExercisesByWorkout, getExercise, createExercise } from "./exercises";
 export { login, register, refreshAccessToken, getMe, logout } from "./auth";
+export {
+  startSession,
+  getSessionsByWorkout,
+  getSessions,
+  getSession,
+  patchSession,
+  completeSession,
+  abandonSession,
+  logSet,
+  patchLoggedSet,
+  deleteLoggedSet,
+} from "./sessions";

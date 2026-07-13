@@ -29,3 +29,22 @@ export {
   type LoginInput,
   type RegisterInput,
 } from "./auth";
+export {
+  loggedSetSchema,
+  workoutSessionSchema,
+  workoutSessionWithSetsSchema,
+  workoutSessionSummarySchema,
+  workoutSessionsSchema,
+  workoutSessionSummariesSchema,
+  logSetRequestSchema,
+  patchSessionRequestSchema,
+  patchLoggedSetRequestSchema,
+  SESSION_STATUSES,
+  type LoggedSet,
+  type WorkoutSession,
+  type WorkoutSessionWithSets,
+  type WorkoutSessionSummary,
+  type LogSetInput,
+  type PatchSessionInput,
+  type PatchLoggedSetInput,
+} from "./session";
