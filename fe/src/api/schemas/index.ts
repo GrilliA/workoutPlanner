@@ -62,9 +62,11 @@ export {
 } from "./session";
 export {
   statsPeriodSchema,
+  dailyStatPointSchema,
   recentSessionSummarySchema,
   userStatsSchema,
   type StatsPeriod,
+  type DailyStatPoint,
   type RecentSessionSummary,
   type UserStats,
 } from "./stats";

@@ -6,6 +6,7 @@ import RegisterPage from "@pages/register";
 import NewWorkoutPage from "@pages/workouts/new";
 import EditWorkoutPage from "@pages/workouts/edit";
 import SettingsPage from "@pages/settings";
+import StatsPage from "@pages/stats";
 import WorkoutsPage from "@pages/workouts";
 import SessionPage from "@pages/sessions";
 import "./App.css";
@@ -38,6 +39,11 @@ function App() {
       <Route path="/workouts">
         <RequireAuth>
           <WorkoutsPage />
+        </RequireAuth>
+      </Route>
+      <Route path="/stats">
+        <RequireAuth>
+          <StatsPage />
         </RequireAuth>
       </Route>
       <Route path="/sessions/:sessionId">

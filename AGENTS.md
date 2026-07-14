@@ -347,4 +347,4 @@ See `WORKBOOK.md` for full detail.
 | W3 (active workout UI) | ✅ |
 | B3 (stats endpoints) | ✅ |
 | B4 (program days) | ✅ |
-| C7 (analytics) | ⬜ |
+| C7 (analytics) | ✅ done |

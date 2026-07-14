@@ -1,3 +1,4 @@
+import { Link } from "wouter";
 import { useDashboard } from "../useDashboard";
 import type { DashboardStat } from "../types";
 import { TopBar } from "../topbar";
@@ -61,9 +62,9 @@ export function Dashboard() {
           <h2 id="recent-workouts-title" className="title">
             ULTIMI ALLENAMENTI
           </h2>
-          <button type="button" className="link">
+          <Link href="/stats" className="link">
             Vedi &gt;
-          </button>
+          </Link>
         </div>
 
         <div className="list" aria-busy={isLoading || undefined}>

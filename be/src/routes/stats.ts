@@ -71,6 +71,9 @@ statsRouter.get("/", async (req, res) => {
     workoutsPerWeek: stats.workoutsPerWeek,
     streakDays: stats.streakDays,
     recordVolumeKg: stats.recordVolumeKg,
+    totalSessions: stats.totalSessions,
+    averageSessionVolumeKg: stats.averageSessionVolumeKg,
+    dailyBreakdown: stats.dailyBreakdown,
     recentSessions: stats.recentSessions.map((session) => ({
       sessionId: session.sessionId,
       workoutId: session.workoutId,

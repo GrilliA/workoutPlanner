@@ -45,9 +45,11 @@ export {
   type PatchSessionInput,
   type PatchLoggedSetInput,
   statsPeriodSchema,
+  dailyStatPointSchema,
   recentSessionSummarySchema,
   userStatsSchema,
   type StatsPeriod,
+  type DailyStatPoint,
   type RecentSessionSummary,
   type UserStats,
 } from "./schemas";

@@ -12,6 +12,13 @@ export type RecentSessionSummary = {
   volumeKg: number;
 };
 
+export type DailyStatPoint = {
+  date: string;
+  weekdayLabel: string;
+  volumeKg: number;
+  workoutCount: number;
+};
+
 export type StatsPeriod = {
   from: Date;
   to: Date;
@@ -23,6 +30,9 @@ export type UserStats = {
   workoutsPerWeek: number;
   streakDays: number;
   recordVolumeKg: number;
+  totalSessions: number;
+  averageSessionVolumeKg: number;
+  dailyBreakdown: DailyStatPoint[];
   recentSessions: RecentSessionSummary[];
 };
 
@@ -32,6 +42,62 @@ const MS_PER_DAY = 86_400_000;
 const DEFAULT_RECENT_LIMIT = 5;
 const MAX_RECENT_LIMIT = 20;
 const ROLLING_WINDOW_DAYS = 7;
+
+const WEEKDAY_LABELS = ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"] as const;
+
+const getWeekdayLabel = (dateKey: string): string => {
+  const date = new Date(`${dateKey}T12:00:00`);
+  const weekdayLabel = date.toLocaleDateString("en-US", {
+    timeZone: ROME_TIME_ZONE,
+    weekday: "short",
+  });
+  const map: Record<string, number> = {
+    Mon: 0,
+    Tue: 1,
+    Wed: 2,
+    Thu: 3,
+    Fri: 4,
+    Sat: 5,
+    Sun: 6,
+  };
+
+  const weekday = map[weekdayLabel] ?? 0;
+  return WEEKDAY_LABELS[weekday];
+};
+
+const buildDailyBreakdown = (
+  sessions: { completedAt: Date; volumeKg: number }[],
+  now: Date,
+  days = ROLLING_WINDOW_DAYS,
+): DailyStatPoint[] => {
+  const todayKey = toRomeDateKey(now);
+  const dateKeys = Array.from({ length: days }, (_, index) =>
+    addRomeDays(todayKey, -(days - 1 - index)),
+  );
+
+  const totals = sessions.reduce<Record<string, { volumeKg: number; workoutCount: number }>>(
+    (groups, session) => {
+      const dateKey = toRomeDateKey(session.completedAt);
+      const existing = groups[dateKey] ?? { volumeKg: 0, workoutCount: 0 };
+
+      return {
+        ...groups,
+        [dateKey]: {
+          volumeKg: existing.volumeKg + session.volumeKg,
+          workoutCount: existing.workoutCount + 1,
+        },
+      };
+    },
+    {},
+  );
+
+  return dateKeys.map((date) => ({
+    date,
+    weekdayLabel: getWeekdayLabel(date),
+    volumeKg: totals[date]?.volumeKg ?? 0,
+    workoutCount: totals[date]?.workoutCount ?? 0,
+  }));
+};
 
 export const parseRecentLimit = (value: unknown): number => {
   if (value === undefined) {
@@ -199,6 +265,8 @@ export const buildUserStats = (
       volumeKg: session.volumeKg,
     }));
 
+  const totalVolumeKg = enriched.reduce((total, session) => total + session.volumeKg, 0);
+
   return {
     period,
     volumeKg,
@@ -208,6 +276,10 @@ export const buildUserStats = (
       now,
     ),
     recordVolumeKg,
+    totalSessions: enriched.length,
+    averageSessionVolumeKg:
+      enriched.length > 0 ? Math.round(totalVolumeKg / enriched.length) : 0,
+    dailyBreakdown: buildDailyBreakdown(enriched, now),
     recentSessions,
   };
 };

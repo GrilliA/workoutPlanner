@@ -31,7 +31,7 @@ How to use:
 ## What we did
 
 - 2026-07-14 — Responsive layout refactor: shared `layout.css` tokens, mobile-first AppShell, `.page-container` utilities, dashboard `@container` grids.
-- 2026-07-14 — C6b wire dashboard to stats: `getStats` in `fetchDashboardData`, real stat grid and recent sessions list, userName from auth.
+- 2026-07-14 — C7 analytics page: extended `GET /stats` with `dailyBreakdown`, `totalSessions`, `averageSessionVolumeKg`; `/stats` Progressi page with stat grid, volume/activity charts, recent sessions.
 - 2026-07-14 — A2 account settings: `/settings` page (name, read-only email, change password, logout); `PATCH /auth/me`, `PATCH /auth/password`.
 - 2026-07-14 — C6c TodayCard schedule: dashboard resolves today's workout day via `getWorkoutScheduleToday`, shows day name + program, starts session with `workoutDayId`.
 - 2026-07-14 — B4 program days: `workout_days`, `workout_day_weekdays`, `workout_schedule_overrides`; CRUD days/weekdays, schedule resolve + override (cambio giorno), session `workoutDayId`; migration script for existing workouts → default day; FE Zod + `@api/workoutdays`.
@@ -64,7 +64,7 @@ Legend: ⬜ todo · 🟡 in progress · ✅ done
 - **W5 — Create program UI (days + weekdays)** ✅
 - **W6 — Set prescriptions + edit workout** ✅
 - **A2 — Account settings** ✅
-- **C7 — Analytics (charts) v2** ⬜ (needs B2/B3)
+- **C7 — Analytics (charts) v2** ✅
 
 ### Backend track
 
