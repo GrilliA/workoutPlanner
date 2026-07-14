@@ -45,7 +45,7 @@ function TodayCardEmpty() {
       </div>
 
       <p className="empty-message" aria-live="polite">
-        Programma un workout per iniziare
+        Giorno di riposo o nessuna scheda programmata
       </p>
 
       <Link href="/workouts/new" className="cta-link">
@@ -70,14 +70,14 @@ export function TodayCard({ workout, isLoading = false }: TodayCardProps) {
     return <TodayCardEmpty />;
   }
 
-  const { workoutId, name, exercises, goal, durationMin } = workout;
+  const { workoutId, workoutDayId, name, programName, exercises, goal, durationMin } = workout;
 
   const handleStart = async () => {
     setIsStarting(true);
     setStartError(null);
 
     try {
-      const sessionId = await resolveWorkoutSessionId(workoutId);
+      const sessionId = await resolveWorkoutSessionId(workoutId, workoutDayId);
       setLocation(`/sessions/${sessionId}`);
     } catch {
       setStartError("Impossibile avviare l'allenamento");
@@ -93,6 +93,7 @@ export function TodayCard({ workout, isLoading = false }: TodayCardProps) {
         <h2 id="today-card-title" className="title">
           {name}
         </h2>
+        <p className="program">{programName}</p>
       </div>
 
       <p className="exercises">{exercises.join(" · ")}</p>

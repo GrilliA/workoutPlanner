@@ -1,4 +1,9 @@
-import { getExercisesByWorkout, getStats, getWorkouts } from "@api";
+import {
+  getStats,
+  getWorkoutDayExercises,
+  getWorkoutScheduleToday,
+  getWorkouts,
+} from "@api";
 import type { DashboardData } from "./types";
 import { buildDashboardData } from "./mappers/mapDashboard";
 
@@ -9,11 +14,28 @@ export async function fetchDashboardData(): Promise<DashboardData> {
   const [workouts, stats] = await Promise.all([getWorkouts(), getStats()]);
 
   if (workouts.length === 0) {
-    return buildDashboardData([], [], stats);
+    return buildDashboardData([], null, stats);
   }
 
   const [newestWorkout] = sortByNewest(workouts);
-  const exercises = await getExercisesByWorkout(newestWorkout.id);
+  const schedule = await getWorkoutScheduleToday(newestWorkout.id);
 
-  return buildDashboardData(workouts, exercises, stats);
+  if (!schedule.workoutDay) {
+    return buildDashboardData(workouts, null, stats);
+  }
+
+  const exercises = await getWorkoutDayExercises(
+    newestWorkout.id,
+    schedule.workoutDay.id,
+  );
+
+  return buildDashboardData(
+    workouts,
+    {
+      workout: newestWorkout,
+      day: schedule.workoutDay,
+      exercises,
+    },
+    stats,
+  );
 }

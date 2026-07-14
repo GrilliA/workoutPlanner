@@ -1,6 +1,8 @@
 export type TodayWorkout = {
   workoutId: number;
+  workoutDayId: number;
   name: string;
+  programName: string;
   exercises: string[];
   goal: string;
   durationMin: number;

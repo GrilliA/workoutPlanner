@@ -1,6 +1,12 @@
 import type { Exercise, UserStats, Workout } from "@api";
 import type { DashboardData, DashboardStat, RecentWorkout } from "../types";
 
+export type TodayWorkoutInput = {
+  workout: Workout;
+  day: { id: number; name: string };
+  exercises: Exercise[];
+};
+
 const formatWorkoutDate = (date: Date) =>
   date.toLocaleDateString("it-IT", {
     day: "numeric",
@@ -36,10 +42,13 @@ export const createEmptyDashboardData = (): DashboardData => ({
 
 export const mapTodayWorkout = (
   workout: Workout,
+  day: { id: number; name: string },
   exercises: Exercise[],
 ): DashboardData["todayWorkout"] => ({
   workoutId: workout.id,
-  name: workout.name,
+  workoutDayId: day.id,
+  name: day.name,
+  programName: workout.name,
   exercises: exercises.map((exercise) => exercise.name),
   goal:
     exercises.length > 0
@@ -90,15 +99,16 @@ export const mapRecentSessions = (stats: UserStats): RecentWorkout[] =>
 
 export const buildDashboardData = (
   workouts: Workout[],
-  todayExercises: Exercise[],
+  today: TodayWorkoutInput | null,
   stats: UserStats,
 ): DashboardData => {
   const sorted = sortByNewest(workouts);
   const sessionHistory = hasSessionHistory(stats);
 
   return {
-    todayWorkout:
-      sorted.length > 0 ? mapTodayWorkout(sorted[0], todayExercises) : null,
+    todayWorkout: today
+      ? mapTodayWorkout(today.workout, today.day, today.exercises)
+      : null,
     stats: sessionHistory ? mapStats(stats) : [],
     recentWorkouts: mapRecentSessions(stats),
     hasSessionHistory: sessionHistory,

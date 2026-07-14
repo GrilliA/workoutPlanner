@@ -28,9 +28,15 @@ export async function loadActiveSessionView(
   return mapActiveSession(session, workout, exercises, focusedExerciseId);
 }
 
-export async function resolveWorkoutSessionId(workoutId: number): Promise<number> {
+export async function resolveWorkoutSessionId(
+  workoutId: number,
+  workoutDayId?: number,
+): Promise<number> {
   try {
-    const session = await startSession(workoutId);
+    const session = await startSession(
+      workoutId,
+      workoutDayId === undefined ? {} : { workoutDayId },
+    );
     return session.id;
   } catch (err) {
     if (err instanceof ApiError && err.status === 409) {
