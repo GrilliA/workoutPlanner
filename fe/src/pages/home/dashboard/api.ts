@@ -5,15 +5,15 @@ import { buildDashboardData } from "./mappers/mapDashboard";
 const sortByNewest = <T extends { createdAt: Date }>(items: T[]): T[] =>
   [...items].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
-export async function fetchDashboardData(userName: string): Promise<DashboardData> {
+export async function fetchDashboardData(): Promise<DashboardData> {
   const [workouts, stats] = await Promise.all([getWorkouts(), getStats()]);
 
   if (workouts.length === 0) {
-    return buildDashboardData([], [], stats, userName);
+    return buildDashboardData([], [], stats);
   }
 
   const [newestWorkout] = sortByNewest(workouts);
   const exercises = await getExercisesByWorkout(newestWorkout.id);
 
-  return buildDashboardData(workouts, exercises, stats, userName);
+  return buildDashboardData(workouts, exercises, stats);
 }

@@ -14,7 +14,6 @@
     font-size: 1.5rem;
     line-height: 1.1;
     color: var(--text-h);
-    text-transform: capitalize;
   }
 
   & .date {
@@ -58,5 +57,11 @@
     background: linear-gradient(135deg, var(--accent), #8ecf2c);
     color: #101014;
     font-weight: 700;
+  }
+
+  &.loading {
+    & .avatar-skeleton {
+      border-radius: 999px;
+    }
   }
 }

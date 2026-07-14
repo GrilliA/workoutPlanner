@@ -1,8 +1,7 @@
+import { Skeleton } from "@components/skeleton";
+import { useAuth } from "@auth";
+import { getAvatarInitial, getDisplayName } from "@utils/displayName";
 import "./style.css";
-
-export type TopBarProps = {
-  userName: string;
-};
 
 const formatItalianDate = (date: Date) =>
   date.toLocaleDateString("it-IT", {
@@ -11,13 +10,34 @@ const formatItalianDate = (date: Date) =>
     month: "long",
   });
 
-export function TopBar({ userName }: TopBarProps) {
+function TopBarSkeleton() {
+  return (
+    <header className="top-bar loading" aria-busy="true">
+      <div className="copy">
+        <Skeleton variant="text" width="55%" height={24} />
+        <Skeleton variant="text" width="70%" />
+      </div>
+      <div className="actions">
+        <Skeleton variant="block" width={40} height={40} className="avatar-skeleton" />
+      </div>
+    </header>
+  );
+}
+
+export function TopBar() {
+  const { user, status } = useAuth();
+
+  if (status === "loading") {
+    return <TopBarSkeleton />;
+  }
+
+  const displayName = getDisplayName(user) || "Utente";
   const today = formatItalianDate(new Date());
 
   return (
     <header className="top-bar">
       <div className="copy">
-        <p className="greeting">Ciao, {userName}</p>
+        <p className="greeting">Ciao, {displayName}</p>
         <p className="date">{today}</p>
       </div>
       <div className="actions">
@@ -33,7 +53,7 @@ export function TopBar({ userName }: TopBarProps) {
           </svg>
         </button>
         <div className="avatar" aria-hidden="true">
-          {userName.charAt(0).toUpperCase()}
+          {getAvatarInitial(displayName)}
         </div>
       </div>
     </header>

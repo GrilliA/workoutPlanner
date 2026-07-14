@@ -61,6 +61,22 @@
         background: var(--accent-bg);
         border-color: var(--accent-border);
       }
+
+      &.accent {
+        color: #101014;
+        background: var(--accent);
+        border-color: var(--accent-border);
+        font-weight: 700;
+
+        &:hover {
+          filter: brightness(0.95);
+        }
+
+        &.active {
+          color: #101014;
+          background: var(--accent);
+        }
+      }
     }
 
     & .logout {

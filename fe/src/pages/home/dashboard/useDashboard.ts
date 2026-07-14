@@ -16,7 +16,7 @@ const isLoadingPreview = () =>
   new URLSearchParams(window.location.search).get("state") === "loading";
 
 export function useDashboard(): UseDashboardResult {
-  const { user } = useAuth();
+  const { status: authStatus } = useAuth();
   const loadingPreview = isLoadingPreview();
   const [fetchId, setFetchId] = useState(0);
   const [status, setStatus] = useState<DashboardStatus>("loading");
@@ -27,10 +27,12 @@ export function useDashboard(): UseDashboardResult {
     setFetchId((current) => current + 1);
   }, []);
 
-  const userName = user?.name?.trim() || user?.email || "Utente";
-
   useEffect(() => {
-    if (loadingPreview) {
+    if (loadingPreview || authStatus === "loading") {
+      return;
+    }
+
+    if (authStatus === "anonymous") {
       return;
     }
 
@@ -42,7 +44,7 @@ export function useDashboard(): UseDashboardResult {
       setError(null);
 
       try {
-        const result = await fetchDashboardData(userName);
+        const result = await fetchDashboardData();
 
         if (cancelled) {
           return;
@@ -70,7 +72,7 @@ export function useDashboard(): UseDashboardResult {
     return () => {
       cancelled = true;
     };
-  }, [loadingPreview, fetchId, userName]);
+  }, [loadingPreview, fetchId, authStatus]);
 
   return { status, data, error, retry };
 }

@@ -8,15 +8,23 @@ type AppShellProps = {
   hideBottomNav?: boolean;
 };
 
-const sidebarLinks = [
+type SidebarLink = {
+  label: string;
+  href: string;
+  accent?: boolean;
+};
+
+const sidebarLinks: SidebarLink[] = [
   { label: "Home", href: "/" },
+  { label: "Workout", href: "/workouts" },
+  { label: "Crea scheda", href: "/workouts/new", accent: true },
   { label: "Impostazioni", href: "/settings" },
 ];
 
 const bottomNavItems = [
   { label: "Home", href: "/", icon: "home" },
   { label: "Workout", href: "/workouts", icon: "workout" },
-  { label: "Stats", href: "/stats", icon: "stats" },
+  { label: "Progressi", href: "/stats", icon: "stats" },
   { label: "Profilo", href: "/profile", icon: "profile" },
 ];
 
@@ -33,12 +41,20 @@ export function AppShell({ children, hideBottomNav = false }: AppShellProps) {
     <div className={`app-shell ${hideBottomNav ? "app-shell--focus" : ""}`}>
       <aside className="sidebar">
         <div className="brand">TRACCIA</div>
-        <nav className="nav">
+        <nav className="nav" aria-label="Navigazione desktop">
           {sidebarLinks.map((item) => (
             <Link
               key={item.label}
               href={item.href}
-              className={(active) => (active ? "item active" : "item")}
+              className={(active) =>
+                [
+                  "item",
+                  active ? "active" : "",
+                  item.accent ? "accent" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")
+              }
             >
               {item.label}
             </Link>

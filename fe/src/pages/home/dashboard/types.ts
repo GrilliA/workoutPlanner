@@ -23,7 +23,6 @@ export type RecentWorkout = {
 };
 
 export type DashboardData = {
-  userName: string;
   todayWorkout: TodayWorkout | null;
   stats: DashboardStat[];
   recentWorkouts: RecentWorkout[];

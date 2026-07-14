@@ -14,7 +14,6 @@ export function Dashboard() {
   const { status, data, error, retry } = useDashboard();
   const isLoading = status === "loading";
   const isDashboardUnavailable = status === "empty" || status === "error";
-  const userName = data?.userName ?? "Utente";
   const showStatPlaceholders =
     isLoading || isDashboardUnavailable || !data?.hasSessionHistory;
 
@@ -26,7 +25,7 @@ export function Dashboard() {
 
   return (
     <div className="dashboard">
-      <TopBar userName={userName} />
+      <TopBar />
       <WeekStrip />
 
       {status === "error" && (

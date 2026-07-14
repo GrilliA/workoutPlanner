@@ -27,8 +27,7 @@ const formatKgValue = (kg: number): string => {
 export const hasSessionHistory = (stats: UserStats): boolean =>
   stats.recentSessions.length > 0;
 
-export const createEmptyDashboardData = (userName = "Utente"): DashboardData => ({
-  userName,
+export const createEmptyDashboardData = (): DashboardData => ({
   todayWorkout: null,
   stats: [],
   recentWorkouts: [],
@@ -93,13 +92,11 @@ export const buildDashboardData = (
   workouts: Workout[],
   todayExercises: Exercise[],
   stats: UserStats,
-  userName: string,
 ): DashboardData => {
   const sorted = sortByNewest(workouts);
   const sessionHistory = hasSessionHistory(stats);
 
   return {
-    userName,
     todayWorkout:
       sorted.length > 0 ? mapTodayWorkout(sorted[0], todayExercises) : null,
     stats: sessionHistory ? mapStats(stats) : [],
