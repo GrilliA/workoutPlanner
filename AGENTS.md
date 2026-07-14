@@ -338,6 +338,7 @@ See `WORKBOOK.md` for full detail.
 | --- | --- |
 | C0–C6 (dashboard UI + API wire) | ✅ done |
 | C6b (dashboard stats wire) | ✅ done |
+| C6c (TodayCard schedule) | ✅ done |
 | B1 (exercises API) | ✅ done |
 | B2 (session logging) | ✅ |
 | W3 (active workout UI) | ✅ |
