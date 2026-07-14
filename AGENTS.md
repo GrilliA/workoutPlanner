@@ -348,3 +348,4 @@ See `WORKBOOK.md` for full detail.
 | B3 (stats endpoints) | ✅ |
 | B4 (program days) | ✅ |
 | C7 (analytics) | ✅ done |
+| W7 (session recap) | ✅ done |

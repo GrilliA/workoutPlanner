@@ -98,7 +98,7 @@ export function Progress() {
             </p>
           ) : (
             recentSessions.map((session) => (
-              <WorkoutRow key={session.id} {...session} />
+              <WorkoutRow key={session.id} sessionId={session.id} {...session} />
             ))
           )}
         </div>

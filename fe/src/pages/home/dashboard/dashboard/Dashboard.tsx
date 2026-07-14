@@ -78,7 +78,7 @@ export function Dashboard() {
             </p>
           ) : (
             recentWorkouts.map((workout) => (
-              <WorkoutRow key={workout.id} {...workout} />
+              <WorkoutRow key={workout.id} sessionId={workout.id} {...workout} />
             ))
           )}
         </div>

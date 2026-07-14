@@ -1,0 +1,99 @@
+.recap-header {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+
+  & .toolbar {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  & .back {
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 1px solid var(--border);
+    border-radius: 0.65rem;
+    background: var(--surface);
+    color: var(--text-h);
+    text-decoration: none;
+
+    & svg {
+      width: 1.1rem;
+      height: 1.1rem;
+    }
+  }
+
+  & .eyebrow {
+    margin: 0;
+    text-align: center;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  & .status {
+    padding: 0.25rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+
+    &.status--completed {
+      color: var(--on-accent);
+      background: var(--accent);
+    }
+
+    &.status--abandoned {
+      color: var(--text-h);
+      background: color-mix(in srgb, #ef4444 12%, var(--surface));
+      border: 1px solid color-mix(in srgb, #ef4444 35%, var(--border));
+    }
+  }
+
+  & .status-skeleton {
+    width: 5rem;
+    height: 1.5rem;
+    border-radius: 999px;
+    background: var(--border);
+  }
+
+  & .meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+
+  & .title {
+    margin: 0;
+    font-size: 1.6rem;
+    line-height: 1.1;
+    color: var(--text-h);
+  }
+
+  & .date {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text);
+    text-transform: capitalize;
+  }
+
+  & .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+  }
+
+  & .chip {
+    padding: 0.35rem 0.65rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 0.78rem;
+    color: var(--text-h);
+    background: var(--surface);
+  }
+}

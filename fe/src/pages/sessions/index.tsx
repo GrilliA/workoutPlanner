@@ -1,6 +1,6 @@
 import { useRoute } from "wouter";
 import { AppShell } from "@components/appshell";
-import { ActiveSession } from "./active/activesession";
+import { SessionRouter } from "./sessionrouter";
 
 export default function SessionPage() {
   const [, params] = useRoute("/sessions/:sessionId");
@@ -18,7 +18,7 @@ export default function SessionPage() {
 
   return (
     <AppShell hideBottomNav>
-      <ActiveSession sessionId={sessionId} />
+      <SessionRouter sessionId={sessionId} />
     </AppShell>
   );
 }

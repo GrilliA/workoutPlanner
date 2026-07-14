@@ -10,6 +10,7 @@
   background: var(--surface);
   color: inherit;
   text-align: left;
+  text-decoration: none;
   cursor: pointer;
   transition: border-color 0.2s, background 0.2s;
 

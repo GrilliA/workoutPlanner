@@ -1,3 +1,4 @@
+import { Link } from "wouter";
 import { Skeleton } from "@components/skeleton";
 import "./style.css";
 
@@ -6,6 +7,7 @@ export type WorkoutRowProps = {
   dateLabel: string;
   durationMin: number;
   volumeKg: number;
+  sessionId?: number;
 };
 
 export function WorkoutRowSkeleton() {
@@ -21,14 +23,14 @@ export function WorkoutRowSkeleton() {
   );
 }
 
-export function WorkoutRow({
+function WorkoutRowContent({
   name,
   dateLabel,
   durationMin,
   volumeKg,
-}: WorkoutRowProps) {
+}: Omit<WorkoutRowProps, "sessionId">) {
   return (
-    <button type="button" className="workout-row">
+    <>
       <span className="icon" aria-hidden="true">
         <svg viewBox="0 0 24 24">
           <path
@@ -66,6 +68,38 @@ export function WorkoutRow({
           />
         </svg>
       </span>
+    </>
+  );
+}
+
+export function WorkoutRow({
+  name,
+  dateLabel,
+  durationMin,
+  volumeKg,
+  sessionId,
+}: WorkoutRowProps) {
+  if (sessionId) {
+    return (
+      <Link href={`/sessions/${sessionId}`} className="workout-row">
+        <WorkoutRowContent
+          name={name}
+          dateLabel={dateLabel}
+          durationMin={durationMin}
+          volumeKg={volumeKg}
+        />
+      </Link>
+    );
+  }
+
+  return (
+    <button type="button" className="workout-row">
+      <WorkoutRowContent
+        name={name}
+        dateLabel={dateLabel}
+        durationMin={durationMin}
+        volumeKg={volumeKg}
+      />
     </button>
   );
 }

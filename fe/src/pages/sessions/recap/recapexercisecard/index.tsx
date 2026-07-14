@@ -1,0 +1,1 @@
+export { RecapExerciseCardView } from "./RecapExerciseCard";
