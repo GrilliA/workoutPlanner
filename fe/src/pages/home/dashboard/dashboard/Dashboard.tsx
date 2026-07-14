@@ -13,12 +13,14 @@ const WORKOUT_SKELETON_COUNT = 3;
 export function Dashboard() {
   const { status, data, error, retry } = useDashboard();
   const isLoading = status === "loading";
-  const isEmpty = status === "empty" || status === "error";
-  const userName = data?.userName ?? "Marco";
+  const isDashboardUnavailable = status === "empty" || status === "error";
+  const userName = data?.userName ?? "Utente";
+  const showStatPlaceholders =
+    isLoading || isDashboardUnavailable || !data?.hasSessionHistory;
 
-  const stats: DashboardStat[] = isEmpty || !data?.stats.length
+  const stats: DashboardStat[] = showStatPlaceholders
     ? EMPTY_STAT_PLACEHOLDERS
-    : data.stats;
+    : (data?.stats ?? EMPTY_STAT_PLACEHOLDERS);
 
   const recentWorkouts = data?.recentWorkouts ?? [];
 
@@ -50,7 +52,7 @@ export function Dashboard() {
                 value={stat.value}
                 unit={stat.unit}
                 trend={stat.trend}
-                isEmpty={isEmpty}
+                isEmpty={showStatPlaceholders}
               />
             ))}
       </div>

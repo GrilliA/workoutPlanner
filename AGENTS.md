@@ -334,6 +334,7 @@ See `WORKBOOK.md` for full detail.
 | Chunk | Status |
 | --- | --- |
 | C0–C6 (dashboard UI + API wire) | ✅ done |
+| C6b (dashboard stats wire) | ✅ done |
 | B1 (exercises API) | ✅ done |
 | B2 (session logging) | ✅ |
 | W3 (active workout UI) | ✅ |

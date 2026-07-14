@@ -1,5 +1,5 @@
-import type { Exercise, Workout } from "@api";
-import type { DashboardData, RecentWorkout, TodayWorkout } from "../types";
+import type { Exercise, UserStats, Workout } from "@api";
+import type { DashboardData, DashboardStat, RecentWorkout } from "../types";
 
 const formatWorkoutDate = (date: Date) =>
   date.toLocaleDateString("it-IT", {
@@ -12,17 +12,33 @@ const sortByNewest = (workouts: Workout[]): Workout[] =>
     (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
   );
 
-export const createEmptyDashboardData = (): DashboardData => ({
-  userName: "Marco",
+const formatKgValue = (kg: number): string => {
+  if (kg <= 0) {
+    return "0";
+  }
+
+  if (kg >= 1000) {
+    return `${(kg / 1000).toFixed(1)}k`;
+  }
+
+  return String(Math.round(kg));
+};
+
+export const hasSessionHistory = (stats: UserStats): boolean =>
+  stats.recentSessions.length > 0;
+
+export const createEmptyDashboardData = (userName = "Utente"): DashboardData => ({
+  userName,
   todayWorkout: null,
   stats: [],
   recentWorkouts: [],
+  hasSessionHistory: false,
 });
 
 export const mapTodayWorkout = (
   workout: Workout,
   exercises: Exercise[],
-): TodayWorkout => ({
+): DashboardData["todayWorkout"] => ({
   workoutId: workout.id,
   name: workout.name,
   exercises: exercises.map((exercise) => exercise.name),
@@ -33,27 +49,62 @@ export const mapTodayWorkout = (
   durationMin: 0,
 });
 
-export const mapRecentWorkouts = (workouts: Workout[]): RecentWorkout[] =>
-  sortByNewest(workouts).map((workout) => ({
-    id: workout.id,
-    name: workout.name,
-    dateLabel: formatWorkoutDate(workout.createdAt),
-    durationMin: 0,
-    volumeKg: 0,
+export const mapStats = (stats: UserStats): DashboardStat[] => [
+  {
+    id: "volume",
+    label: "Volume",
+    value: formatKgValue(stats.volumeKg),
+    unit: "kg",
+    trend: stats.volumeKg > 0 ? "Ultimi 7 giorni" : "Nessun dato",
+  },
+  {
+    id: "workout",
+    label: "Workout",
+    value: String(stats.workoutsPerWeek),
+    unit: "/sett",
+    trend: stats.workoutsPerWeek > 0 ? "Questa settimana" : "Nessun dato",
+  },
+  {
+    id: "streak",
+    label: "Streak",
+    value: String(stats.streakDays),
+    unit: "giorni",
+    trend: stats.streakDays > 0 ? "Giorni consecutivi" : "Nessun dato",
+  },
+  {
+    id: "record",
+    label: "Record",
+    value: formatKgValue(stats.recordVolumeKg),
+    unit: "kg",
+    trend: stats.recordVolumeKg > 0 ? "Volume massimo" : "Nessun dato",
+  },
+];
+
+export const mapRecentSessions = (stats: UserStats): RecentWorkout[] =>
+  stats.recentSessions.map((session) => ({
+    id: session.sessionId,
+    name: session.workoutName,
+    dateLabel: formatWorkoutDate(session.completedAt),
+    durationMin: session.durationMin,
+    volumeKg: session.volumeKg,
   }));
 
 export const buildDashboardData = (
   workouts: Workout[],
   todayExercises: Exercise[],
+  stats: UserStats,
+  userName: string,
 ): DashboardData => {
   const sorted = sortByNewest(workouts);
+  const sessionHistory = hasSessionHistory(stats);
 
   return {
-    userName: "Marco",
+    userName,
     todayWorkout:
       sorted.length > 0 ? mapTodayWorkout(sorted[0], todayExercises) : null,
-    stats: [],
-    recentWorkouts: mapRecentWorkouts(workouts),
+    stats: sessionHistory ? mapStats(stats) : [],
+    recentWorkouts: mapRecentSessions(stats),
+    hasSessionHistory: sessionHistory,
   };
 };
 

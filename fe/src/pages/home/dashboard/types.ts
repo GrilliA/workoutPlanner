@@ -27,6 +27,7 @@ export type DashboardData = {
   todayWorkout: TodayWorkout | null;
   stats: DashboardStat[];
   recentWorkouts: RecentWorkout[];
+  hasSessionHistory: boolean;
 };
 
 export type DashboardStatus = "loading" | "success" | "empty" | "error";

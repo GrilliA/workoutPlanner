@@ -30,6 +30,7 @@ How to use:
 
 ## What we did
 
+- 2026-07-14 — C6b wire dashboard to stats: `getStats` in `fetchDashboardData`, real stat grid and recent sessions list, userName from auth.
 - 2026-07-13 — B3 stats endpoints: `GET /api/stats` with weekly volume, workouts/week, Rome-timezone streak, record volume, and recent completed sessions; FE Zod + `getStats`.
 - 2026-07-13 — W3 active workout UI: `/sessions/:sessionId` page, session header, exercise cards, set logging, focus mode AppShell, TodayCard “AVVIA WORKOUT” wired to B2 API.
 - 2026-07-13 — B2 session logging: `workout_sessions` + `logged_sets` schema, REST API (start/complete/list sessions, log/patch/delete sets), FE Zod schemas + `@api` client. One `in_progress` session per user; `weight_kg` nullable; RIR/TUT optional.
@@ -55,6 +56,7 @@ Legend: ⬜ todo · 🟡 in progress · ✅ done
 - **C4 — Recent workouts list ("ULTIMI ALLENAMENTI")** ✅
 - **C5 — Empty + loading states** ✅
 - **C6 — Wire home to real `workouts` API** ✅
+- **C6b — Wire dashboard stats + recent sessions** ✅
 - **C7 — Analytics (charts) v2** ⬜ (needs B2/B3)
 
 ### Backend track
