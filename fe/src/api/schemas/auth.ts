@@ -30,6 +30,23 @@ export const registerRequestSchema = z.object({
   name: z.string().trim().optional(),
 });
 
+export const updateProfileRequestSchema = z.object({
+  name: z.string().trim().nullable(),
+});
+
+export const changePasswordRequestSchema = z
+  .object({
+    currentPassword: z.string().min(1),
+    newPassword: z.string().min(8),
+    confirmPassword: z.string().min(8),
+  })
+  .refine((value) => value.newPassword === value.confirmPassword, {
+    message: "Le password non coincidono",
+    path: ["confirmPassword"],
+  });
+
 export type AuthUser = z.infer<typeof authUserSchema>;
 export type LoginInput = z.input<typeof loginRequestSchema>;
 export type RegisterInput = z.input<typeof registerRequestSchema>;
+export type UpdateProfileInput = z.input<typeof updateProfileRequestSchema>;
+export type ChangePasswordInput = z.input<typeof changePasswordRequestSchema>;

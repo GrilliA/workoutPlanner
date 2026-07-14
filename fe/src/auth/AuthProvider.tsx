@@ -1,9 +1,7 @@
 import {
   createContext,
-  useCallback,
   useContext,
   useEffect,
-  useMemo,
   useState,
   type ReactNode,
 } from "react";
@@ -17,6 +15,7 @@ type AuthContextValue = AuthState & {
   login: (input: LoginInput) => Promise<void>;
   register: (input: RegisterInput) => Promise<void>;
   logout: () => Promise<void>;
+  setUser: (user: AuthUser) => void;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -74,36 +73,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const login = useCallback(async (input: LoginInput) => {
+  const login = async (input: LoginInput) => {
     const { user, accessToken } = await authApi.login(input);
     authStore.setAccessToken(accessToken);
     setState(authenticatedState(user));
-  }, []);
+  };
 
-  const register = useCallback(async (input: RegisterInput) => {
+  const register = async (input: RegisterInput) => {
     const { user, accessToken } = await authApi.register(input);
     authStore.setAccessToken(accessToken);
     setState(authenticatedState(user));
-  }, []);
+  };
 
-  const logout = useCallback(async () => {
+  const logout = async () => {
     try {
       await authApi.logout();
     } finally {
       authStore.clear();
       setState(anonymousState());
     }
-  }, []);
+  };
 
-  const value = useMemo<AuthContextValue>(
-    () => ({
-      ...state,
-      login,
-      register,
-      logout,
-    }),
-    [state, login, register, logout],
-  );
+  const setUser = (user: AuthUser) => {
+    setState(authenticatedState(user));
+  };
+
+  const value: AuthContextValue = {
+    ...state,
+    login,
+    register,
+    logout,
+    setUser,
+  };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

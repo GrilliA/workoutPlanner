@@ -6,8 +6,12 @@ import {
   loginRequestSchema,
   meResponseSchema,
   registerRequestSchema,
+  updateProfileRequestSchema,
+  changePasswordRequestSchema,
   type LoginInput,
   type RegisterInput,
+  type UpdateProfileInput,
+  type ChangePasswordInput,
 } from "./schemas/auth";
 
 export function login(input: LoginInput) {
@@ -38,6 +42,25 @@ export function refreshAccessToken() {
 export function getMe() {
   return apiRequest("/auth/me", {
     schema: meResponseSchema,
+  });
+}
+
+export function updateProfile(input: UpdateProfileInput) {
+  return apiRequest("/auth/me", {
+    method: "PATCH",
+    body: input,
+    requestSchema: updateProfileRequestSchema,
+    schema: meResponseSchema,
+  });
+}
+
+export async function changePassword(
+  input: Pick<ChangePasswordInput, "currentPassword" | "newPassword">,
+): Promise<void> {
+  await apiRequest("/auth/password", {
+    method: "PATCH",
+    body: input,
+    schema: z.undefined(),
   });
 }
 

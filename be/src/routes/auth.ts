@@ -8,6 +8,8 @@ import { hashPassword, verifyPassword } from "../services/password";
 import {
   validateLoginInput,
   validateRegisterInput,
+  validateUpdateProfileInput,
+  validateChangePasswordInput,
 } from "../services/authValidation";
 import {
   REFRESH_COOKIE_NAME,
@@ -154,4 +156,68 @@ authRouter.post("/logout", async (req, res) => {
 authRouter.get("/me", requireAuth, (req, res) => {
   const { user } = req as AuthenticatedRequest;
   res.json({ user });
+});
+
+authRouter.patch("/me", requireAuth, async (req, res) => {
+  const { user } = req as AuthenticatedRequest;
+  const parsed = validateUpdateProfileInput(req.body);
+
+  if (!parsed.ok) {
+    res.status(400).json({ error: parsed.error });
+    return;
+  }
+
+  const [updated] = await db
+    .update(users)
+    .set({
+      name: parsed.value.name ?? null,
+      updatedAt: new Date(),
+    })
+    .where(eq(users.id, user.id))
+    .returning({
+      id: users.id,
+      email: users.email,
+      name: users.name,
+    });
+
+  res.json({ user: toAuthUser(updated) });
+});
+
+authRouter.patch("/password", requireAuth, async (req, res) => {
+  const { user } = req as AuthenticatedRequest;
+  const parsed = validateChangePasswordInput(req.body);
+
+  if (!parsed.ok) {
+    res.status(400).json({ error: parsed.error });
+    return;
+  }
+
+  const [userRow] = await db
+    .select({ passwordHash: users.passwordHash })
+    .from(users)
+    .where(eq(users.id, user.id));
+
+  if (!userRow) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+
+  const passwordMatches = await verifyPassword(
+    parsed.value.currentPassword,
+    userRow.passwordHash,
+  );
+
+  if (!passwordMatches) {
+    res.status(401).json({ error: "Current password is incorrect" });
+    return;
+  }
+
+  const passwordHash = await hashPassword(parsed.value.newPassword);
+
+  await db
+    .update(users)
+    .set({ passwordHash, updatedAt: new Date() })
+    .where(eq(users.id, user.id));
+
+  res.status(204).send();
 });

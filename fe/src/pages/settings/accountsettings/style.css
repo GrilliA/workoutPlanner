@@ -1,0 +1,91 @@
+.account-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+
+  & .header {
+    margin-bottom: 0.25rem;
+  }
+
+  & .eyebrow {
+    margin: 0 0 0.35rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  & .title {
+    margin: 0;
+    font-size: 1.75rem;
+    line-height: 1.1;
+    color: var(--text-h);
+  }
+
+  & .profile-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    background: var(--surface);
+  }
+
+  & .avatar {
+    display: grid;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 999px;
+    background: var(--accent-bg);
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  & .profile-name {
+    margin: 0;
+    font-size: 1.1rem;
+    color: var(--text-h);
+  }
+
+  & .profile-email {
+    margin: 0.2rem 0 0;
+    font-size: 0.9rem;
+    color: var(--text);
+  }
+
+  & .settings-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  & .section-title {
+    margin: 0;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-h);
+  }
+
+  & .panel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    padding: 1rem;
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    background: var(--surface);
+  }
+
+  & .form-error {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--error, #f87171);
+  }
+
+  & .form-success {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--accent);
+  }
+}
