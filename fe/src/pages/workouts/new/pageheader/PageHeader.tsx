@@ -5,12 +5,19 @@ import "./style.css";
 export type PageHeaderProps = {
   onSave: () => void;
   isSaving?: boolean;
+  mode?: "create" | "edit";
+  backHref?: string;
 };
 
-export function PageHeader({ onSave, isSaving = false }: PageHeaderProps) {
+export function PageHeader({
+  onSave,
+  isSaving = false,
+  mode = "create",
+  backHref = "/workouts",
+}: PageHeaderProps) {
   return (
     <header className="page-header">
-      <Link href="/" className="back" aria-label="Torna alla home">
+      <Link href={backHref} className="back" aria-label="Torna indietro">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path
             d="M15 18 9 12l6-6"
@@ -23,7 +30,7 @@ export function PageHeader({ onSave, isSaving = false }: PageHeaderProps) {
         </svg>
       </Link>
 
-      <h1 className="title">CREA SCHEDA</h1>
+      <h1 className="title">{mode === "edit" ? "MODIFICA SCHEDA" : "CREA SCHEDA"}</h1>
 
       <Button.Root
         variant="primary"

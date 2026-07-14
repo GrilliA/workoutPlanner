@@ -20,7 +20,7 @@ export function WorkoutNameField({
           name="workoutName"
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          placeholder="Giorno A — Petto & Tricipiti"
+          placeholder="Push / Pull / Legs"
           autoComplete="off"
           required
         />

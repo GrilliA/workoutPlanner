@@ -1,16 +1,30 @@
 import { PageHeader } from "../pageheader";
 import { WorkoutNameField } from "../workoutnamefield";
+import { DaySelector } from "../dayselector";
+import { DayNameField } from "../daynamefield";
+import { WeekdayPicker } from "../weekdaypicker";
 import { ExerciseList } from "../exerciselist";
 import { AddExerciseForm } from "../addexerciseform";
 import { WorkoutSettingsPanel } from "../workoutsettings";
-import { useCreateWorkout } from "../useCreateWorkout";
+import { useWorkoutForm } from "../useCreateWorkout";
 import "./style.css";
 
-export function CreateWorkout() {
+export type CreateWorkoutProps = {
+  workoutId?: number;
+};
+
+export function CreateWorkout({ workoutId }: CreateWorkoutProps) {
   const {
     name,
     setName,
-    exercises,
+    days,
+    activeDay,
+    activeDayId,
+    setActiveDayId,
+    setActiveDayName,
+    addDay,
+    removeDay,
+    toggleWeekday,
     addExercise,
     removeExercise,
     settings,
@@ -19,11 +33,29 @@ export function CreateWorkout() {
     formError,
     save,
     isSaving,
-  } = useCreateWorkout();
+    isLoading,
+    isEditMode,
+  } = useWorkoutForm(workoutId);
+
+  const takenWeekdays = days
+    .filter((day) => day.clientId !== activeDayId)
+    .flatMap((day) => day.weekdays);
+
+  if (isLoading) {
+    return (
+      <div className="create-workout page-container">
+        <p className="form-error">Caricamento scheda…</p>
+      </div>
+    );
+  }
 
   return (
     <div className="create-workout page-container">
-      <PageHeader onSave={() => void save()} isSaving={isSaving} />
+      <PageHeader
+        mode={isEditMode ? "edit" : "create"}
+        onSave={() => void save()}
+        isSaving={isSaving}
+      />
 
       <WorkoutNameField
         value={name}
@@ -37,15 +69,41 @@ export function CreateWorkout() {
         </p>
       ) : null}
 
-      <ExerciseList
-        exercises={exercises}
-        defaultRestSec={settings.defaultRestSec}
-        onRemove={removeExercise}
+      <DaySelector
+        days={days}
+        activeDayId={activeDayId}
+        onSelect={setActiveDayId}
+        onAdd={addDay}
+        onRemove={removeDay}
       />
 
-      <div className="add-exercise">
-        <AddExerciseForm onAdd={addExercise} />
-      </div>
+      {activeDay ? (
+        <>
+          <DayNameField
+            value={activeDay.name}
+            onChange={setActiveDayName}
+          />
+
+          <WeekdayPicker
+            selected={activeDay.weekdays}
+            taken={takenWeekdays}
+            onToggle={toggleWeekday}
+          />
+
+          <ExerciseList
+            exercises={activeDay.exercises}
+            defaultRestSec={settings.defaultRestSec}
+            onRemove={removeExercise}
+          />
+
+          <div className="add-exercise">
+            <AddExerciseForm
+              defaultRestSec={settings.defaultRestSec}
+              onAdd={addExercise}
+            />
+          </div>
+        </>
+      ) : null}
 
       <WorkoutSettingsPanel settings={settings} onChange={setSettings} />
     </div>
