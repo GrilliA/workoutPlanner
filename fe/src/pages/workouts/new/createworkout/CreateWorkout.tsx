@@ -22,7 +22,7 @@ export function CreateWorkout() {
   } = useCreateWorkout();
 
   return (
-    <div className="create-workout">
+    <div className="create-workout page-container">
       <PageHeader onSave={() => void save()} isSaving={isSaving} />
 
       <WorkoutNameField

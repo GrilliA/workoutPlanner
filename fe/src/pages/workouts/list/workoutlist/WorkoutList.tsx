@@ -9,7 +9,7 @@ export function WorkoutList() {
   const isLoading = status === "loading";
 
   return (
-    <div className="workout-list-page">
+    <div className="workout-list-page page-container">
       <header className="header">
         <div>
           <p className="eyebrow">SCHEDE</p>

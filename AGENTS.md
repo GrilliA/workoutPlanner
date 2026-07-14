@@ -233,7 +233,10 @@ export function useDashboard() {
 - One `style.css` per component folder — imported only inside the component `.tsx`
 - Single root block class per component (`.today-card`, `.stat-card`) — kebab-case in CSS is fine
 - Nest selectors under the root block; use CSS variables from the design tokens (`--bg`, `--accent`, `--surface`, `--border`, `--text`, `--text-h`)
-- Mobile-first, fluid grids (`auto-fit` / `minmax`) — avoid JS breakpoints for layout
+- **Mobile-first layout:** base styles target phone; use `min-width` only (see `fe/src/styles/layout.css` for `--bp-*` tokens)
+- **Page width:** reuse `.page-container` / `.page-container--wide` from `layout.css` — do not hardcode `max-width: 640px` per feature
+- **Shell breakpoint:** sidebar at `64rem` (`--bp-lg`); bottom nav below that
+- **Grids:** prefer `auto-fit` / `minmax` and `@container` on feature roots (e.g. `.dashboard`) over viewport hacks
 - Never import a component's `style.css` from outside its folder
 
 ---

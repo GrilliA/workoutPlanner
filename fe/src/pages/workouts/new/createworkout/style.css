@@ -1,8 +1,4 @@
 .create-workout {
-  width: 100%;
-  max-width: 640px;
-  margin-inline: auto;
-
   & .add-exercise {
     margin-bottom: 1.5rem;
   }

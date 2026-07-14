@@ -56,7 +56,7 @@ export function ActiveSession({ sessionId }: ActiveSessionProps) {
 
   if (status === "loading") {
     return (
-      <div className="active-session">
+      <div className="active-session page-container">
         <SessionHeaderSkeleton />
         <div className="exercise-stack" aria-busy="true">
           {Array.from({ length: 3 }, (_, index) => (
@@ -69,7 +69,7 @@ export function ActiveSession({ sessionId }: ActiveSessionProps) {
 
   if (status === "error" || !view) {
     return (
-      <div className="active-session">
+      <div className="active-session page-container">
         <SessionHeaderSkeleton />
         <div className="session-error" role="alert">
           <p>{error ?? "Impossibile caricare l'allenamento"}</p>
@@ -87,7 +87,7 @@ export function ActiveSession({ sessionId }: ActiveSessionProps) {
   );
 
   return (
-    <div className="active-session">
+    <div className="active-session page-container">
       <SessionHeader
         workoutName={view.workoutName}
         startedAt={view.startedAt}

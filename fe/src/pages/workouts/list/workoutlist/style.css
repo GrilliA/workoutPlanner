@@ -1,8 +1,4 @@
 .workout-list-page {
-  width: 100%;
-  max-width: 640px;
-  margin-inline: auto;
-
   & .header {
     display: flex;
     align-items: flex-start;
@@ -111,9 +107,5 @@
     margin: 0.25rem 0 0;
     font-size: 0.85rem;
     color: var(--text);
-  }
-
-  @media (min-width: 768px) {
-    max-width: 720px;
   }
 }

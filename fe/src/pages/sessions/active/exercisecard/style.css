@@ -94,7 +94,7 @@
     opacity: 0.72;
   }
 
-  @media (min-width: 480px) {
+  @media (min-width: 30rem) {
     & .sets {
       padding-inline: 1rem;
     }

@@ -10,7 +10,7 @@
   --accent-border: rgba(196, 255, 77, 0.35);
 
   display: grid;
-  grid-template-columns: 220px 1fr;
+  grid-template-columns: 1fr;
   grid-template-rows: 1fr auto;
   min-height: 100dvh;
   color: var(--text);
@@ -18,7 +18,6 @@
   color-scheme: dark;
 
   & .sidebar {
-    grid-row: 1 / -1;
     display: none;
     flex-direction: column;
     gap: 2rem;
@@ -86,7 +85,10 @@
 
   & .content {
     min-width: 0;
-    padding: 1rem 1rem 5.5rem;
+    padding:
+      var(--page-padding-block)
+      var(--page-padding-inline)
+      calc(var(--page-padding-block) + var(--bottom-nav-offset));
   }
 
   & .bottom-nav {
@@ -127,15 +129,19 @@
     }
   }
 
-  @media (min-width: 1024px) {
-    grid-template-columns: 220px 1fr;
+  @media (min-width: 64rem) {
+    grid-template-columns: var(--sidebar-width) 1fr;
 
     & .sidebar {
       display: flex;
+      grid-row: 1 / -1;
     }
 
     & .content {
-      padding: 1.5rem 2rem 2rem;
+      padding:
+        var(--page-padding-block)
+        var(--page-padding-inline)
+        var(--page-padding-block);
     }
 
     & .bottom-nav {
@@ -145,7 +151,7 @@
 
   &.app-shell--focus {
     & .content {
-      padding-bottom: 1.25rem;
+      padding-bottom: var(--page-padding-block);
     }
 
     & .bottom-nav {

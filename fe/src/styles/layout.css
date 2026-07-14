@@ -1,0 +1,40 @@
+/*
+ * Layout tokens — mobile-first breakpoints (min-width only).
+ *
+ * --bp-sm  30rem (480px)  large phone
+ * --bp-md  48rem (768px)  tablet
+ * --bp-lg  64rem (1024px) desktop shell (sidebar)
+ * --bp-xl  80rem (1280px) wide desktop
+ */
+
+:root {
+  --bp-sm: 30rem;
+  --bp-md: 48rem;
+  --bp-lg: 64rem;
+  --bp-xl: 80rem;
+
+  --page-padding-inline: 1rem;
+  --page-padding-block: 1rem;
+  --content-max-width: 40rem;
+  --dashboard-max-width: 72rem;
+  --sidebar-width: 13.75rem;
+  --bottom-nav-offset: 5.5rem;
+}
+
+@media (min-width: 64rem) {
+  :root {
+    --page-padding-inline: 2rem;
+    --page-padding-block: 1.5rem;
+    --bottom-nav-offset: 0px;
+  }
+}
+
+.page-container {
+  width: 100%;
+  max-width: var(--content-max-width);
+  margin-inline: auto;
+}
+
+.page-container--wide {
+  max-width: var(--dashboard-max-width);
+}

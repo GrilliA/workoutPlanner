@@ -24,7 +24,7 @@ export function Dashboard() {
   const recentWorkouts = data?.recentWorkouts ?? [];
 
   return (
-    <div className="dashboard">
+    <div className="dashboard page-container page-container--wide">
       <TopBar />
       <WeekStrip />
 
