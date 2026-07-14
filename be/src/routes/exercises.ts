@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { db } from "../db";
 import { exercises } from "../db/schema";
 import { requireAuth } from "../middleware/requireAuth";
+import { ensureDefaultWorkoutDay } from "../services/workoutDayAccess";
 import { findExerciseForUser } from "../services/workoutAccess";
 import { getAuthUser } from "../types/auth";
 
@@ -54,7 +55,13 @@ exercisesRouter.post("/", async (req, res) => {
 
   const [created] = await db
     .insert(exercises)
-    .values({ name, sets, reps, workoutId })
+    .values({
+      name,
+      sets,
+      reps,
+      workoutId,
+      workoutDayId: (await ensureDefaultWorkoutDay(workoutId)).id,
+    })
     .returning();
 
   res.status(201).json(created);

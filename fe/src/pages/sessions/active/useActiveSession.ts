@@ -4,6 +4,7 @@ import {
   getExercisesByWorkout,
   getSession,
   getWorkout,
+  getWorkoutDayExercises,
   type Exercise,
   type Workout,
   type WorkoutSessionWithSets,
@@ -76,7 +77,9 @@ export function useActiveSession(sessionId: number): UseActiveSessionResult {
   const loadBundle = useCallback(async (): Promise<SessionBundle> => {
     const session = await getSession(sessionId);
     const workout = await getWorkout(session.workoutId);
-    const exercises = await getExercisesByWorkout(session.workoutId);
+    const exercises = session.workoutDayId
+      ? await getWorkoutDayExercises(session.workoutId, session.workoutDayId)
+      : await getExercisesByWorkout(session.workoutId);
 
     return { session, workout, exercises };
   }, [sessionId]);

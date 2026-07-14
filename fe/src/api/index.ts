@@ -67,3 +67,16 @@ export {
   deleteLoggedSet,
 } from "./sessions";
 export { getStats } from "./stats";
+export {
+  getWorkoutDays,
+  getWorkoutDay,
+  createWorkoutDay,
+  updateWorkoutDay,
+  deleteWorkoutDay,
+  setWorkoutDayWeekdays,
+  getWorkoutDayExercises,
+  createWorkoutDayExercise,
+  getWorkoutScheduleToday,
+  setScheduleOverride,
+  deleteScheduleOverride,
+} from "./workoutdays";

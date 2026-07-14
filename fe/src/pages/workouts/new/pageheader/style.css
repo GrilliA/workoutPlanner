@@ -27,14 +27,7 @@
     margin: 0;
     font-size: 1.1rem;
     font-weight: 700;
-    letter-spacing: 0.08em;
     color: var(--text-h);
     text-align: center;
-  }
-
-  & .save {
-    color: #101014;
-    font-weight: 700;
-    letter-spacing: 0.04em;
   }
 }

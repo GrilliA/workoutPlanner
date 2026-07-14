@@ -1,5 +1,6 @@
 export {
   workoutSchema,
+  workoutDetailSchema,
   workoutsSchema,
   createWorkoutRequestSchema,
   workoutSettingsSchema,
@@ -7,6 +8,7 @@ export {
   WORKOUT_TYPE_OPTIONS,
   FREQUENCY_OPTIONS,
   type Workout,
+  type WorkoutDetail,
   type WorkoutSettings,
   type CreateWorkoutInput,
 } from "./workout";
@@ -56,3 +58,23 @@ export {
   type RecentSessionSummary,
   type UserStats,
 } from "./stats";
+export {
+  workoutDaySchema,
+  workoutDaysSchema,
+  createWorkoutDayRequestSchema,
+  updateWorkoutDayRequestSchema,
+  setWeekdaysRequestSchema,
+  workoutScheduleSchema,
+  scheduleOverrideRequestSchema,
+  scheduleOverrideResponseSchema,
+  startSessionRequestSchema,
+  weekdaySchema,
+  type Weekday,
+  type WorkoutDay,
+  type CreateWorkoutDayInput,
+  type UpdateWorkoutDayInput,
+  type SetWeekdaysInput,
+  type WorkoutSchedule,
+  type ScheduleOverrideInput,
+  type StartSessionInput,
+} from "./workoutday";

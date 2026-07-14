@@ -37,6 +37,21 @@ export const workoutSchema = z.object({
   exerciseCount: z.number(),
 });
 
+export const workoutDetailSchema = workoutSchema.extend({
+  days: z
+    .array(
+      z.object({
+        id: z.number(),
+        workoutId: z.number(),
+        name: z.string(),
+        sortOrder: z.number(),
+        weekdays: z.array(z.number().int().min(0).max(6)),
+        exerciseCount: z.number(),
+      }),
+    )
+    .optional(),
+});
+
 export const workoutsSchema = z.array(workoutSchema);
 
 export const createWorkoutRequestSchema = z.object({
@@ -48,4 +63,5 @@ export const createWorkoutRequestSchema = z.object({
 
 export type WorkoutSettings = z.infer<typeof workoutSettingsSchema>;
 export type Workout = z.infer<typeof workoutSchema>;
+export type WorkoutDetail = z.infer<typeof workoutDetailSchema>;
 export type CreateWorkoutInput = z.input<typeof createWorkoutRequestSchema>;

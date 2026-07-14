@@ -17,6 +17,7 @@ export const loggedSetSchema = z.object({
 export const workoutSessionSchema = z.object({
   id: z.number(),
   workoutId: z.number(),
+  workoutDayId: z.number().nullable().optional(),
   userId: z.number(),
   status: z.enum(SESSION_STATUSES),
   startedAt: z.coerce.date(),

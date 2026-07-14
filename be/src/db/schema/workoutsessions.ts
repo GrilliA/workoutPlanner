@@ -1,5 +1,6 @@
 import { integer, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
 import { users } from "./users";
+import { workoutDays } from "./workoutdays";
 import { workouts } from "./workouts";
 
 export const SESSION_STATUSES = ["in_progress", "completed", "abandoned"] as const;
@@ -10,6 +11,9 @@ export const workoutSessions = pgTable("workout_sessions", {
   workoutId: integer("workout_id")
     .notNull()
     .references(() => workouts.id, { onDelete: "cascade" }),
+  workoutDayId: integer("workout_day_id").references(() => workoutDays.id, {
+    onDelete: "set null",
+  }),
   userId: integer("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),

@@ -6,6 +6,7 @@ import {
   getSession,
   getSessions,
   getWorkout,
+  getWorkoutDayExercises,
   logSet,
   startSession,
   type LoggedSet,
@@ -20,7 +21,9 @@ export async function loadActiveSessionView(
 ): Promise<ActiveSessionView> {
   const session = await getSession(sessionId);
   const workout = await getWorkout(session.workoutId);
-  const exercises = await getExercisesByWorkout(session.workoutId);
+  const exercises = session.workoutDayId
+    ? await getWorkoutDayExercises(session.workoutId, session.workoutDayId)
+    : await getExercisesByWorkout(session.workoutId);
 
   return mapActiveSession(session, workout, exercises, focusedExerciseId);
 }

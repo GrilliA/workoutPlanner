@@ -19,6 +19,7 @@
   --dashboard-max-width: 72rem;
   --sidebar-width: 13.75rem;
   --bottom-nav-offset: 5.5rem;
+  --on-accent: #101014;
 }
 
 @media (min-width: 64rem) {

@@ -9,6 +9,8 @@ import {
   findLoggedSetForSession,
   findSessionForUser,
 } from "../services/sessionAccess";
+import { findWorkoutDayForUser, resolveWorkoutDayForDate } from "../services/workoutDayAccess";
+import { validateStartSessionInput } from "../services/workoutDayValidation";
 import { findWorkoutForUser } from "../services/workoutAccess";
 import {
   validateLogSetInput,
@@ -28,6 +30,7 @@ function parseSessionId(params: Record<string, string | undefined>): number {
 const sessionColumns = {
   id: workoutSessions.id,
   workoutId: workoutSessions.workoutId,
+  workoutDayId: workoutSessions.workoutDayId,
   userId: workoutSessions.userId,
   status: workoutSessions.status,
   startedAt: workoutSessions.startedAt,
@@ -68,9 +71,15 @@ export const workoutSessionsRouter = Router({ mergeParams: true });
 workoutSessionsRouter.post("/", async (req, res) => {
   const user = getAuthUser(req);
   const workoutId = parseWorkoutId(req.params);
+  const parsed = validateStartSessionInput(req.body);
 
   if (Number.isNaN(workoutId)) {
     res.status(400).json({ error: "Invalid workout id" });
+    return;
+  }
+
+  if (!parsed.ok) {
+    res.status(400).json({ error: parsed.error });
     return;
   }
 
@@ -88,9 +97,29 @@ workoutSessionsRouter.post("/", async (req, res) => {
     return;
   }
 
+  let workoutDayId = parsed.value.workoutDayId;
+
+  if (workoutDayId !== undefined) {
+    const day = await findWorkoutDayForUser(workoutDayId, user.id);
+
+    if (!day || day.workoutId !== workoutId) {
+      res.status(400).json({ error: "workoutDayId does not belong to this workout" });
+      return;
+    }
+  } else {
+    const resolved = await resolveWorkoutDayForDate(workoutId, user.id);
+
+    if (!resolved) {
+      res.status(409).json({ error: "No workout scheduled for today" });
+      return;
+    }
+
+    workoutDayId = resolved.workoutDayId;
+  }
+
   const [created] = await db
     .insert(workoutSessions)
-    .values({ workoutId, userId: user.id })
+    .values({ workoutId, workoutDayId, userId: user.id })
     .returning();
 
   res.status(201).json({ ...created, sets: [] });
@@ -238,7 +267,11 @@ sessionSetsRouter.post("/", async (req, res) => {
     return;
   }
 
-  const exercise = await findExerciseInWorkout(parsed.value.exerciseId, session.workoutId);
+  const exercise = await findExerciseInWorkout(
+    parsed.value.exerciseId,
+    session.workoutId,
+    session.workoutDayId,
+  );
 
   if (!exercise) {
     res.status(400).json({ error: "Exercise does not belong to this workout" });

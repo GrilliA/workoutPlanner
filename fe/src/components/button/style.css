@@ -24,9 +24,10 @@
 }
 
 .button-root--primary {
-  color: var(--text);
+  color: var(--on-accent, #101014);
   background: var(--accent);
   border-color: var(--accent-border);
+  font-weight: 700;
 }
 
 .button-root--primary:hover:not(:disabled) {

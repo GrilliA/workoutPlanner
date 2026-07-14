@@ -3,7 +3,7 @@ import { and, desc, eq, inArray } from "drizzle-orm";
 import { db } from "../db";
 import { loggedSets, workoutSessions, workouts } from "../db/schema";
 import { requireAuth } from "../middleware/requireAuth";
-import { buildUserStats, parseRecentLimit } from "../services/stats";
+import { buildUserStats, groupLoggedSetsBySession, parseRecentLimit } from "../services/stats";
 import { getAuthUser } from "../types/auth";
 
 export const statsRouter = Router();
@@ -46,26 +46,21 @@ statsRouter.get("/", async (req, res) => {
   });
 
   const sessionIds = completedSessions.map((session) => session.sessionId);
-  const setsBySessionId = new Map<number, { weightKg: number | null; reps: number }[]>();
+  const setsBySession =
+    sessionIds.length === 0
+      ? []
+      : groupLoggedSetsBySession(
+          await db
+            .select({
+              sessionId: loggedSets.sessionId,
+              weightKg: loggedSets.weightKg,
+              reps: loggedSets.reps,
+            })
+            .from(loggedSets)
+            .where(inArray(loggedSets.sessionId, sessionIds)),
+        );
 
-  if (sessionIds.length > 0) {
-    const sets = await db
-      .select({
-        sessionId: loggedSets.sessionId,
-        weightKg: loggedSets.weightKg,
-        reps: loggedSets.reps,
-      })
-      .from(loggedSets)
-      .where(inArray(loggedSets.sessionId, sessionIds));
-
-    for (const set of sets) {
-      const existing = setsBySessionId.get(set.sessionId) ?? [];
-      existing.push({ weightKg: set.weightKg, reps: set.reps });
-      setsBySessionId.set(set.sessionId, existing);
-    }
-  }
-
-  const stats = buildUserStats(completedSessions, setsBySessionId, recentLimit);
+  const stats = buildUserStats(completedSessions, setsBySession, recentLimit);
 
   res.json({
     period: {

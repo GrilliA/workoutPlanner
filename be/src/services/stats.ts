@@ -101,19 +101,11 @@ export const computeStreakDays = (completedAts: Date[], now: Date = new Date()):
     return 0;
   }
 
-  let streak = 0;
-  let cursor = latestDay;
+  const breakIndex = uniqueDays.findIndex(
+    (day, index) => day !== addRomeDays(latestDay, -index),
+  );
 
-  for (const day of uniqueDays) {
-    if (day !== cursor) {
-      break;
-    }
-
-    streak += 1;
-    cursor = addRomeDays(cursor, -1);
-  }
-
-  return streak;
+  return breakIndex === -1 ? uniqueDays.length : breakIndex;
 };
 
 export const isWithinRollingWindow = (
@@ -133,9 +125,39 @@ type CompletedSessionRow = {
   completedAt: Date;
 };
 
+export type SessionSetsGroup = {
+  sessionId: number;
+  sets: LoggedSetRow[];
+};
+
+export const groupLoggedSetsBySession = (
+  sets: { sessionId: number; weightKg: number | null; reps: number }[],
+): SessionSetsGroup[] =>
+  Object.entries(
+    sets.reduce<Record<number, LoggedSetRow[]>>(
+      (groups, set) => ({
+        ...groups,
+        [set.sessionId]: [
+          ...(groups[set.sessionId] ?? []),
+          { weightKg: set.weightKg, reps: set.reps },
+        ],
+      }),
+      {},
+    ),
+  ).map(([sessionId, sessionSets]) => ({
+    sessionId: Number(sessionId),
+    sets: sessionSets,
+  }));
+
+const findSessionSets = (
+  groups: SessionSetsGroup[],
+  sessionId: number,
+): LoggedSetRow[] =>
+  groups.find((group) => group.sessionId === sessionId)?.sets ?? [];
+
 export const buildUserStats = (
   sessions: CompletedSessionRow[],
-  setsBySessionId: Map<number, LoggedSetRow[]>,
+  setsBySession: SessionSetsGroup[],
   recentLimit: number,
   now: Date = new Date(),
 ): UserStats => {
@@ -145,7 +167,7 @@ export const buildUserStats = (
   };
 
   const enriched = sessions.map((session) => {
-    const sets = setsBySessionId.get(session.sessionId) ?? [];
+    const sets = findSessionSets(setsBySession, session.sessionId);
     const volumeKg = computeSessionVolumeKg(sets);
 
     return {

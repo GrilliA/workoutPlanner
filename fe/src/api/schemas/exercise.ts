@@ -6,6 +6,7 @@ export const exerciseSchema = z.object({
   sets: z.number().nullable(),
   reps: z.number().nullable(),
   workoutId: z.number(),
+  workoutDayId: z.number().nullable().optional(),
 });
 
 export const exercisesSchema = z.array(exerciseSchema);

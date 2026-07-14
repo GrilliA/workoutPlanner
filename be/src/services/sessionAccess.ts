@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull, or } from "drizzle-orm";
 import { db } from "../db";
 import { exercises, loggedSets, workoutSessions } from "../db/schema";
 
@@ -30,11 +30,20 @@ export async function findActiveSessionForUser(
 export async function findExerciseInWorkout(
   exerciseId: number,
   workoutId: number,
+  workoutDayId?: number | null,
 ): Promise<typeof exercises.$inferSelect | null> {
+  const conditions = [eq(exercises.id, exerciseId), eq(exercises.workoutId, workoutId)];
+
+  if (workoutDayId != null) {
+    conditions.push(
+      or(eq(exercises.workoutDayId, workoutDayId), isNull(exercises.workoutDayId))!,
+    );
+  }
+
   const [exercise] = await db
     .select()
     .from(exercises)
-    .where(and(eq(exercises.id, exerciseId), eq(exercises.workoutId, workoutId)));
+    .where(and(...conditions));
 
   return exercise ?? null;
 }

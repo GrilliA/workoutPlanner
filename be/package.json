@@ -31,6 +31,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
+    "db:migrate-program-days": "tsx src/scripts/migrateProgramDays.ts",
     "db:studio": "drizzle-kit studio",
     "db:up": "docker compose -f ../docker-compose.yml up -d",
     "db:down": "docker compose -f ../docker-compose.yml down",

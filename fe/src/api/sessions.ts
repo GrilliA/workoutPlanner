@@ -5,21 +5,28 @@ import {
   loggedSetSchema,
   patchLoggedSetRequestSchema,
   patchSessionRequestSchema,
+  startSessionRequestSchema,
   workoutSessionSummariesSchema,
   workoutSessionWithSetsSchema,
   workoutSessionsSchema,
   type LogSetInput,
   type PatchLoggedSetInput,
   type PatchSessionInput,
+  type StartSessionInput,
   type LoggedSet,
   type WorkoutSession,
   type WorkoutSessionSummary,
   type WorkoutSessionWithSets,
 } from "./schemas";
 
-export async function startSession(workoutId: number): Promise<WorkoutSessionWithSets> {
+export async function startSession(
+  workoutId: number,
+  input: StartSessionInput = {},
+): Promise<WorkoutSessionWithSets> {
   return apiRequest(`/workouts/${workoutId}/sessions`, {
     method: "POST",
+    body: input,
+    requestSchema: startSessionRequestSchema,
     schema: workoutSessionWithSetsSchema,
   });
 }

@@ -24,7 +24,6 @@
     & .title {
       margin: 0;
       font-size: 1rem;
-      letter-spacing: 0.08em;
       text-transform: uppercase;
       color: var(--text-h);
     }
@@ -81,7 +80,6 @@
       color: var(--text-h);
       font-size: 0.8rem;
       font-weight: 600;
-      letter-spacing: 0.03em;
       cursor: pointer;
     }
   }
