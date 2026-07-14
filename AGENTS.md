@@ -337,5 +337,5 @@ See `WORKBOOK.md` for full detail.
 | B1 (exercises API) | ✅ done |
 | B2 (session logging) | ✅ |
 | W3 (active workout UI) | ✅ |
-| B3 (stats endpoints) | ⬜ |
+| B3 (stats endpoints) | ✅ |
 | C7 (analytics) | ⬜ |

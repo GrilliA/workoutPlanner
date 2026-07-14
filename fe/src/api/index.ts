@@ -44,6 +44,12 @@ export {
   type LogSetInput,
   type PatchSessionInput,
   type PatchLoggedSetInput,
+  statsPeriodSchema,
+  recentSessionSummarySchema,
+  userStatsSchema,
+  type StatsPeriod,
+  type RecentSessionSummary,
+  type UserStats,
 } from "./schemas";
 export { getWorkouts, getWorkout, createWorkout } from "./workouts";
 export { getExercisesByWorkout, getExercise, createExercise } from "./exercises";
@@ -60,3 +66,4 @@ export {
   patchLoggedSet,
   deleteLoggedSet,
 } from "./sessions";
+export { getStats } from "./stats";
