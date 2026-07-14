@@ -42,7 +42,10 @@ export function SetRow({ set, isLogging, onLog }: SetRowProps) {
 
   return (
     <div className={`set-row ${isActive ? "set-row--active" : "set-row--pending"}`}>
-      <span className="index">{set.setNumber}</span>
+      <span className="index">
+        <span className="number">{set.setNumber}</span>
+        <span className="rest-hint">{set.restSec}s</span>
+      </span>
 
       <label className="weight-field">
         <span className="sr-only">Peso serie {set.setNumber}</span>

@@ -86,3 +86,64 @@ export const validateCreateWorkoutInput = (
     value: { name, defaultRestSec, workoutType, frequency },
   };
 };
+
+export type UpdateWorkoutInput = Partial<CreateWorkoutInput>;
+
+export const validateUpdateWorkoutInput = (
+  body: unknown,
+):
+  | { ok: true; value: UpdateWorkoutInput }
+  | { ok: false; error: string } => {
+  if (!body || typeof body !== "object") {
+    return { ok: false, error: "Invalid request body" };
+  }
+
+  const input = body as Record<string, unknown>;
+  const value: UpdateWorkoutInput = {};
+
+  if ("name" in input) {
+    const name = typeof input.name === "string" ? input.name.trim() : "";
+
+    if (!name) {
+      return { ok: false, error: "name cannot be empty" };
+    }
+
+    value.name = name;
+  }
+
+  if ("defaultRestSec" in input) {
+    const defaultRestSec = Number(input.defaultRestSec);
+
+    if (!Number.isInteger(defaultRestSec) || !isRestSec(defaultRestSec)) {
+      return { ok: false, error: "defaultRestSec must be one of 60, 90, 120, 150" };
+    }
+
+    value.defaultRestSec = defaultRestSec;
+  }
+
+  if ("workoutType" in input) {
+    const workoutType = String(input.workoutType);
+
+    if (!isWorkoutType(workoutType)) {
+      return { ok: false, error: "Invalid workoutType" };
+    }
+
+    value.workoutType = workoutType;
+  }
+
+  if ("frequency" in input) {
+    const frequency = String(input.frequency);
+
+    if (!isFrequency(frequency)) {
+      return { ok: false, error: "Invalid frequency" };
+    }
+
+    value.frequency = frequency;
+  }
+
+  if (Object.keys(value).length === 0) {
+    return { ok: false, error: "At least one field is required" };
+  }
+
+  return { ok: true, value };
+};

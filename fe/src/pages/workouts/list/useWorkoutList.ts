@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { ApiError, getWorkouts, type Workout } from "@api";
 
 type WorkoutListStatus = "loading" | "success" | "empty" | "error";
@@ -16,9 +16,9 @@ export function useWorkoutList(): UseWorkoutListResult {
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  const retry = useCallback(() => {
+  const retry = () => {
     setFetchId((current) => current + 1);
-  }, []);
+  };
 
   useEffect(() => {
     let cancelled = false;

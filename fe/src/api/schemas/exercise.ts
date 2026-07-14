@@ -1,5 +1,11 @@
 import { z } from "zod";
 
+export const setPrescriptionSchema = z.object({
+  setNumber: z.number().int().positive(),
+  reps: z.number().int().positive(),
+  restSec: z.number().int().nonnegative().nullable(),
+});
+
 export const exerciseSchema = z.object({
   id: z.number(),
   name: z.string(),
@@ -7,15 +13,19 @@ export const exerciseSchema = z.object({
   reps: z.number().nullable(),
   workoutId: z.number(),
   workoutDayId: z.number().nullable().optional(),
+  setPrescriptions: z.array(setPrescriptionSchema).default([]),
 });
 
 export const exercisesSchema = z.array(exerciseSchema);
 
 export const createExerciseRequestSchema = z.object({
   name: z.string().trim().min(1, "name is required"),
-  sets: z.number().int().optional(),
-  reps: z.number().int().optional(),
+  setPrescriptions: z.array(setPrescriptionSchema).min(1, "At least one set is required"),
 });
 
+export const updateExerciseRequestSchema = createExerciseRequestSchema;
+
+export type SetPrescription = z.infer<typeof setPrescriptionSchema>;
 export type Exercise = z.infer<typeof exerciseSchema>;
 export type CreateExerciseInput = z.input<typeof createExerciseRequestSchema>;
+export type UpdateExerciseInput = z.input<typeof updateExerciseRequestSchema>;

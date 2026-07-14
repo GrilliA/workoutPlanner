@@ -3,6 +3,7 @@ export {
   workoutDetailSchema,
   workoutsSchema,
   createWorkoutRequestSchema,
+  updateWorkoutRequestSchema,
   workoutSettingsSchema,
   REST_SEC_OPTIONS,
   WORKOUT_TYPE_OPTIONS,
@@ -11,13 +12,18 @@ export {
   type WorkoutDetail,
   type WorkoutSettings,
   type CreateWorkoutInput,
+  type UpdateWorkoutInput,
 } from "./workout";
 export {
   exerciseSchema,
   exercisesSchema,
   createExerciseRequestSchema,
+  updateExerciseRequestSchema,
+  setPrescriptionSchema,
   type Exercise,
   type CreateExerciseInput,
+  type UpdateExerciseInput,
+  type SetPrescription,
 } from "./exercise";
 export { apiErrorSchema, type ApiErrorBody } from "./error";
 export {
@@ -27,9 +33,13 @@ export {
   meResponseSchema,
   loginRequestSchema,
   registerRequestSchema,
+  updateProfileRequestSchema,
+  changePasswordRequestSchema,
   type AuthUser,
   type LoginInput,
   type RegisterInput,
+  type UpdateProfileInput,
+  type ChangePasswordInput,
 } from "./auth";
 export {
   loggedSetSchema,

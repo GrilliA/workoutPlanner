@@ -3,6 +3,7 @@ export type SetRowStatus = "pending" | "active" | "completed";
 export type ActiveSetRow = {
   setNumber: number;
   targetReps: number;
+  restSec: number;
   weightKg: string;
   status: SetRowStatus;
   loggedSetId: number | null;
@@ -12,9 +13,7 @@ export type ActiveExerciseCard = {
   exerciseId: number;
   index: number;
   name: string;
-  targetSets: number;
-  targetReps: number;
-  restSec: number;
+  setPrescriptions: { setNumber: number; reps: number; restSec: number }[];
   sets: ActiveSetRow[];
   isComplete: boolean;
 };

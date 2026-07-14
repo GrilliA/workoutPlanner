@@ -61,7 +61,13 @@ export const createWorkoutRequestSchema = z.object({
   frequency: workoutSettingsSchema.shape.frequency.optional(),
 });
 
+export const updateWorkoutRequestSchema = createWorkoutRequestSchema.partial().refine(
+  (value) => Object.keys(value).length > 0,
+  { message: "At least one field is required" },
+);
+
 export type WorkoutSettings = z.infer<typeof workoutSettingsSchema>;
 export type Workout = z.infer<typeof workoutSchema>;
 export type WorkoutDetail = z.infer<typeof workoutDetailSchema>;
 export type CreateWorkoutInput = z.input<typeof createWorkoutRequestSchema>;
+export type UpdateWorkoutInput = z.input<typeof updateWorkoutRequestSchema>;

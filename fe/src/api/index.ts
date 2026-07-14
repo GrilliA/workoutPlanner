@@ -51,9 +51,15 @@ export {
   type RecentSessionSummary,
   type UserStats,
 } from "./schemas";
-export { getWorkouts, getWorkout, createWorkout } from "./workouts";
-export { getExercisesByWorkout, getExercise, createExercise } from "./exercises";
-export { login, register, refreshAccessToken, getMe, logout } from "./auth";
+export { getWorkouts, getWorkout, createWorkout, updateWorkout } from "./workouts";
+export {
+  getExercisesByWorkout,
+  getExercise,
+  createExercise,
+  updateExercise,
+  deleteExercise,
+} from "./exercises";
+export { login, register, refreshAccessToken, getMe, updateProfile, changePassword, logout } from "./auth";
 export {
   startSession,
   getSessionsByWorkout,

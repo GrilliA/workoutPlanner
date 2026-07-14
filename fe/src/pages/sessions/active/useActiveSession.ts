@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ApiError,
   getExercisesByWorkout,
@@ -61,6 +61,16 @@ const resolveFocus = (
   );
 };
 
+async function loadSessionBundle(sessionId: number): Promise<SessionBundle> {
+  const session = await getSession(sessionId);
+  const workout = await getWorkout(session.workoutId);
+  const exercises = session.workoutDayId
+    ? await getWorkoutDayExercises(session.workoutId, session.workoutDayId)
+    : await getExercisesByWorkout(session.workoutId);
+
+  return { session, workout, exercises };
+}
+
 export function useActiveSession(sessionId: number): UseActiveSessionResult {
   const [fetchId, setFetchId] = useState(0);
   const [status, setStatus] = useState<ActiveSessionStatus>("loading");
@@ -70,19 +80,9 @@ export function useActiveSession(sessionId: number): UseActiveSessionResult {
   const [loggingKey, setLoggingKey] = useState<string | null>(null);
   const [completionVolumeKg, setCompletionVolumeKg] = useState(0);
 
-  const retry = useCallback(() => {
+  const retry = () => {
     setFetchId((current) => current + 1);
-  }, []);
-
-  const loadBundle = useCallback(async (): Promise<SessionBundle> => {
-    const session = await getSession(sessionId);
-    const workout = await getWorkout(session.workoutId);
-    const exercises = session.workoutDayId
-      ? await getWorkoutDayExercises(session.workoutId, session.workoutDayId)
-      : await getExercisesByWorkout(session.workoutId);
-
-    return { session, workout, exercises };
-  }, [sessionId]);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -92,7 +92,7 @@ export function useActiveSession(sessionId: number): UseActiveSessionResult {
       setError(null);
 
       try {
-        const nextBundle = await loadBundle();
+        const nextBundle = await loadSessionBundle(sessionId);
 
         if (cancelled) {
           return;
@@ -129,67 +129,61 @@ export function useActiveSession(sessionId: number): UseActiveSessionResult {
     return () => {
       cancelled = true;
     };
-  }, [sessionId, fetchId, loadBundle]);
+  }, [sessionId, fetchId]);
 
-  const view = useMemo(() => {
-    if (!bundle) {
-      return null;
-    }
+  const view = bundle
+    ? mapActiveSession(
+        bundle.session,
+        bundle.workout,
+        bundle.exercises,
+        focusedExerciseId,
+      )
+    : null;
 
-    return mapActiveSession(
-      bundle.session,
-      bundle.workout,
-      bundle.exercises,
-      focusedExerciseId,
-    );
-  }, [bundle, focusedExerciseId]);
+  const logSetRow = async (
+    exerciseId: number,
+    setNumber: number,
+    weightKg: string,
+    reps: number,
+  ) => {
+    const key = toLoggingKey(exerciseId, setNumber);
+    setLoggingKey(key);
+    setError(null);
 
-  const handleFocusExercise = useCallback((exerciseId: number) => {
-    setFocusedExerciseId(exerciseId);
-  }, []);
+    try {
+      await submitLoggedSet(sessionId, exerciseId, setNumber, reps, weightKg);
+      const nextBundle = await loadSessionBundle(sessionId);
+      setBundle(nextBundle);
 
-  const logSetRow = useCallback(
-    async (exerciseId: number, setNumber: number, weightKg: string, reps: number) => {
-      const key = toLoggingKey(exerciseId, setNumber);
-      setLoggingKey(key);
-      setError(null);
+      const mapped = mapActiveSession(
+        nextBundle.session,
+        nextBundle.workout,
+        nextBundle.exercises,
+        focusedExerciseId,
+      );
 
-      try {
-        await submitLoggedSet(sessionId, exerciseId, setNumber, reps, weightKg);
-        const nextBundle = await loadBundle();
-        setBundle(nextBundle);
+      const completedExercise = mapped.exercises.find(
+        (exercise) => exercise.exerciseId === exerciseId,
+      );
 
-        const mapped = mapActiveSession(
-          nextBundle.session,
-          nextBundle.workout,
-          nextBundle.exercises,
-          focusedExerciseId,
-        );
-
-        const completedExercise = mapped.exercises.find(
-          (exercise) => exercise.exerciseId === exerciseId,
-        );
-
-        if (completedExercise?.isComplete) {
-          const nextFocus = resolveFocus(mapped.exercises, null);
-          setFocusedExerciseId(nextFocus);
-        }
-      } catch (err) {
-        setError(
-          err instanceof ApiError
-            ? err.message
-            : err instanceof Error
-              ? err.message
-              : "Impossibile registrare la serie",
-        );
-      } finally {
-        setLoggingKey(null);
+      if (completedExercise?.isComplete) {
+        const nextFocus = resolveFocus(mapped.exercises, null);
+        setFocusedExerciseId(nextFocus);
       }
-    },
-    [sessionId, focusedExerciseId, loadBundle],
-  );
+    } catch (err) {
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : "Impossibile registrare la serie",
+      );
+    } finally {
+      setLoggingKey(null);
+    }
+  };
 
-  const complete = useCallback(async () => {
+  const complete = async () => {
     setStatus("completing");
     setError(null);
 
@@ -208,9 +202,9 @@ export function useActiveSession(sessionId: number): UseActiveSessionResult {
           : "Impossibile completare l'allenamento",
       );
     }
-  }, [sessionId, view]);
+  };
 
-  const abandon = useCallback(async () => {
+  const abandon = async () => {
     setError(null);
 
     try {
@@ -223,12 +217,11 @@ export function useActiveSession(sessionId: number): UseActiveSessionResult {
       );
       throw err;
     }
-  }, [sessionId]);
+  };
 
-  const completedExerciseCount = useMemo(
-    () => (view ? countCompletedExercises(view.exercises) : 0),
-    [view],
-  );
+  const completedExerciseCount = view
+    ? countCompletedExercises(view.exercises)
+    : 0;
 
   return {
     status,
@@ -238,7 +231,7 @@ export function useActiveSession(sessionId: number): UseActiveSessionResult {
     loggingKey,
     completionVolumeKg,
     completedExerciseCount,
-    setFocusedExerciseId: handleFocusExercise,
+    setFocusedExerciseId,
     logSetRow,
     complete,
     abandon,

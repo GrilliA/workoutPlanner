@@ -1,7 +1,12 @@
 import { Router } from "express";
 import { eq } from "drizzle-orm";
 import { db } from "../db";
-import { exercises, workoutDays } from "../db/schema";
+import { exercises, workoutDays, workouts } from "../db/schema";
+import {
+  createExerciseWithSets,
+  enrichExercises,
+  parseExerciseBody,
+} from "../services/exerciseAccess";
 import {
   findTakenWeekdaysForWorkout,
   findWeekdayConflict,
@@ -242,13 +247,12 @@ workoutDaysRouter.get("/:dayId/exercises", async (req, res) => {
 
   const rows = await db.select().from(exercises).where(eq(exercises.workoutDayId, dayId));
 
-  res.json(rows);
+  res.json(await enrichExercises(rows));
 });
 
 workoutDaysRouter.post("/:dayId/exercises", async (req, res) => {
   const user = getAuthUser(req);
   const dayId = parseDayId(req.params);
-  const { name, sets, reps } = req.body;
 
   if (Number.isNaN(dayId)) {
     res.status(400).json({ error: "Invalid day id" });
@@ -262,31 +266,24 @@ workoutDaysRouter.post("/:dayId/exercises", async (req, res) => {
     return;
   }
 
-  if (!name || typeof name !== "string") {
-    res.status(400).json({ error: "name is required" });
+  const [workout] = await db
+    .select({ defaultRestSec: workouts.defaultRestSec })
+    .from(workouts)
+    .where(eq(workouts.id, day.workoutId));
+
+  const parsed = parseExerciseBody(req.body, workout?.defaultRestSec ?? 90);
+
+  if (!parsed.ok) {
+    res.status(400).json({ error: parsed.error });
     return;
   }
 
-  if (sets !== undefined && (typeof sets !== "number" || !Number.isInteger(sets))) {
-    res.status(400).json({ error: "sets must be an integer" });
-    return;
-  }
-
-  if (reps !== undefined && (typeof reps !== "number" || !Number.isInteger(reps))) {
-    res.status(400).json({ error: "reps must be an integer" });
-    return;
-  }
-
-  const [created] = await db
-    .insert(exercises)
-    .values({
-      name,
-      sets,
-      reps,
-      workoutId: day.workoutId,
-      workoutDayId: dayId,
-    })
-    .returning();
+  const created = await createExerciseWithSets({
+    name: parsed.value.name,
+    workoutId: day.workoutId,
+    workoutDayId: dayId,
+    setPrescriptions: parsed.value.setPrescriptions,
+  });
 
   res.status(201).json(created);
 });

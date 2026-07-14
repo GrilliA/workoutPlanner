@@ -3,8 +3,10 @@ import {
   createExerciseRequestSchema,
   exerciseSchema,
   exercisesSchema,
+  updateExerciseRequestSchema,
   type CreateExerciseInput,
   type Exercise,
+  type UpdateExerciseInput,
 } from "./schemas";
 
 export async function getExercisesByWorkout(workoutId: number): Promise<Exercise[]> {
@@ -25,4 +27,20 @@ export async function createExercise(
     requestSchema: createExerciseRequestSchema,
     schema: exerciseSchema,
   });
+}
+
+export async function updateExercise(
+  id: number,
+  input: UpdateExerciseInput,
+): Promise<Exercise> {
+  return apiRequest(`/exercises/${id}`, {
+    method: "PATCH",
+    body: input,
+    requestSchema: updateExerciseRequestSchema,
+    schema: exerciseSchema,
+  });
+}
+
+export async function deleteExercise(id: number): Promise<void> {
+  await apiRequest(`/exercises/${id}`, { method: "DELETE" });
 }

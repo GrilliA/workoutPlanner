@@ -60,6 +60,12 @@ export function WorkoutList() {
                       {workout.workoutType}
                     </p>
                   </div>
+
+                  <Link href={`/workouts/${workout.id}/edit`} className="edit-link">
+                    <Button.Root variant="secondary" size="sm">
+                      <Button.Label>MODIFICA</Button.Label>
+                    </Button.Root>
+                  </Link>
                 </article>
               </li>
             ))}

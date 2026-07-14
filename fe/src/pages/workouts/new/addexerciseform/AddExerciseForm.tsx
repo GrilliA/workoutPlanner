@@ -1,36 +1,31 @@
 import { useState, type FormEvent } from "react";
 import { Input } from "@components/input";
 import { Button } from "@components/button";
-import type { NewExerciseInput } from "../types";
+import { createDefaultSetPrescriptions, type NewExerciseInput } from "../types";
+import { SetPrescriptionEditor } from "../setprescriptioneditor";
 import "./style.css";
 
-const DEFAULT_SETS = 3;
-const DEFAULT_REPS = 10;
-
 export type AddExerciseFormProps = {
+  defaultRestSec: number;
   onAdd: (input: NewExerciseInput) => boolean;
 };
 
-export function AddExerciseForm({ onAdd }: AddExerciseFormProps) {
+export function AddExerciseForm({ defaultRestSec, onAdd }: AddExerciseFormProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState("");
-  const [sets, setSets] = useState(String(DEFAULT_SETS));
-  const [reps, setReps] = useState(String(DEFAULT_REPS));
+  const [setPrescriptions, setSetPrescriptions] = useState(() =>
+    createDefaultSetPrescriptions(3, 10, defaultRestSec),
+  );
 
   const resetForm = () => {
     setName("");
-    setSets(String(DEFAULT_SETS));
-    setReps(String(DEFAULT_REPS));
+    setSetPrescriptions(createDefaultSetPrescriptions(3, 10, defaultRestSec));
   };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const added = onAdd({
-      name,
-      sets: Number(sets),
-      reps: Number(reps),
-    });
+    const added = onAdd({ name, setPrescriptions });
 
     if (added) {
       resetForm();
@@ -66,31 +61,10 @@ export function AddExerciseForm({ onAdd }: AddExerciseFormProps) {
         />
       </Input.Root>
 
-      <div className="numbers">
-        <Input.Root>
-          <Input.Label>Serie</Input.Label>
-          <Input.Field
-            type="number"
-            min={1}
-            step={1}
-            value={sets}
-            onChange={(event) => setSets(event.target.value)}
-            required
-          />
-        </Input.Root>
-
-        <Input.Root>
-          <Input.Label>Reps</Input.Label>
-          <Input.Field
-            type="number"
-            min={1}
-            step={1}
-            value={reps}
-            onChange={(event) => setReps(event.target.value)}
-            required
-          />
-        </Input.Root>
-      </div>
+      <SetPrescriptionEditor
+        prescriptions={setPrescriptions}
+        onChange={setSetPrescriptions}
+      />
 
       <div className="actions">
         <Button.Root

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { ApiError } from "@api";
 import { useAuth } from "@auth";
 import { fetchDashboardData } from "./api";
@@ -23,9 +23,9 @@ export function useDashboard(): UseDashboardResult {
   const [data, setData] = useState<DashboardData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const retry = useCallback(() => {
+  const retry = () => {
     setFetchId((current) => current + 1);
-  }, []);
+  };
 
   useEffect(() => {
     if (loadingPreview || authStatus === "loading") {

@@ -1,0 +1,71 @@
+.set-prescription-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  & .header,
+  & .row {
+    display: grid;
+    grid-template-columns: 2.5rem 1fr 1fr 2rem;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  & .header {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text);
+    text-transform: uppercase;
+  }
+
+  & .index {
+    text-align: center;
+    font-weight: 700;
+    color: var(--text-h);
+  }
+
+  & .field {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+
+    & input {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      background: var(--surface);
+      color: var(--text-h);
+      padding: 0.55rem 0.65rem;
+      font: inherit;
+    }
+  }
+
+  & .suffix {
+    font-size: 0.8rem;
+    color: var(--text);
+  }
+
+  & .remove {
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    font-size: 1.1rem;
+    cursor: pointer;
+  }
+
+  & .remove:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  & .add-set {
+    align-self: flex-start;
+    border: 0;
+    background: transparent;
+    color: var(--accent);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0.25rem 0;
+  }
+}

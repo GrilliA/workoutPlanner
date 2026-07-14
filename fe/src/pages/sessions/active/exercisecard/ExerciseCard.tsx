@@ -5,6 +5,7 @@ import "./style.css";
 
 export type ExerciseCardProps = {
   exercise: ActiveExerciseCard;
+  defaultRestSec: number;
   isFocused: boolean;
   loggingKey: string | null;
   onFocus: () => void;
@@ -17,16 +18,13 @@ export type ExerciseCardProps = {
 
 export function ExerciseCard({
   exercise,
+  defaultRestSec,
   isFocused,
   loggingKey,
   onFocus,
   onLogSet,
 }: ExerciseCardProps) {
-  const meta = formatExerciseMeta(
-    exercise.targetSets,
-    exercise.targetReps,
-    exercise.restSec,
-  );
+  const meta = formatExerciseMeta(exercise.setPrescriptions, defaultRestSec);
 
   return (
     <article

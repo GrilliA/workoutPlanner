@@ -117,6 +117,7 @@ export function ActiveSession({ sessionId }: ActiveSessionProps) {
             <ExerciseCard
               key={exercise.exerciseId}
               exercise={exercise}
+              defaultRestSec={view.defaultRestSec}
               isFocused={exercise.exerciseId === focusedExerciseId}
               loggingKey={loggingKey}
               onFocus={() => setFocusedExerciseId(exercise.exerciseId)}

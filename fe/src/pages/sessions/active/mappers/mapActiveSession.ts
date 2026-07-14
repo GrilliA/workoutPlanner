@@ -4,23 +4,42 @@ import type { ActiveExerciseCard, ActiveSessionView, ActiveSetRow } from "../typ
 const DEFAULT_TARGET_SETS = 3;
 const DEFAULT_TARGET_REPS = 10;
 
+const getExercisePrescriptions = (exercise: Exercise, defaultRestSec: number) => {
+  if (exercise.setPrescriptions.length > 0) {
+    return exercise.setPrescriptions.map((entry) => ({
+      setNumber: entry.setNumber,
+      reps: entry.reps,
+      restSec: entry.restSec ?? defaultRestSec,
+    }));
+  }
+
+  const targetSets = exercise.sets ?? DEFAULT_TARGET_SETS;
+  const targetReps = exercise.reps ?? DEFAULT_TARGET_REPS;
+
+  return Array.from({ length: targetSets }, (_, index) => ({
+    setNumber: index + 1,
+    reps: targetReps,
+    restSec: defaultRestSec,
+  }));
+};
+
 const buildSetRows = (
   exercise: Exercise,
   loggedSets: LoggedSet[],
   activeExerciseId: number | null,
+  defaultRestSec: number,
 ): ActiveSetRow[] => {
-  const targetSets = exercise.sets ?? DEFAULT_TARGET_SETS;
-  const targetReps = exercise.reps ?? DEFAULT_TARGET_REPS;
+  const prescriptions = getExercisePrescriptions(exercise, defaultRestSec);
   const exerciseLogs = loggedSets.filter((set) => set.exerciseId === exercise.id);
 
-  return Array.from({ length: targetSets }, (_, index) => {
-    const setNumber = index + 1;
-    const logged = exerciseLogs.find((set) => set.setNumber === setNumber);
+  return prescriptions.map((prescription) => {
+    const logged = exerciseLogs.find((set) => set.setNumber === prescription.setNumber);
 
     if (logged) {
       return {
-        setNumber,
+        setNumber: prescription.setNumber,
         targetReps: logged.reps,
+        restSec: prescription.restSec,
         weightKg: logged.weightKg === null ? "" : String(logged.weightKg),
         status: "completed" as const,
         loggedSetId: logged.id,
@@ -28,13 +47,16 @@ const buildSetRows = (
     }
 
     const isActiveExercise = exercise.id === activeExerciseId;
-    const previousSetsDone = Array.from({ length: setNumber - 1 }, (_, i) => i + 1).every(
-      (n) => exerciseLogs.some((set) => set.setNumber === n),
-    );
+    const previousSetsDone = prescriptions
+      .filter((entry) => entry.setNumber < prescription.setNumber)
+      .every((entry) =>
+        exerciseLogs.some((set) => set.setNumber === entry.setNumber),
+      );
 
     return {
-      setNumber,
-      targetReps,
+      setNumber: prescription.setNumber,
+      targetReps: prescription.reps,
+      restSec: prescription.restSec,
       weightKg: "",
       status:
         isActiveExercise && previousSetsDone ? ("active" as const) : ("pending" as const),
@@ -55,19 +77,16 @@ export const mapActiveSession = (
   focusedExerciseId: number | null,
 ): ActiveSessionView => {
   const preliminaryCards: ActiveExerciseCard[] = exercises.map((exercise, index) => {
-    const targetSets = exercise.sets ?? DEFAULT_TARGET_SETS;
+    const prescriptions = getExercisePrescriptions(exercise, workout.defaultRestSec);
     const loggedForExercise = session.sets.filter((set) => set.exerciseId === exercise.id);
-    const isComplete = loggedForExercise.length >= targetSets;
 
     return {
       exerciseId: exercise.id,
       index: index + 1,
       name: exercise.name,
-      targetSets,
-      targetReps: exercise.reps ?? DEFAULT_TARGET_REPS,
-      restSec: workout.defaultRestSec,
+      setPrescriptions: prescriptions,
       sets: [],
-      isComplete,
+      isComplete: loggedForExercise.length >= prescriptions.length,
     };
   });
 
@@ -75,16 +94,19 @@ export const mapActiveSession = (
     focusedExerciseId ?? findActiveExerciseId(preliminaryCards) ?? exercises[0]?.id ?? null;
 
   const mappedExercises = exercises.map((exercise, index) => {
-    const targetSets = exercise.sets ?? DEFAULT_TARGET_SETS;
-    const sets = buildSetRows(exercise, session.sets, activeExerciseId);
+    const prescriptions = getExercisePrescriptions(exercise, workout.defaultRestSec);
+    const sets = buildSetRows(
+      exercise,
+      session.sets,
+      activeExerciseId,
+      workout.defaultRestSec,
+    );
 
     return {
       exerciseId: exercise.id,
       index: index + 1,
       name: exercise.name,
-      targetSets,
-      targetReps: exercise.reps ?? DEFAULT_TARGET_REPS,
-      restSec: workout.defaultRestSec,
+      setPrescriptions: prescriptions,
       sets,
       isComplete: sets.every((set) => set.status === "completed"),
     };

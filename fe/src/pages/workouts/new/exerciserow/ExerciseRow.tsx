@@ -4,8 +4,7 @@ import "./style.css";
 export type ExerciseRowProps = {
   index: number;
   name: string;
-  sets: number;
-  reps: number;
+  setPrescriptions: { reps: number; restSec: number }[];
   defaultRestSec: number;
   onRemove: () => void;
 };
@@ -13,8 +12,7 @@ export type ExerciseRowProps = {
 export function ExerciseRow({
   index,
   name,
-  sets,
-  reps,
+  setPrescriptions,
   defaultRestSec,
   onRemove,
 }: ExerciseRowProps) {
@@ -26,7 +24,9 @@ export function ExerciseRow({
 
       <div className="copy">
         <h3 className="name">{name}</h3>
-        <p className="meta">{formatExerciseMeta(sets, reps, defaultRestSec)}</p>
+        <p className="meta">
+          {formatExerciseMeta(setPrescriptions, defaultRestSec)}
+        </p>
       </div>
 
       <button
