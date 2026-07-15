@@ -21,6 +21,8 @@ cd be && npm test     # unit tests (stats, schedule helpers)
 cd fe && npm run dev
 ```
 
+**CI:** push o PR su `main` → GitHub Actions (`.github/workflows/ci.yml`): `be` typecheck + test, `fe` build (Node 22).
+
 - `be/.env` credentials: `postgres:postgres` (must match `docker-compose.yml`)
 - Frontend calls relative `/api/...` URLs; Vite proxies in dev
 - UI copy in **Italian** (reference: TRACCIA Figma dashboard)

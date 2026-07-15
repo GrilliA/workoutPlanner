@@ -31,6 +31,7 @@ How to use:
 ## What we did
 
 - 2026-07-14 — Responsive layout refactor: shared `layout.css` tokens, mobile-first AppShell, `.page-container` utilities, dashboard `@container` grids.
+- 2026-07-15 — CI GitHub Actions: workflow su push/PR a `main` (BE typecheck + test, FE build con Node 22).
 - 2026-07-15 — C10 WeekStrip polish: tap su un giorno della settimana per cambiare/ripristinare il programma di quel giorno.
 - 2026-07-15 — Tech debt: fix FE TypeScript build errors, initial Drizzle migration (`be/drizzle/0000_*`), backend unit tests for stats and Rome schedule helpers.
 - 2026-07-15 — C8 WeekStrip schedule: dashboard loads 7-day program via schedule API (Rome TZ), shows workout day or rest per weekday.
@@ -83,6 +84,6 @@ Legend: ⬜ todo · 🟡 in progress · ✅ done
 
 ## Other next steps
 
-- [ ] Implement authentication (Login/Logout routes exist in the UI but have no backend auth).
-- [ ] Add the missing FE routes referenced in the UI (`/forgot-password`, `/settings`, `/logout`).
-- [x] Add real migration files via `npm run db:generate` (initial snapshot in `be/drizzle/`).
+- [ ] Smoke test end-to-end manuale (db + be + fe).
+- [ ] Test FE (Vitest su mapper/utils).
+- [ ] Route `/forgot-password` (link già presente in login).
