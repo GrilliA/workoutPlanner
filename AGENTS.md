@@ -9,10 +9,13 @@ Guida per agenti e contributor. Leggere prima di modificare codice.
 ```bash
 # Database
 npm run db:up          # Postgres via Docker Compose
-npm run db:push        # sync schema (no migration files yet)
+npm run db:push        # sync schema in dev (quick)
+npm run db:generate    # create SQL migration in be/drizzle/
+npm run db:migrate     # apply migrations
 
 # Backend (port 3005)
 cd be && npm run dev
+cd be && npm test     # unit tests (stats, schedule helpers)
 
 # Frontend (Vite, proxy /api → localhost:3005)
 cd fe && npm run dev

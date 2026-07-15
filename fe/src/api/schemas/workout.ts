@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { weekdaySchema } from "./workoutday";
 
 export const REST_SEC_OPTIONS = [60, 90, 120, 150] as const;
 
@@ -45,7 +46,7 @@ export const workoutDetailSchema = workoutSchema.extend({
         workoutId: z.number(),
         name: z.string(),
         sortOrder: z.number(),
-        weekdays: z.array(z.number().int().min(0).max(6)),
+        weekdays: z.array(weekdaySchema),
         exerciseCount: z.number(),
       }),
     )

@@ -37,7 +37,7 @@
     "db:up": "docker compose -f ../docker-compose.yml up -d",
     "db:down": "docker compose -f ../docker-compose.yml down",
     "db:logs": "docker compose -f ../docker-compose.yml logs -f postgres",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --import tsx --test src/services/*.test.ts"
   },
   "keywords": [],
   "author": "",

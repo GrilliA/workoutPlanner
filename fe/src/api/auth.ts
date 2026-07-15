@@ -60,6 +60,7 @@ export async function changePassword(
   await apiRequest("/auth/password", {
     method: "PATCH",
     body: input,
+    requestSchema: changePasswordRequestSchema,
     schema: z.undefined(),
   });
 }

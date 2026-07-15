@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { apiRequest } from "./client";
 import {
   createExerciseRequestSchema,
@@ -57,6 +58,7 @@ export async function updateWorkoutDay(
 export async function deleteWorkoutDay(workoutId: number, dayId: number): Promise<void> {
   await apiRequest(`/workouts/${workoutId}/days/${dayId}`, {
     method: "DELETE",
+    schema: z.undefined(),
   });
 }
 
@@ -124,5 +126,6 @@ export async function deleteScheduleOverride(
 ): Promise<void> {
   await apiRequest(`/workouts/${workoutId}/schedule/overrides/${scheduledDate}`, {
     method: "DELETE",
+    schema: z.undefined(),
   });
 }

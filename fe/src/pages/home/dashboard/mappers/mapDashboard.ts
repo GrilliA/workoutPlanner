@@ -118,7 +118,6 @@ export const mapRecentSessions = (stats: UserStats): RecentWorkout[] =>
   }));
 
 export const buildDashboardData = (
-  workouts: Workout[],
   today: TodayWorkoutInput | null,
   stats: UserStats,
   weekSchedules: WorkoutSchedule[] = [],

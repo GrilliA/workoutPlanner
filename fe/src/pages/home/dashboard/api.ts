@@ -40,7 +40,7 @@ export async function fetchDashboardData(): Promise<DashboardData> {
   const [workouts, stats] = await Promise.all([getWorkouts(), getStats()]);
 
   if (workouts.length === 0) {
-    return buildDashboardData([], null, stats);
+    return buildDashboardData(null, stats);
   }
 
   const [newestWorkout] = sortByNewest(workouts);
@@ -58,7 +58,7 @@ export async function fetchDashboardData(): Promise<DashboardData> {
   );
 
   if (!schedule.workoutDay) {
-    return buildDashboardData(workouts, null, stats, weekSchedules, todaySchedule);
+    return buildDashboardData(null, stats, weekSchedules, todaySchedule);
   }
 
   const exercises = await getWorkoutDayExercises(
@@ -67,7 +67,6 @@ export async function fetchDashboardData(): Promise<DashboardData> {
   );
 
   return buildDashboardData(
-    workouts,
     {
       workout: newestWorkout,
       day: schedule.workoutDay,

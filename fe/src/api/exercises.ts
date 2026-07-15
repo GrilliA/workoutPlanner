@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { apiRequest } from "./client";
 import {
   createExerciseRequestSchema,
@@ -42,5 +43,5 @@ export async function updateExercise(
 }
 
 export async function deleteExercise(id: number): Promise<void> {
-  await apiRequest(`/exercises/${id}`, { method: "DELETE" });
+  await apiRequest(`/exercises/${id}`, { method: "DELETE", schema: z.undefined() });
 }

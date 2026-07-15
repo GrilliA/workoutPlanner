@@ -52,6 +52,10 @@ export {
   type DailyStatPoint,
   type RecentSessionSummary,
   type UserStats,
+  workoutScheduleSchema,
+  type WorkoutSchedule,
+  type WorkoutDay,
+  type Weekday,
 } from "./schemas";
 export { getWorkouts, getWorkout, createWorkout, updateWorkout } from "./workouts";
 export {

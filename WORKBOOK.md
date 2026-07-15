@@ -31,7 +31,7 @@ How to use:
 ## What we did
 
 - 2026-07-14 — Responsive layout refactor: shared `layout.css` tokens, mobile-first AppShell, `.page-container` utilities, dashboard `@container` grids.
-- 2026-07-15 — C9 cambio giorno UI: DayPicker su TodayCard, override/ripristino programma via schedule API.
+- 2026-07-15 — Tech debt: fix FE TypeScript build errors, initial Drizzle migration (`be/drizzle/0000_*`), backend unit tests for stats and Rome schedule helpers.
 - 2026-07-15 — C8 WeekStrip schedule: dashboard loads 7-day program via schedule API (Rome TZ), shows workout day or rest per weekday.
 - 2026-07-14 — W7 session recap: read-only `/sessions/:id` for completed/abandoned sessions, WorkoutRow links from dashboard and stats.
 - 2026-07-14 — C7 analytics page: extended `GET /stats` with `dailyBreakdown`, `totalSessions`, `averageSessionVolumeKg`; `/stats` Progressi page with stat grid, volume/activity charts, recent sessions.
@@ -83,5 +83,4 @@ Legend: ⬜ todo · 🟡 in progress · ✅ done
 
 - [ ] Implement authentication (Login/Logout routes exist in the UI but have no backend auth).
 - [ ] Add the missing FE routes referenced in the UI (`/forgot-password`, `/settings`, `/logout`).
-- [ ] Add real migration files via `npm run db:generate` once the schema stabilizes (instead of relying on `db:push`).
-- [ ] Add automated tests (backend currently has no test script; `npm test` is a placeholder).
+- [x] Add real migration files via `npm run db:generate` (initial snapshot in `be/drizzle/`).
