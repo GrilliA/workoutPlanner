@@ -3,12 +3,16 @@ import { Link, useLocation } from "wouter";
 import { Button } from "@components/button";
 import { Skeleton } from "@components/skeleton";
 import { resolveWorkoutSessionId } from "@pages/sessions/active/api";
-import type { TodayWorkout } from "../types";
+import { DayPicker } from "../daypicker";
+import type { TodaySchedule, TodayWorkout } from "../types";
+import { useScheduleOverride } from "../useScheduleOverride";
 import "./style.css";
 
 export type TodayCardProps = {
   workout: TodayWorkout | null;
+  schedule: TodaySchedule | null;
   isLoading?: boolean;
+  onScheduleChanged: () => void;
 };
 
 function TodayCardSkeleton() {
@@ -32,9 +36,83 @@ function TodayCardSkeleton() {
       <Skeleton variant="block" height={44} className="cta-skeleton" />
     </section>
   );
+};
+
+type TodayCardScheduleActionsProps = {
+  schedule: TodaySchedule;
+  currentDayId: number | null;
+  isSaving: boolean;
+  scheduleError: string | null;
+  onOpenPicker: () => void;
+  onResetOverride: () => void;
+};
+
+function TodayCardScheduleActions({
+  schedule,
+  currentDayId,
+  isSaving,
+  scheduleError,
+  onOpenPicker,
+  onResetOverride,
+}: TodayCardScheduleActionsProps) {
+  const canChangeDay = schedule.programDays.length > 0;
+
+  if (!canChangeDay) {
+    return null;
+  }
+
+  return (
+    <div className="schedule-actions">
+      {schedule.source === "override" ? (
+        <span className="chip override">Modificato manualmente</span>
+      ) : null}
+
+      <div className="action-row">
+        <Button.Root
+          variant="secondary"
+          size="sm"
+          disabled={isSaving}
+          onClick={onOpenPicker}
+        >
+          <Button.Label>{currentDayId ? "CAMBIA GIORNO" : "SCEGLI ALLENAMENTO"}</Button.Label>
+        </Button.Root>
+
+        {schedule.source === "override" ? (
+          <Button.Root
+            variant="ghost"
+            size="sm"
+            disabled={isSaving}
+            onClick={() => void onResetOverride()}
+          >
+            <Button.Label>RIPRISTINA</Button.Label>
+          </Button.Root>
+        ) : null}
+      </div>
+
+      {scheduleError ? (
+        <p className="schedule-error" role="alert">
+          {scheduleError}
+        </p>
+      ) : null}
+    </div>
+  );
 }
 
-function TodayCardEmpty() {
+type TodayCardEmptyProps = {
+  schedule: TodaySchedule | null;
+  isSaving: boolean;
+  scheduleError: string | null;
+  onOpenPicker: () => void;
+};
+
+function TodayCardEmpty({
+  schedule,
+  isSaving,
+  scheduleError,
+  onOpenPicker,
+}: TodayCardEmptyProps) {
+  const hasProgramDays = (schedule?.programDays.length ?? 0) > 0;
+
   return (
     <section className="today-card empty" aria-labelledby="today-card-title">
       <div className="header">
@@ -42,32 +120,98 @@ function TodayCardEmpty() {
         <h2 id="today-card-title" className="title">
           Nessun allenamento oggi
         </h2>
+        {schedule ? <p className="program">{schedule.programName}</p> : null}
       </div>
 
       <p className="empty-message" aria-live="polite">
-        Giorno di riposo o nessuna scheda programmata
+        Giorno di riposo o nessuna scheda programmata per oggi
       </p>
 
-      <Link href="/workouts/new" className="cta-link">
-        <Button.Root variant="secondary" className="cta">
-          <Button.Label>CREA WORKOUT</Button.Label>
-        </Button.Root>
-      </Link>
+      {schedule ? (
+        <TodayCardScheduleActions
+          schedule={schedule}
+          currentDayId={null}
+          isSaving={isSaving}
+          scheduleError={scheduleError}
+          onOpenPicker={onOpenPicker}
+          onResetOverride={() => undefined}
+        />
+      ) : null}
+
+      {!hasProgramDays ? (
+        <Link href="/workouts/new" className="cta-link">
+          <Button.Root variant="secondary" className="cta">
+            <Button.Label>CREA WORKOUT</Button.Label>
+          </Button.Root>
+        </Link>
+      ) : null}
     </section>
   );
 }
 
-export function TodayCard({ workout, isLoading = false }: TodayCardProps) {
+export function TodayCard({
+  workout,
+  schedule,
+  isLoading = false,
+  onScheduleChanged,
+}: TodayCardProps) {
   const [, setLocation] = useLocation();
   const [isStarting, setIsStarting] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const { isSaving, error: scheduleError, setDayOverride, clearDayOverride } =
+    useScheduleOverride(onScheduleChanged);
 
   if (isLoading) {
     return <TodayCardSkeleton />;
   }
 
+  const handleSelectDay = async (workoutDayId: number) => {
+    if (!schedule) {
+      return;
+    }
+
+    try {
+      await setDayOverride(schedule.workoutId, schedule.dateKey, workoutDayId);
+      setIsPickerOpen(false);
+    } catch {
+      // error surfaced via hook state
+    }
+  };
+
+  const handleResetOverride = async () => {
+    if (!schedule) {
+      return;
+    }
+
+    try {
+      await clearDayOverride(schedule.workoutId, schedule.dateKey);
+    } catch {
+      // error surfaced via hook state
+    }
+  };
+
   if (!workout) {
-    return <TodayCardEmpty />;
+    return (
+      <>
+        <TodayCardEmpty
+          schedule={schedule}
+          isSaving={isSaving}
+          scheduleError={scheduleError}
+          onOpenPicker={() => setIsPickerOpen(true)}
+        />
+        {schedule ? (
+          <DayPicker
+            isOpen={isPickerOpen}
+            days={schedule.programDays}
+            currentDayId={null}
+            isSaving={isSaving}
+            onClose={() => setIsPickerOpen(false)}
+            onSelect={(workoutDayId) => void handleSelectDay(workoutDayId)}
+          />
+        ) : null}
+      </>
+    );
   }
 
   const { workoutId, workoutDayId, name, programName, exercises, goal, durationMin } = workout;
@@ -87,37 +231,61 @@ export function TodayCard({ workout, isLoading = false }: TodayCardProps) {
   };
 
   return (
-    <section className="today-card" aria-labelledby="today-card-title">
-      <div className="header">
-        <span className="eyebrow">OGGI</span>
-        <h2 id="today-card-title" className="title">
-          {name}
-        </h2>
-        <p className="program">{programName}</p>
-      </div>
+    <>
+      <section className="today-card" aria-labelledby="today-card-title">
+        <div className="header">
+          <span className="eyebrow">OGGI</span>
+          <h2 id="today-card-title" className="title">
+            {name}
+          </h2>
+          <p className="program">{programName}</p>
+        </div>
 
-      <p className="exercises">{exercises.join(" · ")}</p>
+        <p className="exercises">{exercises.join(" · ")}</p>
 
-      <div className="meta">
-        <span className="chip">{goal}</span>
-        {durationMin > 0 && <span className="chip">{durationMin} min</span>}
-      </div>
+        <div className="meta">
+          <span className="chip">{goal}</span>
+          {durationMin > 0 ? <span className="chip">{durationMin} min</span> : null}
+        </div>
 
-      {startError ? (
-        <p className="start-error" role="alert">
-          {startError}
-        </p>
+        {schedule ? (
+          <TodayCardScheduleActions
+            schedule={schedule}
+            currentDayId={workoutDayId}
+            isSaving={isSaving}
+            scheduleError={scheduleError}
+            onOpenPicker={() => setIsPickerOpen(true)}
+            onResetOverride={() => void handleResetOverride()}
+          />
+        ) : null}
+
+        {startError ? (
+          <p className="start-error" role="alert">
+            {startError}
+          </p>
+        ) : null}
+
+        <Button.Root
+          variant="primary"
+          className="cta"
+          loading={isStarting}
+          disabled={isStarting || isSaving}
+          onClick={() => void handleStart()}
+        >
+          <Button.Label>AVVIA WORKOUT</Button.Label>
+        </Button.Root>
+      </section>
+
+      {schedule ? (
+        <DayPicker
+          isOpen={isPickerOpen}
+          days={schedule.programDays}
+          currentDayId={workoutDayId}
+          isSaving={isSaving}
+          onClose={() => setIsPickerOpen(false)}
+          onSelect={(dayId) => void handleSelectDay(dayId)}
+        />
       ) : null}
-
-      <Button.Root
-        variant="primary"
-        className="cta"
-        loading={isStarting}
-        disabled={isStarting}
-        onClick={() => void handleStart()}
-      >
-        <Button.Label>AVVIA WORKOUT</Button.Label>
-      </Button.Root>
-    </section>
+    </>
   );
 }

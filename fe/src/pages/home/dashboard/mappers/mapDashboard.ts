@@ -1,11 +1,25 @@
 import type { Exercise, UserStats, Workout, WorkoutSchedule } from "@api";
-import type { DashboardData, DashboardStat, RecentWorkout, WeekStripDay } from "../types";
+import type {
+  DashboardData,
+  DashboardStat,
+  RecentWorkout,
+  TodaySchedule,
+  WeekStripDay,
+} from "../types";
 import { buildRestWeekStrip, mapWeekStrip } from "./mapWeekStrip";
 
 export type TodayWorkoutInput = {
   workout: Workout;
   day: { id: number; name: string };
   exercises: Exercise[];
+};
+
+export type TodayScheduleInput = {
+  workoutId: number;
+  programName: string;
+  dateKey: string;
+  source: TodaySchedule["source"];
+  programDays: TodaySchedule["programDays"];
 };
 
 const formatWorkoutDate = (date: Date) =>
@@ -31,10 +45,19 @@ export const hasSessionHistory = (stats: UserStats): boolean =>
 
 export const createEmptyDashboardData = (): DashboardData => ({
   todayWorkout: null,
+  todaySchedule: null,
   weekDays: buildRestWeekStrip(),
   stats: [],
   recentWorkouts: [],
   hasSessionHistory: false,
+});
+
+export const mapTodaySchedule = (input: TodayScheduleInput): TodaySchedule => ({
+  workoutId: input.workoutId,
+  programName: input.programName,
+  dateKey: input.dateKey,
+  source: input.source,
+  programDays: input.programDays,
 });
 
 export const mapTodayWorkout = (
@@ -99,6 +122,7 @@ export const buildDashboardData = (
   today: TodayWorkoutInput | null,
   stats: UserStats,
   weekSchedules: WorkoutSchedule[] = [],
+  todaySchedule: TodayScheduleInput | null = null,
 ): DashboardData => {
   const sessionHistory = hasSessionHistory(stats);
   const weekDays: WeekStripDay[] =
@@ -108,6 +132,7 @@ export const buildDashboardData = (
     todayWorkout: today
       ? mapTodayWorkout(today.workout, today.day, today.exercises)
       : null,
+    todaySchedule: todaySchedule ? mapTodaySchedule(todaySchedule) : null,
     weekDays,
     stats: sessionHistory ? mapStats(stats) : [],
     recentWorkouts: mapRecentSessions(stats),

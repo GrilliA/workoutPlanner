@@ -34,8 +34,24 @@ export type WeekStripDay = {
   isOverride: boolean;
 };
 
+export type ScheduleSource = "override" | "schedule" | "default";
+
+export type ProgramDayOption = {
+  id: number;
+  name: string;
+};
+
+export type TodaySchedule = {
+  workoutId: number;
+  programName: string;
+  dateKey: string;
+  source: ScheduleSource | null;
+  programDays: ProgramDayOption[];
+};
+
 export type DashboardData = {
   todayWorkout: TodayWorkout | null;
+  todaySchedule: TodaySchedule | null;
   weekDays: WeekStripDay[];
   stats: DashboardStat[];
   recentWorkouts: RecentWorkout[];

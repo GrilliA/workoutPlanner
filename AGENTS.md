@@ -350,3 +350,4 @@ See `WORKBOOK.md` for full detail.
 | C7 (analytics) | ✅ done |
 | W7 (session recap) | ✅ done |
 | C8 (WeekStrip schedule) | ✅ done |
+| C9 (schedule override UI) | ✅ done |

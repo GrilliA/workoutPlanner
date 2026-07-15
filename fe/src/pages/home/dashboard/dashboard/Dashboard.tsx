@@ -38,7 +38,12 @@ export function Dashboard() {
         </div>
       )}
 
-      <TodayCard workout={data?.todayWorkout ?? null} isLoading={isLoading} />
+      <TodayCard
+        workout={data?.todayWorkout ?? null}
+        schedule={data?.todaySchedule ?? null}
+        isLoading={isLoading}
+        onScheduleChanged={retry}
+      />
 
       <div className="stat-grid" aria-busy={isLoading || undefined}>
         {isLoading

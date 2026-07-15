@@ -55,6 +55,29 @@
     background: rgba(255, 255, 255, 0.03);
     font-size: 0.8rem;
     color: var(--text-h);
+
+    &.override {
+      border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+      color: var(--accent);
+    }
+  }
+
+  & .schedule-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+
+  & .action-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  & .schedule-error {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--error, #f87171);
   }
 
   & .cta {
