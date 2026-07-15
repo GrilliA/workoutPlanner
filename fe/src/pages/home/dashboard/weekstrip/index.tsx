@@ -1,1 +1,1 @@
-export { WeekStrip } from "./WeekStrip";
+export { WeekStrip, WeekStripSkeleton } from "./WeekStrip";

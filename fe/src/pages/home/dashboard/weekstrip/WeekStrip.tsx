@@ -1,40 +1,58 @@
+import { Skeleton } from "@components/skeleton";
+import type { WeekStripDay } from "../types";
 import "./style.css";
 
-const dayLabels = ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"];
+export type WeekStripProps = {
+  days: WeekStripDay[];
+  isLoading?: boolean;
+};
 
-function getWeekDays(reference = new Date()) {
-  const day = reference.getDay();
-  const mondayOffset = day === 0 ? -6 : 1 - day;
-  const monday = new Date(reference);
-  monday.setHours(12, 0, 0, 0);
-  monday.setDate(reference.getDate() + mondayOffset);
+const truncateDayName = (name: string): string =>
+  name.length > 8 ? `${name.slice(0, 7)}…` : name;
 
-  return dayLabels.map((label, index) => {
-    const date = new Date(monday);
-    date.setDate(monday.getDate() + index);
-    return {
-      label,
-      date,
-      isToday: date.toDateString() === reference.toDateString(),
-    };
-  });
+export function WeekStripSkeleton() {
+  return (
+    <div className="week-strip loading" aria-busy="true" aria-hidden="true">
+      {Array.from({ length: 7 }, (_, index) => (
+        <Skeleton key={index} variant="block" width={48} height={56} className="day-skeleton" />
+      ))}
+    </div>
+  );
 }
 
-export function WeekStrip() {
-  const days = getWeekDays();
+export function WeekStrip({ days, isLoading = false }: WeekStripProps) {
+  if (isLoading) {
+    return <WeekStripSkeleton />;
+  }
 
   return (
-    <div className="week-strip" aria-label="Settimana corrente">
+    <div className="week-strip" aria-label="Programma settimanale">
       {days.map((day) => (
-        <button
-          key={day.label}
-          type="button"
-          className={day.isToday ? "day today" : "day"}
+        <div
+          key={day.dateKey}
+          className={[
+            "day",
+            day.isToday ? "today" : "",
+            day.isRest ? "rest" : "scheduled",
+            day.isOverride ? "override" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
           aria-current={day.isToday ? "date" : undefined}
+          title={
+            day.workoutDayName
+              ? `${day.weekdayLabel} ${day.dayNumber}: ${day.workoutDayName}`
+              : `${day.weekdayLabel} ${day.dayNumber}: riposo`
+          }
         >
-          <span className="label">{day.label}</span>
-          <span className="number">{day.date.getDate()}</span>
-        </button>
+          <span className="label">{day.weekdayLabel}</span>
+          <span className="number">{day.dayNumber}</span>
+          {day.workoutDayName ? (
+            <span className="workout">{truncateDayName(day.workoutDayName)}</span>
+          ) : (
+            <span className="workout rest-label">Riposo</span>
+          )}
+        </div>
       ))}
     </div>
   );

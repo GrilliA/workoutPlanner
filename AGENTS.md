@@ -349,3 +349,4 @@ See `WORKBOOK.md` for full detail.
 | B4 (program days) | ✅ |
 | C7 (analytics) | ✅ done |
 | W7 (session recap) | ✅ done |
+| C8 (WeekStrip schedule) | ✅ done |

@@ -1,5 +1,6 @@
-import type { Exercise, UserStats, Workout } from "@api";
-import type { DashboardData, DashboardStat, RecentWorkout } from "../types";
+import type { Exercise, UserStats, Workout, WorkoutSchedule } from "@api";
+import type { DashboardData, DashboardStat, RecentWorkout, WeekStripDay } from "../types";
+import { buildRestWeekStrip, mapWeekStrip } from "./mapWeekStrip";
 
 export type TodayWorkoutInput = {
   workout: Workout;
@@ -12,11 +13,6 @@ const formatWorkoutDate = (date: Date) =>
     day: "numeric",
     month: "short",
   });
-
-const sortByNewest = (workouts: Workout[]): Workout[] =>
-  [...workouts].sort(
-    (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
-  );
 
 const formatKgValue = (kg: number): string => {
   if (kg <= 0) {
@@ -35,6 +31,7 @@ export const hasSessionHistory = (stats: UserStats): boolean =>
 
 export const createEmptyDashboardData = (): DashboardData => ({
   todayWorkout: null,
+  weekDays: buildRestWeekStrip(),
   stats: [],
   recentWorkouts: [],
   hasSessionHistory: false,
@@ -101,14 +98,17 @@ export const buildDashboardData = (
   workouts: Workout[],
   today: TodayWorkoutInput | null,
   stats: UserStats,
+  weekSchedules: WorkoutSchedule[] = [],
 ): DashboardData => {
-  const sorted = sortByNewest(workouts);
   const sessionHistory = hasSessionHistory(stats);
+  const weekDays: WeekStripDay[] =
+    weekSchedules.length > 0 ? mapWeekStrip(weekSchedules) : buildRestWeekStrip();
 
   return {
     todayWorkout: today
       ? mapTodayWorkout(today.workout, today.day, today.exercises)
       : null,
+    weekDays,
     stats: sessionHistory ? mapStats(stats) : [],
     recentWorkouts: mapRecentSessions(stats),
     hasSessionHistory: sessionHistory,

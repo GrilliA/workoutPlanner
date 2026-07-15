@@ -31,6 +31,7 @@ How to use:
 ## What we did
 
 - 2026-07-14 — Responsive layout refactor: shared `layout.css` tokens, mobile-first AppShell, `.page-container` utilities, dashboard `@container` grids.
+- 2026-07-15 — C8 WeekStrip schedule: dashboard loads 7-day program via schedule API (Rome TZ), shows workout day or rest per weekday.
 - 2026-07-14 — W7 session recap: read-only `/sessions/:id` for completed/abandoned sessions, WorkoutRow links from dashboard and stats.
 - 2026-07-14 — C7 analytics page: extended `GET /stats` with `dailyBreakdown`, `totalSessions`, `averageSessionVolumeKg`; `/stats` Progressi page with stat grid, volume/activity charts, recent sessions.
 - 2026-07-14 — A2 account settings: `/settings` page (name, read-only email, change password, logout); `PATCH /auth/me`, `PATCH /auth/password`.
@@ -67,6 +68,7 @@ Legend: ⬜ todo · 🟡 in progress · ✅ done
 - **A2 — Account settings** ✅
 - **C7 — Analytics (charts) v2** ✅
 - **W7 — Session recap (read-only history)** ✅
+- **C8 — WeekStrip wired to schedule** ✅
 
 ### Backend track
 

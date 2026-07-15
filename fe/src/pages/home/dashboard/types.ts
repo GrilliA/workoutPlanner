@@ -24,8 +24,19 @@ export type RecentWorkout = {
   volumeKg: number;
 };
 
+export type WeekStripDay = {
+  dateKey: string;
+  weekdayLabel: string;
+  dayNumber: number;
+  isToday: boolean;
+  workoutDayName: string | null;
+  isRest: boolean;
+  isOverride: boolean;
+};
+
 export type DashboardData = {
   todayWorkout: TodayWorkout | null;
+  weekDays: WeekStripDay[];
   stats: DashboardStat[];
   recentWorkouts: RecentWorkout[];
   hasSessionHistory: boolean;

@@ -27,7 +27,7 @@ export function Dashboard() {
   return (
     <div className="dashboard page-container page-container--wide">
       <TopBar />
-      <WeekStrip />
+      <WeekStrip days={data?.weekDays ?? []} isLoading={isLoading} />
 
       {status === "error" && (
         <div className="dashboard-error" role="alert">
