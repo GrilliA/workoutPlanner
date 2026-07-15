@@ -54,6 +54,12 @@
     }
   }
 
+  & .week-schedule-error {
+    margin: -0.75rem 0 0.75rem;
+    font-size: 0.85rem;
+    color: var(--error, #f87171);
+  }
+
   & .dashboard-error {
     display: flex;
     align-items: center;

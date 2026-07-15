@@ -354,3 +354,4 @@ See `WORKBOOK.md` for full detail.
 | W7 (session recap) | ✅ done |
 | C8 (WeekStrip schedule) | ✅ done |
 | C9 (schedule override UI) | ✅ done |
+| C10 (WeekStrip polish) | ✅ done |

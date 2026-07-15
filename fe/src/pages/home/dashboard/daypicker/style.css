@@ -96,6 +96,13 @@
     text-transform: uppercase;
   }
 
+  & .footer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  & .reset,
   & .cancel {
     width: 100%;
   }

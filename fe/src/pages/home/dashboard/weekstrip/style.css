@@ -22,6 +22,17 @@
     background: var(--surface);
     color: var(--text);
     flex-shrink: 0;
+    font: inherit;
+
+    &.interactive {
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+
+      &:hover {
+        border-color: var(--accent-border);
+        background: var(--surface-elevated);
+      }
+    }
 
     & .label {
       font-size: 0.7rem;

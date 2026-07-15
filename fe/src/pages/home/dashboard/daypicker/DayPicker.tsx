@@ -6,18 +6,26 @@ export type DayPickerProps = {
   isOpen: boolean;
   days: ProgramDayOption[];
   currentDayId: number | null;
+  title?: string;
+  currentLabel?: string;
   isSaving?: boolean;
+  showReset?: boolean;
   onClose: () => void;
   onSelect: (workoutDayId: number) => void;
+  onReset?: () => void;
 };
 
 export function DayPicker({
   isOpen,
   days,
   currentDayId,
+  title = "Scegli il giorno di oggi",
+  currentLabel = "Assegnato",
   isSaving = false,
+  showReset = false,
   onClose,
   onSelect,
+  onReset,
 }: DayPickerProps) {
   if (!isOpen) {
     return null;
@@ -35,7 +43,7 @@ export function DayPicker({
         <header className="header">
           <p className="eyebrow">Programma</p>
           <h2 id="day-picker-title" className="title">
-            Scegli il giorno di oggi
+            {title}
           </h2>
         </header>
 
@@ -52,16 +60,29 @@ export function DayPicker({
                   onClick={() => onSelect(day.id)}
                 >
                   <span className="name">{day.name}</span>
-                  {isCurrent ? <span className="badge">Oggi</span> : null}
+                  {isCurrent ? <span className="badge">{currentLabel}</span> : null}
                 </button>
               </li>
             );
           })}
         </ul>
 
-        <Button.Root variant="ghost" className="cancel" onClick={onClose} disabled={isSaving}>
-          <Button.Label>ANNULLA</Button.Label>
-        </Button.Root>
+        <div className="footer">
+          {showReset && onReset ? (
+            <Button.Root
+              variant="ghost"
+              className="reset"
+              disabled={isSaving}
+              onClick={() => void onReset()}
+            >
+              <Button.Label>RIPRISTINA PROGRAMMA</Button.Label>
+            </Button.Root>
+          ) : null}
+
+          <Button.Root variant="ghost" className="cancel" onClick={onClose} disabled={isSaving}>
+            <Button.Label>ANNULLA</Button.Label>
+          </Button.Root>
+        </div>
       </div>
     </div>
   );

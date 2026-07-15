@@ -44,7 +44,6 @@ type TodayCardScheduleActionsProps = {
   isSaving: boolean;
   scheduleError: string | null;
   onOpenPicker: () => void;
-  onResetOverride: () => void;
 };
 
 function TodayCardScheduleActions({
@@ -53,7 +52,6 @@ function TodayCardScheduleActions({
   isSaving,
   scheduleError,
   onOpenPicker,
-  onResetOverride,
 }: TodayCardScheduleActionsProps) {
   const canChangeDay = schedule.programDays.length > 0;
 
@@ -76,17 +74,6 @@ function TodayCardScheduleActions({
         >
           <Button.Label>{currentDayId ? "CAMBIA GIORNO" : "SCEGLI ALLENAMENTO"}</Button.Label>
         </Button.Root>
-
-        {schedule.source === "override" ? (
-          <Button.Root
-            variant="ghost"
-            size="sm"
-            disabled={isSaving}
-            onClick={() => void onResetOverride()}
-          >
-            <Button.Label>RIPRISTINA</Button.Label>
-          </Button.Root>
-        ) : null}
       </div>
 
       {scheduleError ? (
@@ -134,7 +121,6 @@ function TodayCardEmpty({
           isSaving={isSaving}
           scheduleError={scheduleError}
           onOpenPicker={onOpenPicker}
-          onResetOverride={() => undefined}
         />
       ) : null}
 
@@ -186,6 +172,7 @@ export function TodayCard({
 
     try {
       await clearDayOverride(schedule.workoutId, schedule.dateKey);
+      setIsPickerOpen(false);
     } catch {
       // error surfaced via hook state
     }
@@ -205,9 +192,13 @@ export function TodayCard({
             isOpen={isPickerOpen}
             days={schedule.programDays}
             currentDayId={null}
+            title="Scegli il giorno di oggi"
+            currentLabel="Oggi"
             isSaving={isSaving}
+            showReset={schedule.source === "override"}
             onClose={() => setIsPickerOpen(false)}
             onSelect={(workoutDayId) => void handleSelectDay(workoutDayId)}
+            onReset={() => void handleResetOverride()}
           />
         ) : null}
       </>
@@ -255,7 +246,6 @@ export function TodayCard({
             isSaving={isSaving}
             scheduleError={scheduleError}
             onOpenPicker={() => setIsPickerOpen(true)}
-            onResetOverride={() => void handleResetOverride()}
           />
         ) : null}
 
@@ -281,9 +271,13 @@ export function TodayCard({
           isOpen={isPickerOpen}
           days={schedule.programDays}
           currentDayId={workoutDayId}
+          title="Scegli il giorno di oggi"
+          currentLabel="Oggi"
           isSaving={isSaving}
+          showReset={schedule.source === "override"}
           onClose={() => setIsPickerOpen(false)}
           onSelect={(dayId) => void handleSelectDay(dayId)}
+          onReset={() => void handleResetOverride()}
         />
       ) : null}
     </>

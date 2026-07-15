@@ -29,6 +29,7 @@ export type WeekStripDay = {
   weekdayLabel: string;
   dayNumber: number;
   isToday: boolean;
+  workoutDayId: number | null;
   workoutDayName: string | null;
   isRest: boolean;
   isOverride: boolean;

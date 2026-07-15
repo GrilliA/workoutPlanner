@@ -1,6 +1,9 @@
+import { useState } from "react";
 import { Link } from "wouter";
+import { DayPicker } from "../daypicker";
 import { useDashboard } from "../useDashboard";
-import type { DashboardStat } from "../types";
+import type { DashboardStat, WeekStripDay } from "../types";
+import { useScheduleOverride } from "../useScheduleOverride";
 import { TopBar } from "../topbar";
 import { WeekStrip } from "../weekstrip";
 import { TodayCard } from "../todaycard";
@@ -13,6 +16,14 @@ const WORKOUT_SKELETON_COUNT = 3;
 
 export function Dashboard() {
   const { status, data, error, retry } = useDashboard();
+  const [selectedWeekDay, setSelectedWeekDay] = useState<WeekStripDay | null>(null);
+  const {
+    isSaving: isWeekScheduleSaving,
+    error: weekScheduleError,
+    setDayOverride,
+    clearDayOverride,
+  } = useScheduleOverride(retry);
+
   const isLoading = status === "loading";
   const isDashboardUnavailable = status === "empty" || status === "error";
   const showStatPlaceholders =
@@ -23,11 +34,49 @@ export function Dashboard() {
     : (data?.stats ?? EMPTY_STAT_PLACEHOLDERS);
 
   const recentWorkouts = data?.recentWorkouts ?? [];
+  const schedule = data?.todaySchedule ?? null;
+  const canEditWeekSchedule = schedule !== null && schedule.programDays.length > 0;
+
+  const handleWeekDaySelect = async (workoutDayId: number) => {
+    if (!schedule || !selectedWeekDay) {
+      return;
+    }
+
+    try {
+      await setDayOverride(schedule.workoutId, selectedWeekDay.dateKey, workoutDayId);
+      setSelectedWeekDay(null);
+    } catch {
+      // error surfaced via hook state
+    }
+  };
+
+  const handleWeekDayReset = async () => {
+    if (!schedule || !selectedWeekDay) {
+      return;
+    }
+
+    try {
+      await clearDayOverride(schedule.workoutId, selectedWeekDay.dateKey);
+      setSelectedWeekDay(null);
+    } catch {
+      // error surfaced via hook state
+    }
+  };
 
   return (
     <div className="dashboard page-container page-container--wide">
       <TopBar />
-      <WeekStrip days={data?.weekDays ?? []} isLoading={isLoading} />
+      <WeekStrip
+        days={data?.weekDays ?? []}
+        isLoading={isLoading}
+        onDaySelect={canEditWeekSchedule ? setSelectedWeekDay : undefined}
+      />
+
+      {weekScheduleError ? (
+        <p className="week-schedule-error" role="alert">
+          {weekScheduleError}
+        </p>
+      ) : null}
 
       {status === "error" && (
         <div className="dashboard-error" role="alert">
@@ -40,7 +89,7 @@ export function Dashboard() {
 
       <TodayCard
         workout={data?.todayWorkout ?? null}
-        schedule={data?.todaySchedule ?? null}
+        schedule={schedule}
         isLoading={isLoading}
         onScheduleChanged={retry}
       />
@@ -88,6 +137,21 @@ export function Dashboard() {
           )}
         </div>
       </section>
+
+      {schedule && selectedWeekDay ? (
+        <DayPicker
+          isOpen
+          days={schedule.programDays}
+          currentDayId={selectedWeekDay.workoutDayId}
+          title={`Programma per ${selectedWeekDay.weekdayLabel} ${selectedWeekDay.dayNumber}`}
+          currentLabel="Assegnato"
+          isSaving={isWeekScheduleSaving}
+          showReset={selectedWeekDay.isOverride}
+          onClose={() => setSelectedWeekDay(null)}
+          onSelect={(workoutDayId) => void handleWeekDaySelect(workoutDayId)}
+          onReset={() => void handleWeekDayReset()}
+        />
+      ) : null}
     </div>
   );
 }
