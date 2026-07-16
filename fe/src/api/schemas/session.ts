@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { recentSessionSummarySchema } from "./stats";
 
 export const SESSION_STATUSES = ["in_progress", "completed", "abandoned"] as const;
 
@@ -68,3 +69,13 @@ export type WorkoutSessionSummary = z.infer<typeof workoutSessionSummarySchema>;
 export type LogSetInput = z.input<typeof logSetRequestSchema>;
 export type PatchSessionInput = z.input<typeof patchSessionRequestSchema>;
 export type PatchLoggedSetInput = z.input<typeof patchLoggedSetRequestSchema>;
+
+export const sessionHistoryResponseSchema = z.object({
+  items: z.array(recentSessionSummarySchema),
+  page: z.number(),
+  limit: z.number(),
+  total: z.number(),
+  totalPages: z.number(),
+});
+
+export type SessionHistoryResponse = z.infer<typeof sessionHistoryResponseSchema>;

@@ -34,6 +34,7 @@ export function Dashboard() {
     : (data?.stats ?? EMPTY_STAT_PLACEHOLDERS);
 
   const recentWorkouts = data?.recentWorkouts ?? [];
+  const recentWorkoutsPreview = recentWorkouts.slice(0, 3);
   const schedule = data?.todaySchedule ?? null;
   const canEditWeekSchedule = schedule !== null && schedule.programDays.length > 0;
 
@@ -116,7 +117,7 @@ export function Dashboard() {
           <h2 id="recent-workouts-title" className="title">
             ULTIMI ALLENAMENTI
           </h2>
-          <Link href="/stats" className="link">
+          <Link href="/session-history" className="link">
             Vedi &gt;
           </Link>
         </div>
@@ -131,7 +132,7 @@ export function Dashboard() {
               Nessun allenamento recente
             </p>
           ) : (
-            recentWorkouts.map((workout) => (
+            recentWorkoutsPreview.map((workout) => (
               <WorkoutRow key={workout.id} sessionId={workout.id} {...workout} />
             ))
           )}

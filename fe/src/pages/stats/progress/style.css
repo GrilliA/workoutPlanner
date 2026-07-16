@@ -37,10 +37,25 @@
   }
 
   & .section-title {
-    margin: 0 0 0.85rem;
+    margin: 0;
     font-size: 0.95rem;
     text-transform: uppercase;
     color: var(--text-h);
+  }
+
+  & .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.85rem;
+  }
+
+  & .section-link {
+    color: var(--accent);
+    font-size: 0.85rem;
+    text-decoration: none;
+    white-space: nowrap;
   }
 
   & .chart-section {
@@ -74,8 +89,8 @@
   }
 
   & .list {
-    display: grid;
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
     gap: 0.75rem;
   }
 
@@ -135,8 +150,15 @@
   }
 }
 
-@container progress (min-width: 48rem) {
-  .progress .list {
-    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+@container progress (min-width: 40rem) {
+  .progress .recent-sessions .list {
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  .progress .recent-sessions .list > * {
+    flex: 1 1 0;
+    min-width: 0;
+    width: auto;
   }
 }

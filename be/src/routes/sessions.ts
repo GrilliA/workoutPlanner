@@ -13,6 +13,11 @@ import { findWorkoutDayForUser, resolveWorkoutDayForDate } from "../services/wor
 import { validateStartSessionInput } from "../services/workoutDayValidation";
 import { findWorkoutForUser } from "../services/workoutAccess";
 import {
+  loadSessionHistoryPage,
+  parseSessionHistoryLimit,
+  parseSessionHistoryPage,
+} from "../services/sessionHistoryAccess";
+import {
   validateLogSetInput,
   validatePatchLoggedSetInput,
   validatePatchSessionInput,
@@ -168,6 +173,15 @@ sessionsRouter.get("/", async (req, res) => {
     .orderBy(desc(workoutSessions.startedAt));
 
   res.json(sessions);
+});
+
+sessionsRouter.get("/history", async (req, res) => {
+  const user = getAuthUser(req);
+  const page = parseSessionHistoryPage(req.query.page);
+  const limit = parseSessionHistoryLimit(req.query.limit);
+  const history = await loadSessionHistoryPage(user.id, page, limit);
+
+  res.json(history);
 });
 
 sessionsRouter.get("/:id", async (req, res) => {

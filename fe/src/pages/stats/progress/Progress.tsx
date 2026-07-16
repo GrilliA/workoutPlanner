@@ -1,3 +1,4 @@
+import { Link } from "wouter";
 import { StatCard, StatCardSkeleton } from "@dashboard/statcard";
 import { WorkoutRow, WorkoutRowSkeleton } from "@dashboard/workoutrow";
 import { ActivityChart } from "../activitychart";
@@ -7,7 +8,8 @@ import { VolumeChart } from "../volumechart";
 import "./style.css";
 
 const STAT_SKELETON_COUNT = 6;
-const SESSION_SKELETON_COUNT = 5;
+const SESSION_SKELETON_COUNT = 3;
+const RECENT_SESSIONS_PREVIEW_COUNT = 3;
 
 export function Progress() {
   const { status, data, error, retry } = useProgress();
@@ -20,7 +22,10 @@ export function Progress() {
     : (data?.stats ?? EMPTY_PROGRESS_PLACEHOLDERS);
 
   const dailyBreakdown = data?.dailyBreakdown ?? [];
-  const recentSessions = data?.recentSessions ?? [];
+  const recentSessions = (data?.recentSessions ?? []).slice(
+    0,
+    RECENT_SESSIONS_PREVIEW_COUNT,
+  );
 
   return (
     <div className="progress page-container page-container--wide">
@@ -83,9 +88,16 @@ export function Progress() {
       </section>
 
       <section className="recent-sessions" aria-labelledby="recent-sessions-title">
-        <h2 id="recent-sessions-title" className="section-title">
-          Sessioni recenti
-        </h2>
+        <div className="section-header">
+          <h2 id="recent-sessions-title" className="section-title">
+            Sessioni recenti
+          </h2>
+          {!isLoading && recentSessions.length > 0 ? (
+            <Link href="/session-history" className="section-link">
+              Vedi tutte
+            </Link>
+          ) : null}
+        </div>
 
         <div className="list" aria-busy={isLoading || undefined}>
           {isLoading ? (

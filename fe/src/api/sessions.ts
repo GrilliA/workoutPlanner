@@ -5,6 +5,7 @@ import {
   loggedSetSchema,
   patchLoggedSetRequestSchema,
   patchSessionRequestSchema,
+  sessionHistoryResponseSchema,
   startSessionRequestSchema,
   workoutSessionSummariesSchema,
   workoutSessionWithSetsSchema,
@@ -17,6 +18,7 @@ import {
   type WorkoutSession,
   type WorkoutSessionSummary,
   type WorkoutSessionWithSets,
+  type SessionHistoryResponse,
 } from "./schemas";
 
 export async function startSession(
@@ -43,6 +45,26 @@ export async function getSessions(): Promise<WorkoutSessionSummary[]> {
 
 export async function getSession(id: number): Promise<WorkoutSessionWithSets> {
   return apiRequest(`/sessions/${id}`, { schema: workoutSessionWithSetsSchema });
+}
+
+export async function getSessionHistory(
+  params: { page?: number; limit?: number } = {},
+): Promise<SessionHistoryResponse> {
+  const search = new URLSearchParams();
+
+  if (params.page !== undefined) {
+    search.set("page", String(params.page));
+  }
+
+  if (params.limit !== undefined) {
+    search.set("limit", String(params.limit));
+  }
+
+  const query = search.toString();
+
+  return apiRequest(`/sessions/history${query ? `?${query}` : ""}`, {
+    schema: sessionHistoryResponseSchema,
+  });
 }
 
 export async function patchSession(

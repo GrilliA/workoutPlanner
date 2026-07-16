@@ -4,6 +4,8 @@ import { useAuth } from "@auth";
 import { buildProgressData, isProgressEmpty } from "./mappers/mapProgress";
 import type { ProgressData, ProgressStatus } from "./types";
 
+const RECENT_SESSIONS_PREVIEW_COUNT = 3;
+
 type UseProgressResult = {
   status: ProgressStatus;
   data: ProgressData | null;
@@ -35,7 +37,7 @@ export function useProgress(): UseProgressResult {
       setError(null);
 
       try {
-        const stats = await getStats({ recentLimit: 10 });
+        const stats = await getStats({ recentLimit: RECENT_SESSIONS_PREVIEW_COUNT });
         const result = buildProgressData(stats);
 
         if (cancelled) {

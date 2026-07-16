@@ -59,6 +59,8 @@ export {
   type LogSetInput,
   type PatchSessionInput,
   type PatchLoggedSetInput,
+  sessionHistoryResponseSchema,
+  type SessionHistoryResponse,
 } from "./session";
 export {
   statsPeriodSchema,

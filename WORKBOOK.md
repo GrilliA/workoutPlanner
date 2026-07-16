@@ -30,6 +30,7 @@ How to use:
 
 ## What we did
 
+- 2026-07-16 — C11 session history: `GET /sessions/history` paginato, pagina `/session-history`, link da dashboard e Progressi.
 - 2026-07-14 — Responsive layout refactor: shared `layout.css` tokens, mobile-first AppShell, `.page-container` utilities, dashboard `@container` grids.
 - 2026-07-15 — CI GitHub Actions: workflow su push/PR a `main` (BE typecheck + test, FE build con Node 22).
 - 2026-07-15 — C10 WeekStrip polish: tap su un giorno della settimana per cambiare/ripristinare il programma di quel giorno.
@@ -74,6 +75,7 @@ Legend: ⬜ todo · 🟡 in progress · ✅ done
 - **C8 — WeekStrip wired to schedule** ✅
 - **C9 — Cambio giorno UI (schedule override)** ✅
 - **C10 — WeekStrip schedule polish** ✅
+- **C11 — Session history (lista paginata)** ✅
 
 ### Backend track
 

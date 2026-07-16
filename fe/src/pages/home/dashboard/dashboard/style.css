@@ -38,8 +38,8 @@
     }
 
     & .list {
-      display: grid;
-      grid-template-columns: 1fr;
+      display: flex;
+      flex-direction: column;
       gap: 0.75rem;
     }
 
@@ -97,8 +97,15 @@
   }
 }
 
-@container dashboard (min-width: 48rem) {
+@container dashboard (min-width: 40rem) {
   .dashboard .recent-workouts .list {
-    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  .dashboard .recent-workouts .list > * {
+    flex: 1 1 0;
+    min-width: 0;
+    width: auto;
   }
 }
