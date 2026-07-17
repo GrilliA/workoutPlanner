@@ -10,7 +10,6 @@ import StatsPage from "@pages/stats";
 import WorkoutsPage from "@pages/workouts";
 import SessionHistoryPage from "@pages/sessionhistory";
 import SessionPage from "@pages/sessions";
-import "./App.css";
 
 function App() {
   return (

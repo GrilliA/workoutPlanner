@@ -7,6 +7,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // https://vite.dev/config/
 export default defineConfig({
+  // Relative asset paths so the Capacitor WebView can load the built SPA.
+  base: "./",
   plugins: [react()],
   resolve: {
     alias: {

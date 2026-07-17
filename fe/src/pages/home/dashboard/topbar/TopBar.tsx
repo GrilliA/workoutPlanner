@@ -1,3 +1,4 @@
+import { Link } from "wouter";
 import { Skeleton } from "@components/skeleton";
 import { useAuth } from "@auth";
 import { getAvatarInitial, getDisplayName } from "@utils/displayName";
@@ -52,9 +53,9 @@ export function TopBar() {
             <path d="M10 18a2 2 0 0 0 4 0" fill="none" stroke="currentColor" strokeWidth="1.6" />
           </svg>
         </button>
-        <div className="avatar" aria-hidden="true">
+        <Link href="/settings" className="avatar" aria-label="Impostazioni profilo">
           {getAvatarInitial(displayName)}
-        </div>
+        </Link>
       </div>
     </header>
   );

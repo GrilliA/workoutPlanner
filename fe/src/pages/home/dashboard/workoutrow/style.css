@@ -1,9 +1,12 @@
 .workout-row {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.85rem;
+  box-sizing: border-box;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   padding: 0.95rem 1rem;
   border: 1px solid var(--border);
   border-radius: 0.9rem;
@@ -22,6 +25,7 @@
   & .icon {
     display: grid;
     place-items: center;
+    flex-shrink: 0;
     width: 2.5rem;
     height: 2.5rem;
     border-radius: 0.75rem;
@@ -45,19 +49,27 @@
     font-size: 1rem;
     color: var(--text-h);
     font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   & .meta {
     font-size: 0.82rem;
     color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   & .chevron {
+    flex-shrink: 0;
     color: var(--text);
 
     & svg {
       width: 1rem;
       height: 1rem;
+      display: block;
     }
   }
 

@@ -89,9 +89,11 @@
   }
 
   & .list {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: 0.75rem;
+    width: 100%;
+    min-width: 0;
   }
 
   & .empty-message {
@@ -152,13 +154,6 @@
 
 @container progress (min-width: 40rem) {
   .progress .recent-sessions .list {
-    flex-direction: row;
-    align-items: stretch;
-  }
-
-  .progress .recent-sessions .list > * {
-    flex: 1 1 0;
-    min-width: 0;
-    width: auto;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
   }
 }

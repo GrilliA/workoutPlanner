@@ -5,6 +5,9 @@
  * --bp-md  48rem (768px)  tablet
  * --bp-lg  64rem (1024px) desktop shell (sidebar)
  * --bp-xl  80rem (1280px) wide desktop
+ *
+ * Safe areas: Capacitor injects --safe-area-inset-* on Android;
+ * iOS uses env(safe-area-inset-*). Prefer var() with env() fallback.
  */
 
 :root {
@@ -13,13 +16,20 @@
   --bp-lg: 64rem;
   --bp-xl: 80rem;
 
+  --safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+  --safe-right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));
+  --safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+  --safe-left: var(--safe-area-inset-left, env(safe-area-inset-left, 0px));
+
   --page-padding-inline: 1rem;
   --page-padding-block: 1rem;
   --content-max-width: 40rem;
   --dashboard-max-width: 72rem;
   --sidebar-width: 13.75rem;
-  --bottom-nav-offset: 5.5rem;
+  /* Single-row bottom nav (~3.75rem chrome) + home-indicator inset + breathing room */
+  --bottom-nav-offset: calc(5.5rem + var(--safe-bottom));
   --on-accent: #101014;
+  --app-bg: #16171d;
 }
 
 @media (min-width: 64rem) {
@@ -28,6 +38,37 @@
     --page-padding-block: 1.5rem;
     --bottom-nav-offset: 0px;
   }
+}
+
+/*
+ * Document scroll — pages grow naturally; clip horizontal bleed on html only.
+ */
+html {
+  width: 100%;
+  min-height: 100%;
+  min-height: 100dvh;
+  overflow-x: clip;
+  background-color: var(--app-bg);
+}
+
+body {
+  margin: 0;
+  width: 100%;
+  max-width: 100%;
+  min-height: 100%;
+  min-height: 100dvh;
+  background-color: var(--app-bg);
+  overscroll-behavior-x: none;
+  -webkit-text-size-adjust: 100%;
+}
+
+#root {
+  width: 100%;
+  max-width: 100%;
+  min-height: 100%;
+  min-height: 100dvh;
+  isolation: isolate;
+  background-color: var(--app-bg);
 }
 
 .page-container {

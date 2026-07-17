@@ -26,7 +26,6 @@ const bottomNavItems = [
   { label: "Workout", href: "/workouts", icon: "workout" },
   { label: "Progressi", href: "/stats", icon: "stats" },
   { label: "Storico", href: "/session-history", icon: "history" },
-  { label: "Profilo", href: "/profile", icon: "profile" },
 ];
 
 export function AppShell({ children, hideBottomNav = false }: AppShellProps) {
@@ -103,12 +102,6 @@ function NavIcon({ name }: { name: string }) {
           stroke="currentColor"
           strokeWidth="1.8"
           strokeLinecap="round"
-        />
-      ) : null}
-      {name === "profile" ? (
-        <path
-          d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-4 0-7 2-7 4.5V20h14v-1.5C19 16 16 14 12 14Z"
-          fill="currentColor"
         />
       ) : null}
       {name === "history" ? (

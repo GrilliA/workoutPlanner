@@ -3,8 +3,16 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
   min-height: 100dvh;
-  padding-inline: 1rem;
+  min-height: 100svh;
+  padding-top: max(1rem, var(--safe-top));
+  padding-right: max(1rem, var(--safe-right));
+  padding-bottom: max(1rem, var(--safe-bottom));
+  padding-left: max(1rem, var(--safe-left));
+  background: var(--app-bg, #16171d);
+  color: var(--text);
 
   & .logo {
     margin-bottom: 1rem;

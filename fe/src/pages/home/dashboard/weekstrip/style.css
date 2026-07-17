@@ -1,27 +1,25 @@
 .week-strip {
-  display: flex;
-  gap: 0.5rem;
-  overflow-x: auto;
-  padding-bottom: 0.25rem;
+  /* 7 equal columns — fits phone width, no page-level horizontal scroll */
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.35rem;
+  width: 100%;
+  max-width: 100%;
   margin-bottom: 1.5rem;
-  scrollbar-width: none;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
+  overflow-x: hidden;
 
   & .day {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 0.15rem;
-    min-width: 3.35rem;
-    padding: 0.55rem 0.4rem 0.45rem;
+    min-width: 0;
+    width: 100%;
+    padding: 0.5rem 0.15rem 0.4rem;
     border: 1px solid var(--border);
     border-radius: 0.85rem;
     background: var(--surface);
     color: var(--text);
-    flex-shrink: 0;
     font: inherit;
 
     &.interactive {
@@ -35,12 +33,12 @@
     }
 
     & .label {
-      font-size: 0.7rem;
+      font-size: 0.65rem;
       text-transform: uppercase;
     }
 
     & .number {
-      font-size: 1rem;
+      font-size: 0.95rem;
       color: var(--text-h);
       font-weight: 600;
       line-height: 1;
@@ -48,7 +46,7 @@
 
     & .workout {
       max-width: 100%;
-      font-size: 0.62rem;
+      font-size: 0.55rem;
       font-weight: 600;
       color: var(--accent);
       text-align: center;
@@ -94,15 +92,37 @@
     pointer-events: none;
 
     & .day-skeleton {
-      flex-shrink: 0;
+      min-width: 0;
+      width: 100%;
       border-radius: 0.85rem;
+    }
+  }
+}
+
+@media (min-width: 30rem) {
+  .week-strip {
+    gap: 0.5rem;
+
+    & .day {
+      padding-inline: 0.35rem;
+
+      & .label {
+        font-size: 0.7rem;
+      }
+
+      & .number {
+        font-size: 1rem;
+      }
+
+      & .workout {
+        font-size: 0.62rem;
+      }
     }
   }
 }
 
 @media (min-width: 48rem) {
   .week-strip .day {
-    min-width: 3.75rem;
     padding-inline: 0.5rem;
 
     & .workout {

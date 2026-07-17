@@ -11,8 +11,12 @@
 
   display: grid;
   grid-template-columns: 1fr;
-  grid-template-rows: 1fr auto;
+  grid-template-rows: auto;
+  width: 100%;
+  max-width: 100%;
   min-height: 100dvh;
+  min-height: 100svh;
+  box-sizing: border-box;
   color: var(--text);
   background: var(--bg);
   color-scheme: dark;
@@ -84,10 +88,12 @@
 
   & .content {
     min-width: 0;
-    padding:
-      var(--page-padding-block)
-      var(--page-padding-inline)
-      calc(var(--page-padding-block) + var(--bottom-nav-offset));
+    max-width: 100%;
+    box-sizing: border-box;
+    padding-top: calc(var(--page-padding-block) + var(--safe-top));
+    padding-right: calc(var(--page-padding-inline) + var(--safe-right));
+    padding-bottom: calc(var(--page-padding-block) + var(--bottom-nav-offset));
+    padding-left: calc(var(--page-padding-inline) + var(--safe-left));
   }
 
   & .bottom-nav {
@@ -96,9 +102,15 @@
     bottom: 0;
     z-index: 10;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 0.25rem;
-    padding: 0.5rem 0.75rem calc(0.75rem + env(safe-area-inset-bottom));
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    padding-top: 0.5rem;
+    padding-right: calc(0.75rem + var(--safe-right));
+    padding-bottom: calc(0.5rem + var(--safe-bottom));
+    padding-left: calc(0.75rem + var(--safe-left));
     background: rgba(15, 16, 22, 0.96);
     border-top: 1px solid var(--border);
     backdrop-filter: blur(12px);
@@ -114,6 +126,9 @@
       border-radius: 0.65rem;
       font-size: 0.7rem;
       text-transform: uppercase;
+      min-height: 2.75rem;
+      justify-content: center;
+      -webkit-tap-highlight-color: transparent;
 
       & .icon {
         width: 1.25rem;
@@ -133,13 +148,14 @@
     & .sidebar {
       display: flex;
       grid-row: 1 / -1;
+      padding-top: calc(1.5rem + var(--safe-top));
     }
 
     & .content {
-      padding:
-        var(--page-padding-block)
-        var(--page-padding-inline)
-        var(--page-padding-block);
+      padding-top: calc(var(--page-padding-block) + var(--safe-top));
+      padding-right: calc(var(--page-padding-inline) + var(--safe-right));
+      padding-bottom: calc(var(--page-padding-block) + var(--safe-bottom));
+      padding-left: var(--page-padding-inline);
     }
 
     & .bottom-nav {
@@ -149,7 +165,7 @@
 
   &.app-shell--focus {
     & .content {
-      padding-bottom: var(--page-padding-block);
+      padding-bottom: calc(var(--page-padding-block) + var(--safe-bottom));
     }
 
     & .bottom-nav {

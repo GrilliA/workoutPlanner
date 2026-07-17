@@ -57,6 +57,8 @@
     background: linear-gradient(135deg, var(--accent), #8ecf2c);
     color: #101014;
     font-weight: 700;
+    text-decoration: none;
+    flex-shrink: 0;
   }
 
   &.loading {

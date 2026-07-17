@@ -19,12 +19,19 @@ cd be && npm test     # unit tests (stats, schedule helpers)
 
 # Frontend (Vite, proxy /api → localhost:3005)
 cd fe && npm run dev
+
+# Capacitor (native shell — requires Node ≥22)
+cd fe && npm run cap:sync          # build web + sync into ios/android
+cd fe && npm run cap:ios           # open Xcode
+cd fe && npm run cap:android       # open Android Studio
 ```
 
 **CI:** push o PR su `main` → GitHub Actions (`.github/workflows/ci.yml`): `be` typecheck + test, `fe` build (Node 22).
 
 - `be/.env` credentials: `postgres:postgres` (must match `docker-compose.yml`)
 - Frontend calls relative `/api/...` URLs; Vite proxies in dev
+- **Native builds** need absolute API URL via `fe/.env.capacitor` (`VITE_API_URL=http://127.0.0.1:3005/api` for iOS Simulator). Use `npm run cap:sync` (builds with `--mode capacitor`). Backend CORS allows `capacitor://localhost`.
+- **Mobile chrome:** `viewport-fit=cover` + CSS `--safe-top/bottom/...` (Capacitor `SystemBars` + `env(safe-area-inset-*)`). AppShell pads content/nav for notch and home indicator; html/body use dark `--app-bg` to avoid white letterboxing.
 - UI copy in **Italian** (reference: TRACCIA Figma dashboard)
 - Project log and roadmap: `WORKBOOK.md`
 
@@ -35,10 +42,19 @@ cd fe && npm run dev
 ```
 workoutPlanner/
 ├── be/          # Express + Drizzle + Postgres
-├── fe/          # React + Vite + TypeScript
+├── fe/          # React + Vite + TypeScript (+ Capacitor ios/android)
 ├── WORKBOOK.md  # decisions, done, next steps
 └── AGENTS.md    # this file
 ```
+
+### Frontend (`fe/`)
+
+| Path | Purpose |
+| --- | --- |
+| `src/` | React app (pages, components, api, auth) |
+| `capacitor.config.ts` | Capacitor app id / webDir (`dist`) |
+| `ios/`, `android/` | Native shells (committed; sync with `npm run cap:sync`) |
+| `src/utils/platform.ts` | `isNative()` / `getPlatform()` helpers |
 
 ### Frontend (`fe/src/`)
 
