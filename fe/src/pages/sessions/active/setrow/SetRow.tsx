@@ -16,12 +16,15 @@ export function SetRow({ set, isLogging, onLog }: SetRowProps) {
   if (set.status === "completed") {
     return (
       <div className="set-row set-row--completed">
-        <span className="index">{set.setNumber}</span>
+        <span className="index">
+          <span className="number">{set.setNumber}</span>
+        </span>
         <span className="value">
           {set.weightKg ? `${set.weightKg} kg` : "—"}
         </span>
         <span className="value">{set.targetReps}</span>
-        <span className="status" aria-label="Serie completata">
+        <span className="rest-col">{set.restSec}s</span>
+        <span className="action-cell status" aria-label="Serie completata">
           ✓
         </span>
       </div>
@@ -44,7 +47,6 @@ export function SetRow({ set, isLogging, onLog }: SetRowProps) {
     <div className={`set-row ${isActive ? "set-row--active" : "set-row--pending"}`}>
       <span className="index">
         <span className="number">{set.setNumber}</span>
-        <span className="rest-hint">{set.restSec}s</span>
       </span>
 
       <label className="weight-field">
@@ -74,19 +76,25 @@ export function SetRow({ set, isLogging, onLog }: SetRowProps) {
         />
       </label>
 
+      <span className="rest-col" aria-label={`Recupero ${set.restSec} secondi`}>
+        {set.restSec}s
+      </span>
+
       {isActive ? (
-        <Button.Root
-          variant="ghost"
-          size="sm"
-          className="log"
-          loading={isLogging}
-          disabled={isLogging}
-          onClick={handleLog}
-        >
-          <Button.Label>LOGGA</Button.Label>
-        </Button.Root>
+        <div className="action-cell">
+          <Button.Root
+            variant="ghost"
+            size="sm"
+            className="log"
+            loading={isLogging}
+            disabled={isLogging}
+            onClick={handleLog}
+          >
+            <Button.Label>LOGGA</Button.Label>
+          </Button.Root>
+        </div>
       ) : (
-        <span className="placeholder" aria-hidden="true" />
+        <span className="action-cell action-cell--empty" aria-hidden="true" />
       )}
     </div>
   );

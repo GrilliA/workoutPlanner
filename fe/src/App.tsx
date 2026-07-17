@@ -1,5 +1,6 @@
 import { Router, Route } from "wouter";
 import { RequireAuth } from "@auth";
+import { NativeBootstrap } from "@components/nativebootstrap";
 import HomePage from "@pages/home";
 import LoginPage from "@pages/login";
 import RegisterPage from "@pages/register";
@@ -14,6 +15,7 @@ import SessionPage from "@pages/sessions";
 function App() {
   return (
     <Router>
+      <NativeBootstrap />
       <Route path="/login" component={LoginPage} />
       <Route path="/register" component={RegisterPage} />
       <Route path="/workouts/new">

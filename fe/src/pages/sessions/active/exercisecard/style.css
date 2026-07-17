@@ -60,21 +60,45 @@
     font-weight: 700;
   }
 
-  & .sets {
+  /*
+   * Sets table — same grid template on header + every row (no subgrid).
+   * Padding is identical so columns stay aligned at every breakpoint.
+   */
+  & .sets-table {
+    --set-cols: 2.5rem minmax(5.5rem, 1fr) 4.5rem 3rem 4.5rem;
+    --set-gap: 0.5rem;
+    --set-pad-x: 0.65rem;
+    --set-pad-y: 0.5rem;
+
     padding: 0 0.75rem 0.85rem;
   }
 
-  & .sets-header {
+  & .sets-table .sets-header,
+  & .sets-table .set-row {
+    box-sizing: border-box;
     display: grid;
-    grid-template-columns: 2rem minmax(0, 1fr) minmax(4.5rem, 5.5rem) auto;
-    gap: 0.5rem;
-    padding: 0 0.65rem 0.35rem;
+    grid-template-columns: var(--set-cols);
+    column-gap: var(--set-gap);
+    align-items: center;
+    padding-inline: var(--set-pad-x);
+  }
+
+  & .sets-table .sets-header {
+    padding-top: 0;
+    padding-bottom: 0.4rem;
     font-size: 0.68rem;
     font-weight: 700;
     color: var(--text);
   }
 
-  & .sets-body {
+  & .sets-table .sets-header .col-index,
+  & .sets-table .sets-header .col-reps,
+  & .sets-table .sets-header .col-rec,
+  & .sets-table .sets-header .col-action {
+    text-align: center;
+  }
+
+  & .sets-table .sets-body {
     display: flex;
     flex-direction: column;
     gap: 0.45rem;
@@ -83,6 +107,16 @@
   &.exercise-card--active {
     border-color: var(--accent-border);
     box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+  }
+
+  &.exercise-card--resting {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px rgba(196, 255, 77, 0.35), 0 12px 28px rgba(0, 0, 0, 0.22);
+  }
+
+  & .resting-label {
+    color: var(--accent);
+    font-weight: 700;
   }
 
   &.exercise-card--done {
@@ -94,12 +128,17 @@
   }
 
   @media (min-width: 30rem) {
-    & .sets {
+    & .sets-table {
+      --set-gap: 0.65rem;
+      --set-pad-x: 0.75rem;
       padding-inline: 1rem;
     }
+  }
 
-    & .sets-header {
-      gap: 0.75rem;
+  @media (min-width: 48rem) {
+    & .sets-table {
+      --set-cols: 2.5rem minmax(7rem, 1fr) 5rem 3.25rem 5rem;
+      --set-gap: 0.75rem;
     }
   }
 }

@@ -7,6 +7,7 @@ export type ExerciseCardProps = {
   exercise: ActiveExerciseCard;
   defaultRestSec: number;
   isFocused: boolean;
+  isResting: boolean;
   loggingKey: string | null;
   onFocus: () => void;
   onLogSet: (
@@ -20,6 +21,7 @@ export function ExerciseCard({
   exercise,
   defaultRestSec,
   isFocused,
+  isResting,
   loggingKey,
   onFocus,
   onLogSet,
@@ -31,6 +33,7 @@ export function ExerciseCard({
       className={[
         "exercise-card",
         isFocused ? "exercise-card--active" : "",
+        isResting ? "exercise-card--resting" : "",
         exercise.isComplete ? "exercise-card--done" : "",
         !isFocused && !exercise.isComplete ? "exercise-card--collapsed" : "",
       ]
@@ -44,7 +47,11 @@ export function ExerciseCard({
 
         <div className="copy">
           <h3 className="name">{exercise.name}</h3>
-          <p className="meta">{meta}</p>
+          <p className="meta">
+            {isResting ? <span className="resting-label">RECUPERO</span> : null}
+            {isResting ? " · " : null}
+            {meta}
+          </p>
         </div>
 
         {exercise.isComplete ? (
@@ -55,12 +62,13 @@ export function ExerciseCard({
       </button>
 
       {isFocused ? (
-        <div className="sets">
+        <div className="sets sets-table">
           <div className="sets-header" aria-hidden="true">
-            <span>#</span>
-            <span>KG</span>
-            <span>REPS</span>
-            <span />
+            <span className="col-index">#</span>
+            <span className="col-kg">KG</span>
+            <span className="col-reps">REPS</span>
+            <span className="col-rec">REC</span>
+            <span className="col-action" />
           </div>
 
           <div className="sets-body">

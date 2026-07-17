@@ -31,6 +31,7 @@ How to use:
 
 ## What we did
 
+- 2026-07-17 — CAP2 rest timer nativo: countdown recupero post-set in sessione attiva, `RestTimer` (anello SVG), highlight `ExerciseCard`, Local Notifications + Haptics su Capacitor, fallback web (beep/vibrate), permessi al primo avvio native.
 - 2026-07-17 — CAP1 Capacitor + mobile polish: scaffold iOS/Android, CORS/`VITE_API_URL`, safe-area/viewport, scroll fix shell, bottom nav 4 tab, layout fluido card sessioni.
 - 2026-07-16 — CAP1 Capacitor scaffold: `@capacitor/*` in `fe/`, `capacitor.config.ts`, `ios/` + `android/`, `base: './'` Vite, script `cap:sync`/`cap:ios`/`cap:android`, helper `utils/platform.ts`.
 - 2026-07-16 — C11 session history: `GET /sessions/history` paginato, pagina `/session-history`, link da dashboard e Progressi.

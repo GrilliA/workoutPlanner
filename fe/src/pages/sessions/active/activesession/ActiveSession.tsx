@@ -3,6 +3,9 @@ import { useLocation } from "wouter";
 import { Button } from "@components/button";
 import { Skeleton } from "@components/skeleton";
 import { ExerciseCard } from "../exercisecard";
+import { getRestAfterLoggedSet } from "../resttimer/getRestAfterLoggedSet";
+import { RestTimer } from "../resttimer";
+import { useRestTimer } from "../resttimer/useRestTimer";
 import { SessionHeader, SessionHeaderSkeleton } from "../sessionheader";
 import { useActiveSession } from "../useActiveSession";
 import "./style.css";
@@ -31,6 +34,8 @@ export function ActiveSession({ sessionId }: ActiveSessionProps) {
     retry,
   } = useActiveSession(sessionId);
 
+  const restTimer = useRestTimer(sessionId);
+
   useEffect(() => {
     if (status !== "completed") {
       return;
@@ -46,11 +51,33 @@ export function ActiveSession({ sessionId }: ActiveSessionProps) {
   }, [status, setLocation]);
 
   const handleAbandon = async () => {
+    restTimer.cancel();
+
     try {
       await abandon();
       setLocation("/");
     } catch {
       // error surfaced via hook state
+    }
+  };
+
+  const handleComplete = () => {
+    restTimer.cancel();
+    void complete();
+  };
+
+  const handleLogSet = async (
+    exerciseId: number,
+    setNumber: number,
+    weightKg: string,
+    reps: number,
+  ) => {
+    const rest = view ? getRestAfterLoggedSet(view, exerciseId, setNumber) : null;
+
+    await logSetRow(exerciseId, setNumber, weightKg, reps);
+
+    if (rest?.shouldStart) {
+      await restTimer.start(rest.restSec, exerciseId);
     }
   };
 
@@ -93,9 +120,16 @@ export function ActiveSession({ sessionId }: ActiveSessionProps) {
         startedAt={view.startedAt}
         completedExercises={completedExerciseCount}
         totalExercises={view.exercises.length}
-        onComplete={() => void complete()}
+        onComplete={handleComplete}
         onAbandon={() => void handleAbandon()}
         isCompleting={status === "completing"}
+      />
+
+      <RestTimer
+        status={restTimer.status}
+        remainingSec={restTimer.remainingSec}
+        totalSec={restTimer.totalSec}
+        onSkip={restTimer.skip}
       />
 
       {error ? (
@@ -119,10 +153,11 @@ export function ActiveSession({ sessionId }: ActiveSessionProps) {
               exercise={exercise}
               defaultRestSec={view.defaultRestSec}
               isFocused={exercise.exerciseId === focusedExerciseId}
+              isResting={restTimer.restingExerciseId === exercise.exerciseId}
               loggingKey={loggingKey}
               onFocus={() => setFocusedExerciseId(exercise.exerciseId)}
               onLogSet={(setNumber, weightKg, reps) =>
-                logSetRow(exercise.exerciseId, setNumber, weightKg, reps)
+                handleLogSet(exercise.exerciseId, setNumber, weightKg, reps)
               }
             />
           ))}
