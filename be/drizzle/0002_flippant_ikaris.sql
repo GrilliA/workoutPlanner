@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "refresh_tokens_token_hash" ON "refresh_tokens" USING btree ("token_hash");

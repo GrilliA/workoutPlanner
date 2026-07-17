@@ -1,6 +1,6 @@
 import type { AuthUser } from "@api/schemas/auth";
 
-export type AuthStatus = "loading" | "authenticated" | "anonymous";
+export type AuthStatus = "loading" | "authenticated" | "anonymous" | "error";
 
 export type AuthState = {
   status: AuthStatus;

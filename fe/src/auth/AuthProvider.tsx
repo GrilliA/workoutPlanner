@@ -5,7 +5,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { ApiError } from "@api";
+import { ApiError, refreshAccessToken } from "@api";
 import * as authApi from "@api/auth";
 import { authStore } from "./authStore";
 import type { AuthState, AuthUser } from "./types";
@@ -16,6 +16,7 @@ type AuthContextValue = AuthState & {
   register: (input: RegisterInput) => Promise<void>;
   logout: () => Promise<void>;
   setUser: (user: AuthUser) => void;
+  retryBootstrap: () => void;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -30,20 +31,29 @@ const authenticatedState = (user: AuthUser): AuthState => ({
   user,
 });
 
+const errorState = (): AuthState => ({
+  status: "error",
+  user: null,
+});
+
 async function bootstrapSession(): Promise<AuthState> {
   try {
-    const { accessToken } = await authApi.refreshAccessToken();
-    authStore.setAccessToken(accessToken);
-    const { user } = await authApi.getMe();
-    return authenticatedState(user);
-  } catch (error) {
-    authStore.clear();
+    const accessToken = await refreshAccessToken();
 
-    if (error instanceof ApiError && error.status === 401) {
+    if (!accessToken) {
       return anonymousState();
     }
 
-    return anonymousState();
+    const { user } = await authApi.getMe();
+    return authenticatedState(user);
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 401) {
+      authStore.clear();
+      return anonymousState();
+    }
+
+    authStore.setAccessToken(null);
+    return errorState();
   }
 }
 
@@ -52,6 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     status: "loading",
     user: null,
   });
+  const [bootstrapId, setBootstrapId] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -65,7 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [bootstrapId]);
 
   useEffect(() => {
     return authStore.onSessionCleared(() => {
@@ -98,12 +109,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState(authenticatedState(user));
   };
 
+  const retryBootstrap = () => {
+    setState({ status: "loading", user: null });
+    setBootstrapId((current) => current + 1);
+  };
+
   const value: AuthContextValue = {
     ...state,
     login,
     register,
     logout,
     setUser,
+    retryBootstrap,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

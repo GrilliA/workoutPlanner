@@ -7,7 +7,7 @@ type RequireAuthProps = {
 };
 
 export function RequireAuth({ children }: RequireAuthProps) {
-  const { status } = useAuth();
+  const { status, retryBootstrap } = useAuth();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
@@ -16,7 +16,26 @@ export function RequireAuth({ children }: RequireAuthProps) {
     }
   }, [status, setLocation]);
 
-  if (status === "loading" || status === "anonymous") {
+  if (status === "loading") {
+    return (
+      <main aria-busy="true" aria-live="polite">
+        Verifica della sessione…
+      </main>
+    );
+  }
+
+  if (status === "error") {
+    return (
+      <main role="alert">
+        <p>Impossibile verificare la sessione.</p>
+        <button type="button" onClick={retryBootstrap}>
+          Riprova
+        </button>
+      </main>
+    );
+  }
+
+  if (status === "anonymous") {
     return null;
   }
 

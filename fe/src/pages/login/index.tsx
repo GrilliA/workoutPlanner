@@ -29,7 +29,7 @@ const Login = () => {
       await login({ email, password });
       setLocation("/");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Login failed");
+      setError(err instanceof ApiError ? err.message : "Impossibile accedere");
     } finally {
       setSubmitting(false);
     }
@@ -69,9 +69,6 @@ const Login = () => {
               required
             />
           </Input.Root>
-          <Link href="/forgot-password" className="forgot">
-            forgot password?
-          </Link>
         </div>
 
         {error ? <p className="form-error">{error}</p> : null}
@@ -83,7 +80,7 @@ const Login = () => {
           loading={submitting}
           disabled={submitting}
         >
-          <Button.Label>Login</Button.Label>
+          <Button.Label>Accedi</Button.Label>
         </Button.Root>
 
         <p className="footer-link">

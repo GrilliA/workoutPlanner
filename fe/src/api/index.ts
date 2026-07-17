@@ -1,5 +1,5 @@
 export { API_BASE } from "./config";
-export { ApiError, apiRequest } from "./client";
+export { ApiError, apiRequest, refreshAccessToken } from "./client";
 export {
   workoutSchema,
   workoutsSchema,
@@ -75,7 +75,7 @@ export {
   updateExercise,
   deleteExercise,
 } from "./exercises";
-export { login, register, refreshAccessToken, getMe, updateProfile, changePassword, logout } from "./auth";
+export { login, register, getMe, updateProfile, changePassword, logout } from "./auth";
 export {
   startSession,
   getSessionsByWorkout,

@@ -1,7 +1,8 @@
 import { Router } from "express";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { db } from "../db";
-import { users } from "../db/schema";
+import { refreshTokens, users } from "../db/schema";
+import { authRateLimit } from "../middleware/authRateLimit";
 import { requireAuth } from "../middleware/requireAuth";
 import { signAccessToken, toAuthUser } from "../services/accessToken";
 import { hashPassword, verifyPassword } from "../services/password";
@@ -14,6 +15,7 @@ import {
 import {
   REFRESH_COOKIE_NAME,
   clearRefreshCookie,
+  createRefreshSession,
   findValidRefreshSession,
   revokeRefreshSession,
   rotateRefreshSession,
@@ -27,7 +29,7 @@ export const authRouter = Router();
 const INVALID_CREDENTIALS = "Invalid email or password";
 const UNAUTHORIZED = "Unauthorized";
 
-authRouter.post("/register", async (req, res) => {
+authRouter.post("/register", authRateLimit, async (req, res) => {
   const parsed = validateRegisterInput(req.body);
 
   if (!parsed.ok) {
@@ -36,27 +38,22 @@ authRouter.post("/register", async (req, res) => {
   }
 
   const { email, password, name } = parsed.value;
-
-  const [existing] = await db
-    .select({ id: users.id })
-    .from(users)
-    .where(eq(users.email, email));
-
-  if (existing) {
-    res.status(409).json({ error: "Email already registered" });
-    return;
-  }
-
   const passwordHash = await hashPassword(password);
 
   const [created] = await db
     .insert(users)
     .values({ email, passwordHash, name })
+    .onConflictDoNothing({ target: users.email })
     .returning({
       id: users.id,
       email: users.email,
       name: users.name,
     });
+
+  if (!created) {
+    res.status(409).json({ error: "Email already registered" });
+    return;
+  }
 
   const user = toAuthUser(created);
   const accessToken = await startAuthSession(user, res);
@@ -64,7 +61,7 @@ authRouter.post("/register", async (req, res) => {
   res.status(201).json({ user, accessToken });
 });
 
-authRouter.post("/login", async (req, res) => {
+authRouter.post("/login", authRateLimit, async (req, res) => {
   const parsed = validateLoginInput(req.body);
 
   if (!parsed.ok) {
@@ -137,6 +134,12 @@ authRouter.post("/refresh", async (req, res) => {
   const user = toAuthUser(userRow);
   const accessToken = signAccessToken(user);
   const newRefreshToken = await rotateRefreshSession(refreshToken, user.id);
+
+  if (!newRefreshToken) {
+    res.status(401).json({ error: UNAUTHORIZED });
+    return;
+  }
+
   setRefreshCookie(res, newRefreshToken);
 
   res.json({ accessToken });
@@ -214,10 +217,22 @@ authRouter.patch("/password", requireAuth, async (req, res) => {
 
   const passwordHash = await hashPassword(parsed.value.newPassword);
 
-  await db
-    .update(users)
-    .set({ passwordHash, updatedAt: new Date() })
-    .where(eq(users.id, user.id));
+  await db.transaction(async (tx) => {
+    const now = new Date();
+
+    await tx
+      .update(users)
+      .set({ passwordHash, updatedAt: now })
+      .where(eq(users.id, user.id));
+
+    await tx
+      .update(refreshTokens)
+      .set({ revokedAt: now })
+      .where(and(eq(refreshTokens.userId, user.id), isNull(refreshTokens.revokedAt)));
+  });
+
+  const refreshToken = await createRefreshSession(user.id);
+  setRefreshCookie(res, refreshToken);
 
   res.status(204).send();
 });

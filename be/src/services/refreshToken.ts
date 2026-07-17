@@ -79,9 +79,38 @@ export const revokeRefreshSession = async (token: string): Promise<void> => {
 export const rotateRefreshSession = async (
   oldToken: string,
   userId: number,
-): Promise<string> => {
-  await revokeRefreshSession(oldToken);
-  return createRefreshSession(userId);
+): Promise<string | null> => {
+  const oldTokenHash = hashOpaqueToken(oldToken);
+  const newToken = generateOpaqueToken();
+  const newTokenHash = hashOpaqueToken(newToken);
+  const now = new Date();
+
+  return db.transaction(async (tx) => {
+    const [revoked] = await tx
+      .update(refreshTokens)
+      .set({ revokedAt: now })
+      .where(
+        and(
+          eq(refreshTokens.tokenHash, oldTokenHash),
+          eq(refreshTokens.userId, userId),
+          isNull(refreshTokens.revokedAt),
+          gt(refreshTokens.expiresAt, now),
+        ),
+      )
+      .returning({ id: refreshTokens.id });
+
+    if (!revoked) {
+      return null;
+    }
+
+    await tx.insert(refreshTokens).values({
+      userId,
+      tokenHash: newTokenHash,
+      expiresAt: refreshExpiresAt(),
+    });
+
+    return newToken;
+  });
 };
 
 export const startAuthSession = async (

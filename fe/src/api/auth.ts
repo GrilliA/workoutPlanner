@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { apiRequest } from "./client";
 import {
-  accessTokenSchema,
   authSessionSchema,
   loginRequestSchema,
   meResponseSchema,
@@ -29,13 +28,6 @@ export function register(input: RegisterInput) {
     body: input,
     requestSchema: registerRequestSchema,
     schema: authSessionSchema,
-  });
-}
-
-export function refreshAccessToken() {
-  return apiRequest("/auth/refresh", {
-    method: "POST",
-    schema: accessTokenSchema,
   });
 }
 

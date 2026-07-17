@@ -34,7 +34,7 @@ const Register = () => {
       });
       setLocation("/");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Registration failed");
+      setError(err instanceof ApiError ? err.message : "Impossibile registrarsi");
     } finally {
       setSubmitting(false);
     }

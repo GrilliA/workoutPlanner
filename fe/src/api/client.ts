@@ -48,9 +48,18 @@ const refreshAccessTokenDirect = async (): Promise<string | null> => {
     headers: { Accept: "application/json" },
   });
 
-  if (!response.ok) {
+  if (response.status === 401) {
     authStore.clear();
     return null;
+  }
+
+  if (!response.ok) {
+    const json = await parseJsonBody(response);
+    const parsed = apiErrorSchema.safeParse(json);
+    throw new ApiError(
+      response.status,
+      parsed.success ? parsed.data.error : "Request failed",
+    );
   }
 
   const json: unknown = await response.json();
@@ -58,7 +67,7 @@ const refreshAccessTokenDirect = async (): Promise<string | null> => {
   return accessToken;
 };
 
-const tryRefreshAccessToken = async (): Promise<string | null> => {
+export const refreshAccessToken = async (): Promise<string | null> => {
   if (!refreshPromise) {
     refreshPromise = refreshAccessTokenDirect()
       .then((accessToken) => {
@@ -66,10 +75,6 @@ const tryRefreshAccessToken = async (): Promise<string | null> => {
           authStore.setAccessToken(accessToken);
         }
         return accessToken;
-      })
-      .catch(() => {
-        authStore.clear();
-        return null;
       })
       .finally(() => {
         refreshPromise = null;
@@ -112,7 +117,7 @@ async function sendRequest<TResponse>(
     !isRetry &&
     !isAuthPath(path)
   ) {
-    const newToken = await tryRefreshAccessToken();
+    const newToken = await refreshAccessToken();
 
     if (newToken) {
       return sendRequest(path, options, true);

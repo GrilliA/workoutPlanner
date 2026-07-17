@@ -34,16 +34,10 @@ export const updateProfileRequestSchema = z.object({
   name: z.string().trim().nullable(),
 });
 
-export const changePasswordRequestSchema = z
-  .object({
-    currentPassword: z.string().min(1),
-    newPassword: z.string().min(8),
-    confirmPassword: z.string().min(8),
-  })
-  .refine((value) => value.newPassword === value.confirmPassword, {
-    message: "Le password non coincidono",
-    path: ["confirmPassword"],
-  });
+export const changePasswordRequestSchema = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: z.string().min(8),
+});
 
 export type AuthUser = z.infer<typeof authUserSchema>;
 export type LoginInput = z.input<typeof loginRequestSchema>;
