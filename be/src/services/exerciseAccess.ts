@@ -1,9 +1,8 @@
 import { eq } from "drizzle-orm";
 import { db } from "../db";
-import { exercises } from "../db/schema";
+import { exercises, exerciseSets } from "../db/schema";
 import {
   getSetPrescriptionsByExerciseIds,
-  replaceSetPrescriptionsForExercise,
 } from "./exerciseSetAccess";
 import {
   summarizeSetPrescriptions,
@@ -37,23 +36,30 @@ export async function createExerciseWithSets(
 ): Promise<ExerciseRow & { setPrescriptions: SetPrescription[] }> {
   const summary = summarizeSetPrescriptions(input.setPrescriptions);
 
-  const [created] = await db
-    .insert(exercises)
-    .values({
-      name: input.name,
-      sets: summary.sets,
-      reps: summary.reps,
-      workoutId: input.workoutId,
-      workoutDayId: input.workoutDayId,
-    })
-    .returning();
+  return db.transaction(async (tx) => {
+    const [created] = await tx
+      .insert(exercises)
+      .values({
+        name: input.name,
+        sets: summary.sets,
+        reps: summary.reps,
+        workoutId: input.workoutId,
+        workoutDayId: input.workoutDayId,
+      })
+      .returning();
 
-  await replaceSetPrescriptionsForExercise(created.id, input.setPrescriptions);
+    await tx.insert(exerciseSets).values(
+      input.setPrescriptions.map((prescription) => ({
+        exerciseId: created.id,
+        ...prescription,
+      })),
+    );
 
-  return {
-    ...created,
-    setPrescriptions: input.setPrescriptions,
-  };
+    return {
+      ...created,
+      setPrescriptions: input.setPrescriptions,
+    };
+  });
 }
 
 export async function updateExerciseWithSets(
@@ -65,22 +71,30 @@ export async function updateExerciseWithSets(
 ): Promise<ExerciseRow & { setPrescriptions: SetPrescription[] }> {
   const summary = summarizeSetPrescriptions(input.setPrescriptions);
 
-  const [updated] = await db
-    .update(exercises)
-    .set({
-      name: input.name,
-      sets: summary.sets,
-      reps: summary.reps,
-    })
-    .where(eq(exercises.id, exerciseId))
-    .returning();
+  return db.transaction(async (tx) => {
+    const [updated] = await tx
+      .update(exercises)
+      .set({
+        name: input.name,
+        sets: summary.sets,
+        reps: summary.reps,
+      })
+      .where(eq(exercises.id, exerciseId))
+      .returning();
 
-  await replaceSetPrescriptionsForExercise(exerciseId, input.setPrescriptions);
+    await tx.delete(exerciseSets).where(eq(exerciseSets.exerciseId, exerciseId));
+    await tx.insert(exerciseSets).values(
+      input.setPrescriptions.map((prescription) => ({
+        exerciseId,
+        ...prescription,
+      })),
+    );
 
-  return {
-    ...updated,
-    setPrescriptions: input.setPrescriptions,
-  };
+    return {
+      ...updated,
+      setPrescriptions: input.setPrescriptions,
+    };
+  });
 }
 
 export const parseExerciseBody = (

@@ -11,6 +11,10 @@ import { workoutDaysRouter } from "./workoutdays";
 import { workoutScheduleRouter } from "./workoutschedule";
 import { workoutSessionsRouter } from "./sessions";
 import { ensureDefaultWorkoutDay, listEnrichedWorkoutDays } from "../services/workoutDayAccess";
+import {
+  saveWorkoutProgram,
+  validateWorkoutProgramInput,
+} from "../services/workoutProgram";
 
 export const workoutsRouter = Router();
 
@@ -48,6 +52,51 @@ workoutsRouter.get("/", async (req, res) => {
     .groupBy(...workoutGroupBy);
 
   res.json(all);
+});
+
+workoutsRouter.post("/program", async (req, res) => {
+  const user = getAuthUser(req);
+  const parsed = validateWorkoutProgramInput(req.body);
+
+  if (!parsed.ok) {
+    res.status(400).json({ error: parsed.error });
+    return;
+  }
+
+  const result = await saveWorkoutProgram(user.id, parsed.value);
+
+  if (!result.ok) {
+    res.status(result.status).json({ error: result.error });
+    return;
+  }
+
+  res.status(201).json(result.workout);
+});
+
+workoutsRouter.put("/:id/program", async (req, res) => {
+  const user = getAuthUser(req);
+  const id = Number(req.params.id);
+
+  if (!Number.isInteger(id) || id < 1) {
+    res.status(400).json({ error: "Invalid workout id" });
+    return;
+  }
+
+  const parsed = validateWorkoutProgramInput(req.body);
+
+  if (!parsed.ok) {
+    res.status(400).json({ error: parsed.error });
+    return;
+  }
+
+  const result = await saveWorkoutProgram(user.id, parsed.value, id);
+
+  if (!result.ok) {
+    res.status(result.status).json({ error: result.error });
+    return;
+  }
+
+  res.json(result.workout);
 });
 
 workoutsRouter.get("/:id", async (req, res) => {

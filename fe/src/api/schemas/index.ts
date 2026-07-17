@@ -4,6 +4,7 @@ export {
   workoutsSchema,
   createWorkoutRequestSchema,
   updateWorkoutRequestSchema,
+  workoutProgramRequestSchema,
   workoutSettingsSchema,
   REST_SEC_OPTIONS,
   WORKOUT_TYPE_OPTIONS,
@@ -13,6 +14,7 @@ export {
   type WorkoutSettings,
   type CreateWorkoutInput,
   type UpdateWorkoutInput,
+  type WorkoutProgramInput,
 } from "./workout";
 export {
   exerciseSchema,

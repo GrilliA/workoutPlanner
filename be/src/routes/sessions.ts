@@ -32,6 +32,15 @@ function parseSessionId(params: Record<string, string | undefined>): number {
   return Number(params.sessionId);
 }
 
+const isUniqueViolation = (error: unknown): boolean => {
+  const databaseError = error as {
+    code?: string;
+    cause?: { code?: string };
+  };
+
+  return databaseError?.code === "23505" || databaseError?.cause?.code === "23505";
+};
+
 const sessionColumns = {
   id: workoutSessions.id,
   workoutId: workoutSessions.workoutId,
@@ -122,12 +131,21 @@ workoutSessionsRouter.post("/", async (req, res) => {
     workoutDayId = resolved.workoutDayId;
   }
 
-  const [created] = await db
-    .insert(workoutSessions)
-    .values({ workoutId, workoutDayId, userId: user.id })
-    .returning();
+  try {
+    const [created] = await db
+      .insert(workoutSessions)
+      .values({ workoutId, workoutDayId, userId: user.id })
+      .returning();
 
-  res.status(201).json({ ...created, sets: [] });
+    res.status(201).json({ ...created, sets: [] });
+  } catch (error) {
+    if (isUniqueViolation(error)) {
+      res.status(409).json({ error: "An in-progress session already exists" });
+      return;
+    }
+
+    throw error;
+  }
 });
 
 workoutSessionsRouter.get("/", async (req, res) => {

@@ -48,20 +48,20 @@ export async function replaceSetPrescriptionsForExercise(
   exerciseId: number,
   prescriptions: SetPrescription[],
 ): Promise<void> {
-  await db.delete(exerciseSets).where(eq(exerciseSets.exerciseId, exerciseId));
+  await db.transaction(async (tx) => {
+    await tx.delete(exerciseSets).where(eq(exerciseSets.exerciseId, exerciseId));
 
-  if (prescriptions.length === 0) {
-    return;
-  }
-
-  await db.insert(exerciseSets).values(
-    prescriptions.map((prescription) => ({
-      exerciseId,
-      setNumber: prescription.setNumber,
-      reps: prescription.reps,
-      restSec: prescription.restSec,
-    })),
-  );
+    if (prescriptions.length > 0) {
+      await tx.insert(exerciseSets).values(
+        prescriptions.map((prescription) => ({
+          exerciseId,
+          setNumber: prescription.setNumber,
+          reps: prescription.reps,
+          restSec: prescription.restSec,
+        })),
+      );
+    }
+  });
 }
 
 export async function deleteSetPrescriptionsForExerciseIds(

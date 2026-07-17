@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { weekdaySchema } from "./workoutday";
+import { setPrescriptionSchema } from "./exercise";
 
 export const REST_SEC_OPTIONS = [60, 90, 120, 150] as const;
 
@@ -67,8 +68,27 @@ export const updateWorkoutRequestSchema = createWorkoutRequestSchema.partial().r
   { message: "At least one field is required" },
 );
 
+const workoutProgramExerciseSchema = z.object({
+  id: z.number().int().positive().optional(),
+  name: z.string().trim().min(1, "name is required"),
+  setPrescriptions: z.array(setPrescriptionSchema).min(1, "At least one set is required"),
+});
+
+const workoutProgramDaySchema = z.object({
+  id: z.number().int().positive().optional(),
+  name: z.string().trim().min(1, "name is required"),
+  sortOrder: z.number().int().nonnegative(),
+  weekdays: z.array(weekdaySchema),
+  exercises: z.array(workoutProgramExerciseSchema),
+});
+
+export const workoutProgramRequestSchema = createWorkoutRequestSchema.extend({
+  days: z.array(workoutProgramDaySchema).min(1, "At least one workout day is required"),
+});
+
 export type WorkoutSettings = z.infer<typeof workoutSettingsSchema>;
 export type Workout = z.infer<typeof workoutSchema>;
 export type WorkoutDetail = z.infer<typeof workoutDetailSchema>;
 export type CreateWorkoutInput = z.input<typeof createWorkoutRequestSchema>;
 export type UpdateWorkoutInput = z.input<typeof updateWorkoutRequestSchema>;
+export type WorkoutProgramInput = z.input<typeof workoutProgramRequestSchema>;

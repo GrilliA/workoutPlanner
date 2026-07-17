@@ -2,11 +2,13 @@ import { apiRequest } from "./client";
 import {
   createWorkoutRequestSchema,
   updateWorkoutRequestSchema,
+  workoutProgramRequestSchema,
   workoutDetailSchema,
   workoutSchema,
   workoutsSchema,
   type CreateWorkoutInput,
   type UpdateWorkoutInput,
+  type WorkoutProgramInput,
   type Workout,
   type WorkoutDetail,
 } from "./schemas";
@@ -40,4 +42,19 @@ export async function updateWorkout(
     requestSchema: updateWorkoutRequestSchema,
     schema: workoutSchema,
   });
+}
+
+export async function saveWorkoutProgram(
+  input: WorkoutProgramInput,
+  workoutId?: number,
+): Promise<Workout> {
+  return apiRequest(
+    workoutId ? `/workouts/${workoutId}/program` : "/workouts/program",
+    {
+      method: workoutId ? "PUT" : "POST",
+      body: input,
+      requestSchema: workoutProgramRequestSchema,
+      schema: workoutSchema,
+    },
+  );
 }

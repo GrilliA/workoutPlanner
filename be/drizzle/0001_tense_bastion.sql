@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "workout_sessions_one_active_per_user" ON "workout_sessions" USING btree ("user_id") WHERE "workout_sessions"."status" = 'in_progress';

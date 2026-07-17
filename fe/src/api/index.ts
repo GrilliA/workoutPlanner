@@ -4,6 +4,7 @@ export {
   workoutSchema,
   workoutsSchema,
   createWorkoutRequestSchema,
+  workoutProgramRequestSchema,
   workoutSettingsSchema,
   REST_SEC_OPTIONS,
   WORKOUT_TYPE_OPTIONS,
@@ -21,6 +22,7 @@ export {
   type Workout,
   type WorkoutSettings,
   type CreateWorkoutInput,
+  type WorkoutProgramInput,
   type Exercise,
   type CreateExerciseInput,
   type ApiErrorBody,
@@ -59,7 +61,13 @@ export {
   type WorkoutDay,
   type Weekday,
 } from "./schemas";
-export { getWorkouts, getWorkout, createWorkout, updateWorkout } from "./workouts";
+export {
+  getWorkouts,
+  getWorkout,
+  createWorkout,
+  updateWorkout,
+  saveWorkoutProgram,
+} from "./workouts";
 export {
   getExercisesByWorkout,
   getExercise,
