@@ -26,7 +26,7 @@ cd fe && npm run cap:ios           # open Xcode
 cd fe && npm run cap:android       # open Android Studio
 ```
 
-**CI:** push o PR su `main` → GitHub Actions (`.github/workflows/ci.yml`): `be` typecheck + test, `fe` build (Node 22).
+**CI:** push o PR su `main` → GitHub Actions (`.github/workflows/ci.yml`): `be` typecheck + test, `fe` lint + build (Node 22).
 
 - `be/.env` credentials: `postgres:postgres` (must match `docker-compose.yml`)
 - Frontend calls relative `/api/...` URLs; Vite proxies in dev

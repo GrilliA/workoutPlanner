@@ -9,8 +9,6 @@ export type StatCardProps = {
   isEmpty?: boolean;
 };
 
-type StatCardPlaceholder = StatCardProps & { id: string };
-
 export function StatCardSkeleton() {
   return (
     <article className="stat-card loading" aria-hidden="true">
@@ -39,10 +37,3 @@ export function StatCard({
     </article>
   );
 }
-
-export const EMPTY_STAT_PLACEHOLDERS = [
-  { id: "volume", label: "Volume", value: "—", unit: "kg", trend: "Nessun dato" },
-  { id: "workout", label: "Workout", value: "—", unit: "/sett", trend: "Nessun dato" },
-  { id: "streak", label: "Streak", value: "—", unit: "giorni", trend: "Nessun dato" },
-  { id: "record", label: "Record", value: "—", unit: "kg", trend: "Nessun dato" },
-] satisfies StatCardPlaceholder[];

@@ -7,12 +7,18 @@ import { useScheduleOverride } from "../useScheduleOverride";
 import { TopBar } from "../topbar";
 import { WeekStrip } from "../weekstrip";
 import { TodayCard } from "../todaycard";
-import { StatCard, StatCardSkeleton, EMPTY_STAT_PLACEHOLDERS } from "../statcard";
+import { StatCard, StatCardSkeleton } from "../statcard";
 import { WorkoutRow, WorkoutRowSkeleton } from "../workoutrow";
 import "./style.css";
 
 const STAT_SKELETON_COUNT = 4;
 const WORKOUT_SKELETON_COUNT = 3;
+const EMPTY_STAT_PLACEHOLDERS: DashboardStat[] = [
+  { id: "volume", label: "Volume", value: "—", unit: "kg", trend: "Nessun dato" },
+  { id: "workout", label: "Workout", value: "—", unit: "/sett", trend: "Nessun dato" },
+  { id: "streak", label: "Streak", value: "—", unit: "giorni", trend: "Nessun dato" },
+  { id: "record", label: "Record", value: "—", unit: "kg", trend: "Nessun dato" },
+];
 
 export function Dashboard() {
   const { status, data, error, retry } = useDashboard();

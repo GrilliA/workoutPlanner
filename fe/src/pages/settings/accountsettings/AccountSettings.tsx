@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useLocation } from "wouter";
 import { ApiError, changePassword, updateProfile } from "@api";
 import { useAuth } from "@auth";
@@ -22,10 +22,6 @@ export function AccountSettings() {
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [isSavingPassword, setIsSavingPassword] = useState(false);
-
-  useEffect(() => {
-    setName(user?.name ?? "");
-  }, [user?.name]);
 
   if (!user) {
     return null;

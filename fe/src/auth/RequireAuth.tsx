@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from "react";
 import { useLocation } from "wouter";
-import { useAuth } from "./AuthProvider";
+import { useAuth } from "./useAuth";
 
 type RequireAuthProps = {
   children: ReactNode;

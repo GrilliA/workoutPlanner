@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@components/button";
 import { Skeleton } from "@components/skeleton";
@@ -19,6 +19,7 @@ const formatVolume = (volumeKg: number): string =>
 
 export function ActiveSession({ sessionId }: ActiveSessionProps) {
   const [, setLocation] = useLocation();
+  const [completionDurationMin, setCompletionDurationMin] = useState(1);
   const {
     status,
     view,
@@ -63,6 +64,13 @@ export function ActiveSession({ sessionId }: ActiveSessionProps) {
 
   const handleComplete = () => {
     restTimer.cancel();
+
+    if (view) {
+      setCompletionDurationMin(
+        Math.max(1, Math.round((Date.now() - view.startedAt.getTime()) / 60000)),
+      );
+    }
+
     void complete();
   };
 
@@ -107,11 +115,6 @@ export function ActiveSession({ sessionId }: ActiveSessionProps) {
       </div>
     );
   }
-
-  const elapsedMin = Math.max(
-    1,
-    Math.round((Date.now() - view.startedAt.getTime()) / 60000),
-  );
 
   return (
     <div className="active-session page-container">
@@ -176,7 +179,7 @@ export function ActiveSession({ sessionId }: ActiveSessionProps) {
             <p className="eyebrow">Completato</p>
             <h2 className="title">Allenamento completato</h2>
             <p className="summary">
-              {view.workoutName} · {elapsedMin} min
+              {view.workoutName} · {completionDurationMin} min
               {completionVolumeKg > 0 ? ` · ${formatVolume(completionVolumeKg)}` : ""}
             </p>
             <Button.Root variant="primary" onClick={() => setLocation("/")}>

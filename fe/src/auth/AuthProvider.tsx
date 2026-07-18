@@ -1,6 +1,4 @@
 import {
-  createContext,
-  useContext,
   useEffect,
   useState,
   type ReactNode,
@@ -8,18 +6,9 @@ import {
 import { ApiError, refreshAccessToken } from "@api";
 import * as authApi from "@api/auth";
 import { authStore } from "./authStore";
+import { AuthContext, type AuthContextValue } from "./useAuth";
 import type { AuthState, AuthUser } from "./types";
 import type { LoginInput, RegisterInput } from "@api/schemas/auth";
-
-type AuthContextValue = AuthState & {
-  login: (input: LoginInput) => Promise<void>;
-  register: (input: RegisterInput) => Promise<void>;
-  logout: () => Promise<void>;
-  setUser: (user: AuthUser) => void;
-  retryBootstrap: () => void;
-};
-
-const AuthContext = createContext<AuthContextValue | null>(null);
 
 const anonymousState = (): AuthState => ({
   status: "anonymous",
@@ -124,14 +113,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-export function useAuth(): AuthContextValue {
-  const context = useContext(AuthContext);
-
-  if (!context) {
-    throw new Error("useAuth must be used within AuthProvider");
-  }
-
-  return context;
 }

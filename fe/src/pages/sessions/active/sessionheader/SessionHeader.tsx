@@ -30,7 +30,7 @@ export function SessionHeader({
   onAbandon,
   isCompleting = false,
 }: SessionHeaderProps) {
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
