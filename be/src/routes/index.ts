@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { authRouter } from "./auth";
+import { catalogRouter } from "./catalog";
 import { exerciseByIdRouter } from "./exercises";
 import { sessionsRouter, sessionSetsRouter } from "./sessions";
 import { statsRouter } from "./stats";
@@ -8,6 +9,7 @@ import { workoutsRouter } from "./workouts";
 export const apiRouter = Router();
 
 apiRouter.use("/auth", authRouter);
+apiRouter.use("/catalog", catalogRouter);
 apiRouter.use("/workouts", workoutsRouter);
 apiRouter.use("/exercises", exerciseByIdRouter);
 apiRouter.use("/sessions", sessionsRouter);
