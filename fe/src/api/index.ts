@@ -60,6 +60,13 @@ export {
   type WorkoutSchedule,
   type WorkoutDay,
   type Weekday,
+  catalogExerciseSchema,
+  catalogSearchResultSchema,
+  catalogFacetsSchema,
+  type CatalogExercise,
+  type CatalogSearchResult,
+  type CatalogFacets,
+  type CatalogSearchParams,
 } from "./schemas";
 export {
   getWorkouts,
@@ -75,6 +82,7 @@ export {
   updateExercise,
   deleteExercise,
 } from "./exercises";
+export { searchCatalogExercises, getCatalogExercise, getCatalogFacets } from "./catalog";
 export { login, register, getMe, updateProfile, changePassword, logout } from "./auth";
 export {
   startSession,

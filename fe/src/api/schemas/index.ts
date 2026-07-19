@@ -94,3 +94,12 @@ export {
   type ScheduleOverrideInput,
   type StartSessionInput,
 } from "./workoutday";
+export {
+  catalogExerciseSchema,
+  catalogSearchResultSchema,
+  catalogFacetsSchema,
+  type CatalogExercise,
+  type CatalogSearchResult,
+  type CatalogFacets,
+  type CatalogSearchParams,
+} from "./catalog";
