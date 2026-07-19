@@ -13,6 +13,7 @@ How to use:
 
 | Date | Decision | Why |
 | --- | --- | --- |
+| 2026-07-19 | Exercise catalog = **vendored** [yuhonas/free-exercise-db](https://github.com/yuhonas/free-exercise-db) (~873 exercises), searched via our BE (`GET /api/catalog/exercises`) — not a live third-party call | Compared GitHub/hosted options: **Kinetic** (`api.kinetic.place`, 899 ex) works but public tier ~50 req/day — too low; **wger** has IT translations + public API but network dependency and CC-BY-SA content; **ExerciseDB** free tier is non-commercial. free-exercise-db is public-domain JSON + images on GitHub raw, no API key, offline-capable after seed. English names are fine for gym UX (IT UI copy stays Italian). |
 | 2026-07-16 | Mobile path = Capacitor-first inside `fe/` (not RN, PWA later) | Reuse web UI; unlock native rest-timer notifications; keep one frontend folder |
 | 2026-06-24 | Home page = the "Dashboard" from the Figma reference (TRACCIA app) | The reference's main screen is the dashboard; that is what we build as `/`. |
 | 2026-06-24 | Build the home **mobile-first** and fluid (CSS `auto-fit` grids, no JS breakpoints) | One component tree reflows 1→2→3→4 columns; less code, more control. |
@@ -87,9 +88,37 @@ Legend: ⬜ todo · 🟡 in progress · ✅ done
 - **B2 — Session logging schema + API** ✅
 - **B3 — Stats endpoints** ✅
 - **B4 — Program days schema + API** ✅ (workout days, weekday schedule, date overrides)
+- **B5 — Exercise catalog (search API)** 🟡 — vendored free-exercise-db + `GET /api/catalog/*`
+
+### Workout builder track
+
+- **W8 — Exercise picker UI** ⬜ — autocomplete/picker in “Aggiungi esercizio” wired to B5
+
+## B5 / W8 — implementation plan (8 PRs)
+
+Merge **in order** (stacked branches). Each PR is one concern.
+
+| # | Branch | Scope |
+| --- | --- | --- |
+| 1 | `cursor/b5-catalog-decision-docs-11e3` | This decision + roadmap (docs only) |
+| 2 | `cursor/b5-vendor-exercise-db-11e3` | Slim JSON under `be/data/exercise-catalog.json` + LICENSE note |
+| 3 | `cursor/b5-catalog-schema-11e3` | `exercise_catalog` table + Drizzle migration |
+| 4 | `cursor/b5-catalog-seed-11e3` | Seed script `npm run db:seed-catalog` |
+| 5 | `cursor/b5-catalog-search-api-11e3` | Search / detail / facets routes + unit tests |
+| 6 | `cursor/b5-catalog-fe-client-11e3` | FE Zod schemas + `@api` catalog client |
+| 7 | `cursor/w8-exercise-picker-11e3` | Picker UI under `pages/workouts/new/exercisepicker/` |
+| 8 | `cursor/w8-wire-add-exercise-11e3` | Wire `AddExerciseForm` + optional `catalogId` on create |
+
+**API shape (target):**
+- `GET /api/catalog/exercises?q=&muscle=&equipment=&level=&limit=&offset=`
+- `GET /api/catalog/exercises/:id`
+- `GET /api/catalog/facets`
+
+**Out of scope for B5/W8:** live wger proxy, video demos, Italian name translation layer, user-owned custom catalog rows.
 
 ## Other next steps
 
 - [ ] Smoke test end-to-end manuale (db + be + fe).
 - [ ] Test FE (Vitest su mapper/utils).
 - [ ] Route `/forgot-password` (link già presente in login).
+- [ ] (Later) Optional wger IT names or user custom exercises on top of B5.
