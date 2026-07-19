@@ -7,5 +7,6 @@ export * from "./workoutdayweekdays";
 export * from "./workoutscheduleoverrides";
 export * from "./exercises";
 export * from "./exercisesets";
+export * from "./exercisecatalog";
 export * from "./workoutsessions";
 export * from "./loggedsets";

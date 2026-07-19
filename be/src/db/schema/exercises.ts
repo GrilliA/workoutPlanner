@@ -1,4 +1,5 @@
 import { integer, pgTable, serial, text } from "drizzle-orm/pg-core";
+import { exerciseCatalog } from "./exercisecatalog";
 import { workoutDays } from "./workoutdays";
 import { workouts } from "./workouts";
 
@@ -12,5 +13,8 @@ export const exercises = pgTable("exercises", {
     .references(() => workouts.id, { onDelete: "cascade" }),
   workoutDayId: integer("workout_day_id").references(() => workoutDays.id, {
     onDelete: "cascade",
+  }),
+  catalogId: text("catalog_id").references(() => exerciseCatalog.id, {
+    onDelete: "set null",
   }),
 });
