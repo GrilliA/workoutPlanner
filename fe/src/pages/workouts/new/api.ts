@@ -10,6 +10,7 @@ import type { DraftWorkoutDay } from "./types";
 const toExercisePayload = (exercise: DraftWorkoutDay["exercises"][number]) => ({
   id: exercise.serverId,
   name: exercise.name,
+  catalogId: exercise.catalogId ?? null,
   setPrescriptions: exercise.setPrescriptions.map((entry) => ({
     setNumber: entry.setNumber,
     reps: entry.reps,
@@ -81,6 +82,7 @@ const mapExerciseToDraft = (exercise: Exercise): DraftWorkoutDay["exercises"][nu
   clientId: crypto.randomUUID(),
   serverId: exercise.id,
   name: exercise.name,
+  catalogId: exercise.catalogId ?? null,
   setPrescriptions:
     exercise.setPrescriptions.length > 0
       ? exercise.setPrescriptions.map((entry) => ({

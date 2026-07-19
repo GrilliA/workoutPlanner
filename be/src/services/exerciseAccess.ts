@@ -17,6 +17,7 @@ export type ExerciseInput = {
   workoutId: number;
   workoutDayId: number;
   setPrescriptions: SetPrescription[];
+  catalogId?: string | null;
 };
 
 export async function enrichExercises<T extends { id: number }>(
@@ -45,6 +46,7 @@ export async function createExerciseWithSets(
         reps: summary.reps,
         workoutId: input.workoutId,
         workoutDayId: input.workoutDayId,
+        catalogId: input.catalogId ?? null,
       })
       .returning();
 
@@ -67,6 +69,7 @@ export async function updateExerciseWithSets(
   input: {
     name: string;
     setPrescriptions: SetPrescription[];
+    catalogId?: string | null;
   },
 ): Promise<ExerciseRow & { setPrescriptions: SetPrescription[] }> {
   const summary = summarizeSetPrescriptions(input.setPrescriptions);
@@ -78,6 +81,7 @@ export async function updateExerciseWithSets(
         name: input.name,
         sets: summary.sets,
         reps: summary.reps,
+        ...(input.catalogId !== undefined ? { catalogId: input.catalogId } : {}),
       })
       .where(eq(exercises.id, exerciseId))
       .returning();
@@ -101,7 +105,14 @@ export const parseExerciseBody = (
   body: unknown,
   defaultRestSec: number,
 ):
-  | { ok: true; value: { name: string; setPrescriptions: SetPrescription[] } }
+  | {
+      ok: true;
+      value: {
+        name: string;
+        setPrescriptions: SetPrescription[];
+        catalogId: string | null;
+      };
+    }
   | { ok: false; error: string } => {
   if (!body || typeof body !== "object") {
     return { ok: false, error: "Invalid request body" };
@@ -114,6 +125,14 @@ export const parseExerciseBody = (
     return { ok: false, error: "name is required" };
   }
 
+  let catalogId: string | null = null;
+  if (input.catalogId !== undefined && input.catalogId !== null) {
+    if (typeof input.catalogId !== "string" || input.catalogId.trim().length === 0) {
+      return { ok: false, error: "catalogId must be a non-empty string" };
+    }
+    catalogId = input.catalogId.trim();
+  }
+
   if (input.setPrescriptions !== undefined) {
     const parsed = validateSetPrescriptions(input.setPrescriptions, defaultRestSec);
 
@@ -121,7 +140,7 @@ export const parseExerciseBody = (
       return parsed;
     }
 
-    return { ok: true, value: { name, setPrescriptions: parsed.value } };
+    return { ok: true, value: { name, setPrescriptions: parsed.value, catalogId } };
   }
 
   const sets = input.sets === undefined ? 3 : Number(input.sets);
@@ -141,5 +160,5 @@ export const parseExerciseBody = (
     restSec: defaultRestSec,
   }));
 
-  return { ok: true, value: { name, setPrescriptions } };
+  return { ok: true, value: { name, setPrescriptions, catalogId } };
 };

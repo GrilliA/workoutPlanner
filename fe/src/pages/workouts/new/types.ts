@@ -38,11 +38,13 @@ export type DraftExercise = {
   clientId: string;
   serverId?: number;
   name: string;
+  catalogId?: string | null;
   setPrescriptions: DraftSetPrescription[];
 };
 
 export type NewExerciseInput = {
   name: string;
+  catalogId?: string | null;
   setPrescriptions: DraftSetPrescription[];
 };
 

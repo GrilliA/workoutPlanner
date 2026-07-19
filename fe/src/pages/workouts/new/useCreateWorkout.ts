@@ -38,6 +38,7 @@ const createClientId = (): string => crypto.randomUUID();
 const toDraftExercise = (input: NewExerciseInput): DraftExercise => ({
   clientId: createClientId(),
   name: input.name.trim(),
+  catalogId: input.catalogId ?? null,
   setPrescriptions: input.setPrescriptions.map((entry) => ({ ...entry })),
 });
 

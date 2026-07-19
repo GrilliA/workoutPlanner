@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
-import { Input } from "@components/input";
 import { Button } from "@components/button";
 import { createDefaultSetPrescriptions, type NewExerciseInput } from "../types";
+import { ExercisePicker } from "../exercisepicker";
 import { SetPrescriptionEditor } from "../setprescriptioneditor";
 import "./style.css";
 
@@ -13,19 +13,21 @@ export type AddExerciseFormProps = {
 export function AddExerciseForm({ defaultRestSec, onAdd }: AddExerciseFormProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState("");
+  const [catalogId, setCatalogId] = useState<string | null>(null);
   const [setPrescriptions, setSetPrescriptions] = useState(() =>
     createDefaultSetPrescriptions(3, 10, defaultRestSec),
   );
 
   const resetForm = () => {
     setName("");
+    setCatalogId(null);
     setSetPrescriptions(createDefaultSetPrescriptions(3, 10, defaultRestSec));
   };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const added = onAdd({ name, setPrescriptions });
+    const added = onAdd({ name, setPrescriptions, catalogId });
 
     if (added) {
       resetForm();
@@ -50,16 +52,15 @@ export function AddExerciseForm({ defaultRestSec, onAdd }: AddExerciseFormProps)
 
   return (
     <form className="add-exercise-form" onSubmit={handleSubmit}>
-      <Input.Root>
-        <Input.Label>Nome esercizio</Input.Label>
-        <Input.Field
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-          placeholder="Panca piana"
-          autoFocus
-          required
-        />
-      </Input.Root>
+      <ExercisePicker
+        value={name}
+        onChange={(nextName, nextCatalogId) => {
+          setName(nextName);
+          setCatalogId(nextCatalogId);
+        }}
+        autoFocus
+        required
+      />
 
       <SetPrescriptionEditor
         prescriptions={setPrescriptions}

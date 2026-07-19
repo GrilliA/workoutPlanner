@@ -65,6 +65,7 @@ exercisesRouter.post("/", async (req, res) => {
     workoutId,
     workoutDayId: (await ensureDefaultWorkoutDay(workoutId)).id,
     setPrescriptions: parsed.value.setPrescriptions,
+    catalogId: parsed.value.catalogId,
   });
 
   res.status(201).json(created);

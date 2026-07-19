@@ -283,6 +283,7 @@ workoutDaysRouter.post("/:dayId/exercises", async (req, res) => {
     workoutId: day.workoutId,
     workoutDayId: dayId,
     setPrescriptions: parsed.value.setPrescriptions,
+    catalogId: parsed.value.catalogId,
   });
 
   res.status(201).json(created);

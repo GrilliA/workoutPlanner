@@ -26,6 +26,7 @@ export async function findExerciseForUser(
       reps: exercises.reps,
       workoutId: exercises.workoutId,
       workoutDayId: exercises.workoutDayId,
+      catalogId: exercises.catalogId,
     })
     .from(exercises)
     .innerJoin(workouts, eq(exercises.workoutId, workouts.id))

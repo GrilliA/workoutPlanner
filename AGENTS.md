@@ -368,8 +368,8 @@ See `WORKBOOK.md` for full detail.
 | W3 (active workout UI) | ✅ |
 | B3 (stats endpoints) | ✅ |
 | B4 (program days) | ✅ |
-| B5 (exercise catalog search) | 🟡 |
-| W8 (exercise picker UI) | ⬜ |
+| B5 (exercise catalog search) | ✅ |
+| W8 (exercise picker UI) | ✅ |
 | C7 (analytics) | ✅ done |
 | W7 (session recap) | ✅ done |
 | C8 (WeekStrip schedule) | ✅ done |

@@ -32,6 +32,7 @@ How to use:
 
 ## What we did
 
+- 2026-07-19 — B5/W8 exercise catalog: vendored yuhonas/free-exercise-db, `exercise_catalog` + seed, `GET /api/catalog/*`, FE picker in AddExerciseForm with optional `catalogId`.
 - 2026-07-17 — CAP2 rest timer nativo: countdown recupero post-set in sessione attiva, `RestTimer` (anello SVG), highlight `ExerciseCard`, Local Notifications + Haptics su Capacitor, fallback web (beep/vibrate), permessi al primo avvio native.
 - 2026-07-17 — CAP1 Capacitor + mobile polish: scaffold iOS/Android, CORS/`VITE_API_URL`, safe-area/viewport, scroll fix shell, bottom nav 4 tab, layout fluido card sessioni.
 - 2026-07-16 — CAP1 Capacitor scaffold: `@capacitor/*` in `fe/`, `capacitor.config.ts`, `ios/` + `android/`, `base: './'` Vite, script `cap:sync`/`cap:ios`/`cap:android`, helper `utils/platform.ts`.
@@ -88,37 +89,40 @@ Legend: ⬜ todo · 🟡 in progress · ✅ done
 - **B2 — Session logging schema + API** ✅
 - **B3 — Stats endpoints** ✅
 - **B4 — Program days schema + API** ✅ (workout days, weekday schedule, date overrides)
-- **B5 — Exercise catalog (search API)** 🟡 — vendored free-exercise-db + `GET /api/catalog/*`
+- **B5 — Exercise catalog (search API)** ✅ — vendored free-exercise-db + `GET /api/catalog/*`
+- **W8 — Exercise picker UI** ✅ — autocomplete in “Aggiungi esercizio” + optional `catalogId`
 
 ### Workout builder track
 
-- **W8 — Exercise picker UI** ⬜ — autocomplete/picker in “Aggiungi esercizio” wired to B5
+- **W8 — Exercise picker UI** ✅ (see above)
 
 ## B5 / W8 — implementation plan (8 PRs)
 
 Merge **in order** (stacked branches). Each PR is one concern.
 
-| # | Branch | Scope |
-| --- | --- | --- |
-| 1 | `cursor/b5-catalog-decision-docs-11e3` | This decision + roadmap (docs only) |
-| 2 | `cursor/b5-vendor-exercise-db-11e3` | Slim JSON under `be/data/exercise-catalog.json` + LICENSE note |
-| 3 | `cursor/b5-catalog-schema-11e3` | `exercise_catalog` table + Drizzle migration |
-| 4 | `cursor/b5-catalog-seed-11e3` | Seed script `npm run db:seed-catalog` |
-| 5 | `cursor/b5-catalog-search-api-11e3` | Search / detail / facets routes + unit tests |
-| 6 | `cursor/b5-catalog-fe-client-11e3` | FE Zod schemas + `@api` catalog client |
-| 7 | `cursor/w8-exercise-picker-11e3` | Picker UI under `pages/workouts/new/exercisepicker/` |
-| 8 | `cursor/w8-wire-add-exercise-11e3` | Wire `AddExerciseForm` + optional `catalogId` on create |
+| # | Branch | Scope | Status |
+| --- | --- | --- | --- |
+| 1 | `cursor/b5-catalog-decision-docs-11e3` | Decision + roadmap | done |
+| 2 | `cursor/b5-vendor-exercise-db-11e3` | Slim JSON under `be/data/` | done |
+| 3 | `cursor/b5-catalog-schema-11e3` | `exercise_catalog` + migration | done |
+| 4 | `cursor/b5-catalog-seed-11e3` | `npm run db:seed-catalog` | done |
+| 5 | `cursor/b5-catalog-search-api-11e3` | Search / detail / facets + tests | done |
+| 6 | `cursor/b5-catalog-fe-client-11e3` | FE Zod + `@api` client | done |
+| 7 | `cursor/w8-exercise-picker-11e3` | Picker UI | done |
+| 8 | `cursor/w8-wire-add-exercise-11e3` | Wire form + `catalogId` | done |
 
-**API shape (target):**
+**API shape:**
 - `GET /api/catalog/exercises?q=&muscle=&equipment=&level=&limit=&offset=`
 - `GET /api/catalog/exercises/:id`
 - `GET /api/catalog/facets`
 
-**Out of scope for B5/W8:** live wger proxy, video demos, Italian name translation layer, user-owned custom catalog rows.
+**Setup after merge:** `cd be && npm run db:migrate && npm run db:seed-catalog`
+
+**Out of scope:** live wger proxy, video demos, Italian name translation layer, user-owned custom catalog rows.
 
 ## Other next steps
 
-- [ ] Smoke test end-to-end manuale (db + be + fe).
+- [ ] Smoke test end-to-end manuale (db + be + fe) — include catalog search in Add esercizio.
 - [ ] Test FE (Vitest su mapper/utils).
 - [ ] Route `/forgot-password` (link già presente in login).
 - [ ] (Later) Optional wger IT names or user custom exercises on top of B5.

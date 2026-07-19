@@ -13,6 +13,7 @@ export const exerciseSchema = z.object({
   reps: z.number().nullable(),
   workoutId: z.number(),
   workoutDayId: z.number().nullable().optional(),
+  catalogId: z.string().nullable().optional(),
   setPrescriptions: z.array(setPrescriptionSchema).default([]),
 });
 
@@ -21,6 +22,7 @@ export const exercisesSchema = z.array(exerciseSchema);
 export const createExerciseRequestSchema = z.object({
   name: z.string().trim().min(1, "name is required"),
   setPrescriptions: z.array(setPrescriptionSchema).min(1, "At least one set is required"),
+  catalogId: z.string().trim().min(1).nullable().optional(),
 });
 
 export const updateExerciseRequestSchema = createExerciseRequestSchema;
