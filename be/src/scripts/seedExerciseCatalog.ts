@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { sql } from "drizzle-orm";
@@ -20,13 +20,23 @@ type CatalogSeedRow = {
 };
 
 function resolveCatalogPath(): string {
-  const fromEnv = process.env.EXERCISE_CATALOG_PATH;
-  if (fromEnv) {
-    return fromEnv;
+  if (process.env.EXERCISE_CATALOG_PATH) {
+    return process.env.EXERCISE_CATALOG_PATH;
   }
 
-  const here = dirname(fileURLToPath(import.meta.url));
-  return join(here, "../../../data/exercise-catalog.json");
+  const candidates = [
+    join(process.cwd(), "data/exercise-catalog.json"),
+    join(dirname(fileURLToPath(import.meta.url)), "../../data/exercise-catalog.json"),
+  ];
+
+  const found = candidates.find((path) => existsSync(path));
+  if (!found) {
+    throw new Error(
+      `Catalog JSON not found. Tried:\n${candidates.map((path) => ` - ${path}`).join("\n")}`,
+    );
+  }
+
+  return found;
 }
 
 function loadCatalogRows(path: string): CatalogSeedRow[] {
