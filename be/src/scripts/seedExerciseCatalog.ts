@@ -1,7 +1,6 @@
 import "dotenv/config";
 import { existsSync, readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import { sql } from "drizzle-orm";
 import { db } from "../db";
 import { exerciseCatalog } from "../db/schema";
@@ -26,7 +25,7 @@ function resolveCatalogPath(): string {
 
   const candidates = [
     join(process.cwd(), "data/exercise-catalog.json"),
-    join(dirname(fileURLToPath(import.meta.url)), "../../data/exercise-catalog.json"),
+    join(__dirname, "../../data/exercise-catalog.json"),
   ];
 
   const found = candidates.find((path) => existsSync(path));
