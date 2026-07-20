@@ -17,13 +17,11 @@ export function useCatalogSearch(minChars = 2): CatalogSearchState {
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const trimmed = query.trim();
+  const trimmed = query.trim();
+  const canSearch = trimmed.length >= minChars;
 
-    if (trimmed.length < minChars) {
-      setResults([]);
-      setIsSearching(false);
-      setError(null);
+  useEffect(() => {
+    if (!canSearch) {
       return;
     }
 
@@ -54,7 +52,13 @@ export function useCatalogSearch(minChars = 2): CatalogSearchState {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [query, minChars]);
+  }, [canSearch, trimmed]);
 
-  return { query, setQuery, results, isSearching, error };
+  return {
+    query,
+    setQuery,
+    results: canSearch ? results : [],
+    isSearching: canSearch ? isSearching : false,
+    error: canSearch ? error : null,
+  };
 }
