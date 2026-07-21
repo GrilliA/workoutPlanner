@@ -112,8 +112,19 @@ async function sendRequest<TResponse>(
   let encodedBody: string | undefined;
 
   if (body !== undefined) {
-    const payload = requestSchema ? requestSchema.parse(body) : body;
-    encodedBody = JSON.stringify(payload);
+    if (requestSchema) {
+      const parsedBody = requestSchema.safeParse(body);
+
+      if (!parsedBody.success) {
+        const detail = parsedBody.error.issues[0]?.message ?? "dati non validi";
+        throw new ApiError(400, detail);
+      }
+
+      encodedBody = JSON.stringify(parsedBody.data);
+    } else {
+      encodedBody = JSON.stringify(body);
+    }
+
     headers.set("Content-Type", "application/json");
   }
 

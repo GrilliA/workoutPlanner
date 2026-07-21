@@ -1,19 +1,21 @@
 import { router } from "expo-router";
 import { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from "react-native";
 import { ApiError } from "../../src/api/client";
 import { changePassword, updateProfile } from "../../src/api/auth";
 import { useAuth } from "../../src/auth";
 import {
+  AppText,
   Body,
   ErrorBanner,
   Field,
   PrimaryButton,
   Screen,
   SecondaryButton,
+  SectionLabel,
   Title,
-} from "../../src/components/ui";
-import { colors, spacing } from "../../src/theme/colors";
+} from "../../src/components";
+import { spacing } from "../../src/theme";
 
 export default function SettingsScreen() {
   const { user, logout, setUser } = useAuth();
@@ -65,54 +67,70 @@ export default function SettingsScreen() {
   };
 
   return (
-    <Screen>
-      <Title>Account</Title>
-      <Body>{user?.email}</Body>
-      {error ? <ErrorBanner message={error} /> : null}
-      {message ? <Text style={styles.ok}>{message}</Text> : null}
+    <Screen padded={false}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={styles.flex}
+      >
+        <ScrollView contentContainerStyle={styles.content}>
+          <Title>IMPOSTAZIONI</Title>
+          <Body>{user?.email}</Body>
+          {error ? <ErrorBanner message={error} /> : null}
+          {message ? (
+            <AppText tone="accent" style={styles.ok}>
+              {message}
+            </AppText>
+          ) : null}
 
-      <View style={styles.block}>
-        <Text style={styles.label}>Nome</Text>
-        <Field value={name} onChangeText={setName} autoCapitalize="words" />
-        <PrimaryButton
-          label="Salva profilo"
-          onPress={() => void saveProfile()}
-          disabled={busy}
-        />
-      </View>
+          <View style={styles.block}>
+            <SectionLabel>PROFILO</SectionLabel>
+            <Field
+              value={name}
+              onChangeText={setName}
+              autoCapitalize="words"
+              placeholder="Nome"
+            />
+            <PrimaryButton
+              label="Salva profilo"
+              onPress={() => void saveProfile()}
+              disabled={busy}
+            />
+          </View>
 
-      <View style={styles.block}>
-        <Text style={styles.label}>Cambia password</Text>
-        <Field
-          placeholder="Password attuale"
-          secureTextEntry
-          value={currentPassword}
-          onChangeText={setCurrentPassword}
-        />
-        <Field
-          placeholder="Nuova password"
-          secureTextEntry
-          value={newPassword}
-          onChangeText={setNewPassword}
-        />
-        <PrimaryButton
-          label="Aggiorna password"
-          onPress={() => void savePassword()}
-          disabled={busy || !currentPassword || newPassword.length < 8}
-        />
-      </View>
+          <View style={styles.block}>
+            <SectionLabel>PASSWORD</SectionLabel>
+            <Field
+              placeholder="Password attuale"
+              secureTextEntry
+              value={currentPassword}
+              onChangeText={setCurrentPassword}
+            />
+            <Field
+              placeholder="Nuova password"
+              secureTextEntry
+              value={newPassword}
+              onChangeText={setNewPassword}
+            />
+            <PrimaryButton
+              label="Aggiorna password"
+              onPress={() => void savePassword()}
+              disabled={busy || !currentPassword || newPassword.length < 8}
+            />
+          </View>
 
-      <SecondaryButton label="Esci" onPress={() => void onLogout()} />
+          <SecondaryButton
+            label="Esci dall'account"
+            onPress={() => void onLogout()}
+          />
+        </ScrollView>
+      </KeyboardAvoidingView>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
+  content: { padding: spacing.lg, paddingBottom: spacing.xl },
   block: { marginTop: spacing.lg },
-  label: {
-    color: colors.muted,
-    fontWeight: "700",
-    marginBottom: spacing.sm,
-  },
-  ok: { color: colors.accent, marginVertical: spacing.sm },
+  ok: { marginVertical: spacing.sm },
 });

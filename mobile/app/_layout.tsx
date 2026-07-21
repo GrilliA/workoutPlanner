@@ -2,8 +2,8 @@ import { Stack } from "expo-router";
 import { Pressable, Text } from "react-native";
 import { API_BASE } from "../src/api/config";
 import { AuthProvider, useAuth } from "../src/auth";
-import { LoadingBlock, Screen } from "../src/components/ui";
-import { colors } from "../src/theme/colors";
+import { LoadingBlock, Screen } from "../src/components";
+import { colors } from "../src/theme";
 
 export { ErrorBoundary } from "expo-router";
 
@@ -42,18 +42,15 @@ export default function RootLayout() {
       <AuthGate>
         <Stack
           screenOptions={{
-            headerStyle: { backgroundColor: colors.bg },
-            headerTintColor: colors.textHeading,
+            headerShown: false,
             contentStyle: { backgroundColor: colors.bg },
           }}
         >
-          <Stack.Screen name="index" options={{ headerShown: false }} />
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-          <Stack.Screen name="(app)" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="session/[sessionId]"
-            options={{ title: "Sessione", headerBackTitle: "Indietro" }}
-          />
+          <Stack.Screen name="index" />
+          <Stack.Screen name="(auth)" />
+          <Stack.Screen name="(app)" />
+          <Stack.Screen name="session/[sessionId]" />
+          <Stack.Screen name="workout/new" />
         </Stack>
       </AuthGate>
     </AuthProvider>

@@ -1,13 +1,11 @@
 import { Redirect, Tabs } from "expo-router";
-import { Text } from "react-native";
+import { Icon, type IconName } from "../../src/components";
 import { useAuth } from "../../src/auth";
-import { colors } from "../../src/theme/colors";
+import { colors } from "../../src/theme";
 
-function TabIcon({ label, focused }: { label: string; focused: boolean }) {
+function TabBarIcon({ name, focused }: { name: IconName; focused: boolean }) {
   return (
-    <Text style={{ color: focused ? colors.accent : colors.muted, fontSize: 11 }}>
-      {label}
-    </Text>
+    <Icon name={name} color={focused ? colors.accent : colors.muted} size={22} />
   );
 }
 
@@ -21,42 +19,55 @@ export default function AppLayout() {
   return (
     <Tabs
       screenOptions={{
-        headerStyle: { backgroundColor: colors.bg },
-        headerTintColor: colors.textHeading,
+        headerShown: false,
         tabBarStyle: {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
+          height: 60,
+          paddingTop: 4,
         },
         tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.muted,
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: "600",
+        },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: "Oggi",
-          tabBarIcon: ({ focused }) => <TabIcon label="🏠" focused={focused} />,
+          title: "Home",
+          tabBarIcon: ({ focused }) => (
+            <TabBarIcon name="home" focused={focused} />
+          ),
         }}
       />
       <Tabs.Screen
         name="workouts"
         options={{
-          title: "Programmi",
-          tabBarIcon: ({ focused }) => <TabIcon label="📋" focused={focused} />,
+          title: "Workout",
+          tabBarIcon: ({ focused }) => (
+            <TabBarIcon name="workout" focused={focused} />
+          ),
         }}
       />
       <Tabs.Screen
         name="stats"
         options={{
           title: "Progressi",
-          tabBarIcon: ({ focused }) => <TabIcon label="📈" focused={focused} />,
+          tabBarIcon: ({ focused }) => (
+            <TabBarIcon name="stats" focused={focused} />
+          ),
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
           title: "Account",
-          tabBarIcon: ({ focused }) => <TabIcon label="⚙️" focused={focused} />,
+          tabBarIcon: ({ focused }) => (
+            <TabBarIcon name="settings" focused={focused} />
+          ),
         }}
       />
     </Tabs>

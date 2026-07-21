@@ -108,21 +108,25 @@ export function useRestTimer(sessionId: number) {
       setRestingExerciseId(exerciseId);
       setStatus("running");
 
-      const permission = await Notifications.requestPermissionsAsync();
+      try {
+        const permission = await Notifications.requestPermissionsAsync();
 
-      if (permission.granted) {
-        const id = await Notifications.scheduleNotificationAsync({
-          content: {
-            title: "Recupero finito",
-            body: "Vai con la prossima serie",
-            data: { sessionId },
-          },
-          trigger: {
-            type: Notifications.SchedulableTriggerInputTypes.DATE,
-            date: new Date(endsAt),
-          },
-        });
-        notificationIdRef.current = id;
+        if (permission.granted) {
+          const id = await Notifications.scheduleNotificationAsync({
+            content: {
+              title: "Recupero finito",
+              body: "Vai con la prossima serie",
+              data: { sessionId },
+            },
+            trigger: {
+              type: Notifications.SchedulableTriggerInputTypes.DATE,
+              date: new Date(endsAt),
+            },
+          });
+          notificationIdRef.current = id;
+        }
+      } catch {
+        // Expo web / simulatore: timer UI resta attivo senza notifica.
       }
     },
     [cancel, sessionId],
