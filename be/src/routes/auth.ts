@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, type Request } from "express";
 import { and, eq, isNull } from "drizzle-orm";
 import { db } from "../db";
 import { refreshTokens, users } from "../db/schema";
@@ -29,6 +29,21 @@ export const authRouter = Router();
 const INVALID_CREDENTIALS = "Invalid email or password";
 const UNAUTHORIZED = "Unauthorized";
 
+/** Mobile clients send `X-Client: mobile` — they cannot rely on httpOnly cookies. */
+const isMobileClient = (req: Request): boolean =>
+  req.header("X-Client")?.toLowerCase() === "mobile";
+
+const readRefreshToken = (req: Request): string | undefined => {
+  const fromCookie = req.cookies[REFRESH_COOKIE_NAME] as string | undefined;
+
+  if (fromCookie) {
+    return fromCookie;
+  }
+
+  const fromBody = (req.body as { refreshToken?: unknown } | undefined)?.refreshToken;
+  return typeof fromBody === "string" && fromBody.length > 0 ? fromBody : undefined;
+};
+
 authRouter.post("/register", authRateLimit, async (req, res) => {
   const parsed = validateRegisterInput(req.body);
 
@@ -56,9 +71,11 @@ authRouter.post("/register", authRateLimit, async (req, res) => {
   }
 
   const user = toAuthUser(created);
-  const accessToken = await startAuthSession(user, res);
+  const tokens = await startAuthSession(user, res, {
+    includeRefreshInBody: isMobileClient(req),
+  });
 
-  res.status(201).json({ user, accessToken });
+  res.status(201).json({ user, ...tokens });
 });
 
 authRouter.post("/login", authRateLimit, async (req, res) => {
@@ -94,13 +111,15 @@ authRouter.post("/login", authRateLimit, async (req, res) => {
   }
 
   const user = toAuthUser(userRow);
-  const accessToken = await startAuthSession(user, res);
+  const tokens = await startAuthSession(user, res, {
+    includeRefreshInBody: isMobileClient(req),
+  });
 
-  res.json({ user, accessToken });
+  res.json({ user, ...tokens });
 });
 
 authRouter.post("/refresh", async (req, res) => {
-  const refreshToken = req.cookies[REFRESH_COOKIE_NAME] as string | undefined;
+  const refreshToken = readRefreshToken(req);
 
   if (!refreshToken) {
     res.status(401).json({ error: UNAUTHORIZED });
@@ -142,11 +161,16 @@ authRouter.post("/refresh", async (req, res) => {
 
   setRefreshCookie(res, newRefreshToken);
 
+  if (isMobileClient(req)) {
+    res.json({ accessToken, refreshToken: newRefreshToken });
+    return;
+  }
+
   res.json({ accessToken });
 });
 
 authRouter.post("/logout", async (req, res) => {
-  const refreshToken = req.cookies[REFRESH_COOKIE_NAME] as string | undefined;
+  const refreshToken = readRefreshToken(req);
 
   if (refreshToken) {
     await revokeRefreshSession(refreshToken);
@@ -233,6 +257,11 @@ authRouter.patch("/password", requireAuth, async (req, res) => {
 
   const refreshToken = await createRefreshSession(user.id);
   setRefreshCookie(res, refreshToken);
+
+  if (isMobileClient(req)) {
+    res.status(200).json({ refreshToken });
+    return;
+  }
 
   res.status(204).send();
 });

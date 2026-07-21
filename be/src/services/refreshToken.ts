@@ -113,12 +113,25 @@ export const rotateRefreshSession = async (
   });
 };
 
+export type AuthSessionTokens = {
+  accessToken: string;
+  /** Present when the client asked for a body refresh token (mobile). */
+  refreshToken?: string;
+};
+
 export const startAuthSession = async (
   user: AuthUser,
   res: Response,
-): Promise<string> => {
+  options?: { includeRefreshInBody?: boolean },
+): Promise<AuthSessionTokens> => {
   const accessToken = signAccessToken(user);
   const refreshToken = await createRefreshSession(user.id);
+  // Web keeps using the httpOnly cookie; mobile also receives the opaque token in JSON.
   setRefreshCookie(res, refreshToken);
-  return accessToken;
+
+  if (options?.includeRefreshInBody) {
+    return { accessToken, refreshToken };
+  }
+
+  return { accessToken };
 };
