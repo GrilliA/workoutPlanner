@@ -129,6 +129,10 @@ dist
 # pnpm
 .pnpm-store
 
+# Expo / React Native
+mobile/.expo/
+mobile/dist/
+
 # yarn v3
 .pnp.*
 .yarn/*

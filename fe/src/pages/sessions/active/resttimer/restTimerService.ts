@@ -1,17 +1,10 @@
-import { Haptics, ImpactStyle } from "@capacitor/haptics";
-import { LocalNotifications } from "@capacitor/local-notifications";
-import { getPlatform, isNative } from "@utils/platform";
-import { navigateTo } from "@utils/appNavigation";
-
+/**
+ * Web-only rest timer alerts (beep + vibrate).
+ * Native notifications/haptics live in `mobile/` (Expo) after Capacitor removal.
+ */
 export const REST_TIMER_NOTIFICATION_ID = 9001;
 
-const REST_TIMER_CHANNEL_ID = "rest-timer";
-
 const NOTIFICATION_TITLE = "Recupero finito";
-const NOTIFICATION_BODY = "Vai con la prossima serie";
-
-let nativeReady = false;
-let notificationsGranted = false;
 
 const playWebBeep = (): void => {
   const AudioContextCtor =
@@ -38,109 +31,31 @@ const playWebBeep = (): void => {
 };
 
 const playWebVibrate = (): void => {
-  if (getPlatform() === "android") {
-    navigator.vibrate?.([200, 100, 200]);
-  }
+  navigator.vibrate?.([200, 100, 200]);
 };
 
 export async function initRestTimerNative(): Promise<void> {
-  if (!isNative() || nativeReady) {
-    return;
-  }
-
-  nativeReady = true;
-
-  if (getPlatform() === "android") {
-    await LocalNotifications.createChannel({
-      id: REST_TIMER_CHANNEL_ID,
-      name: "Recupero",
-      description: "Avvisi fine recupero tra le serie",
-      importance: 4,
-      sound: "default",
-    });
-  }
-
-  const permission = await LocalNotifications.requestPermissions();
-  notificationsGranted = permission.display === "granted";
-
-  await LocalNotifications.addListener("localNotificationReceived", (notification) => {
-    if (notification.id !== REST_TIMER_NOTIFICATION_ID) {
-      return;
-    }
-
-    void triggerHaptic();
-  });
-
-  await LocalNotifications.addListener("localNotificationActionPerformed", (event) => {
-    if (event.notification.id !== REST_TIMER_NOTIFICATION_ID) {
-      return;
-    }
-
-    const sessionId = event.notification.extra?.sessionId;
-
-    if (typeof sessionId === "number") {
-      navigateTo(`/sessions/${sessionId}`);
-    }
-  });
+  // No-op on web — native path is the Expo app in `/mobile`.
 }
 
 export function canScheduleNativeNotification(): boolean {
-  return isNative() && notificationsGranted;
+  return false;
 }
 
-export async function scheduleRestAlert(at: Date, sessionId: number): Promise<void> {
-  if (!canScheduleNativeNotification()) {
-    return;
-  }
-
-  await cancelRestAlert();
-
-  await LocalNotifications.schedule({
-    notifications: [
-      {
-        id: REST_TIMER_NOTIFICATION_ID,
-        title: NOTIFICATION_TITLE,
-        body: NOTIFICATION_BODY,
-        schedule: { at },
-        channelId: REST_TIMER_CHANNEL_ID,
-        extra: { sessionId },
-      },
-    ],
-  });
+export async function scheduleRestAlert(_at: Date, _sessionId: number): Promise<void> {
+  // Web cannot schedule reliable background local notifications without a service worker.
 }
 
-export async function cancelRestAlert(): Promise<void> {
-  if (!isNative()) {
-    return;
-  }
+export async function cancelRestAlert(): Promise<void> {}
 
-  await LocalNotifications.cancel({
-    notifications: [{ id: REST_TIMER_NOTIFICATION_ID }],
-  });
-}
-
-export async function triggerHaptic(): Promise<void> {
-  if (!isNative()) {
-    return;
-  }
-
-  try {
-    await Haptics.impact({ style: ImpactStyle.Heavy });
-  } catch {
-    // Haptics unavailable on some devices/simulators.
-  }
-}
+export async function triggerHaptic(): Promise<void> {}
 
 export async function playRestDoneAlert(_sessionId: number, inForeground: boolean): Promise<void> {
-  await cancelRestAlert();
-
-  if (isNative()) {
-    if (inForeground) {
-      await triggerHaptic();
-    }
+  if (!inForeground) {
     return;
   }
 
   playWebBeep();
   playWebVibrate();
+  void NOTIFICATION_TITLE;
 }

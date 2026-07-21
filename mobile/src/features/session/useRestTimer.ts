@@ -1,28 +1,31 @@
+import * as Haptics from "expo-haptics";
+import * as Notifications from "expo-notifications";
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  cancelRestAlert,
-  playRestDoneAlert,
-  scheduleRestAlert,
-} from "./restTimerService";
-import type { RestTimerStatus } from "./types";
+import { AppState } from "react-native";
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
 const DONE_FLASH_MS = 3000;
 const TICK_MS = 250;
 
+export type RestTimerStatus = "idle" | "running" | "done";
+
 const readRemainingSec = (endsAt: number): number =>
   Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
 
-export type UseRestTimerResult = {
-  status: RestTimerStatus;
-  remainingSec: number;
-  totalSec: number;
-  restingExerciseId: number | null;
-  start: (restSec: number, exerciseId: number) => Promise<void>;
-  skip: () => void;
-  cancel: () => void;
-};
-
-export function useRestTimer(sessionId: number): UseRestTimerResult {
+/**
+ * Rest timer for active workout sessions.
+ * Uses Expo Notifications (background alert) + Haptics (foreground) —
+ * the RN replacement for the old Capacitor Local Notifications path.
+ */
+export function useRestTimer(sessionId: number) {
   const [status, setStatus] = useState<RestTimerStatus>("idle");
   const [remainingSec, setRemainingSec] = useState(0);
   const [totalSec, setTotalSec] = useState(0);
@@ -30,16 +33,14 @@ export function useRestTimer(sessionId: number): UseRestTimerResult {
 
   const endsAtRef = useRef<number | null>(null);
   const firedRef = useRef(false);
+  const notificationIdRef = useRef<string | null>(null);
   const appInForegroundRef = useRef(true);
 
-  const syncRemaining = useCallback(() => {
-    const endsAt = endsAtRef.current;
-
-    if (!endsAt) {
-      return;
+  const cancelNotification = useCallback(async () => {
+    if (notificationIdRef.current) {
+      await Notifications.cancelScheduledNotificationAsync(notificationIdRef.current);
+      notificationIdRef.current = null;
     }
-
-    setRemainingSec(readRemainingSec(endsAt));
   }, []);
 
   const cancel = useCallback(() => {
@@ -49,8 +50,8 @@ export function useRestTimer(sessionId: number): UseRestTimerResult {
     setRemainingSec(0);
     setTotalSec(0);
     setRestingExerciseId(null);
-    void cancelRestAlert();
-  }, []);
+    void cancelNotification();
+  }, [cancelNotification]);
 
   const fireDone = useCallback(async () => {
     if (firedRef.current || endsAtRef.current === null) {
@@ -60,10 +61,17 @@ export function useRestTimer(sessionId: number): UseRestTimerResult {
     firedRef.current = true;
     setRemainingSec(0);
     setStatus("done");
+    await cancelNotification();
 
-    await playRestDoneAlert(sessionId, appInForegroundRef.current);
+    if (appInForegroundRef.current) {
+      try {
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } catch {
+        // Simulator may not support haptics.
+      }
+    }
 
-    window.setTimeout(() => {
+    setTimeout(() => {
       endsAtRef.current = null;
       firedRef.current = false;
       setStatus("idle");
@@ -71,7 +79,7 @@ export function useRestTimer(sessionId: number): UseRestTimerResult {
       setTotalSec(0);
       setRestingExerciseId(null);
     }, DONE_FLASH_MS);
-  }, [sessionId]);
+  }, [cancelNotification]);
 
   const checkExpiry = useCallback(() => {
     const endsAt = endsAtRef.current;
@@ -100,42 +108,46 @@ export function useRestTimer(sessionId: number): UseRestTimerResult {
       setRestingExerciseId(exerciseId);
       setStatus("running");
 
-      await scheduleRestAlert(new Date(endsAt), sessionId);
+      const permission = await Notifications.requestPermissionsAsync();
+
+      if (permission.granted) {
+        const id = await Notifications.scheduleNotificationAsync({
+          content: {
+            title: "Recupero finito",
+            body: "Vai con la prossima serie",
+            data: { sessionId },
+          },
+          trigger: {
+            type: Notifications.SchedulableTriggerInputTypes.DATE,
+            date: new Date(endsAt),
+          },
+        });
+        notificationIdRef.current = id;
+      }
     },
     [cancel, sessionId],
   );
-
-  const skip = useCallback(() => {
-    cancel();
-  }, [cancel]);
 
   useEffect(() => {
     if (status !== "running") {
       return;
     }
 
-    const intervalId = window.setInterval(checkExpiry, TICK_MS);
-    return () => {
-      window.clearInterval(intervalId);
-    };
+    const intervalId = setInterval(checkExpiry, TICK_MS);
+    return () => clearInterval(intervalId);
   }, [checkExpiry, status]);
 
   useEffect(() => {
-    const onVisibilityChange = () => {
-      appInForegroundRef.current = document.visibilityState === "visible";
+    const sub = AppState.addEventListener("change", (next) => {
+      appInForegroundRef.current = next === "active";
 
-      if (document.visibilityState === "visible") {
-        syncRemaining();
+      if (next === "active") {
         checkExpiry();
       }
-    };
+    });
 
-    document.addEventListener("visibilitychange", onVisibilityChange);
-
-    return () => {
-      document.removeEventListener("visibilitychange", onVisibilityChange);
-    };
-  }, [checkExpiry, syncRemaining]);
+    return () => sub.remove();
+  }, [checkExpiry]);
 
   return {
     status,
@@ -143,7 +155,7 @@ export function useRestTimer(sessionId: number): UseRestTimerResult {
     totalSec,
     restingExerciseId,
     start,
-    skip,
+    skip: cancel,
     cancel,
   };
 }

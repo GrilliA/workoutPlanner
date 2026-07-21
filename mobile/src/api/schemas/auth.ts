@@ -9,7 +9,7 @@ export const authUserSchema = z.object({
 export const authSessionSchema = z.object({
   user: authUserSchema,
   accessToken: z.string(),
-  /** Present for mobile clients (`X-Client: mobile`); ignored on web. */
+  /** Returned when the client sends `X-Client: mobile`. */
   refreshToken: z.string().optional(),
 });
 
