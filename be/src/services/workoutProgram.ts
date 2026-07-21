@@ -22,6 +22,7 @@ type WorkoutProgramExercise = {
   id?: number;
   name: string;
   setPrescriptions: SetPrescription[];
+  catalogId: string | null;
 };
 
 type WorkoutProgramDay = CreateWorkoutDayInput & {
@@ -275,6 +276,7 @@ export const saveWorkoutProgram = (
           name: exercise.name,
           sets: summary.sets,
           reps: summary.reps,
+          catalogId: exercise.catalogId,
         };
         const [savedExercise] = exercise.id
           ? await tx

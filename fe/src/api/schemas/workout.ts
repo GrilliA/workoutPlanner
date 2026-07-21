@@ -71,6 +71,7 @@ export const updateWorkoutRequestSchema = createWorkoutRequestSchema.partial().r
 const workoutProgramExerciseSchema = z.object({
   id: z.number().int().positive().optional(),
   name: z.string().trim().min(1, "name is required"),
+  catalogId: z.string().trim().min(1).nullable().optional(),
   setPrescriptions: z.array(setPrescriptionSchema).min(1, "At least one set is required"),
 });
 

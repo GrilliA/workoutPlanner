@@ -22,11 +22,13 @@ import {
   SectionLabel,
   Title,
 } from "../../src/components";
+import { ExercisePicker } from "../../src/features/workout/ExercisePicker";
 import { colors, radii, spacing } from "../../src/theme";
 
 type DraftExercise = {
   key: string;
   name: string;
+  catalogId: string | null;
   sets: string;
   reps: string;
 };
@@ -34,11 +36,12 @@ type DraftExercise = {
 const newExercise = (): DraftExercise => ({
   key: String(Date.now() + Math.random()),
   name: "",
+  catalogId: null,
   sets: "3",
   reps: "8",
 });
 
-/** Crea una scheda minima: nome + un giorno + esercizi. */
+/** Crea una scheda minima: nome + un giorno + esercizi (con cerca catalogo). */
 export default function NewWorkoutScreen() {
   const [name, setName] = useState("");
   const [dayName, setDayName] = useState("Giorno A");
@@ -73,6 +76,7 @@ export default function NewWorkoutScreen() {
       const reps = Number(item.reps);
       return {
         name: item.name.trim(),
+        catalogId: item.catalogId,
         sets,
         reps,
       };
@@ -100,7 +104,6 @@ export default function NewWorkoutScreen() {
     setError(null);
 
     try {
-      // Lasciamo i default BE per tipo/frequenza (evita mismatch sul carattere ×).
       await saveWorkoutProgram({
         name: trimmedName,
         defaultRestSec: 90,
@@ -111,6 +114,7 @@ export default function NewWorkoutScreen() {
             weekdays: [0, 2, 4],
             exercises: parsedExercises.map((item) => ({
               name: item.name,
+              catalogId: item.catalogId,
               setPrescriptions: Array.from({ length: item.sets }, (_, index) => ({
                 setNumber: index + 1,
                 reps: item.reps,
@@ -137,9 +141,15 @@ export default function NewWorkoutScreen() {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={styles.flex}
       >
-        <ScrollView contentContainerStyle={styles.content}>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+        >
           <Title>CREA SCHEDA</Title>
-          <Body>Nome, un giorno e gli esercizi. Puoi raffinare dal web.</Body>
+          <Body>
+            Cerca esercizi in inglese dal catalogo, oppure digita un nome libero
+            (anche in italiano).
+          </Body>
           {error ? <ErrorBanner message={error} /> : null}
 
           <SectionLabel>SCHEDA</SectionLabel>
@@ -159,25 +169,29 @@ export default function NewWorkoutScreen() {
           <SectionLabel>ESERCIZI</SectionLabel>
           {exercises.map((item) => (
             <View key={item.key} style={styles.exerciseBlock}>
-              <Field
-                placeholder="Nome esercizio"
+              <ExercisePicker
                 value={item.name}
-                onChangeText={(value) => updateExercise(item.key, { name: value })}
-                autoCapitalize="words"
+                onChange={(nextName, catalogId) =>
+                  updateExercise(item.key, { name: nextName, catalogId })
+                }
               />
               <View style={styles.row}>
                 <Field
                   placeholder="Serie"
                   keyboardType="number-pad"
                   value={item.sets}
-                  onChangeText={(value) => updateExercise(item.key, { sets: value })}
+                  onChangeText={(value) =>
+                    updateExercise(item.key, { sets: value })
+                  }
                   style={styles.half}
                 />
                 <Field
                   placeholder="Reps"
                   keyboardType="number-pad"
                   value={item.reps}
-                  onChangeText={(value) => updateExercise(item.key, { reps: value })}
+                  onChangeText={(value) =>
+                    updateExercise(item.key, { reps: value })
+                  }
                   style={styles.half}
                 />
               </View>
@@ -191,7 +205,9 @@ export default function NewWorkoutScreen() {
 
           <SecondaryButton
             label="Aggiungi esercizio"
-            onPress={() => setExercises((current) => [...current, newExercise()])}
+            onPress={() =>
+              setExercises((current) => [...current, newExercise()])
+            }
           />
           <PrimaryButton
             label={busy ? "Salvataggio…" : "SALVA SCHEDA"}
