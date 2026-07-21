@@ -29,11 +29,13 @@ export default function LoginScreen() {
       await login({ email, password });
       router.replace("/(app)");
     } catch (err) {
-      setError(
-        err instanceof ApiError
-          ? err.message
-          : `Login non riuscito (rete?). API: ${API_BASE}`,
-      );
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        const detail =
+          err instanceof Error ? err.message : "errore sconosciuto";
+        setError(`Login non riuscito (${detail}). API: ${API_BASE}`);
+      }
     } finally {
       setBusy(false);
     }

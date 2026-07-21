@@ -75,7 +75,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     authStore.setAccessToken(session.accessToken);
 
     if (session.refreshToken) {
-      await authStore.setRefreshToken(session.refreshToken);
+      try {
+        await authStore.setRefreshToken(session.refreshToken);
+      } catch (error) {
+        if (__DEV__) {
+          console.warn("[auth] SecureStore setRefreshToken failed", error);
+        }
+      }
     }
 
     setState(authenticatedState(session.user));
@@ -86,7 +92,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     authStore.setAccessToken(session.accessToken);
 
     if (session.refreshToken) {
-      await authStore.setRefreshToken(session.refreshToken);
+      try {
+        await authStore.setRefreshToken(session.refreshToken);
+      } catch (error) {
+        if (__DEV__) {
+          console.warn("[auth] SecureStore setRefreshToken failed", error);
+        }
+      }
     }
 
     setState(authenticatedState(session.user));

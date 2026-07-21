@@ -127,6 +127,9 @@ async function sendRequest<TResponse>(
     method,
     headers,
     body: encodedBody,
+  }).catch((error: unknown) => {
+    const detail = error instanceof Error ? error.message : "network error";
+    throw new ApiError(0, `Rete: ${detail}`);
   });
 
   if (response.status === 401 && !isRetry && !isAuthPath(path)) {
@@ -149,7 +152,13 @@ async function sendRequest<TResponse>(
     );
   }
 
-  return schema.parse(json);
+  const decoded = schema.safeParse(json);
+
+  if (!decoded.success) {
+    throw new ApiError(response.status, "Risposta API non valida");
+  }
+
+  return decoded.data;
 }
 
 export async function apiRequest<TResponse>(

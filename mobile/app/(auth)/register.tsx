@@ -2,6 +2,7 @@ import { Link, router } from "expo-router";
 import { useState } from "react";
 import { KeyboardAvoidingView, Platform, StyleSheet, Text, View } from "react-native";
 import { ApiError } from "../../src/api/client";
+import { API_BASE } from "../../src/api/config";
 import { useAuth } from "../../src/auth";
 import {
   Body,
@@ -33,9 +34,13 @@ export default function RegisterScreen() {
       });
       router.replace("/(app)");
     } catch (err) {
-      setError(
-        err instanceof ApiError ? err.message : "Registrazione non riuscita",
-      );
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        const detail =
+          err instanceof Error ? err.message : "errore sconosciuto";
+        setError(`Registrazione non riuscita (${detail}). API: ${API_BASE}`);
+      }
     } finally {
       setBusy(false);
     }
