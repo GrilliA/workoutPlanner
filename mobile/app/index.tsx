@@ -1,6 +1,6 @@
 import { Redirect } from "expo-router";
 import { useAuth } from "../src/auth";
-import { LoadingBlock } from "../src/components/ui";
+import { LoadingBlock } from "../src/components";
 
 /** Entry: send authenticated users into tabs, others to login. */
 export default function Index() {

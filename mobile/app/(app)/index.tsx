@@ -1,13 +1,6 @@
 import { router } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
-import {
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { useEffect, useState } from "react";
+import { RefreshControl, ScrollView, StyleSheet } from "react-native";
 import { ApiError } from "../../src/api/client";
 import {
   getWorkouts,
@@ -21,13 +14,18 @@ import {
 import { useAuth } from "../../src/auth";
 import {
   Body,
+  Card,
   ErrorBanner,
+  Eyebrow,
+  Heading,
+  ListRow,
   LoadingBlock,
   PrimaryButton,
   Screen,
+  SectionLabel,
   Title,
-} from "../../src/components/ui";
-import { colors, spacing } from "../../src/theme/colors";
+} from "../../src/components";
+import { colors, spacing } from "../../src/theme";
 
 type TodayState = {
   workout: Workout;
@@ -42,39 +40,57 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [starting, setStarting] = useState(false);
-
-  const load = useCallback(async () => {
-    setError(null);
-
-    try {
-      const [workouts, sessions] = await Promise.all([
-        getWorkouts(),
-        getSessions(),
-      ]);
-
-      setRecent(sessions.slice(0, 5));
-
-      if (workouts.length === 0) {
-        setToday(null);
-        return;
-      }
-
-      const workout = [...workouts].sort(
-        (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
-      )[0];
-      const schedule = await getWorkoutScheduleToday(workout.id);
-      setToday({ workout, schedule });
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Errore caricamento");
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
+  const [fetchId, setFetchId] = useState(0);
 
   useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      setError(null);
+
+      try {
+        const [workouts, sessions] = await Promise.all([
+          getWorkouts(),
+          getSessions(),
+        ]);
+
+        if (cancelled) {
+          return;
+        }
+
+        setRecent(sessions.slice(0, 5));
+
+        if (workouts.length === 0) {
+          setToday(null);
+          return;
+        }
+
+        const workout = [...workouts].sort(
+          (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+        )[0];
+        const schedule = await getWorkoutScheduleToday(workout.id);
+
+        if (!cancelled) {
+          setToday({ workout, schedule });
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof ApiError ? err.message : "Errore caricamento");
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+          setRefreshing(false);
+        }
+      }
+    };
+
     void load();
-  }, [load]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchId]);
 
   const onStart = async () => {
     if (!today?.schedule.workoutDay) {
@@ -114,7 +130,7 @@ export default function HomeScreen() {
   const workout = today?.workout;
 
   return (
-    <Screen style={styles.noPad}>
+    <Screen padded={false}>
       <ScrollView
         contentContainerStyle={styles.content}
         refreshControl={
@@ -123,27 +139,28 @@ export default function HomeScreen() {
             tintColor={colors.accent}
             onRefresh={() => {
               setRefreshing(true);
-              void load();
+              setFetchId((id) => id + 1);
             }}
           />
         }
       >
         <Title>Ciao{user?.name ? `, ${user.name}` : ""}</Title>
+
         {error ? (
           <ErrorBanner
             message={error}
             onRetry={() => {
               setLoading(true);
-              void load();
+              setFetchId((id) => id + 1);
             }}
           />
         ) : null}
 
-        <View style={styles.card}>
-          <Text style={styles.eyebrow}>OGGI</Text>
+        <Card highlight>
+          <Eyebrow>OGGI</Eyebrow>
           {day && workout ? (
             <>
-              <Text style={styles.cardTitle}>{day.name}</Text>
+              <Heading>{day.name}</Heading>
               <Body>{workout.name}</Body>
               <PrimaryButton
                 label={starting ? "Avvio…" : "AVVIA WORKOUT"}
@@ -155,7 +172,7 @@ export default function HomeScreen() {
             </>
           ) : (
             <>
-              <Text style={styles.cardTitle}>Riposo</Text>
+              <Heading>Riposo</Heading>
               <Body>
                 {workout
                   ? "Nessun allenamento in programma oggi."
@@ -163,24 +180,19 @@ export default function HomeScreen() {
               </Body>
             </>
           )}
-        </View>
+        </Card>
 
-        <Text style={styles.section}>ULTIMI ALLENAMENTI</Text>
+        <SectionLabel>ULTIMI ALLENAMENTI</SectionLabel>
         {recent.length === 0 ? (
           <Body>Nessuna sessione ancora.</Body>
         ) : (
           recent.map((session) => (
-            <Pressable
+            <ListRow
               key={session.id}
-              style={styles.row}
+              title={session.workoutName}
+              meta={`${session.status} · ${new Date(session.startedAt).toLocaleDateString("it-IT")}`}
               onPress={() => router.push(`/session/${session.id}`)}
-            >
-              <Text style={styles.rowTitle}>{session.workoutName}</Text>
-              <Text style={styles.rowMeta}>
-                {session.status} ·{" "}
-                {new Date(session.startedAt).toLocaleDateString("it-IT")}
-              </Text>
-            </Pressable>
+            />
           ))
         )}
       </ScrollView>
@@ -189,39 +201,9 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  noPad: { padding: 0 },
-  content: { padding: spacing.lg, paddingBottom: spacing.xl },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
+  content: {
     padding: spacing.lg,
-    marginBottom: spacing.lg,
-    gap: spacing.sm,
+    paddingBottom: spacing.xl,
+    gap: spacing.md,
   },
-  eyebrow: {
-    color: colors.accent,
-    fontWeight: "700",
-    letterSpacing: 1,
-    fontSize: 12,
-  },
-  cardTitle: {
-    color: colors.textHeading,
-    fontSize: 22,
-    fontWeight: "700",
-  },
-  section: {
-    color: colors.muted,
-    fontWeight: "700",
-    letterSpacing: 1,
-    marginBottom: spacing.sm,
-  },
-  row: {
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  rowTitle: { color: colors.textHeading, fontWeight: "600" },
-  rowMeta: { color: colors.text, marginTop: 4 },
 });

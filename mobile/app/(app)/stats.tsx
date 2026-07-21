@@ -1,52 +1,79 @@
 import { router } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import { ScrollView, StyleSheet, View } from "react-native";
 import { ApiError } from "../../src/api/client";
 import { getStats, type UserStats } from "../../src/api";
 import {
   Body,
   ErrorBanner,
+  ListRow,
   LoadingBlock,
   Screen,
-} from "../../src/components/ui";
-import { colors, spacing } from "../../src/theme/colors";
+  SectionLabel,
+  StatCard,
+} from "../../src/components";
+import { spacing } from "../../src/theme";
 
 export default function StatsScreen() {
   const [stats, setStats] = useState<UserStats | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-
-  const load = useCallback(async () => {
-    setError(null);
-
-    try {
-      setStats(await getStats());
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Errore");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const [fetchId, setFetchId] = useState(0);
 
   useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      setError(null);
+
+      try {
+        const data = await getStats();
+        if (!cancelled) {
+          setStats(data);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof ApiError ? err.message : "Errore");
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
     void load();
-  }, [load]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchId]);
 
   if (loading) {
     return <LoadingBlock />;
   }
 
   return (
-    <Screen style={styles.noPad}>
+    <Screen padded={false}>
       <ScrollView contentContainerStyle={styles.content}>
         {error ? (
-          <ErrorBanner message={error} onRetry={() => void load()} />
+          <ErrorBanner
+            message={error}
+            onRetry={() => {
+              setLoading(true);
+              setFetchId((id) => id + 1);
+            }}
+          />
         ) : null}
+
         <View style={styles.grid}>
-          <Stat label="Volume (kg)" value={String(stats?.volumeKg ?? "—")} />
-          <Stat label="Sessioni" value={String(stats?.totalSessions ?? "—")} />
-          <Stat label="Streak" value={String(stats?.streakDays ?? "—")} />
-          <Stat
+          <StatCard label="Volume (kg)" value={String(stats?.volumeKg ?? "—")} />
+          <StatCard
+            label="Sessioni"
+            value={String(stats?.totalSessions ?? "—")}
+          />
+          <StatCard label="Streak" value={String(stats?.streakDays ?? "—")} />
+          <StatCard
             label="Media vol."
             value={
               stats?.averageSessionVolumeKg != null
@@ -56,22 +83,17 @@ export default function StatsScreen() {
           />
         </View>
 
-        <Text style={styles.section}>SESSIONI RECENTI</Text>
+        <SectionLabel>SESSIONI RECENTI</SectionLabel>
         {(stats?.recentSessions ?? []).length === 0 ? (
           <Body>Nessuna sessione nel periodo.</Body>
         ) : (
           (stats?.recentSessions ?? []).map((session) => (
-            <Pressable
+            <ListRow
               key={session.sessionId}
-              style={styles.row}
+              title={session.workoutName}
+              meta={`${session.volumeKg} kg · ${new Date(session.completedAt).toLocaleDateString("it-IT")}`}
               onPress={() => router.push(`/session/${session.sessionId}`)}
-            >
-              <Text style={styles.rowTitle}>{session.workoutName}</Text>
-              <Text style={styles.rowMeta}>
-                {session.volumeKg} kg ·{" "}
-                {new Date(session.completedAt).toLocaleDateString("it-IT")}
-              </Text>
-            </Pressable>
+            />
           ))
         )}
       </ScrollView>
@@ -79,49 +101,12 @@ export default function StatsScreen() {
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.stat}>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  noPad: { padding: 0 },
-  content: { padding: spacing.lg },
+  content: { padding: spacing.lg, gap: spacing.sm },
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: spacing.sm,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
   },
-  stat: {
-    width: "48%",
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.md,
-  },
-  statValue: {
-    color: colors.textHeading,
-    fontSize: 22,
-    fontWeight: "700",
-  },
-  statLabel: { color: colors.text, marginTop: 4 },
-  section: {
-    color: colors.muted,
-    fontWeight: "700",
-    letterSpacing: 1,
-    marginBottom: spacing.sm,
-  },
-  row: {
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  rowTitle: { color: colors.textHeading, fontWeight: "600" },
-  rowMeta: { color: colors.text, marginTop: 4 },
 });

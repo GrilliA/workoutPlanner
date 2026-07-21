@@ -1,6 +1,12 @@
 import { Link, router } from "expo-router";
 import { useState } from "react";
-import { KeyboardAvoidingView, Platform, StyleSheet, Text, View } from "react-native";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { ApiError } from "../../src/api/client";
 import { API_BASE } from "../../src/api/config";
 import { useAuth } from "../../src/auth";
@@ -11,8 +17,8 @@ import {
   PrimaryButton,
   Screen,
   Title,
-} from "../../src/components/ui";
-import { colors, spacing } from "../../src/theme/colors";
+} from "../../src/components";
+import { colors, spacing } from "../../src/theme";
 
 export default function RegisterScreen() {
   const { register } = useAuth();
@@ -70,7 +76,7 @@ export default function RegisterScreen() {
             autoComplete="email"
           />
           <Field
-            placeholder="Password (min 8)"
+            placeholder="Password (min. 8)"
             secureTextEntry
             value={password}
             onChangeText={setPassword}
