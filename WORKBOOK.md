@@ -13,8 +13,11 @@ How to use:
 
 | Date | Decision | Why |
 | --- | --- | --- |
+| 2026-07-21 | Mobile path = **Expo React Native** in `mobile/` (TypeScript); Capacitor retired from `fe/` | Native UI/notifications without WebView; separate toolchain from Vite; didactic README in `mobile/` |
+| 2026-07-21 | Auth refresh = cookie (web) **and** JSON body when `X-Client: mobile` + SecureStore | RN has no httpOnly cookie jar; keep web unchanged |
+| 2026-07-21 | Share Zod/API lazily (copy into `mobile/` first; `packages/shared` later) | Avoid monorepo day-1; extract only when duplication hurts |
 | 2026-07-19 | Exercise catalog = **vendored** [yuhonas/free-exercise-db](https://github.com/yuhonas/free-exercise-db) (~873 exercises), searched via our BE (`GET /api/catalog/exercises`) — not a live third-party call | Compared GitHub/hosted options: **Kinetic** (`api.kinetic.place`, 899 ex) works but public tier ~50 req/day — too low; **wger** has IT translations + public API but network dependency and CC-BY-SA content; **ExerciseDB** free tier is non-commercial. free-exercise-db is public-domain JSON + images on GitHub raw, no API key, offline-capable after seed. English names are fine for gym UX (IT UI copy stays Italian). |
-| 2026-07-16 | Mobile path = Capacitor-first inside `fe/` (not RN, PWA later) | Reuse web UI; unlock native rest-timer notifications; keep one frontend folder |
+| 2026-07-16 | ~~Mobile path = Capacitor-first inside `fe/` (not RN, PWA later)~~ **superseded 2026-07-21** | Was: reuse web UI; unlock native rest-timer notifications; keep one frontend folder |
 | 2026-06-24 | Home page = the "Dashboard" from the Figma reference (TRACCIA app) | The reference's main screen is the dashboard; that is what we build as `/`. |
 | 2026-06-24 | Build the home **mobile-first** and fluid (CSS `auto-fit` grids, no JS breakpoints) | One component tree reflows 1→2→3→4 columns; less code, more control. |
 | 2026-06-24 | Mobile/tablet nav = `BottomNav`; reuse `Sidebar` on desktop (≥1024px) | Thumb-friendly on phones; sidebar already built and styled. |
@@ -32,10 +35,12 @@ How to use:
 
 ## What we did
 
+- 2026-07-21 — Expo RN `mobile/`: TypeScript + Expo Router, auth SecureStore, API Zod port, screens (login/home/workouts/stats/settings/session + rest timer). Capacitor removed from `fe/`. Docs: `mobile/README.md`.
+- 2026-07-21 — BE auth dual delivery: cookie for web + optional `refreshToken` in JSON when `X-Client: mobile`; refresh/logout accept body token.
 - 2026-07-19 — B5/W8 exercise catalog: vendored yuhonas/free-exercise-db, `exercise_catalog` + seed, `GET /api/catalog/*`, FE picker in AddExerciseForm with optional `catalogId`.
-- 2026-07-17 — CAP2 rest timer nativo: countdown recupero post-set in sessione attiva, `RestTimer` (anello SVG), highlight `ExerciseCard`, Local Notifications + Haptics su Capacitor, fallback web (beep/vibrate), permessi al primo avvio native.
-- 2026-07-17 — CAP1 Capacitor + mobile polish: scaffold iOS/Android, CORS/`VITE_API_URL`, safe-area/viewport, scroll fix shell, bottom nav 4 tab, layout fluido card sessioni.
-- 2026-07-16 — CAP1 Capacitor scaffold: `@capacitor/*` in `fe/`, `capacitor.config.ts`, `ios/` + `android/`, `base: './'` Vite, script `cap:sync`/`cap:ios`/`cap:android`, helper `utils/platform.ts`.
+- 2026-07-17 — CAP2 rest timer nativo: countdown recupero post-set in sessione attiva, `RestTimer` (anello SVG), highlight `ExerciseCard`, Local Notifications + Haptics su Capacitor, fallback web (beep/vibrate), permessi al primo avvio native. *(native path moved to Expo `mobile/` on 2026-07-21)*
+- 2026-07-17 — CAP1 Capacitor + mobile polish: scaffold iOS/Android, CORS/`VITE_API_URL`, safe-area/viewport, scroll fix shell, bottom nav 4 tab, layout fluido card sessioni. *(Capacitor retired 2026-07-21)*
+- 2026-07-16 — CAP1 Capacitor scaffold: `@capacitor/*` in `fe/`, `capacitor.config.ts`, `ios/` + `android/`, `base: './'` Vite, script `cap:sync`/`cap:ios`/`cap:android`, helper `utils/platform.ts`. *(retired)*
 - 2026-07-16 — C11 session history: `GET /sessions/history` paginato, pagina `/session-history`, link da dashboard e Progressi.
 - 2026-07-14 — Responsive layout refactor: shared `layout.css` tokens, mobile-first AppShell, `.page-container` utilities, dashboard `@container` grids.
 - 2026-07-15 — CI GitHub Actions: workflow su push/PR a `main` (BE typecheck + test, FE build con Node 22).
@@ -122,7 +127,9 @@ Merge **in order** (stacked branches). Each PR is one concern.
 
 ## Other next steps
 
-- [ ] Smoke test end-to-end manuale (db + be + fe) — include catalog search in Add esercizio.
+- [ ] Smoke test end-to-end manuale (db + be + fe + mobile Expo).
 - [ ] Test FE (Vitest su mapper/utils).
 - [ ] Route `/forgot-password` (link già presente in login).
 - [ ] (Later) Optional wger IT names or user custom exercises on top of B5.
+- [ ] (Later) Mobile: create/edit programmi; polish UI vs Figma.
+- [ ] (Later) Extract `packages/shared` if Zod/API copy between `fe` and `mobile` hurts.

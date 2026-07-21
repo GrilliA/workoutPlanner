@@ -22,16 +22,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-# Capacitor / native build artifacts (ios/ and android/ source projects are committed)
-ios/App/Pods
-ios/App/build
-ios/DerivedData
-ios/capacitor-cordova-ios-plugins
-android/.gradle
-android/app/build
-android/build
-android/local.properties
-android/.idea
-*.iml
-.capacitor

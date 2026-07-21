@@ -1,6 +1,4 @@
-import { App } from "@capacitor/app";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { isNative } from "@utils/platform";
 import {
   cancelRestAlert,
   playRestDoneAlert,
@@ -124,6 +122,8 @@ export function useRestTimer(sessionId: number): UseRestTimerResult {
 
   useEffect(() => {
     const onVisibilityChange = () => {
+      appInForegroundRef.current = document.visibilityState === "visible";
+
       if (document.visibilityState === "visible") {
         syncRemaining();
         checkExpiry();
@@ -134,41 +134,6 @@ export function useRestTimer(sessionId: number): UseRestTimerResult {
 
     return () => {
       document.removeEventListener("visibilitychange", onVisibilityChange);
-    };
-  }, [checkExpiry, syncRemaining]);
-
-  useEffect(() => {
-    if (!isNative()) {
-      return;
-    }
-
-    let cancelled = false;
-    let listener: { remove: () => Promise<void> } | null = null;
-
-    const bind = async () => {
-      const state = await App.getState();
-
-      if (cancelled) {
-        return;
-      }
-
-      appInForegroundRef.current = state.isActive;
-
-      listener = await App.addListener("appStateChange", ({ isActive }) => {
-        appInForegroundRef.current = isActive;
-
-        if (isActive) {
-          syncRemaining();
-          checkExpiry();
-        }
-      });
-    };
-
-    void bind();
-
-    return () => {
-      cancelled = true;
-      void listener?.remove();
     };
   }, [checkExpiry, syncRemaining]);
 

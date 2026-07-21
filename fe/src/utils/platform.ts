@@ -1,6 +1,4 @@
-import { Capacitor } from "@capacitor/core";
+/** Web client always runs in the browser. Native shell is `mobile/` (Expo). */
+export const isNative = (): boolean => false;
 
-export const isNative = (): boolean => Capacitor.isNativePlatform();
-
-export const getPlatform = (): "ios" | "android" | "web" =>
-  Capacitor.getPlatform() as "ios" | "android" | "web";
+export const getPlatform = (): "ios" | "android" | "web" => "web";

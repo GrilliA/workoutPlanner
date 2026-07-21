@@ -17,23 +17,22 @@ npm run db:migrate     # apply migrations
 cd be && npm run dev
 cd be && npm test     # unit tests (stats, schedule helpers)
 
-# Frontend (Vite, proxy /api → localhost:3005)
+# Frontend web (Vite, proxy /api → localhost:3005)
 cd fe && npm run dev
 
-# Capacitor (native shell — requires Node ≥22)
-cd fe && npm run cap:sync          # build web + sync into ios/android
-cd fe && npm run cap:ios           # open Xcode
-cd fe && npm run cap:android       # open Android Studio
+# Mobile native (Expo React Native — requires Node ≥22)
+cd mobile && npm start            # Expo Dev Tools (i / a for simulators)
+cd mobile && npm run typecheck
 ```
 
 **CI:** push o PR su `main` → GitHub Actions (`.github/workflows/ci.yml`): `be` typecheck + test, `fe` lint + build (Node 22).
 
 - `be/.env` credentials: `postgres:postgres` (must match `docker-compose.yml`)
-- Frontend calls relative `/api/...` URLs; Vite proxies in dev
-- **Native builds** need absolute API URL via `fe/.env.capacitor` (`VITE_API_URL=http://127.0.0.1:3005/api` for iOS Simulator). Use `npm run cap:sync` (builds with `--mode capacitor`). Backend CORS allows `capacitor://localhost`.
-- **Mobile chrome:** `viewport-fit=cover` + CSS `--safe-top/bottom/...` (Capacitor `SystemBars` + `env(safe-area-inset-*)`). AppShell pads content/nav for notch and home indicator; html/body use dark `--app-bg` to avoid white letterboxing.
+- Frontend web calls relative `/api/...` URLs; Vite proxies in dev
+- **Native app** (`mobile/`): absolute API URL via `EXPO_PUBLIC_API_URL` (see `mobile/.env.example`). Simulator: `http://127.0.0.1:3005/api`; physical device: LAN IP of the host. Auth uses header `X-Client: mobile` + SecureStore refresh token (web keeps httpOnly cookies).
 - UI copy in **Italian** (reference: TRACCIA Figma dashboard)
 - Project log and roadmap: `WORKBOOK.md`
+- Mobile onboarding / glossary: [`mobile/README.md`](mobile/README.md)
 
 ---
 
@@ -42,21 +41,31 @@ cd fe && npm run cap:android       # open Android Studio
 ```
 workoutPlanner/
 ├── be/          # Express + Drizzle + Postgres
-├── fe/          # React + Vite + TypeScript (+ Capacitor ios/android)
+├── fe/          # React + Vite + TypeScript (web)
+├── mobile/      # Expo React Native + TypeScript (iOS/Android)
 ├── WORKBOOK.md  # decisions, done, next steps
 └── AGENTS.md    # this file
 ```
 
-### Frontend (`fe/`)
+### Frontend web (`fe/`)
 
 | Path | Purpose |
 | --- | --- |
 | `src/` | React app (pages, components, api, auth) |
-| `capacitor.config.ts` | Capacitor app id / webDir (`dist`) |
-| `ios/`, `android/` | Native shells (committed; sync with `npm run cap:sync`) |
-| `src/utils/platform.ts` | `isNative()` / `getPlatform()` helpers |
+| `src/utils/platform.ts` | `isNative()` always false on web; native = `mobile/` |
 
-### Frontend (`fe/src/`)
+### Mobile (`mobile/`)
+
+| Path | Purpose |
+| --- | --- |
+| `app/` | Expo Router screens (file-based routes) |
+| `src/api/` | HTTP client + Zod (ported from `fe`, mobile auth headers) |
+| `src/auth/` | AuthProvider + SecureStore refresh |
+| `README.md` | Glossary web→RN + “cosa/perché” log |
+
+See [`mobile/README.md`](mobile/README.md) before changing mobile code.
+
+### Frontend web (`fe/src/`)
 
 | Path | Purpose |
 | --- | --- |

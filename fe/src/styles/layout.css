@@ -6,7 +6,8 @@
  * --bp-lg  64rem (1024px) desktop shell (sidebar)
  * --bp-xl  80rem (1280px) wide desktop
  *
- * Safe areas: Capacitor injects --safe-area-inset-* on Android;
+ * Safe areas: use env(safe-area-inset-*) where supported (notch / home indicator).
+ * Native Expo app handles safe areas via react-native-safe-area-context.
  * iOS uses env(safe-area-inset-*). Prefer var() with env() fallback.
  */
 

@@ -25,7 +25,7 @@ export const applyCors = (req: Request, res: Response, next: NextFunction): void
     res.setHeader("Access-Control-Allow-Credentials", "true");
     res.setHeader(
       "Access-Control-Allow-Headers",
-      "Authorization, Content-Type, Accept",
+      "Authorization, Content-Type, Accept, X-Client",
     );
     res.setHeader(
       "Access-Control-Allow-Methods",
