@@ -46,9 +46,20 @@ export const logSetRequestSchema = z.object({
   tutSec: z.number().int().nonnegative().nullable().optional(),
 });
 
-export const patchSessionRequestSchema = z.object({
-  status: z.enum(["completed", "abandoned"]),
-});
+export const patchSessionRequestSchema = z
+  .object({
+    status: z.enum(["completed", "abandoned"]),
+    sets: z.array(logSetRequestSchema).optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.status === "abandoned" && value.sets !== undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "sets are not allowed when abandoning a session",
+        path: ["sets"],
+      });
+    }
+  });
 
 export const patchLoggedSetRequestSchema = z
   .object({

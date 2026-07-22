@@ -11,6 +11,8 @@ export type LogSetInput = {
 
 export type PatchSessionInput = {
   status: "completed" | "abandoned";
+  /** Present only on complete: flush client-buffered sets in one write. */
+  sets?: LogSetInput[];
 };
 
 export type PatchLoggedSetInput = {
@@ -117,6 +119,41 @@ export const validateLogSetInput = (
   };
 };
 
+const validateLogSetList = (
+  value: unknown,
+):
+  | { ok: true; value: LogSetInput[] }
+  | { ok: false; error: string } => {
+  if (!Array.isArray(value)) {
+    return { ok: false, error: "sets must be an array" };
+  }
+
+  const sets: LogSetInput[] = [];
+  const seen = new Set<string>();
+
+  for (const entry of value) {
+    const parsed = validateLogSetInput(entry);
+
+    if (!parsed.ok) {
+      return parsed;
+    }
+
+    const key = `${parsed.value.exerciseId}:${parsed.value.setNumber}`;
+
+    if (seen.has(key)) {
+      return {
+        ok: false,
+        error: "sets must not contain duplicate exerciseId and setNumber",
+      };
+    }
+
+    seen.add(key);
+    sets.push(parsed.value);
+  }
+
+  return { ok: true, value: sets };
+};
+
 export const validatePatchSessionInput = (
   body: unknown,
 ):
@@ -133,7 +170,21 @@ export const validatePatchSessionInput = (
     return { ok: false, error: "status must be completed or abandoned" };
   }
 
-  return { ok: true, value: { status } };
+  if (!("sets" in input) || input.sets === undefined) {
+    return { ok: true, value: { status } };
+  }
+
+  if (status === "abandoned") {
+    return { ok: false, error: "sets are not allowed when abandoning a session" };
+  }
+
+  const sets = validateLogSetList(input.sets);
+
+  if (!sets.ok) {
+    return sets;
+  }
+
+  return { ok: true, value: { status, sets: sets.value } };
 };
 
 export const validatePatchLoggedSetInput = (

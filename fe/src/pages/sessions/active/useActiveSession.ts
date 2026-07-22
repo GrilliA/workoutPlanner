@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ApiError,
   getExercisesByWorkout,
@@ -9,7 +9,7 @@ import {
   type Workout,
   type WorkoutSessionWithSets,
 } from "@api";
-import { cancelSession, finishSession, submitLoggedSet } from "./api";
+import { cancelSession, createLocalLoggedSet, finishSession } from "./api";
 import {
   computeSessionVolumeKg,
   countCompletedExercises,
@@ -79,6 +79,7 @@ export function useActiveSession(sessionId: number): UseActiveSessionResult {
   const [focusedExerciseId, setFocusedExerciseId] = useState<number | null>(null);
   const [loggingKey, setLoggingKey] = useState<string | null>(null);
   const [completionVolumeKg, setCompletionVolumeKg] = useState(0);
+  const loggedKeysRef = useRef(new Set<string>());
 
   const retry = () => {
     setFetchId((current) => current + 1);
@@ -90,6 +91,7 @@ export function useActiveSession(sessionId: number): UseActiveSessionResult {
     const load = async () => {
       setStatus("loading");
       setError(null);
+      loggedKeysRef.current = new Set();
 
       try {
         const nextBundle = await loadSessionBundle(sessionId);
@@ -98,10 +100,19 @@ export function useActiveSession(sessionId: number): UseActiveSessionResult {
           return;
         }
 
-        setBundle(nextBundle);
+        // Active sets live in client memory until TERMINA; start the buffer empty.
+        const sessionForActive =
+          nextBundle.session.status === "in_progress"
+            ? { ...nextBundle.session, sets: [] }
+            : nextBundle.session;
+
+        setBundle({
+          ...nextBundle,
+          session: sessionForActive,
+        });
 
         const preliminary = mapActiveSession(
-          nextBundle.session,
+          sessionForActive,
           nextBundle.workout,
           nextBundle.exercises,
           null,
@@ -146,13 +157,38 @@ export function useActiveSession(sessionId: number): UseActiveSessionResult {
     weightKg: string,
     reps: number,
   ) => {
+    if (!bundle || bundle.session.status !== "in_progress") {
+      return;
+    }
+
     const key = toLoggingKey(exerciseId, setNumber);
+
+    // Sync guard: loggingKey alone is too late after local (non-await) logging.
+    if (loggedKeysRef.current.has(key)) {
+      return;
+    }
+
+    loggedKeysRef.current.add(key);
     setLoggingKey(key);
     setError(null);
 
     try {
-      await submitLoggedSet(sessionId, exerciseId, setNumber, reps, weightKg);
-      const nextBundle = await loadSessionBundle(sessionId);
+      const logged = createLocalLoggedSet(
+        sessionId,
+        exerciseId,
+        setNumber,
+        reps,
+        weightKg,
+      );
+
+      const nextBundle: SessionBundle = {
+        ...bundle,
+        session: {
+          ...bundle.session,
+          sets: [...bundle.session.sets, logged],
+        },
+      };
+
       setBundle(nextBundle);
 
       const mapped = mapActiveSession(
@@ -167,10 +203,10 @@ export function useActiveSession(sessionId: number): UseActiveSessionResult {
       );
 
       if (completedExercise?.isComplete) {
-        const nextFocus = resolveFocus(mapped.exercises, null);
-        setFocusedExerciseId(nextFocus);
+        setFocusedExerciseId(resolveFocus(mapped.exercises, null));
       }
     } catch (err) {
+      loggedKeysRef.current.delete(key);
       setError(
         err instanceof ApiError
           ? err.message
@@ -179,11 +215,18 @@ export function useActiveSession(sessionId: number): UseActiveSessionResult {
             : "Impossibile registrare la serie",
       );
     } finally {
-      setLoggingKey(null);
+      // Let React paint loading=true before clearing (button disable).
+      queueMicrotask(() => {
+        setLoggingKey((current) => (current === key ? null : current));
+      });
     }
   };
 
   const complete = async () => {
+    if (!bundle) {
+      return;
+    }
+
     setStatus("completing");
     setError(null);
 
@@ -192,7 +235,7 @@ export function useActiveSession(sessionId: number): UseActiveSessionResult {
         setCompletionVolumeKg(computeSessionVolumeKg(view.exercises));
       }
 
-      await finishSession(sessionId);
+      await finishSession(sessionId, bundle.session.sets);
       setStatus("completed");
     } catch (err) {
       setStatus("ready");

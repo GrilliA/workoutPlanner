@@ -79,8 +79,11 @@ export async function patchSession(
   });
 }
 
-export async function completeSession(id: number): Promise<WorkoutSessionWithSets> {
-  return patchSession(id, { status: "completed" });
+export async function completeSession(
+  id: number,
+  sets: LogSetInput[] = [],
+): Promise<WorkoutSessionWithSets> {
+  return patchSession(id, { status: "completed", sets });
 }
 
 export async function abandonSession(id: number): Promise<WorkoutSessionWithSets> {
