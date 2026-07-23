@@ -51,6 +51,7 @@ export default function RootLayout() {
           <Stack.Screen name="(app)" />
           <Stack.Screen name="session/[sessionId]" />
           <Stack.Screen name="workout/new" />
+          <Stack.Screen name="workout/[workoutId]" />
         </Stack>
       </AuthGate>
     </AuthProvider>

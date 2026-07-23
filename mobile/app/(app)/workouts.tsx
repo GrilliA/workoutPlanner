@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { ScrollView, StyleSheet } from "react-native";
+import { Pressable, ScrollView, StyleSheet } from "react-native";
 import { ApiError } from "../../src/api/client";
 import { getWorkouts, type Workout } from "../../src/api";
 import {
@@ -76,12 +76,19 @@ export default function WorkoutsScreen() {
           <Body>Nessuna scheda ancora. Creane una per iniziare.</Body>
         ) : (
           workouts.map((item) => (
-            <Card key={item.id} style={styles.card}>
-              <Heading>{item.name}</Heading>
-              <Meta>
-                {item.exerciseCount} esercizi · {item.frequency}
-              </Meta>
-            </Card>
+            <Pressable
+              key={item.id}
+              onPress={() => router.push(`/workout/${item.id}`)}
+              accessibilityRole="button"
+              accessibilityLabel={`Modifica ${item.name}`}
+            >
+              <Card style={styles.card}>
+                <Heading>{item.name}</Heading>
+                <Meta>
+                  {item.exerciseCount} esercizi · {item.frequency}
+                </Meta>
+              </Card>
+            </Pressable>
           ))
         )}
       </ScrollView>

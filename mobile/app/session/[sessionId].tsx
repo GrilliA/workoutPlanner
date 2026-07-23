@@ -19,15 +19,21 @@ import {
   ErrorBanner,
   Heading,
   LoadingBlock,
-  PrimaryButton,
   Screen,
-  SecondaryButton,
 } from "../../src/components";
 import { ExerciseCard } from "../../src/features/session/ExerciseCard";
 import { groupSetsByExercise } from "../../src/features/session/groupSetsByExercise";
+import {
+  formatWeightKg,
+  getRestSecForSet,
+  getTargetSetCount,
+  isExerciseComplete,
+  resolveLogDefaults,
+} from "../../src/features/session/logDefaults";
 import { RestTimerCard } from "../../src/features/session/RestTimerCard";
+import { SessionActionBar } from "../../src/features/session/SessionActionBar";
 import { useRestTimer } from "../../src/features/session/useRestTimer";
-import { spacing } from "../../src/theme";
+import { colors, spacing } from "../../src/theme";
 
 export default function SessionScreen() {
   const { sessionId: rawId } = useLocalSearchParams<{ sessionId: string }>();
@@ -45,6 +51,7 @@ export default function SessionScreen() {
     Record<number, string>
   >({});
   const [fetchId, setFetchId] = useState(0);
+  const [finishing, setFinishing] = useState(false);
   const timer = useRestTimer(sessionId);
 
   useEffect(() => {
@@ -73,10 +80,25 @@ export default function SessionScreen() {
           return;
         }
 
+        const grouped = groupSetsByExercise(nextSession.sets);
+        const nextWeights: Record<number, string> = {};
+        const nextReps: Record<number, string> = {};
+
+        for (const exercise of nextExercises) {
+          const defaults = resolveLogDefaults(
+            exercise,
+            grouped.get(exercise.id) ?? [],
+          );
+          nextWeights[exercise.id] = defaults.weight;
+          nextReps[exercise.id] = defaults.reps;
+        }
+
         setSession(nextSession);
         setExercises(nextExercises);
         setWorkoutName(workout.name);
         setDefaultRestSec(workout.defaultRestSec);
+        setWeightByExercise(nextWeights);
+        setRepsByExercise(nextReps);
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof ApiError ? err.message : "Errore caricamento");
@@ -121,6 +143,19 @@ export default function SessionScreen() {
       return;
     }
 
+    const loggedForExercise = setsByExercise.get(exercise.id) ?? [];
+    if (isExerciseComplete(exercise, loggedForExercise.length)) {
+      setError("Serie del piano già completate per questo esercizio");
+      return;
+    }
+
+    const targetSets = getTargetSetCount(exercise);
+    const setNumber = loggedForExercise.length + 1;
+    if (setNumber > targetSets) {
+      setError("Serie del piano già completate per questo esercizio");
+      return;
+    }
+
     const reps = Number(repsByExercise[exercise.id] ?? "");
     const weightRaw = weightByExercise[exercise.id]?.trim() ?? "";
     const weightKg = weightRaw === "" ? null : Number(weightRaw);
@@ -135,7 +170,6 @@ export default function SessionScreen() {
       return;
     }
 
-    const setNumber = (setsByExercise.get(exercise.id)?.length ?? 0) + 1;
     setError(null);
 
     try {
@@ -148,10 +182,18 @@ export default function SessionScreen() {
       setSession((current) =>
         current ? { ...current, sets: [...current.sets, logged] } : current,
       );
+      setWeightByExercise((current) => ({
+        ...current,
+        [exercise.id]:
+          weightKg === null ? "" : formatWeightKg(weightKg),
+      }));
+      setRepsByExercise((current) => ({
+        ...current,
+        [exercise.id]: String(reps),
+      }));
 
-      const restSec =
-        exercise.setPrescriptions[0]?.restSec ?? defaultRestSec;
-      if (restSec > 0) {
+      const restSec = getRestSecForSet(exercise, setNumber, defaultRestSec);
+      if (restSec > 0 && !isExerciseComplete(exercise, loggedForExercise.length + 1)) {
         try {
           await timer.start(restSec, exercise.id);
         } catch {
@@ -164,6 +206,13 @@ export default function SessionScreen() {
   };
 
   const finish = async (mode: "complete" | "abandon") => {
+    if (finishing) {
+      return;
+    }
+
+    setFinishing(true);
+    setError(null);
+
     try {
       timer.cancel();
       if (mode === "complete") {
@@ -173,6 +222,7 @@ export default function SessionScreen() {
       }
       router.replace("/(app)");
     } catch (err) {
+      setFinishing(false);
       setError(err instanceof ApiError ? err.message : "Operazione fallita");
     }
   };
@@ -180,70 +230,87 @@ export default function SessionScreen() {
   return (
     <Screen padded={false}>
       <BackHeader onPress={() => router.back()} />
-      <ScrollView contentContainerStyle={styles.content}>
-        <Heading>{workoutName}</Heading>
-        <Body>
-          Stato: {session.status}
-          {readOnly ? " (sola lettura)" : ""}
-        </Body>
+      <View style={styles.body}>
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={[
+            styles.content,
+            !readOnly && styles.contentWithBar,
+          ]}
+          keyboardShouldPersistTaps="handled"
+        >
+          <Heading>{workoutName}</Heading>
+          <Body>
+            Stato: {session.status}
+            {readOnly ? " (sola lettura)" : ""}
+          </Body>
 
-        <RestTimerCard
-          status={timer.status}
-          remainingSec={timer.remainingSec}
-          onSkip={timer.skip}
-        />
-
-        {error ? <ErrorBanner message={error} /> : null}
-
-        {exercises.map((exercise) => (
-          <ExerciseCard
-            key={exercise.id}
-            exercise={exercise}
-            sets={setsByExercise.get(exercise.id) ?? []}
-            resting={timer.restingExerciseId === exercise.id}
-            readOnly={readOnly}
-            weight={weightByExercise[exercise.id] ?? ""}
-            reps={repsByExercise[exercise.id] ?? ""}
-            onChangeWeight={(value) =>
-              setWeightByExercise((current) => ({
-                ...current,
-                [exercise.id]: value,
-              }))
-            }
-            onChangeReps={(value) =>
-              setRepsByExercise((current) => ({
-                ...current,
-                [exercise.id]: value,
-              }))
-            }
-            onLog={() => {
-              void onLogSet(exercise);
-            }}
+          <RestTimerCard
+            status={timer.status}
+            remainingSec={timer.remainingSec}
+            onSkip={timer.skip}
           />
-        ))}
+
+          {error ? <ErrorBanner message={error} /> : null}
+
+          {exercises.map((exercise) => (
+            <ExerciseCard
+              key={exercise.id}
+              exercise={exercise}
+              sets={setsByExercise.get(exercise.id) ?? []}
+              resting={timer.restingExerciseId === exercise.id}
+              readOnly={readOnly}
+              weight={weightByExercise[exercise.id] ?? ""}
+              reps={repsByExercise[exercise.id] ?? ""}
+              onChangeWeight={(value) =>
+                setWeightByExercise((current) => ({
+                  ...current,
+                  [exercise.id]: value,
+                }))
+              }
+              onChangeReps={(value) =>
+                setRepsByExercise((current) => ({
+                  ...current,
+                  [exercise.id]: value,
+                }))
+              }
+              onLog={() => {
+                void onLogSet(exercise);
+              }}
+            />
+          ))}
+        </ScrollView>
 
         {!readOnly ? (
-          <View style={styles.actions}>
-            <PrimaryButton
-              label="TERMINA"
-              onPress={() => void finish("complete")}
-            />
-            <SecondaryButton
-              label="ABBANDONA"
-              onPress={() => void finish("abandon")}
-            />
-          </View>
+          <SessionActionBar
+            busy={finishing}
+            onComplete={() => {
+              void finish("complete");
+            }}
+            onAbandon={() => {
+              void finish("abandon");
+            }}
+          />
         ) : null}
-      </ScrollView>
+      </View>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  body: {
+    flex: 1,
+    backgroundColor: colors.bg,
+  },
+  scroll: {
+    flex: 1,
+  },
   content: {
     padding: spacing.lg,
     paddingBottom: spacing.xl,
     gap: spacing.sm,
   },
-  actions: { marginTop: spacing.lg, gap: spacing.sm },
+  contentWithBar: {
+    paddingBottom: spacing.xl + spacing.lg,
+  },
 });
