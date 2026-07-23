@@ -7,8 +7,8 @@ import {
   getSessions,
   getWorkout,
   getWorkoutDayExercises,
-  logSet,
   startSession,
+  type LogSetInput,
   type LoggedSet,
   type WorkoutSessionWithSets,
 } from "@api";
@@ -52,29 +52,53 @@ export async function resolveWorkoutSessionId(
   }
 }
 
-export async function submitLoggedSet(
+let nextLocalSetId = -1;
+
+export function createLocalLoggedSet(
   sessionId: number,
   exerciseId: number,
   setNumber: number,
   reps: number,
   weightKg: string,
-): Promise<LoggedSet> {
+): LoggedSet {
   const parsedWeight = weightKg.trim() === "" ? null : Number(weightKg);
 
   if (parsedWeight !== null && (!Number.isFinite(parsedWeight) || parsedWeight < 0)) {
     throw new Error("Il peso deve essere un numero valido");
   }
 
-  return logSet(sessionId, {
+  const id = nextLocalSetId;
+  nextLocalSetId -= 1;
+
+  return {
+    id,
+    sessionId,
     exerciseId,
     setNumber,
     reps,
     weightKg: parsedWeight,
-  });
+    rir: null,
+    tutSec: null,
+    loggedAt: new Date(),
+  };
 }
 
-export async function finishSession(sessionId: number): Promise<WorkoutSessionWithSets> {
-  return completeSession(sessionId);
+export function toCompleteSetsPayload(sets: LoggedSet[]): LogSetInput[] {
+  return sets.map((set) => ({
+    exerciseId: set.exerciseId,
+    setNumber: set.setNumber,
+    reps: set.reps,
+    weightKg: set.weightKg,
+    rir: set.rir,
+    tutSec: set.tutSec,
+  }));
+}
+
+export async function finishSession(
+  sessionId: number,
+  sets: LoggedSet[],
+): Promise<WorkoutSessionWithSets> {
+  return completeSession(sessionId, toCompleteSetsPayload(sets));
 }
 
 export async function cancelSession(sessionId: number): Promise<WorkoutSessionWithSets> {

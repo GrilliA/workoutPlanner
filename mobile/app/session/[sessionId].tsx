@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import {
   abandonSession,
@@ -8,8 +8,9 @@ import {
   getSession,
   getWorkout,
   getWorkoutDayExercises,
-  logSet,
   type Exercise,
+  type LogSetInput,
+  type LoggedSet,
   type WorkoutSessionWithSets,
 } from "../../src/api";
 import { ApiError } from "../../src/api/client";
@@ -35,10 +36,51 @@ import { SessionActionBar } from "../../src/features/session/SessionActionBar";
 import { useRestTimer } from "../../src/features/session/useRestTimer";
 import { colors, spacing } from "../../src/theme";
 
+let nextLocalSetId = -1;
+
+function createLocalLoggedSet(
+  sessionId: number,
+  exerciseId: number,
+  setNumber: number,
+  reps: number,
+  weightKg: number | null,
+): LoggedSet {
+  const id = nextLocalSetId;
+  nextLocalSetId -= 1;
+
+  return {
+    id,
+    sessionId,
+    exerciseId,
+    setNumber,
+    reps,
+    weightKg,
+    rir: null,
+    tutSec: null,
+    loggedAt: new Date(),
+  };
+}
+
+function toCompleteSetsPayload(sets: LoggedSet[]): LogSetInput[] {
+  return sets.map((set) => ({
+    exerciseId: set.exerciseId,
+    setNumber: set.setNumber,
+    reps: set.reps,
+    weightKg: set.weightKg,
+    rir: set.rir,
+    tutSec: set.tutSec,
+  }));
+}
+
+function toLoggingKey(exerciseId: number, setNumber: number): string {
+  return `${exerciseId}:${setNumber}`;
+}
+
 export default function SessionScreen() {
   const { sessionId: rawId } = useLocalSearchParams<{ sessionId: string }>();
   const sessionId = Number(rawId);
   const [session, setSession] = useState<WorkoutSessionWithSets | null>(null);
+  const [localSets, setLocalSets] = useState<LoggedSet[]>([]);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [workoutName, setWorkoutName] = useState("");
   const [defaultRestSec, setDefaultRestSec] = useState(90);
@@ -52,6 +94,8 @@ export default function SessionScreen() {
   >({});
   const [fetchId, setFetchId] = useState(0);
   const [finishing, setFinishing] = useState(false);
+  const loggedKeysRef = useRef(new Set<string>());
+  const loggingLockRef = useRef(false);
   const timer = useRestTimer(sessionId);
 
   useEffect(() => {
@@ -80,7 +124,11 @@ export default function SessionScreen() {
           return;
         }
 
-        const grouped = groupSetsByExercise(nextSession.sets);
+        loggedKeysRef.current = new Set();
+
+        const setsForDefaults =
+          nextSession.status === "in_progress" ? [] : nextSession.sets;
+        const grouped = groupSetsByExercise(setsForDefaults);
         const nextWeights: Record<number, string> = {};
         const nextReps: Record<number, string> = {};
 
@@ -94,6 +142,10 @@ export default function SessionScreen() {
         }
 
         setSession(nextSession);
+        // Active: buffer in memory. Recap/read-only: show persisted sets.
+        setLocalSets(
+          nextSession.status === "in_progress" ? [] : nextSession.sets,
+        );
         setExercises(nextExercises);
         setWorkoutName(workout.name);
         setDefaultRestSec(workout.defaultRestSec);
@@ -136,10 +188,10 @@ export default function SessionScreen() {
   }
 
   const readOnly = session.status !== "in_progress";
-  const setsByExercise = groupSetsByExercise(session.sets);
+  const setsByExercise = groupSetsByExercise(localSets);
 
-  const onLogSet = async (exercise: Exercise) => {
-    if (session.status !== "in_progress") {
+  const onLogSet = (exercise: Exercise) => {
+    if (session.status !== "in_progress" || loggingLockRef.current) {
       return;
     }
 
@@ -170,39 +222,48 @@ export default function SessionScreen() {
       return;
     }
 
-    setError(null);
+    const key = toLoggingKey(exercise.id, setNumber);
+    if (loggedKeysRef.current.has(key)) {
+      return;
+    }
 
-    try {
-      const logged = await logSet(session.id, {
-        exerciseId: exercise.id,
+    setError(null);
+    loggingLockRef.current = true;
+    loggedKeysRef.current.add(key);
+
+    setLocalSets((current) => [
+      ...current,
+      createLocalLoggedSet(
+        session.id,
+        exercise.id,
         setNumber,
         reps,
         weightKg,
-      });
-      setSession((current) =>
-        current ? { ...current, sets: [...current.sets, logged] } : current,
-      );
-      setWeightByExercise((current) => ({
-        ...current,
-        [exercise.id]:
-          weightKg === null ? "" : formatWeightKg(weightKg),
-      }));
-      setRepsByExercise((current) => ({
-        ...current,
-        [exercise.id]: String(reps),
-      }));
+      ),
+    ]);
 
-      const restSec = getRestSecForSet(exercise, setNumber, defaultRestSec);
-      if (restSec > 0 && !isExerciseComplete(exercise, loggedForExercise.length + 1)) {
-        try {
-          await timer.start(restSec, exercise.id);
-        } catch {
-          // Notifiche possono fallire (web / permessi): il set è già loggato.
-        }
-      }
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Log set fallito");
+    setWeightByExercise((current) => ({
+      ...current,
+      [exercise.id]: weightKg === null ? "" : formatWeightKg(weightKg),
+    }));
+    setRepsByExercise((current) => ({
+      ...current,
+      [exercise.id]: String(reps),
+    }));
+
+    const restSec = getRestSecForSet(exercise, setNumber, defaultRestSec);
+    if (
+      restSec > 0 &&
+      !isExerciseComplete(exercise, loggedForExercise.length + 1)
+    ) {
+      void timer.start(restSec, exercise.id).catch(() => {
+        // Notifiche possono fallire (permessi): il set resta in buffer locale.
+      });
     }
+
+    queueMicrotask(() => {
+      loggingLockRef.current = false;
+    });
   };
 
   const finish = async (mode: "complete" | "abandon") => {
@@ -216,7 +277,7 @@ export default function SessionScreen() {
     try {
       timer.cancel();
       if (mode === "complete") {
-        await completeSession(session.id);
+        await completeSession(session.id, toCompleteSetsPayload(localSets));
       } else {
         await abandonSession(session.id);
       }
@@ -275,7 +336,7 @@ export default function SessionScreen() {
                 }))
               }
               onLog={() => {
-                void onLogSet(exercise);
+                onLogSet(exercise);
               }}
             />
           ))}

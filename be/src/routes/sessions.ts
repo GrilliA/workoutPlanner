@@ -249,6 +249,70 @@ sessionsRouter.patch("/:id", async (req, res) => {
     return;
   }
 
+  const flushSets = parsed.value.sets;
+
+  if (flushSets !== undefined) {
+    for (const set of flushSets) {
+      const exercise = await findExerciseInWorkout(
+        set.exerciseId,
+        session.workoutId,
+        session.workoutDayId,
+      );
+
+      if (!exercise) {
+        res.status(400).json({ error: "Exercise does not belong to this workout" });
+        return;
+      }
+    }
+
+    try {
+      const result = await db.transaction(async (tx) => {
+        await tx.delete(loggedSets).where(eq(loggedSets.sessionId, id));
+
+        if (flushSets.length > 0) {
+          await tx.insert(loggedSets).values(
+            flushSets.map((set) => ({
+              sessionId: id,
+              exerciseId: set.exerciseId,
+              setNumber: set.setNumber,
+              weightKg: set.weightKg,
+              reps: set.reps,
+              rir: set.rir,
+              tutSec: set.tutSec,
+            })),
+          );
+        }
+
+        const [updated] = await tx
+          .update(workoutSessions)
+          .set({
+            status: parsed.value.status,
+            completedAt: new Date(),
+          })
+          .where(eq(workoutSessions.id, id))
+          .returning();
+
+        const sets = await tx
+          .select(loggedSetColumns)
+          .from(loggedSets)
+          .where(eq(loggedSets.sessionId, id))
+          .orderBy(loggedSets.exerciseId, loggedSets.setNumber);
+
+        return { ...updated, sets };
+      });
+
+      res.json(result);
+      return;
+    } catch (error) {
+      if (isUniqueViolation(error)) {
+        res.status(409).json({ error: "Set already logged for this exercise and set number" });
+        return;
+      }
+
+      throw error;
+    }
+  }
+
   const [updated] = await db
     .update(workoutSessions)
     .set({
