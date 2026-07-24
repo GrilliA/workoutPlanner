@@ -24,6 +24,7 @@ import {
 } from "../../src/components";
 import { WeekdayChips } from "../../src/features/workoutprogram/WeekdayChips";
 import { colors, radii, spacing } from "../../src/theme";
+import { animateLayoutSoft } from "../../src/utils/layoutMotion";
 
 type DraftExercise = {
   key: string;
@@ -90,12 +91,14 @@ export default function NewWorkoutScreen() {
     if (activeDay.exercises.length <= 1) {
       return;
     }
+    animateLayoutSoft();
     patchActiveDay({
       exercises: activeDay.exercises.filter((item) => item.key !== key),
     });
   };
 
   const addDay = () => {
+    animateLayoutSoft();
     const day = newDay(days.length);
     setDays((current) => [...current, day]);
     setActiveDayKey(day.key);
@@ -105,6 +108,7 @@ export default function NewWorkoutScreen() {
     if (days.length <= 1) {
       return;
     }
+    animateLayoutSoft();
     const remaining = days.filter((day) => day.key !== activeDay.key);
     setDays(remaining);
     setActiveDayKey(remaining[0]!.key);
@@ -304,11 +308,12 @@ export default function NewWorkoutScreen() {
 
           <SecondaryButton
             label="Aggiungi esercizio"
-            onPress={() =>
+            onPress={() => {
+              animateLayoutSoft();
               patchActiveDay({
                 exercises: [...activeDay.exercises, newExercise()],
-              })
-            }
+              });
+            }}
           />
           <PrimaryButton
             label={busy ? "Salvataggio…" : "SALVA SCHEDA"}

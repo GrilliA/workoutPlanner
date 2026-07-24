@@ -20,6 +20,8 @@ export default function AppLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
+        animation: "fade",
+        sceneStyle: { backgroundColor: colors.bg },
         tabBarStyle: {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,

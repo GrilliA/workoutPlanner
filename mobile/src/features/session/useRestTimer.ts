@@ -12,7 +12,7 @@ Notifications.setNotificationHandler({
   }),
 });
 
-const DONE_FLASH_MS = 3000;
+const DONE_FLASH_MS = 700;
 const TICK_MS = 250;
 
 export type RestTimerStatus = "idle" | "running" | "done";

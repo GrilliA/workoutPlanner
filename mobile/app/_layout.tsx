@@ -44,14 +44,29 @@ export default function RootLayout() {
           screenOptions={{
             headerShown: false,
             contentStyle: { backgroundColor: colors.bg },
+            animation: "fade",
+            animationDuration: 200,
           }}
         >
           <Stack.Screen name="index" />
           <Stack.Screen name="(auth)" />
-          <Stack.Screen name="(app)" />
-          <Stack.Screen name="session/[sessionId]" />
-          <Stack.Screen name="workout/new" />
-          <Stack.Screen name="workout/[workoutId]" />
+          <Stack.Screen name="(app)" options={{ animation: "fade" }} />
+          <Stack.Screen
+            name="session/[sessionId]"
+            options={{ animation: "slide_from_right", animationDuration: 220 }}
+          />
+          <Stack.Screen
+            name="session/complete"
+            options={{ animation: "fade", animationDuration: 280 }}
+          />
+          <Stack.Screen
+            name="workout/new"
+            options={{ animation: "slide_from_right", animationDuration: 220 }}
+          />
+          <Stack.Screen
+            name="workout/[workoutId]"
+            options={{ animation: "slide_from_right", animationDuration: 220 }}
+          />
         </Stack>
       </AuthGate>
     </AuthProvider>

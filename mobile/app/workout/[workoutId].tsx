@@ -39,6 +39,7 @@ import {
 } from "../../src/components";
 import { WeekdayChips } from "../../src/features/workoutprogram/WeekdayChips";
 import { colors, radii, spacing } from "../../src/theme";
+import { animateLayoutSoft } from "../../src/utils/layoutMotion";
 
 type DraftExercise = {
   key: string;
@@ -218,6 +219,7 @@ export default function EditWorkoutScreen() {
         sortOrder: days.length,
         weekdays: [],
       });
+      animateLayoutSoft();
       setDays((current) =>
         [...current, created].sort((a, b) => a.sortOrder - b.sortOrder),
       );
@@ -244,9 +246,10 @@ export default function EditWorkoutScreen() {
     try {
       await deleteWorkoutDay(workoutId, selectedDayId);
       const remaining = days.filter((day) => day.id !== selectedDayId);
-      setDays(remaining);
       const next = remaining[0]!;
       const dayExercises = await getWorkoutDayExercises(workoutId, next.id);
+      animateLayoutSoft();
+      setDays(remaining);
       setSelectedDayId(next.id);
       setDayName(next.name);
       setDayWeekdays(next.weekdays);
@@ -271,6 +274,7 @@ export default function EditWorkoutScreen() {
   };
 
   const removeDraft = (key: string) => {
+    animateLayoutSoft();
     setExercises((current) =>
       current.length <= 1 ? current : current.filter((item) => item.key !== key),
     );
@@ -523,7 +527,10 @@ export default function EditWorkoutScreen() {
 
           <SecondaryButton
             label="Aggiungi esercizio"
-            onPress={() => setExercises((current) => [...current, newDraft()])}
+            onPress={() => {
+              animateLayoutSoft();
+              setExercises((current) => [...current, newDraft()]);
+            }}
             disabled={busy}
           />
           <PrimaryButton

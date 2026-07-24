@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams, type Href } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import {
@@ -31,6 +31,10 @@ import {
   isExerciseComplete,
   resolveLogDefaults,
 } from "../../src/features/session/logDefaults";
+import {
+  computeDurationMin,
+  computeVolumeKg,
+} from "../../src/features/session/celebrationStats";
 import { RestTimerCard } from "../../src/features/session/RestTimerCard";
 import { SessionActionBar } from "../../src/features/session/SessionActionBar";
 import { useRestTimer } from "../../src/features/session/useRestTimer";
@@ -277,10 +281,22 @@ export default function SessionScreen() {
     try {
       timer.cancel();
       if (mode === "complete") {
+        const completedAt = new Date();
         await completeSession(session.id, toCompleteSetsPayload(localSets));
-      } else {
-        await abandonSession(session.id);
+        router.replace({
+          pathname: "/session/complete",
+          params: {
+            workoutName,
+            volumeKg: String(computeVolumeKg(localSets)),
+            durationMin: String(
+              computeDurationMin(session.startedAt, completedAt),
+            ),
+          },
+        } as unknown as Href);
+        return;
       }
+
+      await abandonSession(session.id);
       router.replace("/(app)");
     } catch (err) {
       setFinishing(false);
