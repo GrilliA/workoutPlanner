@@ -5,9 +5,9 @@ import { exercises, workouts } from "../db/schema";
 export async function findWorkoutForUser(
   workoutId: number,
   userId: number,
-): Promise<{ id: number } | null> {
+): Promise<{ id: number; isActive: boolean } | null> {
   const [workout] = await db
-    .select({ id: workouts.id })
+    .select({ id: workouts.id, isActive: workouts.isActive })
     .from(workouts)
     .where(and(eq(workouts.id, workoutId), eq(workouts.userId, userId)));
 

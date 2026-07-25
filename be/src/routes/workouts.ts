@@ -24,6 +24,7 @@ const workoutColumns = {
   defaultRestSec: workouts.defaultRestSec,
   workoutType: workouts.workoutType,
   frequency: workouts.frequency,
+  isActive: workouts.isActive,
   createdAt: workouts.createdAt,
 };
 
@@ -33,6 +34,7 @@ const workoutGroupBy = [
   workouts.defaultRestSec,
   workouts.workoutType,
   workouts.frequency,
+  workouts.isActive,
   workouts.createdAt,
 ] as const;
 
@@ -137,11 +139,18 @@ workoutsRouter.post("/", async (req, res) => {
     return;
   }
 
-  const { name, defaultRestSec, workoutType, frequency } = parsed.value;
+  const { name, defaultRestSec, workoutType, frequency, isActive } = parsed.value;
 
   const [created] = await db
     .insert(workouts)
-    .values({ name, defaultRestSec, workoutType, frequency, userId: user.id })
+    .values({
+      name,
+      defaultRestSec,
+      workoutType,
+      frequency,
+      isActive,
+      userId: user.id,
+    })
     .returning();
 
   await ensureDefaultWorkoutDay(created.id);

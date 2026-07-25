@@ -1,4 +1,11 @@
-import { integer, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  integer,
+  pgTable,
+  serial,
+  text,
+  timestamp,
+} from "drizzle-orm/pg-core";
 import { users } from "./users";
 
 export const workouts = pgTable("workouts", {
@@ -10,5 +17,6 @@ export const workouts = pgTable("workouts", {
   defaultRestSec: integer("default_rest_sec").notNull().default(90),
   workoutType: text("workout_type").notNull().default("Forza + Ipertrofia"),
   frequency: text("frequency").notNull().default("3× a settimana"),
+  isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

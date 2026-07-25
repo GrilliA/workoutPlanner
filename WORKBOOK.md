@@ -13,6 +13,7 @@ How to use:
 
 | Date | Decision | Why |
 | --- | --- | --- |
+| 2026-07-25 | Mobile start = **picker scheda attiva + giorno**; schede `isActive` (disattiva/riattiva); create/edit con **prescription per serie** (reps + recupero) | Evitare “sempre la scheda più nuova / tutto il ciclo”; più programmi convivono; serie 10→8 e rest diversi senza lasciare il modello BE |
 | 2026-07-21 | Mobile path = **Expo React Native** in `mobile/` (TypeScript); Capacitor retired from `fe/` | Native UI/notifications without WebView; separate toolchain from Vite; didactic README in `mobile/` |
 | 2026-07-21 | Auth refresh = cookie (web) **and** JSON body when `X-Client: mobile` + SecureStore | RN has no httpOnly cookie jar; keep web unchanged |
 | 2026-07-21 | Share Zod/API lazily (copy into `mobile/` first; `packages/shared` later) | Avoid monorepo day-1; extract only when duplication hurts |
@@ -35,6 +36,7 @@ How to use:
 
 ## What we did
 
+- 2026-07-25 — Mobile UX: `workouts.is_active` + PATCH; Home picker scheda/giorno; disattiva/riattiva in lista; create/edit con serie variabili + recupero; sessione prefill reps dalla prossima prescription.
 - 2026-07-21 — Expo RN `mobile/`: TypeScript + Expo Router, auth SecureStore, API Zod port, screens (login/home/workouts/stats/settings/session + rest timer). Capacitor removed from `fe/`. Docs: `mobile/README.md`.
 - 2026-07-21 — BE auth dual delivery: cookie for web + optional `refreshToken` in JSON when `X-Client: mobile`; refresh/logout accept body token.
 - 2026-07-19 — B5/W8 exercise catalog: vendored yuhonas/free-exercise-db, `exercise_catalog` + seed, `GET /api/catalog/*`, FE picker in AddExerciseForm with optional `catalogId`.

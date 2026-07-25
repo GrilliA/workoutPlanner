@@ -86,8 +86,9 @@ export function isExerciseComplete(exercise: Exercise, loggedCount: number): boo
 }
 
 /**
- * Prefill priority: last logged set → next prescription reps → legacy reps → empty.
- * Weight comes only from the last logged set (prescriptions have no weight).
+ * Prefill priority:
+ * - weight: last logged set (prescriptions have no weight)
+ * - reps: next set prescription (so 10 → 8 plans advance correctly)
  */
 export function resolveLogDefaults(
   exercise: Exercise,
@@ -97,15 +98,8 @@ export function resolveLogDefaults(
   const last = ordered.at(-1);
   const nextSetNumber = (last?.setNumber ?? 0) + 1;
 
-  if (last) {
-    return {
-      weight: last.weightKg === null ? "" : formatWeightKg(last.weightKg),
-      reps: String(last.reps),
-    };
-  }
-
   return {
-    weight: "",
+    weight: last == null || last.weightKg === null ? "" : formatWeightKg(last.weightKg),
     reps: String(getTargetRepsForSet(exercise, nextSetNumber)),
   };
 }

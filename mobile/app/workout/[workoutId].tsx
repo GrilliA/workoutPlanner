@@ -37,7 +37,15 @@ import {
   SectionLabel,
   Title,
 } from "../../src/components";
-import { WeekdayChips } from "../../src/features/workoutprogram/WeekdayChips";
+import {
+  SetPrescriptionEditor,
+  WeekdayChips,
+  newPrescription,
+  prescriptionsFromServer,
+  toSetPrescriptions,
+  validatePrescriptionDrafts,
+  type DraftPrescription,
+} from "../../src/features/workoutprogram";
 import { colors, radii, spacing } from "../../src/theme";
 import { animateLayoutSoft } from "../../src/utils/layoutMotion";
 
@@ -45,49 +53,59 @@ type DraftExercise = {
   key: string;
   serverId: number | null;
   name: string;
-  sets: string;
-  reps: string;
+  prescriptions: DraftPrescription[];
   catalogId: string | null;
-  restSec: number;
 };
 
 const newDraft = (): DraftExercise => ({
   key: `new-${Date.now()}-${Math.random()}`,
   serverId: null,
   name: "",
-  sets: "3",
-  reps: "8",
+  prescriptions: [
+    newPrescription("8", 90),
+    newPrescription("8", 90),
+    newPrescription("8", 90),
+  ],
   catalogId: null,
-  restSec: 90,
 });
 
 const toDraft = (exercise: Exercise): DraftExercise => {
-  const prescriptions = exercise.setPrescriptions;
-  const sets =
-    prescriptions.length > 0
-      ? prescriptions.length
-      : (exercise.sets ?? 3);
-  const reps =
-    prescriptions[0]?.reps ?? exercise.reps ?? 8;
-  const restSec = prescriptions[0]?.restSec ?? 90;
+  const prescriptions =
+    exercise.setPrescriptions.length > 0
+      ? prescriptionsFromServer(exercise.setPrescriptions)
+      : [
+          newPrescription(
+            String(exercise.reps ?? 8),
+            90,
+          ),
+        ];
+
+  // If only legacy sets count exists, expand uniform reps.
+  if (
+    exercise.setPrescriptions.length === 0 &&
+    exercise.sets != null &&
+    exercise.sets > 1
+  ) {
+    const reps = String(exercise.reps ?? 8);
+    return {
+      key: `ex-${exercise.id}`,
+      serverId: exercise.id,
+      name: exercise.name,
+      prescriptions: Array.from({ length: exercise.sets }, () =>
+        newPrescription(reps, 90),
+      ),
+      catalogId: exercise.catalogId ?? null,
+    };
+  }
 
   return {
     key: `ex-${exercise.id}`,
     serverId: exercise.id,
     name: exercise.name,
-    sets: String(sets),
-    reps: String(reps),
+    prescriptions,
     catalogId: exercise.catalogId ?? null,
-    restSec: restSec ?? 90,
   };
 };
-
-const toPrescriptions = (sets: number, reps: number, restSec: number) =>
-  Array.from({ length: sets }, (_, index) => ({
-    setNumber: index + 1,
-    reps,
-    restSec,
-  }));
 
 /** Modifica esercizi di un giorno (MVP). Multi-giorno: selettore semplice. */
 export default function EditWorkoutScreen() {
@@ -307,8 +325,6 @@ export default function EditWorkoutScreen() {
     const parsed = exercises.map((item) => ({
       ...item,
       name: item.name.trim(),
-      sets: Number(item.sets),
-      reps: Number(item.reps),
     }));
 
     if (parsed.some((item) => !item.name)) {
@@ -316,17 +332,12 @@ export default function EditWorkoutScreen() {
       return;
     }
 
-    if (
-      parsed.some(
-        (item) =>
-          !Number.isFinite(item.sets) ||
-          item.sets < 1 ||
-          !Number.isFinite(item.reps) ||
-          item.reps < 1,
-      )
-    ) {
-      setError("Serie e ripetizioni devono essere numeri positivi");
-      return;
+    for (const item of parsed) {
+      const prescriptionError = validatePrescriptionDrafts(item.prescriptions);
+      if (prescriptionError) {
+        setError(`${item.name}: ${prescriptionError}`);
+        return;
+      }
     }
 
     setBusy(true);
@@ -369,7 +380,7 @@ export default function EditWorkoutScreen() {
       for (const item of parsed) {
         const payload = {
           name: item.name,
-          setPrescriptions: toPrescriptions(item.sets, item.reps, item.restSec),
+          setPrescriptions: toSetPrescriptions(item.prescriptions),
           catalogId: item.catalogId,
         };
 
@@ -418,8 +429,8 @@ export default function EditWorkoutScreen() {
         <ScrollView contentContainerStyle={styles.content}>
           <Title>MODIFICA SCHEDA</Title>
           <Body>
-            Più giorni (Petto, Gambe, …), ciascuno con esercizi e giorni in
-            settimana.
+            Più giorni (Petto, Gambe, …). Per ogni esercizio imposta reps e
+            recupero diversi per serie.
           </Body>
           {error ? <ErrorBanner message={error} /> : null}
 
@@ -493,30 +504,13 @@ export default function EditWorkoutScreen() {
                 onChangeText={(value) => updateDraft(item.key, { name: value })}
                 autoCapitalize="words"
               />
-              <View style={styles.row}>
-                <View style={styles.half}>
-                  <Meta style={styles.fieldLabel}>Serie</Meta>
-                  <Field
-                    placeholder="es. 3"
-                    keyboardType="number-pad"
-                    value={item.sets}
-                    onChangeText={(value) => updateDraft(item.key, { sets: value })}
-                    style={styles.fieldInHalf}
-                    accessibilityLabel="Numero di serie"
-                  />
-                </View>
-                <View style={styles.half}>
-                  <Meta style={styles.fieldLabel}>Ripetizioni</Meta>
-                  <Field
-                    placeholder="es. 10"
-                    keyboardType="number-pad"
-                    value={item.reps}
-                    onChangeText={(value) => updateDraft(item.key, { reps: value })}
-                    style={styles.fieldInHalf}
-                    accessibilityLabel="Ripetizioni per serie"
-                  />
-                </View>
-              </View>
+              <SetPrescriptionEditor
+                prescriptions={item.prescriptions}
+                onChange={(prescriptions) =>
+                  updateDraft(item.key, { prescriptions })
+                }
+                disabled={busy}
+              />
               {exercises.length > 1 ? (
                 <Pressable onPress={() => removeDraft(item.key)}>
                   <Meta style={styles.remove}>Rimuovi</Meta>

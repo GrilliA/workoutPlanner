@@ -104,6 +104,11 @@ workoutSessionsRouter.post("/", async (req, res) => {
     return;
   }
 
+  if (!workout.isActive) {
+    res.status(409).json({ error: "Workout is inactive" });
+    return;
+  }
+
   const activeSession = await findActiveSessionForUser(user.id);
 
   if (activeSession) {

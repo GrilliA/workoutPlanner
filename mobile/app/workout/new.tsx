@@ -22,15 +22,21 @@ import {
   SectionLabel,
   Title,
 } from "../../src/components";
-import { WeekdayChips } from "../../src/features/workoutprogram/WeekdayChips";
+import {
+  SetPrescriptionEditor,
+  WeekdayChips,
+  newPrescription,
+  toSetPrescriptions,
+  validatePrescriptionDrafts,
+  type DraftPrescription,
+} from "../../src/features/workoutprogram";
 import { colors, radii, spacing } from "../../src/theme";
 import { animateLayoutSoft } from "../../src/utils/layoutMotion";
 
 type DraftExercise = {
   key: string;
   name: string;
-  sets: string;
-  reps: string;
+  prescriptions: DraftPrescription[];
 };
 
 type DraftDay = {
@@ -43,8 +49,11 @@ type DraftDay = {
 const newExercise = (): DraftExercise => ({
   key: `ex-${Date.now()}-${Math.random()}`,
   name: "",
-  sets: "3",
-  reps: "10",
+  prescriptions: [
+    newPrescription("10", 90),
+    newPrescription("10", 90),
+    newPrescription("10", 90),
+  ],
 });
 
 const dayLetter = (index: number): string =>
@@ -57,7 +66,7 @@ const newDay = (index: number): DraftDay => ({
   exercises: [newExercise()],
 });
 
-/** Crea scheda multi-giorno: giorni + esercizi + giorni settimana. */
+/** Crea scheda multi-giorno: giorni + esercizi con serie variabili + recupero. */
 export default function NewWorkoutScreen() {
   const initialDay = newDay(0);
   const [name, setName] = useState("");
@@ -136,15 +145,9 @@ export default function NewWorkoutScreen() {
       }
 
       for (const item of day.exercises) {
-        const sets = Number(item.sets);
-        const reps = Number(item.reps);
-        if (
-          !Number.isFinite(sets) ||
-          sets < 1 ||
-          !Number.isFinite(reps) ||
-          reps < 1
-        ) {
-          setError("Serie e ripetizioni devono essere numeri positivi");
+        const prescriptionError = validatePrescriptionDrafts(item.prescriptions);
+        if (prescriptionError) {
+          setError(`${item.name.trim() || "Esercizio"}: ${prescriptionError}`);
           return;
         }
       }
@@ -175,18 +178,10 @@ export default function NewWorkoutScreen() {
           name: day.name.trim(),
           sortOrder: index,
           weekdays: day.weekdays as Array<0 | 1 | 2 | 3 | 4 | 5 | 6>,
-          exercises: day.exercises.map((item) => {
-            const sets = Number(item.sets);
-            const reps = Number(item.reps);
-            return {
-              name: item.name.trim(),
-              setPrescriptions: Array.from({ length: sets }, (_, setIndex) => ({
-                setNumber: setIndex + 1,
-                reps,
-                restSec: 90,
-              })),
-            };
-          }),
+          exercises: day.exercises.map((item) => ({
+            name: item.name.trim(),
+            setPrescriptions: toSetPrescriptions(item.prescriptions),
+          })),
         })),
       });
     } catch (err) {
@@ -210,7 +205,8 @@ export default function NewWorkoutScreen() {
           <Title>CREA SCHEDA</Title>
           <Body>
             Una scheda ha più giorni (Petto, Gambe, …), ciascuno con i suoi
-            esercizi e i giorni della settimana.
+            esercizi. Per ogni esercizio puoi impostare reps e recupero diversi
+            per serie.
           </Body>
           {error ? <ErrorBanner message={error} /> : null}
 
@@ -270,34 +266,13 @@ export default function NewWorkoutScreen() {
                 onChangeText={(value) => updateExercise(item.key, { name: value })}
                 autoCapitalize="words"
               />
-              <View style={styles.row}>
-                <View style={styles.half}>
-                  <Meta style={styles.fieldLabel}>Serie</Meta>
-                  <Field
-                    placeholder="es. 3"
-                    keyboardType="number-pad"
-                    value={item.sets}
-                    onChangeText={(value) =>
-                      updateExercise(item.key, { sets: value })
-                    }
-                    style={styles.fieldInHalf}
-                    accessibilityLabel="Numero di serie"
-                  />
-                </View>
-                <View style={styles.half}>
-                  <Meta style={styles.fieldLabel}>Ripetizioni</Meta>
-                  <Field
-                    placeholder="es. 10"
-                    keyboardType="number-pad"
-                    value={item.reps}
-                    onChangeText={(value) =>
-                      updateExercise(item.key, { reps: value })
-                    }
-                    style={styles.fieldInHalf}
-                    accessibilityLabel="Ripetizioni per serie"
-                  />
-                </View>
-              </View>
+              <SetPrescriptionEditor
+                prescriptions={item.prescriptions}
+                onChange={(prescriptions) =>
+                  updateExercise(item.key, { prescriptions })
+                }
+                disabled={busy}
+              />
               {activeDay.exercises.length > 1 ? (
                 <Pressable onPress={() => removeExercise(item.key)}>
                   <Meta style={styles.remove}>Rimuovi esercizio</Meta>
@@ -343,37 +318,35 @@ const styles = StyleSheet.create({
   dayChip: {
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: radii.sm,
+    borderRadius: radii.md,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     backgroundColor: colors.surface,
   },
   dayChipSelected: {
     borderColor: colors.accent,
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: colors.accentBg,
   },
   dayChipLabelSelected: {
-    color: colors.accent,
+    color: colors.textHeading,
     fontWeight: "700",
   },
   dayActions: {
-    gap: spacing.sm,
-    marginBottom: spacing.xs,
+    gap: spacing.xs,
+  },
+  fieldLabel: {
+    marginTop: spacing.xs,
   },
   exerciseBlock: {
+    gap: spacing.xs,
+    padding: spacing.sm,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radii.md,
-    padding: spacing.md,
-    marginBottom: spacing.sm,
     backgroundColor: colors.surface,
   },
-  row: { flexDirection: "row", gap: spacing.sm },
-  half: { flex: 1 },
-  fieldLabel: {
-    marginBottom: 4,
+  remove: {
+    color: colors.danger,
     fontWeight: "600",
   },
-  fieldInHalf: { marginBottom: 0 },
-  remove: { color: colors.danger, marginTop: spacing.xs },
 });

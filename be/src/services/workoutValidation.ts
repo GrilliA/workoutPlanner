@@ -25,6 +25,7 @@ export type CreateWorkoutInput = {
   defaultRestSec: number;
   workoutType: string;
   frequency: string;
+  isActive: boolean;
 };
 
 const isRestSec = (value: number): value is (typeof REST_SEC_OPTIONS)[number] =>
@@ -81,9 +82,15 @@ export const validateCreateWorkoutInput = (
     return { ok: false, error: "Invalid frequency" };
   }
 
+  if (input.isActive !== undefined && typeof input.isActive !== "boolean") {
+    return { ok: false, error: "isActive must be a boolean" };
+  }
+
+  const isActive = input.isActive === undefined ? true : input.isActive;
+
   return {
     ok: true,
-    value: { name, defaultRestSec, workoutType, frequency },
+    value: { name, defaultRestSec, workoutType, frequency, isActive },
   };
 };
 
@@ -139,6 +146,14 @@ export const validateUpdateWorkoutInput = (
     }
 
     value.frequency = frequency;
+  }
+
+  if ("isActive" in input) {
+    if (typeof input.isActive !== "boolean") {
+      return { ok: false, error: "isActive must be a boolean" };
+    }
+
+    value.isActive = input.isActive;
   }
 
   if (Object.keys(value).length === 0) {

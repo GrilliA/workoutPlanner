@@ -27,6 +27,7 @@ import { groupSetsByExercise } from "../../src/features/session/groupSetsByExerc
 import {
   formatWeightKg,
   getRestSecForSet,
+  getTargetRepsForSet,
   getTargetSetCount,
   isExerciseComplete,
   resolveLogDefaults,
@@ -252,7 +253,9 @@ export default function SessionScreen() {
     }));
     setRepsByExercise((current) => ({
       ...current,
-      [exercise.id]: String(reps),
+      [exercise.id]: String(
+        getTargetRepsForSet(exercise, setNumber + 1),
+      ),
     }));
 
     const restSec = getRestSecForSet(exercise, setNumber, defaultRestSec);
