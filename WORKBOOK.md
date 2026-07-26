@@ -37,6 +37,7 @@ How to use:
 ## What we did
 
 - 2026-07-25 — Mobile UX: `workouts.is_active` + PATCH; Home picker scheda/giorno; disattiva/riattiva in lista; create/edit con serie variabili + recupero; sessione prefill reps dalla prossima prescription.
+- 2026-07-26 — Mobile sessione: one-tap `LOG kg × reps`, edit/undo set locale, TERMINA dominante + abbandona dietro conferma; copy stato in italiano.
 - 2026-07-21 — Expo RN `mobile/`: TypeScript + Expo Router, auth SecureStore, API Zod port, screens (login/home/workouts/stats/settings/session + rest timer). Capacitor removed from `fe/`. Docs: `mobile/README.md`.
 - 2026-07-21 — BE auth dual delivery: cookie for web + optional `refreshToken` in JSON when `X-Client: mobile`; refresh/logout accept body token.
 - 2026-07-19 — B5/W8 exercise catalog: vendored yuhonas/free-exercise-db, `exercise_catalog` + seed, `GET /api/catalog/*`, FE picker in AddExerciseForm with optional `catalogId`.

@@ -42,6 +42,10 @@ export function SecondaryButton(props: Omit<ButtonProps, "variant">) {
   return <Button variant="secondary" {...props} />;
 }
 
+export function DangerButton(props: Omit<ButtonProps, "variant">) {
+  return <Button variant="danger" {...props} />;
+}
+
 const styles = StyleSheet.create({
   base: {
     borderRadius: radii.md,
