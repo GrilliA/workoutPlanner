@@ -1,6 +1,6 @@
-import { router } from "expo-router";
-import { useEffect, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { ApiError } from "../../src/api/client";
 import {
   getWorkouts,
@@ -46,8 +46,20 @@ export default function HomeScreen() {
   const [recent, setRecent] = useState<WorkoutSessionSummary[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [starting, setStarting] = useState(false);
   const [fetchId, setFetchId] = useState(0);
+  const skipNextFocusRefresh = useRef(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (skipNextFocusRefresh.current) {
+        skipNextFocusRefresh.current = false;
+        return;
+      }
+      setFetchId((id) => id + 1);
+    }, []),
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -135,6 +147,7 @@ export default function HomeScreen() {
       } finally {
         if (!cancelled) {
           setLoading(false);
+          setRefreshing(false);
         }
       }
     };
@@ -191,7 +204,19 @@ export default function HomeScreen() {
 
   return (
     <Screen padded={false}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            tintColor={colors.accent}
+            onRefresh={() => {
+              setRefreshing(true);
+              setFetchId((id) => id + 1);
+            }}
+          />
+        }
+      >
         <Title>Ciao{user?.name ? `, ${user.name}` : ""}</Title>
 
         {error ? (

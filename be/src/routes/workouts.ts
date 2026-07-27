@@ -148,7 +148,7 @@ workoutsRouter.post("/", async (req, res) => {
       defaultRestSec,
       workoutType,
       frequency,
-      isActive,
+      isActive: isActive ?? true,
       userId: user.id,
     })
     .returning();
