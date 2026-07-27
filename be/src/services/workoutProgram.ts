@@ -208,6 +208,7 @@ export const saveWorkoutProgram = (
       defaultRestSec: input.defaultRestSec,
       workoutType: input.workoutType,
       frequency: input.frequency,
+      ...(input.isActive !== undefined ? { isActive: input.isActive } : {}),
     };
     const [savedWorkout] = workoutId
       ? await tx
@@ -217,7 +218,11 @@ export const saveWorkoutProgram = (
           .returning()
       : await tx
           .insert(workouts)
-          .values({ ...workoutValues, userId })
+          .values({
+            ...workoutValues,
+            isActive: input.isActive ?? true,
+            userId,
+          })
           .returning();
 
     const keptDayIds = new Set(input.days.flatMap((day) => (day.id ? [day.id] : [])));

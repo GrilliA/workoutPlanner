@@ -27,6 +27,7 @@ import { groupSetsByExercise } from "../../src/features/session/groupSetsByExerc
 import {
   formatWeightKg,
   getRestSecForSet,
+  getTargetRepsForSet,
   getTargetSetCount,
   isExerciseComplete,
   resolveLogDefaults,
@@ -212,7 +213,11 @@ export default function SessionScreen() {
       return;
     }
 
-    const reps = Number(repsByExercise[exercise.id] ?? "");
+    const repsRaw = repsByExercise[exercise.id]?.trim() ?? "";
+    const reps =
+      repsRaw === ""
+        ? getTargetRepsForSet(exercise, setNumber)
+        : Number(repsRaw);
     const weightRaw = weightByExercise[exercise.id]?.trim() ?? "";
     const weightKg = weightRaw === "" ? null : Number(weightRaw);
 
@@ -252,7 +257,7 @@ export default function SessionScreen() {
     }));
     setRepsByExercise((current) => ({
       ...current,
-      [exercise.id]: String(reps),
+      [exercise.id]: String(getTargetRepsForSet(exercise, setNumber + 1)),
     }));
 
     const restSec = getRestSecForSet(exercise, setNumber, defaultRestSec);
@@ -268,6 +273,76 @@ export default function SessionScreen() {
     queueMicrotask(() => {
       loggingLockRef.current = false;
     });
+  };
+
+  const onUndoLastSet = (exercise: Exercise) => {
+    if (session.status !== "in_progress") {
+      return;
+    }
+
+    const loggedForExercise = setsByExercise.get(exercise.id) ?? [];
+    const last = loggedForExercise.at(-1);
+    if (!last) {
+      return;
+    }
+
+    timer.cancel();
+    loggedKeysRef.current.delete(toLoggingKey(exercise.id, last.setNumber));
+
+    setLocalSets((current) =>
+      current.filter(
+        (set) =>
+          !(set.exerciseId === exercise.id && set.setNumber === last.setNumber),
+      ),
+    );
+
+    setWeightByExercise((current) => ({
+      ...current,
+      [exercise.id]:
+        last.weightKg === null ? "" : formatWeightKg(last.weightKg),
+    }));
+    setRepsByExercise((current) => ({
+      ...current,
+      [exercise.id]: String(last.reps),
+    }));
+    setError(null);
+  };
+
+  const onEditSet = (
+    exercise: Exercise,
+    setNumber: number,
+    next: { reps: number; weightKg: number | null },
+  ) => {
+    if (session.status !== "in_progress") {
+      return;
+    }
+
+    setLocalSets((current) =>
+      current.map((set) =>
+        set.exerciseId === exercise.id && set.setNumber === setNumber
+          ? { ...set, reps: next.reps, weightKg: next.weightKg }
+          : set,
+      ),
+    );
+
+    const loggedForExercise = setsByExercise.get(exercise.id) ?? [];
+    const isLast =
+      loggedForExercise.length > 0 &&
+      loggedForExercise[loggedForExercise.length - 1]?.setNumber === setNumber;
+
+    if (isLast) {
+      setWeightByExercise((current) => ({
+        ...current,
+        [exercise.id]:
+          next.weightKg === null ? "" : formatWeightKg(next.weightKg),
+      }));
+      setRepsByExercise((current) => ({
+        ...current,
+        [exercise.id]: String(getTargetRepsForSet(exercise, setNumber + 1)),
+      }));
+    }
+
+    setError(null);
   };
 
   const finish = async (mode: "complete" | "abandon") => {
@@ -318,8 +393,11 @@ export default function SessionScreen() {
         >
           <Heading>{workoutName}</Heading>
           <Body>
-            Stato: {session.status}
-            {readOnly ? " (sola lettura)" : ""}
+            {readOnly
+              ? session.status === "completed"
+                ? "Sessione completata"
+                : "Sessione abbandonata"
+              : "Sessione in corso"}
           </Body>
 
           <RestTimerCard
@@ -353,6 +431,12 @@ export default function SessionScreen() {
               }
               onLog={() => {
                 onLogSet(exercise);
+              }}
+              onUndoLast={() => {
+                onUndoLastSet(exercise);
+              }}
+              onEditSet={(setNumber, next) => {
+                onEditSet(exercise, setNumber, next);
               }}
             />
           ))}

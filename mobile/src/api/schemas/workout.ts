@@ -36,6 +36,7 @@ export const workoutSchema = z.object({
   defaultRestSec: z.number(),
   workoutType: z.string(),
   frequency: z.string(),
+  isActive: z.boolean().default(true),
   createdAt: z.coerce.date(),
   exerciseCount: z.number(),
 });
@@ -62,6 +63,7 @@ export const createWorkoutRequestSchema = z.object({
   defaultRestSec: workoutSettingsSchema.shape.defaultRestSec.optional(),
   workoutType: workoutSettingsSchema.shape.workoutType.optional(),
   frequency: workoutSettingsSchema.shape.frequency.optional(),
+  isActive: z.boolean().optional(),
 });
 
 export const updateWorkoutRequestSchema = createWorkoutRequestSchema.partial().refine(

@@ -72,7 +72,7 @@ describe("isExerciseComplete", () => {
 });
 
 describe("resolveLogDefaults", () => {
-  it("prefers last logged set", () => {
+  it("keeps last weight and advances to next prescription reps", () => {
     const sets: LoggedSet[] = [
       {
         id: 1,
@@ -85,17 +85,6 @@ describe("resolveLogDefaults", () => {
         tutSec: null,
         loggedAt: new Date(),
       },
-      {
-        id: 2,
-        sessionId: 1,
-        exerciseId: 1,
-        setNumber: 2,
-        weightKg: 80,
-        reps: 5,
-        rir: null,
-        tutSec: null,
-        loggedAt: new Date(),
-      },
     ];
 
     assert.deepEqual(
@@ -103,11 +92,15 @@ describe("resolveLogDefaults", () => {
         exercise({
           id: 1,
           name: "Squat",
-          setPrescriptions: [{ setNumber: 1, reps: 8, restSec: 90 }],
+          setPrescriptions: [
+            { setNumber: 1, reps: 10, restSec: 90 },
+            { setNumber: 2, reps: 8, restSec: 120 },
+            { setNumber: 3, reps: 8, restSec: 120 },
+          ],
         }),
         sets,
       ),
-      { weight: "80", reps: "5" },
+      { weight: "60", reps: "8" },
     );
   });
 

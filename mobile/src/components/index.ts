@@ -9,7 +9,7 @@ export {
   Meta,
   SectionLabel,
 } from "./text";
-export { Button, PrimaryButton, SecondaryButton } from "./button";
+export { Button, PrimaryButton, SecondaryButton, DangerButton } from "./button";
 export { TextField, Field } from "./input";
 export { Card } from "./card";
 export { LoadingBlock, ErrorBanner } from "./feedback";
