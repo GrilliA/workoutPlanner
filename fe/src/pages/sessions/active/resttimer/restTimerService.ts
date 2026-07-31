@@ -42,7 +42,7 @@ export function canScheduleNativeNotification(): boolean {
   return false;
 }
 
-export async function scheduleRestAlert(_at: Date, _sessionId: number): Promise<void> {
+export async function scheduleRestAlert(): Promise<void> {
   // Web cannot schedule reliable background local notifications without a service worker.
 }
 
@@ -50,7 +50,7 @@ export async function cancelRestAlert(): Promise<void> {}
 
 export async function triggerHaptic(): Promise<void> {}
 
-export async function playRestDoneAlert(_sessionId: number, inForeground: boolean): Promise<void> {
+export async function playRestDoneAlert(inForeground: boolean): Promise<void> {
   if (!inForeground) {
     return;
   }

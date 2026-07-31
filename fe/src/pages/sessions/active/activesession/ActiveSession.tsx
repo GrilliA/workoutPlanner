@@ -35,7 +35,7 @@ export function ActiveSession({ sessionId }: ActiveSessionProps) {
     retry,
   } = useActiveSession(sessionId);
 
-  const restTimer = useRestTimer(sessionId);
+  const restTimer = useRestTimer();
 
   useEffect(() => {
     if (status !== "completed") {
