@@ -10,7 +10,7 @@ type RestTimerCardProps = {
 };
 
 /** Approx card height incl. margins — collapse senza jump sulla lista. */
-const CARD_HEIGHT = 156;
+const CARD_HEIGHT = 200;
 const DONE_HOLD_MS = 350;
 
 const formatCountdown = (remainingSec: number): string => {
@@ -147,55 +147,68 @@ const styles = StyleSheet.create({
   shell: {
     width: "100%",
     overflow: "hidden",
+    // Full-bleed rispetto al padding pagina (Focus mode).
+    marginHorizontal: -spacing.lg,
+    alignSelf: "stretch",
   },
   timer: {
     backgroundColor: colors.surfaceElevated,
     borderColor: colors.accentBorder,
-    borderWidth: 1,
-    borderRadius: radii.lg,
-    paddingVertical: spacing.md,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderLeftWidth: 0,
+    borderRightWidth: 0,
+    borderRadius: 0,
+    paddingVertical: spacing.lg,
     paddingHorizontal: spacing.lg,
     alignItems: "center",
     justifyContent: "center",
-    gap: spacing.xs,
-    minHeight: 132,
+    gap: spacing.sm,
+    minHeight: 172,
     width: "100%",
   },
   timerDone: {
     borderColor: colors.accent,
+    backgroundColor: colors.accentBg,
   },
   label: {
-    letterSpacing: 1.2,
+    letterSpacing: 1.4,
+    fontSize: 13,
   },
   value: {
-    fontSize: 48,
+    fontSize: 64,
     fontWeight: "700",
-    lineHeight: 58,
-    color: colors.textHeading,
+    lineHeight: 72,
+    color: colors.accent,
     fontVariant: ["tabular-nums"],
     textAlign: "center",
     includeFontPadding: false,
   },
   skipSlot: {
-    minHeight: 40,
+    minHeight: 44,
     justifyContent: "center",
     alignItems: "center",
+    alignSelf: "stretch",
+    paddingHorizontal: spacing.lg,
   },
   skipPlaceholder: {
-    height: 40,
+    height: 44,
   },
   skip: {
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: radii.sm,
+    alignSelf: "stretch",
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radii.md,
     borderWidth: 1,
     borderColor: colors.border,
+    backgroundColor: colors.bg,
+    alignItems: "center",
   },
   skipPressed: {
     opacity: 0.7,
   },
   skipLabel: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: "700",
     lineHeight: 18,
   },

@@ -15,14 +15,13 @@ import {
 } from "../../src/api";
 import { ApiError } from "../../src/api/client";
 import {
-  Body,
   BackHeader,
   ErrorBanner,
-  Heading,
   LoadingBlock,
   Screen,
 } from "../../src/components";
 import { ExerciseCard } from "../../src/features/session/ExerciseCard";
+import { ExercisePager } from "../../src/features/session/ExercisePager";
 import { groupSetsByExercise } from "../../src/features/session/groupSetsByExercise";
 import {
   formatWeightKg,
@@ -38,6 +37,7 @@ import {
 } from "../../src/features/session/celebrationStats";
 import { RestTimerCard } from "../../src/features/session/RestTimerCard";
 import { SessionActionBar } from "../../src/features/session/SessionActionBar";
+import { SessionFocusHeader } from "../../src/features/session/SessionFocusHeader";
 import { useRestTimer } from "../../src/features/session/useRestTimer";
 import { colors, spacing } from "../../src/theme";
 
@@ -81,6 +81,30 @@ function toLoggingKey(exerciseId: number, setNumber: number): string {
   return `${exerciseId}:${setNumber}`;
 }
 
+function formatElapsed(startedAt: Date, nowMs: number): string {
+  const totalSec = Math.max(0, Math.floor((nowMs - startedAt.getTime()) / 1000));
+  const hours = Math.floor(totalSec / 3600);
+  const minutes = Math.floor((totalSec % 3600) / 60);
+  const seconds = totalSec % 60;
+
+  if (hours > 0) {
+    return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  }
+
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
+function firstIncompleteIndex(
+  exercises: Exercise[],
+  setsByExercise: Map<number, LoggedSet[]>,
+): number {
+  const index = exercises.findIndex(
+    (exercise) =>
+      !isExerciseComplete(exercise, (setsByExercise.get(exercise.id) ?? []).length),
+  );
+  return index >= 0 ? index : 0;
+}
+
 export default function SessionScreen() {
   const { sessionId: rawId } = useLocalSearchParams<{ sessionId: string }>();
   const sessionId = Number(rawId);
@@ -99,6 +123,8 @@ export default function SessionScreen() {
   >({});
   const [fetchId, setFetchId] = useState(0);
   const [finishing, setFinishing] = useState(false);
+  const [focusIndex, setFocusIndex] = useState(0);
+  const [nowMs, setNowMs] = useState(() => Date.now());
   const loggedKeysRef = useRef(new Set<string>());
   const loggingLockRef = useRef(false);
   const timer = useRestTimer(sessionId);
@@ -147,7 +173,6 @@ export default function SessionScreen() {
         }
 
         setSession(nextSession);
-        // Active: buffer in memory. Recap/read-only: show persisted sets.
         setLocalSets(
           nextSession.status === "in_progress" ? [] : nextSession.sets,
         );
@@ -156,6 +181,14 @@ export default function SessionScreen() {
         setDefaultRestSec(workout.defaultRestSec);
         setWeightByExercise(nextWeights);
         setRepsByExercise(nextReps);
+        setFocusIndex(
+          firstIncompleteIndex(
+            nextExercises,
+            groupSetsByExercise(
+              nextSession.status === "in_progress" ? [] : nextSession.sets,
+            ),
+          ),
+        );
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof ApiError ? err.message : "Errore caricamento");
@@ -173,6 +206,15 @@ export default function SessionScreen() {
       cancelled = true;
     };
   }, [sessionId, fetchId]);
+
+  useEffect(() => {
+    if (!session || session.status !== "in_progress") {
+      return;
+    }
+
+    const id = setInterval(() => setNowMs(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [session]);
 
   if (loading) {
     return <LoadingBlock />;
@@ -194,6 +236,17 @@ export default function SessionScreen() {
 
   const readOnly = session.status !== "in_progress";
   const setsByExercise = groupSetsByExercise(localSets);
+  const safeFocusIndex = Math.min(
+    focusIndex,
+    Math.max(0, exercises.length - 1),
+  );
+  const focusedExercise = exercises[safeFocusIndex] ?? null;
+  const elapsedLabel = formatElapsed(session.startedAt, nowMs);
+  const statusLabel = readOnly
+    ? session.status === "completed"
+      ? "Sessione completata"
+      : "Sessione abbandonata"
+    : "Sessione in corso";
 
   const onLogSet = (exercise: Exercise) => {
     if (session.status !== "in_progress" || loggingLockRef.current) {
@@ -240,6 +293,8 @@ export default function SessionScreen() {
     loggingLockRef.current = true;
     loggedKeysRef.current.add(key);
 
+    const nextLoggedCount = loggedForExercise.length + 1;
+
     setLocalSets((current) => [
       ...current,
       createLocalLoggedSet(
@@ -261,13 +316,27 @@ export default function SessionScreen() {
     }));
 
     const restSec = getRestSecForSet(exercise, setNumber, defaultRestSec);
-    if (
-      restSec > 0 &&
-      !isExerciseComplete(exercise, loggedForExercise.length + 1)
-    ) {
+    const exerciseDone = isExerciseComplete(exercise, nextLoggedCount);
+
+    if (restSec > 0 && !exerciseDone) {
       void timer.start(restSec, exercise.id).catch(() => {
         // Notifiche possono fallire (permessi): il set resta in buffer locale.
       });
+    }
+
+    if (exerciseDone) {
+      const nextIndex = exercises.findIndex(
+        (item, index) =>
+          index > safeFocusIndex &&
+          !isExerciseComplete(
+            item,
+            (setsByExercise.get(item.id) ?? []).length +
+              (item.id === exercise.id ? 1 : 0),
+          ),
+      );
+      if (nextIndex >= 0) {
+        setFocusIndex(nextIndex);
+      }
     }
 
     queueMicrotask(() => {
@@ -391,55 +460,89 @@ export default function SessionScreen() {
           ]}
           keyboardShouldPersistTaps="handled"
         >
-          <Heading>{workoutName}</Heading>
-          <Body>
-            {readOnly
-              ? session.status === "completed"
-                ? "Sessione completata"
-                : "Sessione abbandonata"
-              : "Sessione in corso"}
-          </Body>
-
-          <RestTimerCard
-            status={timer.status}
-            remainingSec={timer.remainingSec}
-            onSkip={timer.skip}
+          <SessionFocusHeader
+            workoutName={workoutName}
+            exerciseIndex={safeFocusIndex}
+            exerciseTotal={exercises.length}
+            elapsedLabel={elapsedLabel}
+            statusLabel={statusLabel}
           />
 
           {error ? <ErrorBanner message={error} /> : null}
 
-          {exercises.map((exercise) => (
-            <ExerciseCard
-              key={exercise.id}
-              exercise={exercise}
-              sets={setsByExercise.get(exercise.id) ?? []}
-              resting={timer.restingExerciseId === exercise.id}
-              readOnly={readOnly}
-              weight={weightByExercise[exercise.id] ?? ""}
-              reps={repsByExercise[exercise.id] ?? ""}
-              onChangeWeight={(value) =>
-                setWeightByExercise((current) => ({
-                  ...current,
-                  [exercise.id]: value,
-                }))
-              }
-              onChangeReps={(value) =>
-                setRepsByExercise((current) => ({
-                  ...current,
-                  [exercise.id]: value,
-                }))
-              }
-              onLog={() => {
-                onLogSet(exercise);
-              }}
-              onUndoLast={() => {
-                onUndoLastSet(exercise);
-              }}
-              onEditSet={(setNumber, next) => {
-                onEditSet(exercise, setNumber, next);
-              }}
-            />
-          ))}
+          {readOnly ? (
+            exercises.map((exercise) => (
+              <ExerciseCard
+                key={exercise.id}
+                exercise={exercise}
+                sets={setsByExercise.get(exercise.id) ?? []}
+                resting={false}
+                readOnly
+                weight={weightByExercise[exercise.id] ?? ""}
+                reps={repsByExercise[exercise.id] ?? ""}
+                onChangeWeight={() => undefined}
+                onChangeReps={() => undefined}
+                onLog={() => undefined}
+                onUndoLast={() => undefined}
+                onEditSet={() => undefined}
+              />
+            ))
+          ) : focusedExercise ? (
+            <>
+              <ExerciseCard
+                key={focusedExercise.id}
+                exercise={focusedExercise}
+                sets={setsByExercise.get(focusedExercise.id) ?? []}
+                resting={timer.restingExerciseId === focusedExercise.id}
+                readOnly={false}
+                focus
+                weight={weightByExercise[focusedExercise.id] ?? ""}
+                reps={repsByExercise[focusedExercise.id] ?? ""}
+                onChangeWeight={(value) =>
+                  setWeightByExercise((current) => ({
+                    ...current,
+                    [focusedExercise.id]: value,
+                  }))
+                }
+                onChangeReps={(value) =>
+                  setRepsByExercise((current) => ({
+                    ...current,
+                    [focusedExercise.id]: value,
+                  }))
+                }
+                onLog={() => {
+                  onLogSet(focusedExercise);
+                }}
+                onUndoLast={() => {
+                  onUndoLastSet(focusedExercise);
+                }}
+                onEditSet={(setNumber, next) => {
+                  onEditSet(focusedExercise, setNumber, next);
+                }}
+              />
+
+              <RestTimerCard
+                status={timer.status}
+                remainingSec={timer.remainingSec}
+                onSkip={timer.skip}
+              />
+
+              {exercises.length > 1 ? (
+                <ExercisePager
+                  index={safeFocusIndex}
+                  total={exercises.length}
+                  onPrev={() => setFocusIndex((current) => Math.max(0, current - 1))}
+                  onNext={() =>
+                    setFocusIndex((current) =>
+                      Math.min(exercises.length - 1, current + 1),
+                    )
+                  }
+                />
+              ) : null}
+            </>
+          ) : (
+            <ErrorBanner message="Nessun esercizio in questa sessione" />
+          )}
         </ScrollView>
 
         {!readOnly ? (
