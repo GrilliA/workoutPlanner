@@ -22,7 +22,7 @@ export type UseRestTimerResult = {
   cancel: () => void;
 };
 
-export function useRestTimer(sessionId: number): UseRestTimerResult {
+export function useRestTimer(): UseRestTimerResult {
   const [status, setStatus] = useState<RestTimerStatus>("idle");
   const [remainingSec, setRemainingSec] = useState(0);
   const [totalSec, setTotalSec] = useState(0);
@@ -61,7 +61,7 @@ export function useRestTimer(sessionId: number): UseRestTimerResult {
     setRemainingSec(0);
     setStatus("done");
 
-    await playRestDoneAlert(sessionId, appInForegroundRef.current);
+    await playRestDoneAlert(appInForegroundRef.current);
 
     window.setTimeout(() => {
       endsAtRef.current = null;
@@ -71,7 +71,7 @@ export function useRestTimer(sessionId: number): UseRestTimerResult {
       setTotalSec(0);
       setRestingExerciseId(null);
     }, DONE_FLASH_MS);
-  }, [sessionId]);
+  }, []);
 
   const checkExpiry = useCallback(() => {
     const endsAt = endsAtRef.current;
@@ -100,9 +100,9 @@ export function useRestTimer(sessionId: number): UseRestTimerResult {
       setRestingExerciseId(exerciseId);
       setStatus("running");
 
-      await scheduleRestAlert(new Date(endsAt), sessionId);
+      await scheduleRestAlert();
     },
-    [cancel, sessionId],
+    [cancel],
   );
 
   const skip = useCallback(() => {
