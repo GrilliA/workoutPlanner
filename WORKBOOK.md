@@ -13,6 +13,12 @@ How to use:
 
 | Date | Decision | Why |
 | --- | --- | --- |
+| 2026-07-30 | Assignment lifecycle hardening: `workouts.isActive` sincronizzato con status/date assegnazione; gate sessione atleta su assignment attiva; assign da TXT atomico in transazione; migration `0006` elimina programmi legacy self-service atleta e normalizza `is_active` | Evitare schede fantasma attive, sessioni su programmi non assegnati, stati incoerenti post-pivot coach |
+| 2026-07-30 | Import TXT: weekday per giorno = ordine sequenziale (Giorno 1 → Lun, Giorno 2 → Mar, …) se non specificati nel testo | Allineare parser AI/TXT al calendario settimanale senza chiedere weekday espliciti |
+| 2026-07-30 | Web atleta (`fe/src/pages/home`, `sessions`, `stats`, …) **non routato**; solo coach + landing/auth; builder `workouts/new` riusato dal coach | Athlete UX solo su mobile; ridurre superficie web morta in attesa di cleanup PR |
+| 2026-07-28 | Style guide landing HTML: palette `#1D1F25` / `#C7F464` / `#166534` / `#E0E0E0`, font Roboto, landing pubblica su `/`, dashboard coach su `/dashboard` | Unificare brand identity al codice style fornito |
+| 2026-07-28 | Import scheda da TXT (incolla) su template e assegnazione da zero; giorni logici numerati; prompt AI copiabile | Velocizzare creazione schede con AI esterna senza UI upload file |
+| 2026-07-27 | Web (`fe/`) = **pannello coach**; atleti su **mobile**; schede template + assegnazione con `startsAt`/`expiresAt`; atleta solo logga | Pivot da self-service a coach→clienti; template riutilizzabili o scheda da zero; date di validità sull’assegnazione |
 | 2026-07-25 | Mobile start = **picker scheda attiva + giorno**; schede `isActive` (disattiva/riattiva); create/edit con **prescription per serie** (reps + recupero) | Evitare “sempre la scheda più nuova / tutto il ciclo”; più programmi convivono; serie 10→8 e rest diversi senza lasciare il modello BE |
 | 2026-07-21 | Mobile path = **Expo React Native** in `mobile/` (TypeScript); Capacitor retired from `fe/` | Native UI/notifications without WebView; separate toolchain from Vite; didactic README in `mobile/` |
 | 2026-07-21 | Auth refresh = cookie (web) **and** JSON body when `X-Client: mobile` + SecureStore | RN has no httpOnly cookie jar; keep web unchanged |
@@ -36,6 +42,12 @@ How to use:
 
 ## What we did
 
+- 2026-07-30 — Assignment lifecycle: sync `isActive` ↔ assignment status/dates, session start gate per atleta, assign program/TXT in transazione, migration `0006` cleanup programmi legacy; doc `fe/src/pages/ATHLETE_WEB_DEPRECATED.md`.
+- 2026-07-30 — Parser TXT: weekday sequenziali Lun→Dom per ordine giorno quando assenti nel testo.
+- 2026-07-28 — Style guide landing: token CSS/mobile da HTML brand, pagina `/` pubblica (hero + Accedi/Prova Gratuita), coach home su `/dashboard`, font Roboto.
+- 2026-07-28 — Brand Traccia: asset logo in `fe/src/assets/brand` + `mobile/assets/brand`, componente `BrandLogo`, auth web e login/register mobile col logo.
+- 2026-07-28 — Import TXT scheda (incolla): parser `parseSchedaTxt`, UI su template create/edit, assegnazione da zero e edit programma cliente; bottone “Copia prompt AI”.
+- 2026-07-27 — Coach admin v1: roles `coach`/`athlete`, `coach_athletes`, workout `kind` template/program, `program_assignments` (date + status), API `/api/coach/*` + `/api/assignments/active`, web pivot to coach dashboard/clienti/template/assegnazioni, mobile atleta read-only schede + solo logging.
 - 2026-07-25 — Mobile UX: `workouts.is_active` + PATCH; Home picker scheda/giorno; disattiva/riattiva in lista; create/edit con serie variabili + recupero; sessione prefill reps dalla prossima prescription.
 - 2026-07-26 — Mobile sessione: one-tap `LOG kg × reps`, edit/undo set locale, TERMINA dominante + abbandona dietro conferma; copy stato in italiano.
 - 2026-07-21 — Expo RN `mobile/`: TypeScript + Expo Router, auth SecureStore, API Zod port, screens (login/home/workouts/stats/settings/session + rest timer). Capacitor removed from `fe/`. Docs: `mobile/README.md`.
@@ -130,9 +142,10 @@ Merge **in order** (stacked branches). Each PR is one concern.
 
 ## Other next steps
 
-- [ ] Smoke test end-to-end manuale (db + be + fe + mobile Expo).
+- [ ] Smoke test end-to-end manuale (db + be + fe coach + mobile atleta Expo).
 - [ ] Test FE (Vitest su mapper/utils).
 - [ ] Route `/forgot-password` (link già presente in login).
+- [ ] (Later) Cleanup PR: rimuovere pagine web atleta orfane (`home/`, `sessions/`, `stats/`, …); tenere solo `workouts/new` condiviso col coach.
 - [ ] (Later) Optional wger IT names or user custom exercises on top of B5.
-- [ ] (Later) Mobile: create/edit programmi; polish UI vs Figma.
+- [ ] (Later) Mobile: polish UI atleta vs Figma (execute/log only — niente create/edit programmi).
 - [ ] (Later) Extract `packages/shared` if Zod/API copy between `fe` and `mobile` hurts.

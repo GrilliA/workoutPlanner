@@ -3,11 +3,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { ApiError } from "../../src/api/client";
 import {
+  getActiveAssignment,
   getWorkouts,
   getSessions,
   getWorkoutDays,
   getWorkoutScheduleToday,
   startSession,
+  type ActiveAssignment,
   type Workout,
   type WorkoutDay,
   type WorkoutSessionSummary,
@@ -38,6 +40,7 @@ type StartSelection = {
 export default function HomeScreen() {
   const { user } = useAuth();
   const [activeWorkouts, setActiveWorkouts] = useState<Workout[]>([]);
+  const [assignment, setAssignment] = useState<ActiveAssignment | null>(null);
   const [daysByWorkout, setDaysByWorkout] = useState<Record<number, WorkoutDay[]>>(
     {},
   );
@@ -68,9 +71,10 @@ export default function HomeScreen() {
       setError(null);
 
       try {
-        const [workouts, sessions] = await Promise.all([
+        const [workouts, sessions, activeAssignment] = await Promise.all([
           getWorkouts(),
           getSessions(),
+          getActiveAssignment(),
         ]);
 
         if (cancelled) {
@@ -78,10 +82,13 @@ export default function HomeScreen() {
         }
 
         setRecent(sessions.slice(0, 5));
+        setAssignment(activeAssignment);
 
-        const active = workouts
-          .filter((workout) => workout.isActive)
-          .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        const active = (
+          activeAssignment
+            ? workouts.filter((workout) => workout.id === activeAssignment.workoutId)
+            : []
+        ).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
         setActiveWorkouts(active);
 
         if (active.length === 0) {
@@ -235,7 +242,7 @@ export default function HomeScreen() {
             <>
               <Heading>Nessuna scheda attiva</Heading>
               <Body>
-                Crea una scheda o riattivala dalla tab Workout.
+                Il tuo coach deve assegnarti una scheda dal pannello web.
               </Body>
               <PrimaryButton
                 label="VAI ALLE SCHEDE"
@@ -245,6 +252,11 @@ export default function HomeScreen() {
           ) : (
             <>
               <Heading>Cosa alleni?</Heading>
+              {assignment ? (
+                <Meta style={styles.scheduleHint}>
+                  Valida fino al {assignment.expiresAt}
+                </Meta>
+              ) : null}
               {scheduledLabel ? (
                 <Meta style={styles.scheduleHint}>
                   In programma: {scheduledLabel}

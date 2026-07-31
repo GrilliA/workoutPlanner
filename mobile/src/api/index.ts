@@ -31,6 +31,8 @@ export {
   deleteLoggedSet,
 } from "./sessions";
 export { getStats } from "./stats";
+export { getActiveAssignment } from "./assignments";
+export type { ActiveAssignment } from "./schemas/assignment";
 export {
   getWorkoutDays,
   getWorkoutDay,

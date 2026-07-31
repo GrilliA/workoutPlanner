@@ -1,19 +1,19 @@
-/** Design tokens — allineati al web (`fe/src/index.css` + AppShell). */
+/** Design tokens — allineati al landing style guide Traccia. */
 
 export const colors = {
-  bg: "#16171d",
-  surface: "#1f2028",
-  surfaceElevated: "#262833",
-  border: "#2e303a",
-  text: "#8b8bb8",
-  textHeading: "#e8e8ff",
-  accent: "#c4ff4d",
-  accentBg: "rgba(196, 255, 77, 0.15)",
-  accentBorder: "rgba(196, 255, 77, 0.5)",
-  onAccent: "#101014",
+  bg: "#1d1f25",
+  surface: "#252830",
+  surfaceElevated: "#2c3038",
+  border: "rgba(224, 224, 224, 0.12)",
+  text: "#aaaaaa",
+  textHeading: "#e0e0e0",
+  accent: "#c7f464",
+  accentBg: "rgba(199, 244, 100, 0.12)",
+  accentBorder: "rgba(199, 244, 100, 0.4)",
+  onAccent: "#111111",
   danger: "#f87171",
   dangerBg: "rgba(248, 113, 113, 0.12)",
-  muted: "#6b6e7c",
+  muted: "#666666",
 } as const;
 
 export const spacing = {
@@ -25,7 +25,7 @@ export const spacing = {
 } as const;
 
 export const radii = {
-  sm: 6,
+  sm: 4,
   md: 10,
   lg: 14,
   pill: 999,

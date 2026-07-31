@@ -29,8 +29,8 @@
   --sidebar-width: 13.75rem;
   /* Single-row bottom nav (~3.75rem chrome) + home-indicator inset + breathing room */
   --bottom-nav-offset: calc(5.5rem + var(--safe-bottom));
-  --on-accent: #101014;
-  --app-bg: #16171d;
+  --on-accent: #111111;
+  --app-bg: #1d1f25;
 }
 
 @media (min-width: 64rem) {

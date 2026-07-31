@@ -12,6 +12,7 @@ import {
 import { findWorkoutDayForUser, resolveWorkoutDayForDate } from "../services/workoutDayAccess";
 import { validateStartSessionInput } from "../services/workoutDayValidation";
 import { findWorkoutForUser } from "../services/workoutAccess";
+import { athleteHasActiveAssignmentForWorkout } from "../services/programAssignment";
 import {
   loadSessionHistoryPage,
   parseSessionHistoryLimit,
@@ -107,6 +108,18 @@ workoutSessionsRouter.post("/", async (req, res) => {
   if (!workout.isActive) {
     res.status(409).json({ error: "Workout is inactive" });
     return;
+  }
+
+  if (user.role === "athlete") {
+    const allowed = await athleteHasActiveAssignmentForWorkout(
+      user.id,
+      workoutId,
+    );
+
+    if (!allowed) {
+      res.status(403).json({ error: "No active program assignment for this workout" });
+      return;
+    }
   }
 
   const activeSession = await findActiveSessionForUser(user.id);

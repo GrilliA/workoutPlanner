@@ -13,7 +13,7 @@ export function PageHeader({
   onSave,
   isSaving = false,
   mode = "create",
-  backHref = "/workouts",
+  backHref = "/dashboard",
 }: PageHeaderProps) {
   return (
     <header className="page-header">

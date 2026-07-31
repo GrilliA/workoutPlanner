@@ -4,6 +4,7 @@ export const authUserSchema = z.object({
   id: z.number(),
   email: z.string(),
   name: z.string().nullable(),
+  role: z.enum(["coach", "athlete"]).default("athlete"),
 });
 
 export const authSessionSchema = z.object({

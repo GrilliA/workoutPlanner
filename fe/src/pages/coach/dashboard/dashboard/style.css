@@ -1,0 +1,36 @@
+.coach-dashboard__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.coach-dashboard__main {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+@media (min-width: 64rem) {
+  .coach-dashboard__main {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+.coach-dashboard__empty {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.85rem;
+  padding: 1.5rem;
+
+  & h2 {
+    margin: 0 0 0.5rem;
+    color: var(--text-h);
+    font-size: 1.15rem;
+  }
+
+  & .coach-dashboard__actions {
+    margin-top: 1rem;
+  }
+}

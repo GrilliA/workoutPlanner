@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link, useLocation } from "wouter";
 import { ApiError } from "@api";
 import { useAuth } from "@auth";
+import { BrandLogo } from "@components/brandlogo";
 import { Input } from "@components/input";
 import { Button } from "@components/button";
 import "@auth/authpage.css";
@@ -16,7 +17,7 @@ const Login = () => {
 
   useEffect(() => {
     if (status === "authenticated") {
-      setLocation("/");
+      setLocation("/dashboard");
     }
   }, [status, setLocation]);
 
@@ -27,7 +28,7 @@ const Login = () => {
 
     try {
       await login({ email, password });
-      setLocation("/");
+      setLocation("/dashboard");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Impossibile accedere");
     } finally {
@@ -41,7 +42,17 @@ const Login = () => {
 
   return (
     <main className="auth-page">
-      <div className="logo">LOGO</div>
+      <div className="auth-brand">
+        <BrandLogo size="lg" layout="stack" />
+        <p className="auth-eyebrow">Area coach</p>
+        <h1 className="auth-tagline">
+          Visualizza il percorso. Guida i tuoi atleti.
+        </h1>
+        <p className="auth-support">
+          Accedi al pannello per clienti, schede e scadenze.
+        </p>
+      </div>
+
       <form className="form" onSubmit={handleSubmit}>
         <Input.Root>
           <Input.Label>Email</Input.Label>
@@ -84,7 +95,7 @@ const Login = () => {
         </Button.Root>
 
         <p className="footer-link">
-          Non hai un account? <Link href="/register">Registrati</Link>
+          Non hai un account coach? <Link href="/register">Registrati</Link>
         </p>
       </form>
     </main>

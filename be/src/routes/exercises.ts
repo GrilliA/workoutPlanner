@@ -75,6 +75,17 @@ export const exerciseByIdRouter = Router();
 
 exerciseByIdRouter.use(requireAuth);
 
+exerciseByIdRouter.use((req, res, next) => {
+  const user = getAuthUser(req);
+
+  if (user.role === "athlete" && req.method !== "GET" && req.method !== "HEAD") {
+    res.status(403).json({ error: "Athletes cannot modify programs" });
+    return;
+  }
+
+  next();
+});
+
 exerciseByIdRouter.get("/:id", async (req, res) => {
   const user = getAuthUser(req);
   const id = Number(req.params.id);

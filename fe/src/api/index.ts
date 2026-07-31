@@ -20,6 +20,7 @@ export {
   loginRequestSchema,
   registerRequestSchema,
   type Workout,
+  type WorkoutDetail,
   type WorkoutSettings,
   type CreateWorkoutInput,
   type WorkoutProgramInput,
@@ -98,6 +99,34 @@ export {
   deleteLoggedSet,
 } from "./sessions";
 export { getStats } from "./stats";
+export {
+  getCoachDashboard,
+  getCoachClients,
+  createCoachClient,
+  getCoachClient,
+  getCoachTemplates,
+  getCoachTemplate,
+  saveCoachTemplateProgram,
+  updateCoachTemplateProgram,
+  getCoachAssignments,
+  createCoachAssignment,
+  revokeCoachAssignment,
+  updateCoachAssignment,
+  resetCoachClientPassword,
+  unlinkCoachClient,
+  getCoachClientProgram,
+  updateCoachClientProgram,
+} from "./coach";
+export type {
+  CoachClient,
+  CoachAssignment,
+  CoachDashboard,
+  CoachTemplate,
+  CreateClientInput,
+  CreateAssignmentInput,
+  ResetPasswordInput,
+  UpdateAssignmentDatesInput,
+} from "./schemas/coach";
 export {
   getWorkoutDays,
   getWorkoutDay,

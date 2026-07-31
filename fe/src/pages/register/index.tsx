@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link, useLocation } from "wouter";
 import { ApiError } from "@api";
 import { useAuth } from "@auth";
+import { BrandLogo } from "@components/brandlogo";
 import { Input } from "@components/input";
 import { Button } from "@components/button";
 import "@auth/authpage.css";
@@ -17,7 +18,7 @@ const Register = () => {
 
   useEffect(() => {
     if (status === "authenticated") {
-      setLocation("/");
+      setLocation("/dashboard");
     }
   }, [status, setLocation]);
 
@@ -32,7 +33,7 @@ const Register = () => {
         password,
         name: name.trim() || undefined,
       });
-      setLocation("/");
+      setLocation("/dashboard");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Impossibile registrarsi");
     } finally {
@@ -46,7 +47,15 @@ const Register = () => {
 
   return (
     <main className="auth-page">
-      <div className="logo">LOGO</div>
+      <div className="auth-brand">
+        <BrandLogo size="lg" layout="stack" />
+        <p className="auth-eyebrow">Area coach</p>
+        <h1 className="auth-tagline">Crea il tuo account coach</h1>
+        <p className="auth-support">
+          Gestisci clienti, template e scadenze da un unico pannello.
+        </p>
+      </div>
+
       <form className="form" onSubmit={handleSubmit}>
         <Input.Root>
           <Input.Label>Nome</Input.Label>
@@ -96,7 +105,7 @@ const Register = () => {
           loading={submitting}
           disabled={submitting}
         >
-          <Button.Label>Registrati</Button.Label>
+          <Button.Label>Crea account coach</Button.Label>
         </Button.Root>
 
         <p className="footer-link">

@@ -1,22 +1,28 @@
 :root {
-  --text: #8b8bb8;
-  --text-h: #e8e8ff;
-  --bg: #16171d;
-  --border: #2e303a;
-  --code-bg: #1f2028;
-  --accent: rgb(196, 255, 77);
-  --accent-bg: rgba(196, 255, 77, 0.15);
-  --accent-border: rgba(196, 255, 77, 0.5);
+  /* Brand tokens from landing style guide */
+  --accent: #c7f464;
+  --accent-deep: #166534;
+  --text-h: #e0e0e0;
+  --text: #aaaaaa;
+  --bg: #1d1f25;
+  --border: rgba(224, 224, 224, 0.12);
+  --code-bg: #252830;
+  --surface: #252830;
+  --surface-elevated: #2c3038;
+  --accent-bg: rgba(199, 244, 100, 0.12);
+  --accent-border: rgba(199, 244, 100, 0.4);
+  --on-accent: #111111;
   --error: #f87171;
   --social-bg: rgba(47, 48, 58, 0.5);
   --shadow:
-    rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+    rgba(0, 0, 0, 0.45) 0 12px 24px -6px, rgba(0, 0, 0, 0.3) 0 4px 8px -2px;
 
-  --sans: "Barlow Condensed", sans-serif;
-  --heading: "Barlow Condensed", sans-serif;
+  --sans: "Roboto", system-ui, sans-serif;
+  --heading: "Roboto", system-ui, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
 
-  font: 18px/145% var(--sans);
+  font: 16px/1.6 var(--sans);
+  font-weight: 400;
   color-scheme: dark;
   color: var(--text);
   background-color: var(--bg);
@@ -26,6 +32,6 @@
   -moz-osx-font-smoothing: grayscale;
 
   @media (max-width: 63.99rem) {
-    font-size: 16px;
+    font-size: 15px;
   }
 }

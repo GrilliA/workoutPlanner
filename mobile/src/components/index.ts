@@ -17,3 +17,4 @@ export { ListRow } from "./listrow";
 export { StatCard } from "./statcard";
 export { BackButton, BackHeader } from "./backbutton";
 export { Icon, type IconName } from "./icon";
+export { BrandLogo } from "./brandlogo";

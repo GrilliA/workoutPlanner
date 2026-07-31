@@ -1,0 +1,79 @@
+.brand-logo {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  line-height: 1;
+}
+
+.brand-logo__lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.brand-logo--stack {
+  align-items: center;
+}
+
+.brand-logo--stack .brand-logo__lockup {
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.brand-logo__mark {
+  flex-shrink: 0;
+  display: block;
+}
+
+.brand-logo__word {
+  font-family: var(--heading, Roboto, system-ui, sans-serif);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text-h, #e0e0e0);
+  white-space: nowrap;
+}
+
+.brand-logo__a {
+  color: var(--accent, #c7f464);
+}
+
+.brand-logo__badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent, #c7f464);
+}
+
+.brand-logo--sm .brand-logo__mark {
+  width: 1.55rem;
+  height: 1.55rem;
+}
+
+.brand-logo--sm .brand-logo__word {
+  font-size: 1.15rem;
+}
+
+.brand-logo--md .brand-logo__mark {
+  width: 3rem;
+  height: 3rem;
+}
+
+.brand-logo--md .brand-logo__word {
+  font-size: 1.85rem;
+}
+
+.brand-logo--lg .brand-logo__mark {
+  width: 4.5rem;
+  height: 4.5rem;
+}
+
+.brand-logo--lg .brand-logo__word {
+  font-size: 2.6rem;
+}
+
+.brand-logo--stack.brand-logo--lg .brand-logo__lockup {
+  gap: 1rem;
+}

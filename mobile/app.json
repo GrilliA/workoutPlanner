@@ -2,6 +2,7 @@
   "expo": {
     "name": "TRACCIA",
     "slug": "traccia-mobile",
+    "owner": "fortezza",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -46,6 +47,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "f063827c-b59f-4cab-b82f-ffe2b9b78646"
+      }
     }
   }
 }
