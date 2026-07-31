@@ -6,14 +6,23 @@ import { WeekdayPicker } from "../weekdaypicker";
 import { ExerciseList } from "../exerciselist";
 import { AddExerciseForm } from "../addexerciseform";
 import { WorkoutSettingsPanel } from "../workoutsettings";
-import { useWorkoutForm } from "../useCreateWorkout";
+import { useWorkoutForm, type WorkoutFormAdapters } from "../useCreateWorkout";
+import { SchedaTxtPaste } from "@pages/coach/schedatxt";
+import type { Weekday } from "../types";
 import "./style.css";
 
 export type CreateWorkoutProps = {
   workoutId?: number;
+  adapters?: WorkoutFormAdapters;
+  /** Show TXT paste import (new template / blank program flows). */
+  enableTxtImport?: boolean;
 };
 
-export function CreateWorkout({ workoutId }: CreateWorkoutProps) {
+export function CreateWorkout({
+  workoutId,
+  adapters,
+  enableTxtImport = false,
+}: CreateWorkoutProps) {
   const {
     name,
     setName,
@@ -32,10 +41,11 @@ export function CreateWorkout({ workoutId }: CreateWorkoutProps) {
     nameError,
     formError,
     save,
+    applyDraft,
     isSaving,
     isLoading,
     isEditMode,
-  } = useWorkoutForm(workoutId);
+  } = useWorkoutForm(workoutId, adapters);
 
   const takenWeekdays = days
     .filter((day) => day.clientId !== activeDayId)
@@ -55,7 +65,23 @@ export function CreateWorkout({ workoutId }: CreateWorkoutProps) {
         mode={isEditMode ? "edit" : "create"}
         onSave={() => void save()}
         isSaving={isSaving}
+        backHref={adapters?.backHref ?? adapters?.successPath ?? "/dashboard"}
       />
+
+      {enableTxtImport ? (
+        <SchedaTxtPaste
+          onApply={(parsed) =>
+            applyDraft({
+              name: parsed.name,
+              settings: parsed.settings,
+              days: parsed.days.map((day) => ({
+                ...day,
+                weekdays: day.weekdays as Weekday[],
+              })),
+            })
+          }
+        />
+      ) : null}
 
       <WorkoutNameField
         value={name}

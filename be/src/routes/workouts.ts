@@ -40,6 +40,27 @@ const workoutGroupBy = [
 
 workoutsRouter.use(requireAuth);
 
+workoutsRouter.use((req, res, next) => {
+  const user = getAuthUser(req);
+
+  if (user.role !== "athlete") {
+    next();
+    return;
+  }
+
+  if (req.method === "GET" || req.method === "HEAD") {
+    next();
+    return;
+  }
+
+  if (req.path.includes("/sessions")) {
+    next();
+    return;
+  }
+
+  res.status(403).json({ error: "Athletes cannot modify programs" });
+});
+
 workoutsRouter.get("/", async (req, res) => {
   const user = getAuthUser(req);
 

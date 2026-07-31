@@ -36,6 +36,20 @@
       "when": 1784978400000,
       "tag": "0004_workout_is_active",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1785151200000,
+      "tag": "0005_coach_admin",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1785400000000,
+      "tag": "0006_assignment_lifecycle_cleanup",
+      "breakpoints": true
     }
   ]
 }

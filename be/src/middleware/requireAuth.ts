@@ -26,6 +26,7 @@ export async function requireAuth(
         id: users.id,
         email: users.email,
         name: users.name,
+        role: users.role,
       })
       .from(users)
       .where(eq(users.id, payload.sub));
@@ -35,7 +36,12 @@ export async function requireAuth(
       return;
     }
 
-    (req as AuthenticatedRequest).user = user;
+    (req as AuthenticatedRequest).user = {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role === "coach" ? "coach" : "athlete",
+    };
     next();
   } catch {
     res.status(401).json({ error: "Unauthorized" });

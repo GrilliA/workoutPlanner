@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { ApiError } from "@api";
 import type { Weekday } from "@api/schemas/workoutday";
@@ -49,8 +49,40 @@ const updateDay = (
 ): DraftWorkoutDay[] =>
   days.map((day) => (day.clientId === dayClientId ? updater(day) : day));
 
-export function useWorkoutForm(workoutId?: number) {
+export type WorkoutFormAdapters = {
+  loadDraft?: (workoutId: number) => Promise<{
+    name: string;
+    settings: WorkoutSettings;
+    days: DraftWorkoutDay[];
+  }>;
+  saveNew?: (
+    name: string,
+    settings: WorkoutSettings,
+    days: DraftWorkoutDay[],
+  ) => Promise<unknown>;
+  saveUpdate?: (
+    workoutId: number,
+    name: string,
+    settings: WorkoutSettings,
+    days: DraftWorkoutDay[],
+  ) => Promise<unknown>;
+  successPath?: string;
+  backHref?: string;
+};
+
+export type WorkoutDraftSeed = {
+  name: string;
+  settings: WorkoutSettings;
+  days: DraftWorkoutDay[];
+};
+
+export function useWorkoutForm(
+  workoutId?: number,
+  adapters: WorkoutFormAdapters = {},
+) {
   const [, setLocation] = useLocation();
+  const adaptersRef = useRef(adapters);
+  adaptersRef.current = adapters;
   const initialDay = createDefaultWorkoutDay();
   const [name, setName] = useState("");
   const [days, setDays] = useState<DraftWorkoutDay[]>([initialDay]);
@@ -62,19 +94,39 @@ export function useWorkoutForm(workoutId?: number) {
   const [nameError, setNameError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
+  const applyDraft = (draft: WorkoutDraftSeed) => {
+    const nextDays =
+      draft.days.length > 0
+        ? draft.days.map((day, index) => ({
+            ...day,
+            sortOrder: index,
+            weekdays: day.weekdays as Weekday[],
+          }))
+        : [createDefaultWorkoutDay()];
+
+    setName(draft.name);
+    setSettings(draft.settings);
+    setDays(nextDays);
+    setActiveDayId(nextDays[0]?.clientId ?? "");
+    setNameError(null);
+    setFormError(null);
+    setStatus("idle");
+  };
+
   useEffect(() => {
     if (!workoutId) {
       return;
     }
 
     let cancelled = false;
+    const loadDraft = adaptersRef.current.loadDraft ?? loadWorkoutDraft;
 
     const load = async () => {
       setStatus("loading");
       setFormError(null);
 
       try {
-        const draft = await loadWorkoutDraft(workoutId);
+        const draft = await loadDraft(workoutId);
 
         if (cancelled) {
           return;
@@ -258,17 +310,14 @@ export function useWorkoutForm(workoutId?: number) {
 
     try {
       if (workoutId) {
-        await updateWorkoutWithDays(
-          workoutId,
-          trimmedName,
-          settings,
-          normalizedDays,
-        );
+        const update = adaptersRef.current.saveUpdate ?? updateWorkoutWithDays;
+        await update(workoutId, trimmedName, settings, normalizedDays);
       } else {
-        await saveWorkoutWithDays(trimmedName, settings, normalizedDays);
+        const create = adaptersRef.current.saveNew ?? saveWorkoutWithDays;
+        await create(trimmedName, settings, normalizedDays);
       }
 
-      setLocation("/workouts");
+      setLocation(adaptersRef.current.successPath ?? "/dashboard");
     } catch (err) {
       setStatus("error");
       setFormError(
@@ -296,6 +345,7 @@ export function useWorkoutForm(workoutId?: number) {
     nameError,
     formError,
     save,
+    applyDraft,
     isSaving: status === "saving",
     isLoading: status === "loading",
     isEditMode: workoutId !== undefined,

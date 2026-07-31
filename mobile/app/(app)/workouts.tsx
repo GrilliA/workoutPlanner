@@ -1,8 +1,12 @@
-import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { ScrollView, StyleSheet } from "react-native";
 import { ApiError } from "../../src/api/client";
-import { getWorkouts, updateWorkout, type Workout } from "../../src/api";
+import {
+  getActiveAssignment,
+  getWorkouts,
+  type ActiveAssignment,
+  type Workout,
+} from "../../src/api";
 import {
   Body,
   Card,
@@ -10,17 +14,15 @@ import {
   Heading,
   LoadingBlock,
   Meta,
-  PrimaryButton,
   Screen,
-  SecondaryButton,
 } from "../../src/components";
-import { colors, spacing } from "../../src/theme";
+import { spacing } from "../../src/theme";
 
 export default function WorkoutsScreen() {
   const [workouts, setWorkouts] = useState<Workout[]>([]);
+  const [assignment, setAssignment] = useState<ActiveAssignment | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [busyId, setBusyId] = useState<number | null>(null);
   const [fetchId, setFetchId] = useState(0);
 
   useEffect(() => {
@@ -30,11 +32,15 @@ export default function WorkoutsScreen() {
       setError(null);
 
       try {
-        const data = await getWorkouts();
+        const [data, active] = await Promise.all([
+          getWorkouts(),
+          getActiveAssignment(),
+        ]);
         if (!cancelled) {
           setWorkouts(
             [...data].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
           );
+          setAssignment(active);
         }
       } catch (err) {
         if (!cancelled) {
@@ -54,46 +60,18 @@ export default function WorkoutsScreen() {
     };
   }, [fetchId]);
 
-  const toggleActive = async (workout: Workout) => {
-    if (busyId !== null) {
-      return;
-    }
-
-    setBusyId(workout.id);
-    setError(null);
-
-    try {
-      const updated = await updateWorkout(workout.id, {
-        isActive: !workout.isActive,
-      });
-      setWorkouts((current) =>
-        current.map((item) => (item.id === workout.id ? updated : item)),
-      );
-    } catch (err) {
-      setError(
-        err instanceof ApiError
-          ? err.message
-          : "Impossibile aggiornare la scheda",
-      );
-    } finally {
-      setBusyId(null);
-    }
-  };
-
   if (loading) {
     return <LoadingBlock />;
   }
 
-  const active = workouts.filter((item) => item.isActive);
-  const inactive = workouts.filter((item) => !item.isActive);
-
   return (
     <Screen padded={false}>
       <ScrollView contentContainerStyle={styles.list}>
-        <PrimaryButton
-          label="CREA SCHEDA"
-          onPress={() => router.push("/workout/new")}
-        />
+        <Heading>Le tue schede</Heading>
+        <Body>
+          Le schede sono gestite dal coach. Qui puoi solo consultarle e
+          allenarti dalla Home.
+        </Body>
 
         {error ? (
           <ErrorBanner
@@ -105,82 +83,32 @@ export default function WorkoutsScreen() {
           />
         ) : null}
 
-        {workouts.length === 0 ? (
-          <Body>Nessuna scheda ancora. Creane una per iniziare.</Body>
+        {assignment ? (
+          <Card style={styles.card}>
+            <Meta>SCHEDA ATTIVA</Meta>
+            <Heading>{assignment.workoutName}</Heading>
+            <Meta>
+              Valida dal {assignment.startsAt} al {assignment.expiresAt}
+            </Meta>
+          </Card>
         ) : (
-          <>
-            <Meta style={styles.section}>ATTIVE ({active.length})</Meta>
-            {active.length === 0 ? (
-              <Body>Nessuna scheda attiva. Riattivane una sotto.</Body>
-            ) : (
-              active.map((item) => (
-                <WorkoutCard
-                  key={item.id}
-                  workout={item}
-                  busy={busyId === item.id}
-                  onToggle={() => {
-                    void toggleActive(item);
-                  }}
-                />
-              ))
-            )}
-
-            {inactive.length > 0 ? (
-              <>
-                <Meta style={styles.section}>DISATTIVATE ({inactive.length})</Meta>
-                {inactive.map((item) => (
-                  <WorkoutCard
-                    key={item.id}
-                    workout={item}
-                    busy={busyId === item.id}
-                    onToggle={() => {
-                      void toggleActive(item);
-                    }}
-                  />
-                ))}
-              </>
-            ) : null}
-          </>
+          <Body>Nessuna scheda attiva assegnata dal coach.</Body>
         )}
+
+        {assignment
+          ? workouts
+              .filter((item) => item.id === assignment.workoutId)
+              .map((item) => (
+                <Card key={item.id} style={styles.card}>
+                  <Heading>{item.name}</Heading>
+                  <Meta>
+                    {item.exerciseCount} esercizi · {item.frequency} · in vigore
+                  </Meta>
+                </Card>
+              ))
+          : null}
       </ScrollView>
     </Screen>
-  );
-}
-
-type WorkoutCardProps = {
-  workout: Workout;
-  busy: boolean;
-  onToggle: () => void;
-};
-
-function WorkoutCard({ workout, busy, onToggle }: WorkoutCardProps) {
-  return (
-    <Card style={styles.card}>
-      <Pressable
-        onPress={() => router.push(`/workout/${workout.id}`)}
-        accessibilityRole="button"
-        accessibilityLabel={`Modifica ${workout.name}`}
-      >
-        <Heading>{workout.name}</Heading>
-        <Meta>
-          {workout.exerciseCount} esercizi · {workout.frequency}
-          {workout.isActive ? "" : " · disattivata"}
-        </Meta>
-      </Pressable>
-      <View style={styles.actions}>
-        <SecondaryButton
-          label={
-            busy
-              ? "…"
-              : workout.isActive
-                ? "Disattiva"
-                : "Riattiva"
-          }
-          onPress={onToggle}
-          disabled={busy}
-        />
-      </View>
-    </Card>
   );
 }
 
@@ -190,18 +118,8 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl,
     gap: spacing.sm,
   },
-  section: {
-    marginTop: spacing.md,
-    fontWeight: "700",
-    letterSpacing: 0.6,
-  },
   card: {
     marginTop: spacing.xs,
-    gap: spacing.sm,
-  },
-  actions: {
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    paddingTop: spacing.sm,
+    gap: spacing.xs,
   },
 });

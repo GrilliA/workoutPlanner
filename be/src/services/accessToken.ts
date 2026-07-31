@@ -12,10 +12,12 @@ export const toAuthUser = (user: {
   id: number;
   email: string;
   name: string | null;
+  role: AuthUser["role"];
 }): AuthUser => ({
   id: user.id,
   email: user.email,
   name: user.name,
+  role: user.role === "coach" ? "coach" : "athlete",
 });
 
 export const signAccessToken = (user: AuthUser): string =>

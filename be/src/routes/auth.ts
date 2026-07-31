@@ -57,12 +57,13 @@ authRouter.post("/register", authRateLimit, async (req, res) => {
 
   const [created] = await db
     .insert(users)
-    .values({ email, passwordHash, name })
+    .values({ email, passwordHash, name, role: "coach" })
     .onConflictDoNothing({ target: users.email })
     .returning({
       id: users.id,
       email: users.email,
       name: users.name,
+      role: users.role,
     });
 
   if (!created) {
@@ -93,6 +94,7 @@ authRouter.post("/login", authRateLimit, async (req, res) => {
       id: users.id,
       email: users.email,
       name: users.name,
+      role: users.role,
       passwordHash: users.passwordHash,
     })
     .from(users)
@@ -139,6 +141,7 @@ authRouter.post("/refresh", async (req, res) => {
       id: users.id,
       email: users.email,
       name: users.name,
+      role: users.role,
     })
     .from(users)
     .where(eq(users.id, session.userId));
@@ -205,6 +208,7 @@ authRouter.patch("/me", requireAuth, async (req, res) => {
       id: users.id,
       email: users.email,
       name: users.name,
+      role: users.role,
     });
 
   res.json({ user: toAuthUser(updated) });

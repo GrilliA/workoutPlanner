@@ -7,6 +7,7 @@ import {
   workoutScheduleOverrides,
   workouts,
 } from "../db/schema";
+import { enrichExercises } from "./exerciseAccess";
 import { getRomeWeekday, toRomeDateKey, type Weekday } from "./workoutSchedule";
 
 export type WorkoutDayRow = typeof workoutDays.$inferSelect;
@@ -138,6 +139,25 @@ export async function listEnrichedWorkoutDays(workoutId: number) {
     weekdays: findWeekdaysForDay(weekdaysByDay, day.id),
     exerciseCount: findExerciseCountForDay(exerciseCountsByDay, day.id),
   }));
+}
+
+export async function listProgramDaysWithExercises(workoutId: number) {
+  const days = await listEnrichedWorkoutDays(workoutId);
+
+  return Promise.all(
+    days.map(async (day) => {
+      const rows = await db
+        .select()
+        .from(exercises)
+        .where(eq(exercises.workoutDayId, day.id));
+      const enriched = await enrichExercises(rows);
+
+      return {
+        ...day,
+        exercises: enriched,
+      };
+    }),
+  );
 }
 
 export type ResolvedWorkoutDay = {

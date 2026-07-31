@@ -12,11 +12,11 @@ import { API_BASE } from "../../src/api/config";
 import { useAuth } from "../../src/auth";
 import {
   Body,
+  BrandLogo,
   ErrorBanner,
   Field,
   PrimaryButton,
   Screen,
-  Title,
 } from "../../src/components";
 import { colors, spacing } from "../../src/theme";
 
@@ -53,8 +53,11 @@ export default function LoginScreen() {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={styles.flex}
       >
-        <Title>TRACCIA</Title>
-        <Body>Accedi per continuare</Body>
+        <View style={styles.brand}>
+          <BrandLogo size="lg" />
+          <Text style={styles.eyebrow}>AREA ATLETA</Text>
+          <Body>Accedi per allenarti e registrare le serie</Body>
+        </View>
         <View style={styles.form}>
           {error ? <ErrorBanner message={error} /> : null}
           <Field
@@ -79,7 +82,7 @@ export default function LoginScreen() {
             disabled={busy || !email || !password}
           />
           <Link href="/(auth)/register" asChild>
-            <Text style={styles.link}>Crea un account</Text>
+            <Text style={styles.link}>Come ottengo un account?</Text>
           </Link>
         </View>
       </KeyboardAvoidingView>
@@ -89,7 +92,18 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1, justifyContent: "center" },
-  form: { marginTop: spacing.lg },
+  brand: {
+    alignItems: "center",
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  eyebrow: {
+    color: colors.accent,
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+  },
+  form: { marginTop: spacing.md },
   link: {
     color: colors.accent,
     textAlign: "center",

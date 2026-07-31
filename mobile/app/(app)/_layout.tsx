@@ -1,6 +1,6 @@
 import { Redirect, Tabs } from "expo-router";
 import { Icon, type IconName } from "../../src/components";
-import { useAuth } from "../../src/auth";
+import { CoachBlockScreen, useAuth } from "../../src/auth";
 import { colors } from "../../src/theme";
 
 function TabBarIcon({ name, focused }: { name: IconName; focused: boolean }) {
@@ -10,10 +10,18 @@ function TabBarIcon({ name, focused }: { name: IconName; focused: boolean }) {
 }
 
 export default function AppLayout() {
-  const { status } = useAuth();
+  const { status, user } = useAuth();
 
   if (status === "anonymous" || status === "error") {
     return <Redirect href="/(auth)/login" />;
+  }
+
+  if (status === "loading") {
+    return null;
+  }
+
+  if (user?.role === "coach") {
+    return <CoachBlockScreen />;
   }
 
   return (

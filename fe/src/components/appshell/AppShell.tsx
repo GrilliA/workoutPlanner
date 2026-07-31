@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@auth";
+import { BrandLogo } from "@components/brandlogo";
 import "./style.css";
 
 type AppShellProps = {
@@ -14,18 +15,18 @@ type SidebarLink = {
 };
 
 const sidebarLinks: SidebarLink[] = [
-  { label: "Home", href: "/" },
-  { label: "Workout", href: "/workouts" },
-  { label: "Crea scheda", href: "/workouts/new" },
-  { label: "Storico sessioni", href: "/session-history" },
+  { label: "Dashboard", href: "/dashboard" },
+  { label: "Clienti", href: "/clients" },
+  { label: "Template", href: "/templates" },
+  { label: "Schede assegnate", href: "/assignments" },
   { label: "Impostazioni", href: "/settings" },
 ];
 
 const bottomNavItems = [
-  { label: "Home", href: "/", icon: "home" },
-  { label: "Workout", href: "/workouts", icon: "workout" },
-  { label: "Progressi", href: "/stats", icon: "stats" },
-  { label: "Storico", href: "/session-history", icon: "history" },
+  { label: "Home", href: "/dashboard", icon: "home" },
+  { label: "Clienti", href: "/clients", icon: "workout" },
+  { label: "Template", href: "/templates", icon: "stats" },
+  { label: "Schede", href: "/assignments", icon: "history" },
 ];
 
 export function AppShell({ children, hideBottomNav = false }: AppShellProps) {
@@ -40,7 +41,9 @@ export function AppShell({ children, hideBottomNav = false }: AppShellProps) {
   return (
     <div className={`app-shell ${hideBottomNav ? "app-shell--focus" : ""}`}>
       <aside className="sidebar">
-        <div className="brand">TRACCIA</div>
+        <div className="brand">
+          <BrandLogo size="sm" layout="inline" mark="coach" />
+        </div>
         <nav className="nav" aria-label="Navigazione desktop">
           {sidebarLinks.map((item) => (
             <Link
@@ -57,9 +60,7 @@ export function AppShell({ children, hideBottomNav = false }: AppShellProps) {
         </nav>
       </aside>
 
-      <div className="content">
-        {children}
-      </div>
+      <div className="content">{children}</div>
 
       <nav className="bottom-nav" aria-label="Navigazione principale">
         {bottomNavItems.map((item) => (
@@ -106,7 +107,7 @@ function NavIcon({ name }: { name: string }) {
       ) : null}
       {name === "history" ? (
         <path
-          d="M7.5 7.5V4.8c0-.4.5-.7.8-.4l1.8 1.3 1.8-1.3c.3-.2.8 0 .8.4V7.5h2.2A9.5 9.5 0 1 1 6.1 9"
+          d="M12 8v5l3 2M4.5 12a7.5 7.5 0 1 0 2.2-5.3L4.5 9"
           fill="none"
           stroke="currentColor"
           strokeWidth="1.8"

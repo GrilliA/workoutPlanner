@@ -103,3 +103,21 @@ export {
   type CatalogFacets,
   type CatalogSearchParams,
 } from "./catalog";
+export {
+  coachClientSchema,
+  coachClientsSchema,
+  coachAssignmentSchema,
+  coachAssignmentsSchema,
+  coachClientDetailSchema,
+  coachDashboardSchema,
+  coachTemplateSchema,
+  coachTemplatesSchema,
+  createClientRequestSchema,
+  createAssignmentRequestSchema,
+  type CoachClient,
+  type CoachAssignment,
+  type CoachDashboard,
+  type CoachTemplate,
+  type CreateClientInput,
+  type CreateAssignmentInput,
+} from "./coach";

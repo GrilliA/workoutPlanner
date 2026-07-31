@@ -21,6 +21,7 @@ import {
 type WorkoutProgramExercise = {
   id?: number;
   name: string;
+  catalogId?: string | null;
   setPrescriptions: SetPrescription[];
 };
 
@@ -149,12 +150,23 @@ type SaveWorkoutProgramResult =
     }
   | { ok: false; status: 400 | 404; error: string };
 
+export type SaveWorkoutProgramOptions = {
+  kind?: "template" | "program";
+  createdByUserId?: number;
+  sourceTemplateId?: number | null;
+  isActive?: boolean;
+};
+
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
 export const saveWorkoutProgram = (
   userId: number,
   input: WorkoutProgramInput,
   workoutId?: number,
-): Promise<SaveWorkoutProgramResult> =>
-  db.transaction(async (tx) => {
+  options: SaveWorkoutProgramOptions = {},
+  externalTx?: Tx,
+): Promise<SaveWorkoutProgramResult> => {
+  const run = async (tx: Tx): Promise<SaveWorkoutProgramResult> => {
     const existingWorkout = workoutId
       ? (
           await tx
@@ -203,12 +215,27 @@ export const saveWorkoutProgram = (
       }
     }
 
+    const kind = options.kind ?? existingWorkout?.kind ?? "program";
+    const createdByUserId =
+      options.createdByUserId ?? existingWorkout?.createdByUserId ?? userId;
+    const sourceTemplateId =
+      options.sourceTemplateId !== undefined
+        ? options.sourceTemplateId
+        : (existingWorkout?.sourceTemplateId ?? null);
+
     const workoutValues = {
       name: input.name,
       defaultRestSec: input.defaultRestSec,
       workoutType: input.workoutType,
       frequency: input.frequency,
-      ...(input.isActive !== undefined ? { isActive: input.isActive } : {}),
+      kind,
+      createdByUserId,
+      sourceTemplateId,
+      ...(options.isActive !== undefined
+        ? { isActive: options.isActive }
+        : input.isActive !== undefined
+          ? { isActive: input.isActive }
+          : {}),
     };
     const [savedWorkout] = workoutId
       ? await tx
@@ -220,7 +247,8 @@ export const saveWorkoutProgram = (
           .insert(workouts)
           .values({
             ...workoutValues,
-            isActive: input.isActive ?? true,
+            isActive:
+              options.isActive ?? input.isActive ?? true,
             userId,
           })
           .returning();
@@ -280,6 +308,7 @@ export const saveWorkoutProgram = (
           name: exercise.name,
           sets: summary.sets,
           reps: summary.reps,
+          catalogId: exercise.catalogId ?? null,
         };
         const [savedExercise] = exercise.id
           ? await tx
@@ -316,4 +345,11 @@ export const saveWorkoutProgram = (
         ),
       },
     };
-  });
+  };
+
+  if (externalTx) {
+    return run(externalTx);
+  }
+
+  return db.transaction(run);
+};

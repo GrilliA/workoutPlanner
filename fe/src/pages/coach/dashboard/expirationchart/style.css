@@ -1,0 +1,22 @@
+.expiration-chart {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.85rem;
+  padding: 1rem;
+  min-width: 0;
+  min-height: 16rem;
+  display: flex;
+  flex-direction: column;
+
+  & h2 {
+    margin: 0 0 0.75rem;
+    font-size: 1rem;
+    color: var(--text-h);
+  }
+}
+
+.expiration-chart__host {
+  flex: 1;
+  width: 100%;
+  min-height: 14rem;
+}
