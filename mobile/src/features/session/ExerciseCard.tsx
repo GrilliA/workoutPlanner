@@ -34,6 +34,8 @@ type ExerciseCardProps = {
     setNumber: number,
     next: { reps: number; weightKg: number | null },
   ) => void;
+  /** Focus mode: larger type, kg/reps always visible, set chips. */
+  focus?: boolean;
 };
 
 type EditingField = "weight" | "reps" | null;
@@ -58,7 +60,15 @@ function formatLogLabel(weight: string, reps: string, setNumber: number): string
   return `LOG ${kg} × ${repValue}  ·  #${setNumber}`;
 }
 
-/** Card esercizio: one-tap log, edit/undo set, stepper opzionali. */
+function formatChipLabel(logged: LoggedSet | undefined, setNumber: number): string {
+  if (!logged) {
+    return `#${setNumber}`;
+  }
+  const kg = logged.weightKg == null ? "—" : formatWeightKg(logged.weightKg);
+  return `#${setNumber} ${kg}×${logged.reps}`;
+}
+
+/** Card esercizio: one-tap log, edit/undo set, stepper kg/reps. */
 export function ExerciseCard({
   exercise,
   sets,
@@ -71,9 +81,9 @@ export function ExerciseCard({
   onLog,
   onUndoLast,
   onEditSet,
+  focus = false,
 }: ExerciseCardProps) {
   const [editing, setEditing] = useState<EditingField>(null);
-  const [adjustOpen, setAdjustOpen] = useState(false);
   const [editDraft, setEditDraft] = useState<EditDraft | null>(null);
   const weightRef = useRef<TextInputType>(null);
   const repsRef = useRef<TextInputType>(null);
@@ -110,7 +120,6 @@ export function ExerciseCard({
     if (readOnly) {
       return;
     }
-    setAdjustOpen(false);
     setEditDraft({
       setNumber: logged.setNumber,
       weight:
@@ -144,150 +153,196 @@ export function ExerciseCard({
     <View
       style={[
         styles.card,
+        focus && styles.cardFocus,
         resting && styles.cardResting,
         complete && styles.cardDone,
       ]}
     >
-      <AppText tone="heading" style={styles.name}>
+      <AppText tone="heading" style={[styles.name, focus && styles.nameFocus]}>
         {exercise.name}
       </AppText>
       <Meta>
         Serie {Math.min(sets.length, targetSets)} / {targetSets}
-        {canLog ? ` · prossima ${targetReps} reps` : ""}
+        {canLog ? ` · target ${targetReps} reps` : ""}
       </Meta>
 
-      {Array.from({ length: targetSets }, (_, index) => {
-        const setNumber = index + 1;
-        const logged = sets.find((set) => set.setNumber === setNumber);
-        const plannedReps = getTargetRepsForSet(exercise, setNumber);
-
-        if (logged) {
-          const isEditingThis =
-            editDraft !== null && editDraft.setNumber === setNumber;
-
-          if (isEditingThis && editDraft) {
+      {focus ? (
+        <View style={styles.chipRow}>
+          {Array.from({ length: targetSets }, (_, index) => {
+            const setNumber = index + 1;
+            const logged = sets.find((set) => set.setNumber === setNumber);
+            const isNext = !logged && setNumber === nextSetNumber && canLog;
             return (
-              <View key={setNumber} style={styles.editBlock}>
-                <Meta style={styles.nextLabel}>Modifica serie #{setNumber}</Meta>
-                <StepperRow
-                  label="kg"
-                  value={editDraft.weight}
-                  placeholder="0"
-                  editing={editing === "weight"}
-                  inputRef={weightRef}
-                  keyboardType="decimal-pad"
-                  onMinus={() =>
-                    setEditDraft((current) =>
-                      current
-                        ? {
-                            ...current,
-                            weight: stepWeightKg(current.weight, -1),
-                          }
-                        : current,
-                    )
+              <Pressable
+                key={setNumber}
+                onPress={() => {
+                  if (logged) {
+                    openSetEditor(logged);
                   }
-                  onPlus={() =>
-                    setEditDraft((current) =>
-                      current
-                        ? {
-                            ...current,
-                            weight: stepWeightKg(current.weight, 1),
-                          }
-                        : current,
-                    )
-                  }
-                  onPressValue={() => startEdit("weight")}
-                  onChangeText={(value) =>
-                    setEditDraft((current) =>
-                      current ? { ...current, weight: value } : current,
-                    )
-                  }
-                  onEndEditing={() => setEditing(null)}
-                />
-                <StepperRow
-                  label="reps"
-                  value={editDraft.reps}
-                  placeholder={String(plannedReps)}
-                  editing={editing === "reps"}
-                  inputRef={repsRef}
-                  keyboardType="number-pad"
-                  onMinus={() =>
-                    setEditDraft((current) =>
-                      current
-                        ? { ...current, reps: stepReps(current.reps, -1) }
-                        : current,
-                    )
-                  }
-                  onPlus={() =>
-                    setEditDraft((current) =>
-                      current
-                        ? { ...current, reps: stepReps(current.reps, 1) }
-                        : current,
-                    )
-                  }
-                  onPressValue={() => startEdit("reps")}
-                  onChangeText={(value) =>
-                    setEditDraft((current) =>
-                      current ? { ...current, reps: value } : current,
-                    )
-                  }
-                  onEndEditing={() => setEditing(null)}
-                />
-                <View style={styles.editActions}>
-                  <Pressable
-                    onPress={() => setEditDraft(null)}
-                    style={styles.textAction}
-                    accessibilityRole="button"
-                    accessibilityLabel="Annulla modifica"
-                  >
-                    <Meta>Annulla</Meta>
-                  </Pressable>
-                  <Pressable
-                    onPress={saveSetEditor}
-                    style={styles.saveEditBtn}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Salva serie ${setNumber}`}
-                  >
-                    <AppText style={styles.saveEditLabel}>Salva</AppText>
-                  </Pressable>
-                </View>
-              </View>
+                }}
+                disabled={readOnly || !logged || editDraft !== null}
+                style={[
+                  styles.chip,
+                  logged ? styles.chipDone : styles.chipPending,
+                  isNext && styles.chipNext,
+                ]}
+                accessibilityRole={logged && !readOnly ? "button" : "text"}
+                accessibilityLabel={
+                  logged
+                    ? `Serie ${setNumber}: ${logged.weightKg ?? "—"} kg × ${logged.reps}`
+                    : `Serie ${setNumber} in attesa`
+                }
+              >
+                <AppText
+                  style={[
+                    styles.chipLabel,
+                    !logged && styles.chipLabelPending,
+                    isNext && styles.chipLabelNext,
+                  ]}
+                >
+                  {formatChipLabel(logged, setNumber)}
+                </AppText>
+              </Pressable>
+            );
+          })}
+        </View>
+      ) : (
+        Array.from({ length: targetSets }, (_, index) => {
+          const setNumber = index + 1;
+          const logged = sets.find((set) => set.setNumber === setNumber);
+          const plannedReps = getTargetRepsForSet(exercise, setNumber);
+
+          if (logged && !(editDraft && editDraft.setNumber === setNumber)) {
+            return (
+              <Pressable
+                key={setNumber}
+                onPress={() => openSetEditor(logged)}
+                disabled={readOnly || editDraft !== null}
+                accessibilityRole={readOnly ? "text" : "button"}
+                accessibilityLabel={
+                  readOnly
+                    ? `Serie ${setNumber}: ${logged.weightKg ?? "—"} kg per ${logged.reps} reps`
+                    : `Modifica serie ${setNumber}`
+                }
+                style={({ pressed }) => [
+                  styles.setLinePressable,
+                  pressed && !readOnly && styles.setLinePressed,
+                ]}
+              >
+                <AppText style={styles.setLine}>
+                  #{setNumber}: {logged.weightKg ?? "—"} kg × {logged.reps}{" "}
+                  <AppText tone="muted">(piano {plannedReps})</AppText>
+                </AppText>
+                {!readOnly ? (
+                  <Meta style={styles.editHint}>tocca per modificare</Meta>
+                ) : null}
+              </Pressable>
             );
           }
 
-          return (
-            <Pressable
-              key={setNumber}
-              onPress={() => openSetEditor(logged)}
-              disabled={readOnly || editDraft !== null}
-              accessibilityRole={readOnly ? "text" : "button"}
-              accessibilityLabel={
-                readOnly
-                  ? `Serie ${setNumber}: ${logged.weightKg ?? "—"} kg per ${logged.reps} reps`
-                  : `Modifica serie ${setNumber}`
-              }
-              style={({ pressed }) => [
-                styles.setLinePressable,
-                pressed && !readOnly && styles.setLinePressed,
-              ]}
-            >
-              <AppText style={styles.setLine}>
-                #{setNumber}: {logged.weightKg ?? "—"} kg × {logged.reps}{" "}
-                <AppText tone="muted">(piano {plannedReps})</AppText>
+          if (!logged) {
+            return (
+              <AppText key={setNumber} tone="muted" style={styles.setLine}>
+                #{setNumber}: in attesa · {plannedReps} reps
               </AppText>
-              {!readOnly ? (
-                <Meta style={styles.editHint}>tocca per modificare</Meta>
-              ) : null}
-            </Pressable>
-          );
-        }
+            );
+          }
 
-        return (
-          <AppText key={setNumber} tone="muted" style={styles.setLine}>
-            #{setNumber}: in attesa · {plannedReps} reps
-          </AppText>
-        );
-      })}
+          return null;
+        })
+      )}
+
+      {editDraft ? (
+        <View style={styles.editBlock}>
+          <Meta style={styles.nextLabel}>Modifica serie #{editDraft.setNumber}</Meta>
+          <StepperRow
+            label="kg"
+            value={editDraft.weight}
+            placeholder="0"
+            editing={editing === "weight"}
+            inputRef={weightRef}
+            keyboardType="decimal-pad"
+            large={focus}
+            onMinus={() =>
+              setEditDraft((current) =>
+                current
+                  ? {
+                      ...current,
+                      weight: stepWeightKg(current.weight, -1),
+                    }
+                  : current,
+              )
+            }
+            onPlus={() =>
+              setEditDraft((current) =>
+                current
+                  ? {
+                      ...current,
+                      weight: stepWeightKg(current.weight, 1),
+                    }
+                  : current,
+              )
+            }
+            onPressValue={() => startEdit("weight")}
+            onChangeText={(value) =>
+              setEditDraft((current) =>
+                current ? { ...current, weight: value } : current,
+              )
+            }
+            onEndEditing={() => setEditing(null)}
+          />
+          <StepperRow
+            label="reps"
+            value={editDraft.reps}
+            placeholder={String(
+              getTargetRepsForSet(exercise, editDraft.setNumber),
+            )}
+            editing={editing === "reps"}
+            inputRef={repsRef}
+            keyboardType="number-pad"
+            large={focus}
+            onMinus={() =>
+              setEditDraft((current) =>
+                current
+                  ? { ...current, reps: stepReps(current.reps, -1) }
+                  : current,
+              )
+            }
+            onPlus={() =>
+              setEditDraft((current) =>
+                current
+                  ? { ...current, reps: stepReps(current.reps, 1) }
+                  : current,
+              )
+            }
+            onPressValue={() => startEdit("reps")}
+            onChangeText={(value) =>
+              setEditDraft((current) =>
+                current ? { ...current, reps: value } : current,
+              )
+            }
+            onEndEditing={() => setEditing(null)}
+          />
+          <View style={styles.editActions}>
+            <Pressable
+              onPress={() => setEditDraft(null)}
+              style={styles.textAction}
+              accessibilityRole="button"
+              accessibilityLabel="Annulla modifica"
+            >
+              <Meta>Annulla</Meta>
+            </Pressable>
+            <Pressable
+              onPress={saveSetEditor}
+              style={styles.saveEditBtn}
+              accessibilityRole="button"
+              accessibilityLabel={`Salva serie ${editDraft.setNumber}`}
+            >
+              <AppText style={styles.saveEditLabel}>Salva</AppText>
+            </Pressable>
+          </View>
+        </View>
+      ) : null}
 
       {complete && !readOnly ? (
         <AppText tone="accent" style={styles.doneLabel}>
@@ -297,6 +352,37 @@ export function ExerciseCard({
 
       {canLog && editDraft === null ? (
         <View style={styles.logBlock}>
+          <View style={focus ? styles.stepperPair : undefined}>
+            <StepperRow
+              label="kg"
+              value={weight}
+              placeholder="0"
+              editing={editing === "weight"}
+              inputRef={weightRef}
+              keyboardType="decimal-pad"
+              large={focus}
+              onMinus={() => onStepWeight(-1)}
+              onPlus={() => onStepWeight(1)}
+              onPressValue={() => startEdit("weight")}
+              onChangeText={onChangeWeight}
+              onEndEditing={() => setEditing(null)}
+            />
+            <StepperRow
+              label="reps"
+              value={reps}
+              placeholder={String(targetReps)}
+              editing={editing === "reps"}
+              inputRef={repsRef}
+              keyboardType="number-pad"
+              large={focus}
+              onMinus={() => onStepReps(-1)}
+              onPlus={() => onStepReps(1)}
+              onPressValue={() => startEdit("reps")}
+              onChangeText={onChangeReps}
+              onEndEditing={() => setEditing(null)}
+            />
+          </View>
+
           <Pressable
             style={({ pressed }) => [
               styles.logBtn,
@@ -307,53 +393,17 @@ export function ExerciseCard({
             accessibilityLabel={`Logga serie ${nextSetNumber}: ${weight || "senza peso"} kg per ${reps || targetReps} reps`}
           >
             <AppText style={styles.logBtnLabel}>
-              {formatLogLabel(weight, reps || String(targetReps), nextSetNumber)}
+              {focus
+                ? `LOG SERIE ${nextSetNumber}`
+                : formatLogLabel(weight, reps || String(targetReps), nextSetNumber)}
             </AppText>
+            {focus ? (
+              <Meta style={styles.logBtnMeta}>
+                {weight.trim() === "" ? "—" : weight.trim()} kg ×{" "}
+                {reps.trim() === "" ? targetReps : reps.trim()}
+              </Meta>
+            ) : null}
           </Pressable>
-
-          <Pressable
-            onPress={() => setAdjustOpen((open) => !open)}
-            style={styles.textAction}
-            accessibilityRole="button"
-            accessibilityLabel={
-              adjustOpen ? "Nascondi regolazione" : "Modifica peso e reps"
-            }
-          >
-            <Meta style={styles.adjustToggle}>
-              {adjustOpen ? "Nascondi regolazione" : "Modifica peso / reps"}
-            </Meta>
-          </Pressable>
-
-          {adjustOpen ? (
-            <>
-              <StepperRow
-                label="kg"
-                value={weight}
-                placeholder="0"
-                editing={editing === "weight"}
-                inputRef={weightRef}
-                keyboardType="decimal-pad"
-                onMinus={() => onStepWeight(-1)}
-                onPlus={() => onStepWeight(1)}
-                onPressValue={() => startEdit("weight")}
-                onChangeText={onChangeWeight}
-                onEndEditing={() => setEditing(null)}
-              />
-              <StepperRow
-                label="reps"
-                value={reps}
-                placeholder={String(targetReps)}
-                editing={editing === "reps"}
-                inputRef={repsRef}
-                keyboardType="number-pad"
-                onMinus={() => onStepReps(-1)}
-                onPlus={() => onStepReps(1)}
-                onPressValue={() => startEdit("reps")}
-                onChangeText={onChangeReps}
-                onEndEditing={() => setEditing(null)}
-              />
-            </>
-          ) : null}
         </View>
       ) : null}
 
@@ -378,6 +428,7 @@ type StepperRowProps = {
   editing: boolean;
   inputRef: React.RefObject<TextInputType | null>;
   keyboardType: "decimal-pad" | "number-pad";
+  large?: boolean;
   onMinus: () => void;
   onPlus: () => void;
   onPressValue: () => void;
@@ -392,6 +443,7 @@ function StepperRow({
   editing,
   inputRef,
   keyboardType,
+  large = false,
   onMinus,
   onPlus,
   onPressValue,
@@ -399,7 +451,7 @@ function StepperRow({
   onEndEditing,
 }: StepperRowProps) {
   return (
-    <View style={styles.stepperRow}>
+    <View style={[styles.stepperRow, large && styles.stepperRowLarge]}>
       <AppText tone="muted" style={styles.stepperLabel}>
         {label}
       </AppText>
@@ -408,6 +460,7 @@ function StepperRow({
           onPress={onMinus}
           style={({ pressed }) => [
             styles.stepBtn,
+            large && styles.stepBtnLarge,
             pressed && styles.stepBtnPressed,
           ]}
           accessibilityRole="button"
@@ -421,7 +474,7 @@ function StepperRow({
         {editing ? (
           <TextInput
             ref={inputRef}
-            style={styles.valueInput}
+            style={[styles.valueInput, large && styles.valueInputLarge]}
             value={value}
             placeholder={placeholder}
             placeholderTextColor={colors.muted}
@@ -434,11 +487,14 @@ function StepperRow({
         ) : (
           <Pressable
             onPress={onPressValue}
-            style={styles.valueTap}
+            style={[styles.valueTap, large && styles.valueTapLarge]}
             accessibilityRole="button"
             accessibilityLabel={`Modifica ${label}`}
           >
-            <AppText tone="heading" style={styles.valueText}>
+            <AppText
+              tone="heading"
+              style={[styles.valueText, large && styles.valueTextLarge]}
+            >
               {value === "" ? "—" : value}
             </AppText>
           </Pressable>
@@ -448,6 +504,7 @@ function StepperRow({
           onPress={onPlus}
           style={({ pressed }) => [
             styles.stepBtn,
+            large && styles.stepBtnLarge,
             pressed && styles.stepBtnPressed,
           ]}
           accessibilityRole="button"
@@ -471,6 +528,11 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     marginTop: spacing.sm,
   },
+  cardFocus: {
+    marginTop: 0,
+    padding: spacing.lg,
+    borderRadius: radii.lg,
+  },
   cardResting: {
     borderColor: colors.accent,
   },
@@ -480,6 +542,45 @@ const styles = StyleSheet.create({
   name: {
     fontWeight: "700",
     fontSize: 17,
+  },
+  nameFocus: {
+    fontSize: 22,
+    lineHeight: 28,
+  },
+  chipRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.xs,
+    marginTop: spacing.md,
+  },
+  chip: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  chipDone: {
+    borderColor: colors.accentBorder,
+    backgroundColor: colors.accentBg,
+  },
+  chipPending: {
+    borderColor: colors.border,
+    backgroundColor: colors.bg,
+  },
+  chipNext: {
+    borderColor: colors.accent,
+  },
+  chipLabel: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: colors.textHeading,
+  },
+  chipLabelPending: {
+    color: colors.muted,
+    fontWeight: "600",
+  },
+  chipLabelNext: {
+    color: colors.accent,
   },
   setLine: {
     color: colors.text,
@@ -501,7 +602,10 @@ const styles = StyleSheet.create({
   },
   logBlock: {
     marginTop: spacing.md,
-    gap: spacing.sm,
+    gap: spacing.md,
+  },
+  stepperPair: {
+    gap: spacing.md,
   },
   editBlock: {
     marginTop: spacing.sm,
@@ -535,9 +639,6 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
     paddingVertical: spacing.xs,
   },
-  adjustToggle: {
-    fontWeight: "600",
-  },
   undoLabel: {
     color: colors.danger,
     fontWeight: "600",
@@ -545,6 +646,9 @@ const styles = StyleSheet.create({
   },
   stepperRow: {
     gap: spacing.xs,
+  },
+  stepperRowLarge: {
+    gap: spacing.sm,
   },
   stepperLabel: {
     fontSize: 12,
@@ -567,6 +671,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  stepBtnLarge: {
+    width: 56,
+    height: 56,
+  },
   stepBtnPressed: {
     opacity: 0.7,
     borderColor: colors.accent,
@@ -587,11 +695,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: spacing.sm,
   },
+  valueTapLarge: {
+    minHeight: 56,
+  },
   valueText: {
     fontSize: 28,
     lineHeight: 34,
     fontWeight: "700",
     fontVariant: ["tabular-nums"],
+  },
+  valueTextLarge: {
+    fontSize: 34,
+    lineHeight: 40,
   },
   valueInput: {
     flex: 1,
@@ -607,6 +722,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.sm,
   },
+  valueInputLarge: {
+    minHeight: 56,
+    fontSize: 34,
+  },
   logBtn: {
     marginTop: spacing.xs,
     backgroundColor: colors.accent,
@@ -616,6 +735,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.sm,
+    gap: 2,
   },
   logBtnPressed: {
     opacity: 0.85,
@@ -626,5 +746,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     letterSpacing: 0.3,
     textAlign: "center",
+  },
+  logBtnMeta: {
+    color: colors.onAccent,
+    opacity: 0.85,
+    fontWeight: "600",
   },
 });

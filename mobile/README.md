@@ -106,6 +106,16 @@ Senza questo pezzo, chiudendo l’app perderesti la sessione.
 
 ## Cosa abbiamo fatto / Perché
 
+### 2026-07-31 — Sessione Focus mode
+
+- **Cosa:** un esercizio alla volta (pager Prec/Succ), kg/reps stepper sempre visibili, chip serie, timer recupero sotto il focus, header con progresso e durata.
+- **Perché:** la lista piatta nascondeva i kg dietro un toggle e rendeva la sessione poco moderna.
+
+### 2026-07-31 — Rest timer visibile in background
+
+- **Cosa:** all’avvio recupero notifica sticky “Recupero in corso · termina alle HH:MM”; a fine resta l’alert “Recupero finito”; cancel/skip rimuove entrambe. Channel Android `rest-timer`.
+- **Perché:** in background il tick JS non aggiorna la UI; la shade mostra almeno durata/fine senza Live Activity / foreground service.
+
 ### 2026-07-21 — Scaffold Expo TypeScript in `mobile/`
 
 - **Cosa:** app Expo Router + TypeScript strict, tema dark TRACCIA, tab principali.
