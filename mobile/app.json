@@ -15,7 +15,7 @@
     "android": {
       "package": "com.traccia.app",
       "adaptiveIcon": {
-        "backgroundColor": "#16171d",
+        "backgroundColor": "#000000",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
@@ -34,13 +34,15 @@
         {
           "image": "./assets/images/splash-icon.png",
           "resizeMode": "contain",
-          "backgroundColor": "#16171d"
+          "backgroundColor": "#000000"
         }
       ],
       "expo-secure-store",
       [
         "expo-notifications",
         {
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#c7f464",
           "sounds": []
         }
       ],
