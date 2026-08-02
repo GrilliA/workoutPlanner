@@ -26,6 +26,7 @@ import {
   Meta,
   PrimaryButton,
   Screen,
+  SecondaryButton,
   SectionLabel,
   Title,
 } from "../../src/components";
@@ -87,7 +88,12 @@ export default function HomeScreen() {
         const active = (
           activeAssignment
             ? workouts.filter((workout) => workout.id === activeAssignment.workoutId)
-            : []
+            : workouts.filter(
+                (workout) =>
+                  workout.isActive &&
+                  (workout.createdByUserId == null ||
+                    workout.createdByUserId === user?.id),
+              )
         ).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
         setActiveWorkouts(active);
 
@@ -242,9 +248,14 @@ export default function HomeScreen() {
             <>
               <Heading>Nessuna scheda attiva</Heading>
               <Body>
-                Il tuo coach deve assegnarti una scheda dal pannello web.
+                Crea una scheda dalle Schede, oppure collega un coach dalle
+                Impostazioni con il suo codice invito.
               </Body>
               <PrimaryButton
+                label="CREA SCHEDA"
+                onPress={() => router.push("/workout/new")}
+              />
+              <SecondaryButton
                 label="VAI ALLE SCHEDE"
                 onPress={() => router.push("/(app)/workouts")}
               />

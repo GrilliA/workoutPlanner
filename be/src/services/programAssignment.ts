@@ -443,28 +443,32 @@ export const revokeAssignment = async (
   return updated;
 };
 
-export const athleteHasActiveAssignmentForWorkout = async (
-  athleteId: number,
-  workoutId: number,
-): Promise<boolean> => {
-  await syncAssignmentStatusesForAthlete(athleteId);
-  const today = todayInRome();
-
-  const rows = await db
+/** Either side of an assignment can cancel it. */
+export const revokeAssignmentForParticipant = async (
+  userId: number,
+  assignmentId: number,
+) => {
+  const [row] = await db
     .select()
     .from(programAssignments)
-    .where(
-      and(
-        eq(programAssignments.athleteId, athleteId),
-        eq(programAssignments.workoutId, workoutId),
-        ne(programAssignments.status, "revoked"),
-      ),
-    );
+    .where(eq(programAssignments.id, assignmentId));
 
-  return rows.some(
-    (row) =>
-      computeAssignmentStatus(row.startsAt, row.expiresAt, today) === "active",
-  );
+  if (!row || (row.coachId !== userId && row.athleteId !== userId)) {
+    return null;
+  }
+
+  const [updated] = await db
+    .update(programAssignments)
+    .set({ status: "revoked", updatedAt: new Date() })
+    .where(eq(programAssignments.id, assignmentId))
+    .returning();
+
+  await db
+    .update(workouts)
+    .set({ isActive: false })
+    .where(eq(workouts.id, row.workoutId));
+
+  return updated;
 };
 
 export const coachOwnsAthleteProgram = async (

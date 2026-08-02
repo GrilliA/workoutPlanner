@@ -4,15 +4,14 @@ import {
   coachAssignmentSchema,
   coachAssignmentsSchema,
   coachClientDetailSchema,
-  coachClientSchema,
   coachClientsSchema,
   coachDashboardSchema,
+  coachInviteCodeSchema,
   coachTemplatesSchema,
   okResponseSchema,
   resetPasswordRequestSchema,
   updateAssignmentDatesRequestSchema,
   type CreateAssignmentInput,
-  type CreateClientInput,
   type ResetPasswordInput,
   type UpdateAssignmentDatesInput,
 } from "./schemas/coach";
@@ -29,11 +28,13 @@ export const getCoachDashboard = () =>
 export const getCoachClients = () =>
   apiRequest("/coach/clients", { schema: coachClientsSchema });
 
-export const createCoachClient = (input: CreateClientInput) =>
-  apiRequest("/coach/clients", {
+export const getCoachInviteCode = () =>
+  apiRequest("/coach/invite-code", { schema: coachInviteCodeSchema });
+
+export const rotateCoachInviteCode = () =>
+  apiRequest("/coach/invite-code/rotate", {
     method: "POST",
-    body: input,
-    schema: coachClientSchema,
+    schema: coachInviteCodeSchema,
   });
 
 export const getCoachClient = (athleteId: number) =>

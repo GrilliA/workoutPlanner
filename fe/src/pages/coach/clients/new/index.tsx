@@ -1,36 +1,54 @@
-import { useState, type FormEvent } from "react";
-import { useLocation } from "wouter";
-import { ApiError, createCoachClient } from "@api";
+import { useCallback, useEffect, useState } from "react";
+import { ApiError, getCoachInviteCode, rotateCoachInviteCode } from "@api";
 import { AppShell } from "@components/appshell";
 import { Button } from "@components/button";
-import { Input } from "@components/input";
 import { CoachPageHeader } from "../../coachpageheader";
 import "../../style.css";
 
-export default function NewClientPage() {
-  const [, setLocation] = useLocation();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+export default function InviteClientPage() {
+  const [code, setCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [busy, setBusy] = useState(false);
 
-  const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault();
-    setSubmitting(true);
-    setError(null);
+  const load = useCallback(async () => {
+    const invite = await getCoachInviteCode();
+    setCode(invite.code);
+  }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    void load().catch((err) => {
+      if (!cancelled) {
+        setError(err instanceof ApiError ? err.message : "Errore caricamento codice");
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [load]);
+
+  const handleCopy = async () => {
+    if (!code) return;
     try {
-      const client = await createCoachClient({
-        email,
-        password,
-        name: name.trim() || undefined,
-      });
-      setLocation(`/clients/${client.id}`);
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setError("Impossibile copiare il codice");
+    }
+  };
+
+  const handleRotate = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const invite = await rotateCoachInviteCode();
+      setCode(invite.code);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Impossibile creare il cliente");
+      setError(err instanceof ApiError ? err.message : "Rigenerazione fallita");
     } finally {
-      setSubmitting(false);
+      setBusy(false);
     }
   };
 
@@ -38,49 +56,50 @@ export default function NewClientPage() {
     <AppShell>
       <div className="coach-page page-container">
         <CoachPageHeader
-          title="Nuovo cliente"
-          subtitle="Crea l'account atleta (password temporanea)"
+          title="Invita cliente"
+          subtitle="Condividi il codice: l'atleta lo inserisce nell'app dopo la registrazione"
         />
-
-        <form className="coach-form" onSubmit={(event) => void handleSubmit(event)}>
-          <Input.Root>
-            <Input.Label>Nome</Input.Label>
-            <Input.Field
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="Marco Rossi"
-            />
-          </Input.Root>
-
-          <Input.Root>
-            <Input.Label>Email</Input.Label>
-            <Input.Field
-              type="email"
-              required
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="cliente@email.com"
-            />
-          </Input.Root>
-
-          <Input.Root>
-            <Input.Label>Password temporanea</Input.Label>
-            <Input.Field
-              type="password"
-              required
-              minLength={8}
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder="minimo 8 caratteri"
-            />
-          </Input.Root>
-
-          {error ? <p className="coach-empty">{error}</p> : null}
-
-          <Button.Root type="submit" variant="primary" loading={submitting} disabled={submitting}>
-            <Button.Label>Crea cliente</Button.Label>
-          </Button.Root>
-        </form>
+        {error ? <p className="coach-empty">{error}</p> : null}
+        <section className="coach-section">
+          <p className="coach-empty" style={{ marginBottom: "1rem" }}>
+            L&apos;atleta crea da solo l&apos;account su mobile, poi collega il tuo codice
+            nella sezione Coach. Un atleta può avere un solo coach alla volta.
+          </p>
+          <div className="coach-card" style={{ textAlign: "center" }}>
+            <p className="coach-empty" style={{ marginBottom: "0.5rem" }}>
+              Codice invito
+            </p>
+            <p
+              style={{
+                fontSize: "2rem",
+                fontWeight: 700,
+                letterSpacing: "0.2em",
+                margin: "0.5rem 0 1rem",
+              }}
+            >
+              {code ?? "……"}
+            </p>
+            <div className="coach-card-actions" style={{ justifyContent: "center" }}>
+              <Button.Root
+                type="button"
+                variant="primary"
+                disabled={!code}
+                onClick={() => void handleCopy()}
+              >
+                <Button.Label>{copied ? "Copiato" : "Copia codice"}</Button.Label>
+              </Button.Root>
+              <Button.Root
+                type="button"
+                variant="secondary"
+                loading={busy}
+                disabled={busy}
+                onClick={() => void handleRotate()}
+              >
+                <Button.Label>Rigenera</Button.Label>
+              </Button.Root>
+            </div>
+          </div>
+        </section>
       </div>
     </AppShell>
   );

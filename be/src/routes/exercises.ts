@@ -10,7 +10,8 @@ import {
   parseExerciseBody,
   updateExerciseWithSets,
 } from "../services/exerciseAccess";
-import { findExerciseForUser } from "../services/workoutAccess";
+import { isAthleteEditableProgram } from "../services/programOwnership";
+import { findExerciseForUser, findWorkoutForUser } from "../services/workoutAccess";
 import { getAuthUser } from "../types/auth";
 
 export const exercisesRouter = Router({ mergeParams: true });
@@ -75,11 +76,38 @@ export const exerciseByIdRouter = Router();
 
 exerciseByIdRouter.use(requireAuth);
 
-exerciseByIdRouter.use((req, res, next) => {
+/** Athletes may edit exercises only inside programs they authored themselves. */
+exerciseByIdRouter.use(async (req, res, next) => {
   const user = getAuthUser(req);
 
-  if (user.role === "athlete" && req.method !== "GET" && req.method !== "HEAD") {
-    res.status(403).json({ error: "Athletes cannot modify programs" });
+  if (user.role !== "athlete" || req.method === "GET" || req.method === "HEAD") {
+    next();
+    return;
+  }
+
+  const exerciseId = Number(req.path.split("/")[1]);
+
+  if (!Number.isInteger(exerciseId) || exerciseId < 1) {
+    res.status(400).json({ error: "Invalid exercise id" });
+    return;
+  }
+
+  const exercise = await findExerciseForUser(exerciseId, user.id);
+
+  if (!exercise) {
+    res.status(404).json({ error: "Exercise not found" });
+    return;
+  }
+
+  const workout = await findWorkoutForUser(exercise.workoutId, user.id);
+
+  if (!workout) {
+    res.status(404).json({ error: "Exercise not found" });
+    return;
+  }
+
+  if (!isAthleteEditableProgram(workout, user.id)) {
+    res.status(403).json({ error: "Coach programs are read-only" });
     return;
   }
 

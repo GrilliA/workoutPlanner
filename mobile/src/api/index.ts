@@ -31,8 +31,14 @@ export {
   deleteLoggedSet,
 } from "./sessions";
 export { getStats } from "./stats";
-export { getActiveAssignment } from "./assignments";
+export { getActiveAssignment, revokeActiveAssignment } from "./assignments";
 export type { ActiveAssignment } from "./schemas/assignment";
+export {
+  getAthleteCoach,
+  linkAthleteCoach,
+  unlinkAthleteCoach,
+} from "./athlete";
+export type { AthleteCoach } from "./athlete";
 export {
   getWorkoutDays,
   getWorkoutDay,

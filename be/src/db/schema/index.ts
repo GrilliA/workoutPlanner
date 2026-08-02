@@ -2,6 +2,7 @@ export * from "./users";
 export * from "./refreshTokens";
 export * from "./passwordResetTokens";
 export * from "./coachathletes";
+export * from "./coachinvitecodes";
 export * from "./workouts";
 export * from "./workoutdays";
 export * from "./workoutdayweekdays";

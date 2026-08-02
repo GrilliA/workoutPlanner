@@ -13,6 +13,7 @@ How to use:
 
 | Date | Decision | Why |
 | --- | --- | --- |
+| 2026-08-02 | Dual-mode atleta: self-register mobile + schede self editabili; coach via codice invite (max 1); programma coach ha priorità (annulla per cambiare); coach vede storico | Acquisizione senza frizione + coach workflow; reverse-pivot controllato dal self-service totale |
 | 2026-07-30 | Assignment lifecycle hardening: `workouts.isActive` sincronizzato con status/date assegnazione; gate sessione atleta su assignment attiva; assign da TXT atomico in transazione; migration `0006` elimina programmi legacy self-service atleta e normalizza `is_active` | Evitare schede fantasma attive, sessioni su programmi non assegnati, stati incoerenti post-pivot coach |
 | 2026-07-30 | Import TXT: weekday per giorno = ordine sequenziale (Giorno 1 → Lun, Giorno 2 → Mar, …) se non specificati nel testo | Allineare parser AI/TXT al calendario settimanale senza chiedere weekday espliciti |
 | 2026-07-30 | Web atleta (`fe/src/pages/home`, `sessions`, `stats`, …) **non routato**; solo coach + landing/auth; builder `workouts/new` riusato dal coach | Athlete UX solo su mobile; ridurre superficie web morta in attesa di cleanup PR |
@@ -42,6 +43,7 @@ How to use:
 
 ## What we did
 
+- 2026-08-02 — A3 athlete dual-mode: mobile self-register; invite codes (generate/redeem/unlink, 1 coach); self vs coach program permissions; session priority on active coach assignment (revoke by athlete or coach); mobile create (DIY + AI TXT prompt); coach client detail shows session history.
 - 2026-07-30 — Assignment lifecycle: sync `isActive` ↔ assignment status/dates, session start gate per atleta, assign program/TXT in transazione, migration `0006` cleanup programmi legacy; doc `fe/src/pages/ATHLETE_WEB_DEPRECATED.md`.
 - 2026-07-30 — Parser TXT: weekday sequenziali Lun→Dom per ordine giorno quando assenti nel testo.
 - 2026-07-28 — Style guide landing: token CSS/mobile da HTML brand, pagina `/` pubblica (hero + Accedi/Prova Gratuita), coach home su `/dashboard`, font Roboto.

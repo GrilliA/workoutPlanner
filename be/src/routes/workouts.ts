@@ -3,6 +3,7 @@ import { and, count, eq } from "drizzle-orm";
 import { db } from "../db";
 import { exercises, workouts } from "../db/schema";
 import { requireAuth } from "../middleware/requireAuth";
+import { isAthleteEditableProgram } from "../services/programOwnership";
 import { findWorkoutForUser } from "../services/workoutAccess";
 import { validateCreateWorkoutInput, validateUpdateWorkoutInput } from "../services/workoutValidation";
 import { getAuthUser } from "../types/auth";
@@ -20,6 +21,8 @@ export const workoutsRouter = Router();
 
 const workoutColumns = {
   id: workouts.id,
+  userId: workouts.userId,
+  createdByUserId: workouts.createdByUserId,
   name: workouts.name,
   defaultRestSec: workouts.defaultRestSec,
   workoutType: workouts.workoutType,
@@ -30,6 +33,8 @@ const workoutColumns = {
 
 const workoutGroupBy = [
   workouts.id,
+  workouts.userId,
+  workouts.createdByUserId,
   workouts.name,
   workouts.defaultRestSec,
   workouts.workoutType,
@@ -40,7 +45,8 @@ const workoutGroupBy = [
 
 workoutsRouter.use(requireAuth);
 
-workoutsRouter.use((req, res, next) => {
+/** Athletes own their self-made programs; coach-authored ones stay read-only. */
+workoutsRouter.use(async (req, res, next) => {
   const user = getAuthUser(req);
 
   if (user.role !== "athlete") {
@@ -58,7 +64,31 @@ workoutsRouter.use((req, res, next) => {
     return;
   }
 
-  res.status(403).json({ error: "Athletes cannot modify programs" });
+  if (req.path === "/" || req.path === "/program") {
+    next();
+    return;
+  }
+
+  const workoutId = Number(req.path.split("/")[1]);
+
+  if (!Number.isInteger(workoutId) || workoutId < 1) {
+    res.status(400).json({ error: "Invalid workout id" });
+    return;
+  }
+
+  const workout = await findWorkoutForUser(workoutId, user.id);
+
+  if (!workout) {
+    res.status(404).json({ error: "Workout not found" });
+    return;
+  }
+
+  if (!isAthleteEditableProgram(workout, user.id)) {
+    res.status(403).json({ error: "Coach programs are read-only" });
+    return;
+  }
+
+  next();
 });
 
 workoutsRouter.get("/", async (req, res) => {
@@ -86,7 +116,10 @@ workoutsRouter.post("/program", async (req, res) => {
     return;
   }
 
-  const result = await saveWorkoutProgram(user.id, parsed.value);
+  const result = await saveWorkoutProgram(user.id, parsed.value, undefined, {
+    kind: "program",
+    createdByUserId: user.id,
+  });
 
   if (!result.ok) {
     res.status(result.status).json({ error: result.error });
@@ -171,6 +204,7 @@ workoutsRouter.post("/", async (req, res) => {
       frequency,
       isActive: isActive ?? true,
       userId: user.id,
+      createdByUserId: user.id,
     })
     .returning();
 

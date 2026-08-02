@@ -12,7 +12,8 @@ import {
 import { findWorkoutDayForUser, resolveWorkoutDayForDate } from "../services/workoutDayAccess";
 import { validateStartSessionInput } from "../services/workoutDayValidation";
 import { findWorkoutForUser } from "../services/workoutAccess";
-import { athleteHasActiveAssignmentForWorkout } from "../services/programAssignment";
+import { getActiveAssignmentForAthlete } from "../services/coachDashboard";
+import { isCoachAuthoredProgram } from "../services/programOwnership";
 import {
   loadSessionHistoryPage,
   parseSessionHistoryLimit,
@@ -111,12 +112,17 @@ workoutSessionsRouter.post("/", async (req, res) => {
   }
 
   if (user.role === "athlete") {
-    const allowed = await athleteHasActiveAssignmentForWorkout(
-      user.id,
-      workoutId,
-    );
+    const assignment = await getActiveAssignmentForAthlete(user.id);
 
-    if (!allowed) {
+    if (assignment && assignment.workoutId !== workoutId) {
+      res.status(403).json({
+        error:
+          "A coach program is in progress. Cancel the assignment to train on another program.",
+      });
+      return;
+    }
+
+    if (!assignment && isCoachAuthoredProgram(workout)) {
       res.status(403).json({ error: "No active program assignment for this workout" });
       return;
     }

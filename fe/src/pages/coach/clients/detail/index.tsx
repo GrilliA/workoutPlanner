@@ -9,6 +9,7 @@ import {
   updateCoachAssignment,
   type CoachAssignment,
   type CoachClient,
+  type CoachClientDetail,
 } from "@api";
 import { AppShell } from "@components/appshell";
 import { Button } from "@components/button";
@@ -33,12 +34,22 @@ const toDraft = (assignment: CoachAssignment): AssignmentDraft => ({
   expiresAt: assignment.expiresAt,
 });
 
+const formatSessionDate = (value: string) =>
+  new Date(value).toLocaleDateString("it-IT", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+
 export default function ClientDetailPage() {
   const [, params] = useRoute("/clients/:id");
   const [, setLocation] = useLocation();
   const athleteId = Number(params?.id);
   const [client, setClient] = useState<CoachClient | null>(null);
   const [assignments, setAssignments] = useState<CoachAssignment[]>([]);
+  const [recentSessions, setRecentSessions] = useState<
+    CoachClientDetail["recentSessions"]
+  >([]);
   const [drafts, setDrafts] = useState<Record<number, AssignmentDraft>>({});
   const [password, setPassword] = useState("");
   const [resettingPassword, setResettingPassword] = useState(false);
@@ -56,6 +67,7 @@ export default function ClientDetailPage() {
     const data = await getCoachClient(athleteId);
     setClient(data.client);
     setAssignments(data.assignments);
+    setRecentSessions(data.recentSessions);
     setDrafts(
       Object.fromEntries(data.assignments.map((assignment) => [assignment.id, toDraft(assignment)])),
     );
@@ -178,7 +190,26 @@ export default function ClientDetailPage() {
         {error ? <p className="coach-empty">{error}</p> : null}
 
         <section className="coach-section">
-          <h2>Password temporanea</h2>
+          <h2>Storico allenamenti</h2>
+          {recentSessions.length === 0 ? (
+            <p className="coach-empty">Nessuna sessione completata</p>
+          ) : (
+            <div className="coach-card-list">
+              {recentSessions.map((session) => (
+                <div key={session.sessionId} className="coach-card">
+                  <h2>{session.workoutName}</h2>
+                  <p>
+                    {formatSessionDate(session.completedAt)} · {session.durationMin} min ·{" "}
+                    {Math.round(session.volumeKg)} kg
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="coach-section">
+          <h2>Password</h2>
           <form className="coach-form" onSubmit={(event) => void handleResetPassword(event)}>
             <Input.Root>
               <Input.Label>Nuova password</Input.Label>

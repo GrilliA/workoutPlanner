@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { athleteRouter } from "./athlete";
 import { authRouter } from "./auth";
 import { catalogRouter } from "./catalog";
 import { coachRouter } from "./coach";
@@ -11,6 +12,7 @@ import { assignmentsRouter } from "./assignments";
 export const apiRouter = Router();
 
 apiRouter.use("/auth", authRouter);
+apiRouter.use("/athlete", athleteRouter);
 apiRouter.use("/coach", coachRouter);
 apiRouter.use("/assignments", assignmentsRouter);
 apiRouter.use("/catalog", catalogRouter);

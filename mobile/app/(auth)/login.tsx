@@ -82,7 +82,7 @@ export default function LoginScreen() {
             disabled={busy || !email || !password}
           />
           <Link href="/(auth)/register" asChild>
-            <Text style={styles.link}>Come ottengo un account?</Text>
+            <Text style={styles.link}>Crea un account</Text>
           </Link>
         </View>
       </KeyboardAvoidingView>

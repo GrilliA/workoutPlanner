@@ -54,10 +54,12 @@ authRouter.post("/register", authRateLimit, async (req, res) => {
 
   const { email, password, name } = parsed.value;
   const passwordHash = await hashPassword(password);
+  // The native app is the athlete entry point; the web app onboards coaches.
+  const role = isMobileClient(req) ? "athlete" : "coach";
 
   const [created] = await db
     .insert(users)
-    .values({ email, passwordHash, name, role: "coach" })
+    .values({ email, passwordHash, name, role })
     .onConflictDoNothing({ target: users.email })
     .returning({
       id: users.id,

@@ -13,5 +13,8 @@ export const coachAthletes = pgTable(
       .references(() => users.id, { onDelete: "cascade" }),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
-  (table) => [unique().on(table.coachId, table.athleteId)],
+  (table) => [
+    unique().on(table.coachId, table.athleteId),
+    unique().on(table.athleteId),
+  ],
 );

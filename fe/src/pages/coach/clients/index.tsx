@@ -52,7 +52,7 @@ export default function CoachClientsPage() {
           subtitle="Atleti collegati al tuo account"
           action={
             <Link href="/clients/new" className="coach-btn-link coach-btn-link--primary">
-              Nuovo cliente
+              Invita cliente
             </Link>
           }
         />

@@ -102,7 +102,8 @@ export { getStats } from "./stats";
 export {
   getCoachDashboard,
   getCoachClients,
-  createCoachClient,
+  getCoachInviteCode,
+  rotateCoachInviteCode,
   getCoachClient,
   getCoachTemplates,
   getCoachTemplate,
@@ -120,9 +121,10 @@ export {
 export type {
   CoachClient,
   CoachAssignment,
+  CoachClientDetail,
+  CoachInviteCode,
   CoachDashboard,
   CoachTemplate,
-  CreateClientInput,
   CreateAssignmentInput,
   ResetPasswordInput,
   UpdateAssignmentDatesInput,

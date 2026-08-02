@@ -30,6 +30,24 @@ export const coachAssignmentsSchema = z.array(coachAssignmentSchema);
 export const coachClientDetailSchema = z.object({
   client: coachClientSchema,
   assignments: coachAssignmentsSchema,
+  recentSessions: z
+    .array(
+      z.object({
+        sessionId: z.number(),
+        workoutId: z.number(),
+        workoutName: z.string(),
+        completedAt: z.coerce.string(),
+        durationMin: z.number(),
+        volumeKg: z.number(),
+      }),
+    )
+    .optional()
+    .default([]),
+});
+
+export const coachInviteCodeSchema = z.object({
+  code: z.string(),
+  updatedAt: z.coerce.string(),
 });
 
 export const coachDashboardExpirationItemSchema = z.object({
@@ -116,6 +134,8 @@ export const createAssignmentRequestSchema = z.object({
 
 export type CoachClient = z.infer<typeof coachClientSchema>;
 export type CoachAssignment = z.infer<typeof coachAssignmentSchema>;
+export type CoachClientDetail = z.infer<typeof coachClientDetailSchema>;
+export type CoachInviteCode = z.infer<typeof coachInviteCodeSchema>;
 export type CoachDashboard = z.infer<typeof coachDashboardSchema>;
 export type CoachDashboardExpirationItem = z.infer<
   typeof coachDashboardExpirationItemSchema

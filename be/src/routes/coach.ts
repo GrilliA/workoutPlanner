@@ -1,11 +1,11 @@
 import { Router } from "express";
 import { and, count, eq } from "drizzle-orm";
 import { db } from "../db";
-import { coachAthletes, exercises, programAssignments, users, workouts } from "../db/schema";
+import { exercises, programAssignments, users, workouts } from "../db/schema";
 import { requireAuth } from "../middleware/requireAuth";
 import { requireRole } from "../middleware/requireRole";
 import { validateAssignmentDates, validatePartialAssignmentDates } from "../services/assignmentStatus";
-import { validateCreateClientInput, validateResetPasswordInput } from "../services/clientValidation";
+import { validateResetPasswordInput } from "../services/clientValidation";
 import {
   getCoachAthlete,
   listCoachAthletes,
@@ -16,6 +16,11 @@ import {
   listAthleteAssignmentsForCoach,
   listCoachAssignments,
 } from "../services/coachDashboard";
+import {
+  getOrCreateCoachInviteCode,
+  rotateCoachInviteCode,
+} from "../services/coachInvite";
+import { loadSessionHistoryPage } from "../services/sessionHistoryAccess";
 import { hashPassword } from "../services/password";
 import {
   assignBlankProgram,
@@ -64,66 +69,29 @@ coachRouter.get("/dashboard", async (req, res) => {
   res.json(stats);
 });
 
+coachRouter.get("/invite-code", async (req, res) => {
+  const coach = getAuthUser(req);
+  const invite = await getOrCreateCoachInviteCode(coach.id);
+  res.json({ code: invite.code, updatedAt: invite.updatedAt });
+});
+
+coachRouter.post("/invite-code/rotate", async (req, res) => {
+  const coach = getAuthUser(req);
+  const invite = await rotateCoachInviteCode(coach.id);
+  res.json({ code: invite.code, updatedAt: invite.updatedAt });
+});
+
 coachRouter.get("/clients", async (req, res) => {
   const coach = getAuthUser(req);
   const clients = await listCoachAthletes(coach.id);
   res.json(clients);
 });
 
-coachRouter.post("/clients", async (req, res) => {
-  const coach = getAuthUser(req);
-  const parsed = validateCreateClientInput(req.body);
-
-  if (!parsed.ok) {
-    res.status(400).json({ error: parsed.error });
-    return;
-  }
-
-  const { email, password, name } = parsed.value;
-  const passwordHash = await hashPassword(password);
-
-  try {
-    const client = await db.transaction(async (tx) => {
-      const [created] = await tx
-        .insert(users)
-        .values({
-          email,
-          passwordHash,
-          name,
-          role: "athlete",
-        })
-        .onConflictDoNothing({ target: users.email })
-        .returning({
-          id: users.id,
-          email: users.email,
-          name: users.name,
-          createdAt: users.createdAt,
-        });
-
-      if (!created) {
-        return null;
-      }
-
-      await tx.insert(coachAthletes).values({
-        coachId: coach.id,
-        athleteId: created.id,
-      });
-
-      return created;
-    });
-
-    if (!client) {
-      res.status(409).json({ error: "Email already registered" });
-      return;
-    }
-
-    res.status(201).json({
-      ...client,
-      linkedAt: new Date().toISOString(),
-    });
-  } catch {
-    res.status(500).json({ error: "Failed to create client" });
-  }
+coachRouter.post("/clients", (_req, res) => {
+  res.status(410).json({
+    error:
+      "Creating clients is deprecated. Share your invite code so athletes can link their account.",
+  });
 });
 
 coachRouter.get("/clients/:athleteId", async (req, res) => {
@@ -142,8 +110,16 @@ coachRouter.get("/clients/:athleteId", async (req, res) => {
     return;
   }
 
-  const assignments = await listAthleteAssignmentsForCoach(coach.id, athleteId);
-  res.json({ client, assignments });
+  const [assignments, recentSessions] = await Promise.all([
+    listAthleteAssignmentsForCoach(coach.id, athleteId),
+    loadSessionHistoryPage(athleteId, 1, 20),
+  ]);
+
+  res.json({
+    client,
+    assignments,
+    recentSessions: recentSessions.items,
+  });
 });
 
 coachRouter.post("/clients/:athleteId/reset-password", async (req, res) => {

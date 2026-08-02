@@ -13,7 +13,7 @@ export function Dashboard() {
   const headerAction = (
     <div className="coach-dashboard__actions">
       <Link href="/clients/new" className="coach-btn-link coach-btn-link--primary">
-        Nuovo cliente
+        Invita cliente
       </Link>
       <Link
         href="/assignments/new"
@@ -42,16 +42,16 @@ export function Dashboard() {
 
       {state.status === "ready" && state.data.isEmpty ? (
         <section className="coach-dashboard__empty">
-          <h2>Inizia dal primo cliente</h2>
+          <h2>Invita il primo cliente</h2>
           <p className="coach-empty">
-            Crea un cliente e assegna una scheda per vedere scadenze e KPI qui.
+            Condividi il codice invito: l&apos;atleta si registra sull&apos;app e si collega a te.
           </p>
           <div className="coach-dashboard__actions">
             <Link
               href="/clients/new"
               className="coach-btn-link coach-btn-link--primary"
             >
-              Nuovo cliente
+              Invita cliente
             </Link>
             <Link href="/templates/new" className="coach-link">
               Oppure crea un template

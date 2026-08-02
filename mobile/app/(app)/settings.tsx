@@ -1,8 +1,22 @@
 import { router } from "expo-router";
-import { useState } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
 import { ApiError } from "../../src/api/client";
-import { changePassword, updateProfile } from "../../src/api/auth";
+import {
+  changePassword,
+  getAthleteCoach,
+  linkAthleteCoach,
+  unlinkAthleteCoach,
+  updateProfile,
+  type AthleteCoach,
+} from "../../src/api";
 import { useAuth } from "../../src/auth";
 import {
   AppText,
@@ -22,9 +36,22 @@ export default function SettingsScreen() {
   const [name, setName] = useState(user?.name ?? "");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [inviteCode, setInviteCode] = useState("");
+  const [coach, setCoach] = useState<AthleteCoach | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  const loadCoach = useCallback(async () => {
+    const response = await getAthleteCoach();
+    setCoach(response.coach);
+  }, []);
+
+  useEffect(() => {
+    void loadCoach().catch(() => {
+      // ignore — section still usable
+    });
+  }, [loadCoach]);
 
   const saveProfile = async () => {
     setBusy(true);
@@ -61,6 +88,54 @@ export default function SettingsScreen() {
     }
   };
 
+  const onLinkCoach = async () => {
+    setBusy(true);
+    setError(null);
+    setMessage(null);
+
+    try {
+      const response = await linkAthleteCoach(inviteCode);
+      setCoach(response.coach);
+      setInviteCode("");
+      setMessage("Coach collegato");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Codice non valido");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onUnlinkCoach = () => {
+    Alert.alert(
+      "Rimuovi coach",
+      "Le schede assegnate dal coach verranno revocate. Potrai collegarne un altro dopo.",
+      [
+        { text: "Annulla", style: "cancel" },
+        {
+          text: "Rimuovi",
+          style: "destructive",
+          onPress: () => {
+            void (async () => {
+              setBusy(true);
+              setError(null);
+              try {
+                await unlinkAthleteCoach();
+                setCoach(null);
+                setMessage("Coach rimosso");
+              } catch (err) {
+                setError(
+                  err instanceof ApiError ? err.message : "Scollegamento fallito",
+                );
+              } finally {
+                setBusy(false);
+              }
+            })();
+          },
+        },
+      ],
+    );
+  };
+
   const onLogout = async () => {
     await logout();
     router.replace("/(auth)/login");
@@ -81,6 +156,40 @@ export default function SettingsScreen() {
               {message}
             </AppText>
           ) : null}
+
+          <View style={styles.block}>
+            <SectionLabel>COACH</SectionLabel>
+            {coach ? (
+              <>
+                <Body>
+                  Collegato a {coach.name?.trim() || coach.email}
+                </Body>
+                <SecondaryButton
+                  label="Rimuovi coach"
+                  onPress={onUnlinkCoach}
+                  disabled={busy}
+                />
+              </>
+            ) : (
+              <>
+                <Body>
+                  Inserisci il codice invito del tuo coach per collegarti.
+                </Body>
+                <Field
+                  placeholder="Codice invito"
+                  value={inviteCode}
+                  onChangeText={setInviteCode}
+                  autoCapitalize="characters"
+                  autoCorrect={false}
+                />
+                <PrimaryButton
+                  label="Collega coach"
+                  onPress={() => void onLinkCoach()}
+                  disabled={busy || inviteCode.trim().length < 4}
+                />
+              </>
+            )}
+          </View>
 
           <View style={styles.block}>
             <SectionLabel>PROFILO</SectionLabel>
@@ -131,6 +240,6 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   content: { padding: spacing.lg, paddingBottom: spacing.xl },
-  block: { marginTop: spacing.lg },
+  block: { marginTop: spacing.lg, gap: spacing.sm },
   ok: { marginVertical: spacing.sm },
 });
