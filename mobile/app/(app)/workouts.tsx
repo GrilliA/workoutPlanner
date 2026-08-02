@@ -11,17 +11,20 @@ import {
 } from "../../src/api";
 import { useAuth } from "../../src/auth";
 import {
+  AppText,
   Body,
   Card,
   ErrorBanner,
+  Eyebrow,
   Heading,
   LoadingBlock,
   Meta,
   PrimaryButton,
   Screen,
   SecondaryButton,
+  SectionLabel,
 } from "../../src/components";
-import { spacing } from "../../src/theme";
+import { colors, spacing } from "../../src/theme";
 
 const isSelfProgram = (workout: Workout, userId: number) =>
   workout.createdByUserId == null || workout.createdByUserId === userId;
@@ -133,16 +136,12 @@ export default function WorkoutsScreen() {
           />
         ) : null}
 
-        <PrimaryButton
-          label="Crea scheda"
-          onPress={() => router.push("/workout/new")}
-          disabled={busy}
-        />
-
         {assignment ? (
-          <Card style={styles.card}>
-            <Meta>PROGRAMMA COACH (PRIORITÀ)</Meta>
-            <Heading>{assignment.workoutName}</Heading>
+          <Card highlight style={styles.card}>
+            <Eyebrow>PROGRAMMA COACH · PRIORITÀ</Eyebrow>
+            <AppText tone="heading" style={styles.cardTitle}>
+              {assignment.workoutName}
+            </AppText>
             <Meta>
               Valida dal {assignment.startsAt} al {assignment.expiresAt}
             </Meta>
@@ -161,6 +160,14 @@ export default function WorkoutsScreen() {
           </Card>
         ) : null}
 
+        <SectionLabel>SCHEDE PERSONALI</SectionLabel>
+
+        <PrimaryButton
+          label="Crea scheda"
+          onPress={() => router.push("/workout/new")}
+          disabled={busy}
+        />
+
         {selfWorkouts.length === 0 ? (
           <Body>Nessuna scheda personale ancora.</Body>
         ) : (
@@ -168,10 +175,17 @@ export default function WorkoutsScreen() {
             <Pressable
               key={item.id}
               onPress={() => router.push(`/workout/${item.id}`)}
+              style={({ pressed }) => pressed && styles.cardPressed}
             >
               <Card style={styles.card}>
-                <Meta>{item.isActive ? "ATTIVA" : "DISATTIVA"}</Meta>
-                <Heading>{item.name}</Heading>
+                {item.isActive ? (
+                  <Eyebrow>ATTIVA</Eyebrow>
+                ) : (
+                  <Meta style={styles.inactiveLabel}>DISATTIVA</Meta>
+                )}
+                <AppText tone="heading" style={styles.cardTitle}>
+                  {item.name}
+                </AppText>
                 <Meta>
                   {item.exerciseCount} esercizi · {item.frequency}
                   {assignment ? " · in pausa (coach attivo)" : ""}
@@ -189,8 +203,26 @@ const styles = StyleSheet.create({
   list: {
     padding: spacing.lg,
     paddingBottom: spacing.xl,
+    gap: spacing.md,
+  },
+  card: {
     gap: spacing.sm,
   },
-  card: { gap: spacing.xs },
-  actions: { marginTop: spacing.sm },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    lineHeight: 22,
+  },
+  cardPressed: {
+    opacity: 0.75,
+  },
+  inactiveLabel: {
+    fontWeight: "700",
+    letterSpacing: 1,
+    fontSize: 12,
+    color: colors.muted,
+  },
+  actions: {
+    marginTop: spacing.xs,
+  },
 });

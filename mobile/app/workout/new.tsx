@@ -3,7 +3,6 @@ import { useMemo, useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   Share,
   StyleSheet,
@@ -14,11 +13,11 @@ import { ApiError } from "../../src/api/client";
 import { saveWorkoutProgram } from "../../src/api";
 import {
   AppText,
+  BackHeader,
   Body,
   ErrorBanner,
   Field,
   Heading,
-  Meta,
   PrimaryButton,
   Screen,
   SecondaryButton,
@@ -132,10 +131,8 @@ export default function NewWorkoutScreen() {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={styles.flex}
       >
+        <BackHeader onPress={() => router.back()} />
         <ScrollView contentContainerStyle={styles.content}>
-          <Pressable onPress={() => router.back()}>
-            <Meta>← Indietro</Meta>
-          </Pressable>
           <Heading>Nuova scheda</Heading>
 
           {error ? <ErrorBanner message={error} /> : null}
