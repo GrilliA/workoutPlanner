@@ -29,7 +29,7 @@ cd mobile && npm run typecheck
 
 - `be/.env` credentials: `postgres:postgres` (must match `docker-compose.yml`)
 - Frontend web calls relative `/api/...` URLs; Vite proxies in dev
-- **Native app** (`mobile/`): absolute API URL via `EXPO_PUBLIC_API_URL` (see `mobile/.env.example`). Simulator: `http://127.0.0.1:3005/api`; physical device: LAN IP of the host. Auth uses header `X-Client: mobile` + SecureStore refresh token (web keeps httpOnly cookies).
+- **Native app** (`mobile/`): API base hardcoded to Railway production in `mobile/src/api/config.ts` (iOS / Android / Expo Go / EAS). Auth uses header `X-Client: mobile` + SecureStore refresh token (web keeps httpOnly cookies).
 - UI copy in **Italian** (reference: TRACCIA Figma dashboard)
 - Project log and roadmap: `WORKBOOK.md`
 - Mobile onboarding / glossary: [`mobile/README.md`](mobile/README.md)

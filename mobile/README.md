@@ -30,7 +30,8 @@ Mischiare RN dentro `fe/` mescolerebbe due toolchain. Per questo è una sibling 
 | CSS / `style.css` | `StyleSheet.create({ ... })` |
 | `className` | `style={styles.foo}` |
 | Vite `import.meta.env.VITE_*` | `process.env.EXPO_PUBLIC_*` |
-| Proxy `/api` in dev | URL assoluto (`EXPO_PUBLIC_API_URL`) |
+| Proxy `/api` in dev | URL assoluto hardcoded (Railway prod) |
+
 | `localStorage` / cookie | `expo-secure-store` (refresh) + memoria (access JWT) |
 | Capacitor plugins | Moduli Expo (`expo-notifications`, `expo-haptics`, …) |
 
@@ -40,22 +41,17 @@ React (hooks, componenti funzione, stato) è lo stesso. Cambia il “DOM”.
 
 ## Come avviare
 
-Prerequisiti: **Node ≥ 22**, backend su porta `3005`, Postgres up.
+Prerequisiti: **Node ≥ 22**. L’app mobile punta **sempre** all’API di produzione (Railway); non serve il backend locale.
 
 ```bash
-# terminale 1 — API
-cd be && npm run dev
-
-# terminale 2 — app
 cd mobile
-cp .env.example .env   # se non c’è già
 npm start              # Expo Dev Tools
 ```
 
 Poi:
 - **iOS Simulator**: premi `i` (macOS + Xcode)
 - **Android Emulator**: premi `a`
-- **Device fisico**: Expo Go + stesso Wi‑Fi; in `.env` metti l’IP LAN della macchina, es. `EXPO_PUBLIC_API_URL=http://192.168.1.20:3005/api` (non `127.0.0.1` sul telefono)
+- **Device fisico**: Expo Go (stesso account Expo) oppure APK da EAS `preview`
 
 Typecheck:
 
@@ -81,7 +77,7 @@ mobile/
 │   ├── components/      # UI primitives RN
 │   └── theme/           # colori / spacing
 ├── app.json             # config Expo (nome, bundle id, plugin)
-├── .env.example         # EXPO_PUBLIC_API_URL
+├── .env.example         # nota: API base hardcoded in src/api/config.ts
 └── README.md            # questo file
 ```
 
@@ -105,6 +101,11 @@ Senza questo pezzo, chiudendo l’app perderesti la sessione.
 ---
 
 ## Cosa abbiamo fatto / Perché
+
+### 2026-08-02 — API sempre in produzione
+
+- **Cosa:** `API_BASE` hardcoded su Railway; niente override via `.env` / `EXPO_PUBLIC_API_URL`.
+- **Perché:** su device/Expo Go `127.0.0.1` punta al telefono e fallisce il login; allineiamo iOS, Android e build EAS sulla stessa API.
 
 ### 2026-07-31 — Sessione Focus mode
 
