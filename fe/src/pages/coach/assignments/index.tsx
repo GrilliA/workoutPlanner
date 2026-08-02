@@ -22,16 +22,24 @@ export default function AssignmentsPage() {
   const [error, setError] = useState<string | null>(null);
   const [revokingId, setRevokingId] = useState<number | null>(null);
 
-  const load = async () => {
-    try {
-      setAssignments(await getCoachAssignments());
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Errore caricamento");
-    }
-  };
-
   useEffect(() => {
-    void load();
+    let cancelled = false;
+
+    void getCoachAssignments()
+      .then((data) => {
+        if (!cancelled) {
+          setAssignments(data);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(err instanceof ApiError ? err.message : "Errore caricamento");
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleRevoke = async (id: number) => {
@@ -40,7 +48,7 @@ export default function AssignmentsPage() {
 
     try {
       await revokeCoachAssignment(id);
-      await load();
+      setAssignments(await getCoachAssignments());
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Revoca fallita");
     } finally {

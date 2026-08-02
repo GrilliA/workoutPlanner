@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { ApiError, getCoachInviteCode, rotateCoachInviteCode } from "@api";
 import { AppShell } from "@components/appshell";
 import { Button } from "@components/button";
@@ -11,22 +11,25 @@ export default function InviteClientPage() {
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  const load = useCallback(async () => {
-    const invite = await getCoachInviteCode();
-    setCode(invite.code);
-  }, []);
-
   useEffect(() => {
     let cancelled = false;
-    void load().catch((err) => {
-      if (!cancelled) {
-        setError(err instanceof ApiError ? err.message : "Errore caricamento codice");
-      }
-    });
+
+    void getCoachInviteCode()
+      .then((invite) => {
+        if (!cancelled) {
+          setCode(invite.code);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(err instanceof ApiError ? err.message : "Errore caricamento codice");
+        }
+      });
+
     return () => {
       cancelled = true;
     };
-  }, [load]);
+  }, []);
 
   const handleCopy = async () => {
     if (!code) return;

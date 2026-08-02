@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Link, useLocation, useRoute } from "wouter";
 import {
   ApiError,
@@ -59,33 +59,38 @@ export default function ClientDetailPage() {
   const [unlinking, setUnlinking] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
+  useEffect(() => {
     if (!Number.isInteger(athleteId) || athleteId < 1) {
       return;
     }
 
-    const data = await getCoachClient(athleteId);
-    setClient(data.client);
-    setAssignments(data.assignments);
-    setRecentSessions(data.recentSessions);
-    setDrafts(
-      Object.fromEntries(data.assignments.map((assignment) => [assignment.id, toDraft(assignment)])),
-    );
-  }, [athleteId]);
-
-  useEffect(() => {
     let cancelled = false;
 
-    void load().catch((err) => {
-      if (!cancelled) {
-        setError(err instanceof ApiError ? err.message : "Errore caricamento");
-      }
-    });
+    void getCoachClient(athleteId)
+      .then((data) => {
+        if (cancelled) {
+          return;
+        }
+
+        setClient(data.client);
+        setAssignments(data.assignments);
+        setRecentSessions(data.recentSessions);
+        setDrafts(
+          Object.fromEntries(
+            data.assignments.map((assignment) => [assignment.id, toDraft(assignment)]),
+          ),
+        );
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(err instanceof ApiError ? err.message : "Errore caricamento");
+        }
+      });
 
     return () => {
       cancelled = true;
     };
-  }, [load]);
+  }, [athleteId]);
 
   const handleResetPassword = async (event: FormEvent) => {
     event.preventDefault();

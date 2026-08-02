@@ -82,7 +82,9 @@ export function useWorkoutForm(
 ) {
   const [, setLocation] = useLocation();
   const adaptersRef = useRef(adapters);
-  adaptersRef.current = adapters;
+  useEffect(() => {
+    adaptersRef.current = adapters;
+  });
   const initialDay = createDefaultWorkoutDay();
   const [name, setName] = useState("");
   const [days, setDays] = useState<DraftWorkoutDay[]>([initialDay]);
