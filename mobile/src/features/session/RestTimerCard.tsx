@@ -9,8 +9,6 @@ type RestTimerCardProps = {
   onSkip: () => void;
 };
 
-/** Approx card height incl. margins — collapse senza jump sulla lista. */
-const CARD_HEIGHT = 200;
 const DONE_HOLD_MS = 350;
 
 const formatCountdown = (remainingSec: number): string => {
@@ -24,21 +22,20 @@ const formatCountdown = (remainingSec: number): string => {
   return `${seconds}s`;
 };
 
-function collapse(
+function fadeOut(
   progress: Animated.Value,
-  onDone: () => void,
   delay = 0,
 ): Animated.CompositeAnimation {
   return Animated.timing(progress, {
     toValue: 0,
-    duration: 260,
+    duration: 220,
     delay,
     easing: Easing.in(Easing.cubic),
-    useNativeDriver: false,
+    useNativeDriver: true,
   });
 }
 
-/** Card recupero: compare/scompare con collapse altezza (niente jump sulla lista). */
+/** Sticky chrome recupero: idle = nessun spazio; running/done a altezza naturale. */
 export function RestTimerCard({
   status,
   remainingSec,
@@ -57,7 +54,7 @@ export function RestTimerCard({
         toValue: 1,
         duration: 220,
         easing: Easing.out(Easing.cubic),
-        useNativeDriver: false,
+        useNativeDriver: true,
       });
       activeAnim.current.start();
       return;
@@ -65,7 +62,7 @@ export function RestTimerCard({
 
     if (status === "done") {
       setMounted(true);
-      activeAnim.current = collapse(progress, () => setMounted(false), DONE_HOLD_MS);
+      activeAnim.current = fadeOut(progress, DONE_HOLD_MS);
       activeAnim.current.start(({ finished }) => {
         if (finished) {
           setMounted(false);
@@ -74,8 +71,8 @@ export function RestTimerCard({
       return;
     }
 
-    // idle (skip / cancel): collapse subito se ancora montata
-    activeAnim.current = collapse(progress, () => setMounted(false));
+    // idle (skip / cancel): fade subito se ancora montata
+    activeAnim.current = fadeOut(progress);
     activeAnim.current.start(({ finished }) => {
       if (finished) {
         setMounted(false);
@@ -92,20 +89,7 @@ export function RestTimerCard({
 
   return (
     <Animated.View
-      style={[
-        styles.shell,
-        {
-          opacity: progress,
-          maxHeight: progress.interpolate({
-            inputRange: [0, 1],
-            outputRange: [0, CARD_HEIGHT],
-          }),
-          marginVertical: progress.interpolate({
-            inputRange: [0, 1],
-            outputRange: [0, spacing.sm],
-          }),
-        },
-      ]}
+      style={[styles.shell, { opacity: progress }]}
       pointerEvents={showSkip ? "auto" : "none"}
     >
       <View style={[styles.timer, isDone && styles.timerDone]}>
@@ -146,9 +130,6 @@ export function RestTimerCard({
 const styles = StyleSheet.create({
   shell: {
     width: "100%",
-    overflow: "hidden",
-    // Full-bleed rispetto al padding pagina (Focus mode).
-    marginHorizontal: -spacing.lg,
     alignSelf: "stretch",
   },
   timer: {
@@ -164,7 +145,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: spacing.sm,
-    minHeight: 172,
     width: "100%",
   },
   timerDone: {

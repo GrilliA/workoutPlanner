@@ -24,6 +24,8 @@ type ExerciseCardProps = {
   sets: LoggedSet[];
   resting: boolean;
   readOnly: boolean;
+  /** Disables log/undo/edit while a set mutation is in flight. */
+  busy?: boolean;
   weight: string;
   reps: string;
   onChangeWeight: (value: string) => void;
@@ -74,6 +76,7 @@ export function ExerciseCard({
   sets,
   resting,
   readOnly,
+  busy = false,
   weight,
   reps,
   onChangeWeight,
@@ -92,10 +95,15 @@ export function ExerciseCard({
   const complete = isExerciseComplete(exercise, sets.length);
   const nextSetNumber = sets.length + 1;
   const targetReps = getTargetRepsForSet(exercise, nextSetNumber);
+  const locked = readOnly || busy;
   const canLog = !readOnly && !complete;
   const canUndo = !readOnly && sets.length > 0 && editDraft === null;
+  const actionsDisabled = busy;
 
   const startEdit = (field: EditingField) => {
+    if (actionsDisabled) {
+      return;
+    }
     setEditing(field);
     requestAnimationFrame(() => {
       if (field === "weight") {
@@ -107,17 +115,23 @@ export function ExerciseCard({
   };
 
   const onStepWeight = (direction: 1 | -1) => {
+    if (actionsDisabled) {
+      return;
+    }
     void tickHaptic();
     onChangeWeight(stepWeightKg(weight, direction));
   };
 
   const onStepReps = (direction: 1 | -1) => {
+    if (actionsDisabled) {
+      return;
+    }
     void tickHaptic();
     onChangeReps(stepReps(reps, direction));
   };
 
   const openSetEditor = (logged: LoggedSet) => {
-    if (readOnly) {
+    if (locked) {
       return;
     }
     setEditDraft({
@@ -129,7 +143,7 @@ export function ExerciseCard({
   };
 
   const saveSetEditor = () => {
-    if (!editDraft) {
+    if (!editDraft || actionsDisabled) {
       return;
     }
 
@@ -180,13 +194,13 @@ export function ExerciseCard({
                     openSetEditor(logged);
                   }
                 }}
-                disabled={readOnly || !logged || editDraft !== null}
+                disabled={locked || !logged || editDraft !== null}
                 style={[
                   styles.chip,
                   logged ? styles.chipDone : styles.chipPending,
                   isNext && styles.chipNext,
                 ]}
-                accessibilityRole={logged && !readOnly ? "button" : "text"}
+                accessibilityRole={logged && !locked ? "button" : "text"}
                 accessibilityLabel={
                   logged
                     ? `Serie ${setNumber}: ${logged.weightKg ?? "—"} kg × ${logged.reps}`
@@ -217,23 +231,23 @@ export function ExerciseCard({
               <Pressable
                 key={setNumber}
                 onPress={() => openSetEditor(logged)}
-                disabled={readOnly || editDraft !== null}
-                accessibilityRole={readOnly ? "text" : "button"}
+                disabled={locked || editDraft !== null}
+                accessibilityRole={locked ? "text" : "button"}
                 accessibilityLabel={
-                  readOnly
+                  locked
                     ? `Serie ${setNumber}: ${logged.weightKg ?? "—"} kg per ${logged.reps} reps`
                     : `Modifica serie ${setNumber}`
                 }
                 style={({ pressed }) => [
                   styles.setLinePressable,
-                  pressed && !readOnly && styles.setLinePressed,
+                  pressed && !locked && styles.setLinePressed,
                 ]}
               >
                 <AppText style={styles.setLine}>
                   #{setNumber}: {logged.weightKg ?? "—"} kg × {logged.reps}{" "}
                   <AppText tone="muted">(piano {plannedReps})</AppText>
                 </AppText>
-                {!readOnly ? (
+                {!locked ? (
                   <Meta style={styles.editHint}>tocca per modificare</Meta>
                 ) : null}
               </Pressable>
@@ -326,6 +340,7 @@ export function ExerciseCard({
           <View style={styles.editActions}>
             <Pressable
               onPress={() => setEditDraft(null)}
+              disabled={actionsDisabled}
               style={styles.textAction}
               accessibilityRole="button"
               accessibilityLabel="Annulla modifica"
@@ -334,7 +349,8 @@ export function ExerciseCard({
             </Pressable>
             <Pressable
               onPress={saveSetEditor}
-              style={styles.saveEditBtn}
+              disabled={actionsDisabled}
+              style={[styles.saveEditBtn, actionsDisabled && styles.logBtnPressed]}
               accessibilityRole="button"
               accessibilityLabel={`Salva serie ${editDraft.setNumber}`}
             >
@@ -386,10 +402,12 @@ export function ExerciseCard({
           <Pressable
             style={({ pressed }) => [
               styles.logBtn,
-              pressed && styles.logBtnPressed,
+              (pressed || actionsDisabled) && styles.logBtnPressed,
             ]}
             onPress={onLog}
+            disabled={actionsDisabled}
             accessibilityRole="button"
+            accessibilityState={{ disabled: actionsDisabled }}
             accessibilityLabel={`Logga serie ${nextSetNumber}: ${weight || "senza peso"} kg per ${reps || targetReps} reps`}
           >
             <AppText style={styles.logBtnLabel}>
@@ -410,9 +428,11 @@ export function ExerciseCard({
       {canUndo ? (
         <Pressable
           onPress={onUndoLast}
-          style={styles.textAction}
+          disabled={actionsDisabled}
+          style={[styles.textAction, actionsDisabled && styles.actionDisabled]}
           accessibilityRole="button"
           accessibilityLabel="Annulla ultima serie"
+          accessibilityState={{ disabled: actionsDisabled }}
         >
           <Meta style={styles.undoLabel}>Annulla ultima serie</Meta>
         </Pressable>
@@ -638,6 +658,9 @@ const styles = StyleSheet.create({
   textAction: {
     alignSelf: "flex-start",
     paddingVertical: spacing.xs,
+  },
+  actionDisabled: {
+    opacity: 0.5,
   },
   undoLabel: {
     color: colors.danger,

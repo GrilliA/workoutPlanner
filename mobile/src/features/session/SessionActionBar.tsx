@@ -22,7 +22,7 @@ export function SessionActionBar({
   const requestAbandon = () => {
     Alert.alert(
       "Abbandonare la sessione?",
-      "Le serie non salvate andranno perse.",
+      "La sessione verrà segnata come abbandonata. Le serie già registrate restano salvate.",
       [
         { text: "Annulla", style: "cancel" },
         {

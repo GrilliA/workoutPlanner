@@ -1,15 +1,23 @@
 import { router, useLocalSearchParams, type Href } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
 import {
   abandonSession,
   completeSession,
+  deleteLoggedSet,
   getExercisesByWorkout,
   getSession,
   getWorkout,
   getWorkoutDayExercises,
+  logSet,
+  patchLoggedSet,
   type Exercise,
-  type LogSetInput,
   type LoggedSet,
   type WorkoutSessionWithSets,
 } from "../../src/api";
@@ -41,42 +49,6 @@ import { SessionFocusHeader } from "../../src/features/session/SessionFocusHeade
 import { useRestTimer } from "../../src/features/session/useRestTimer";
 import { colors, spacing } from "../../src/theme";
 
-let nextLocalSetId = -1;
-
-function createLocalLoggedSet(
-  sessionId: number,
-  exerciseId: number,
-  setNumber: number,
-  reps: number,
-  weightKg: number | null,
-): LoggedSet {
-  const id = nextLocalSetId;
-  nextLocalSetId -= 1;
-
-  return {
-    id,
-    sessionId,
-    exerciseId,
-    setNumber,
-    reps,
-    weightKg,
-    rir: null,
-    tutSec: null,
-    loggedAt: new Date(),
-  };
-}
-
-function toCompleteSetsPayload(sets: LoggedSet[]): LogSetInput[] {
-  return sets.map((set) => ({
-    exerciseId: set.exerciseId,
-    setNumber: set.setNumber,
-    reps: set.reps,
-    weightKg: set.weightKg,
-    rir: set.rir,
-    tutSec: set.tutSec,
-  }));
-}
-
 function toLoggingKey(exerciseId: number, setNumber: number): string {
   return `${exerciseId}:${setNumber}`;
 }
@@ -105,6 +77,10 @@ function firstIncompleteIndex(
   return index >= 0 ? index : 0;
 }
 
+function mutationErrorMessage(err: unknown, fallback: string): string {
+  return err instanceof ApiError ? err.message : fallback;
+}
+
 export default function SessionScreen() {
   const { sessionId: rawId } = useLocalSearchParams<{ sessionId: string }>();
   const sessionId = Number(rawId);
@@ -123,6 +99,7 @@ export default function SessionScreen() {
   >({});
   const [fetchId, setFetchId] = useState(0);
   const [finishing, setFinishing] = useState(false);
+  const [mutating, setMutating] = useState(false);
   const [focusIndex, setFocusIndex] = useState(0);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const loggedKeysRef = useRef(new Set<string>());
@@ -155,11 +132,12 @@ export default function SessionScreen() {
           return;
         }
 
-        loggedKeysRef.current = new Set();
+        const hydratedSets = nextSession.sets;
+        loggedKeysRef.current = new Set(
+          hydratedSets.map((set) => toLoggingKey(set.exerciseId, set.setNumber)),
+        );
 
-        const setsForDefaults =
-          nextSession.status === "in_progress" ? [] : nextSession.sets;
-        const grouped = groupSetsByExercise(setsForDefaults);
+        const grouped = groupSetsByExercise(hydratedSets);
         const nextWeights: Record<number, string> = {};
         const nextReps: Record<number, string> = {};
 
@@ -173,22 +151,13 @@ export default function SessionScreen() {
         }
 
         setSession(nextSession);
-        setLocalSets(
-          nextSession.status === "in_progress" ? [] : nextSession.sets,
-        );
+        setLocalSets(hydratedSets);
         setExercises(nextExercises);
         setWorkoutName(workout.name);
         setDefaultRestSec(workout.defaultRestSec);
         setWeightByExercise(nextWeights);
         setRepsByExercise(nextReps);
-        setFocusIndex(
-          firstIncompleteIndex(
-            nextExercises,
-            groupSetsByExercise(
-              nextSession.status === "in_progress" ? [] : nextSession.sets,
-            ),
-          ),
-        );
+        setFocusIndex(firstIncompleteIndex(nextExercises, grouped));
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof ApiError ? err.message : "Errore caricamento");
@@ -235,6 +204,7 @@ export default function SessionScreen() {
   }
 
   const readOnly = session.status !== "in_progress";
+  const chromeBusy = finishing || mutating;
   const setsByExercise = groupSetsByExercise(localSets);
   const safeFocusIndex = Math.min(
     focusIndex,
@@ -248,8 +218,13 @@ export default function SessionScreen() {
       : "Sessione abbandonata"
     : "Sessione in corso";
 
-  const onLogSet = (exercise: Exercise) => {
-    if (session.status !== "in_progress" || loggingLockRef.current) {
+  const onLogSet = async (exercise: Exercise) => {
+    if (
+      session.status !== "in_progress" ||
+      loggingLockRef.current ||
+      mutating ||
+      finishing
+    ) {
       return;
     }
 
@@ -292,60 +267,63 @@ export default function SessionScreen() {
     setError(null);
     loggingLockRef.current = true;
     loggedKeysRef.current.add(key);
+    setMutating(true);
 
-    const nextLoggedCount = loggedForExercise.length + 1;
-
-    setLocalSets((current) => [
-      ...current,
-      createLocalLoggedSet(
-        session.id,
-        exercise.id,
+    try {
+      const logged = await logSet(session.id, {
+        exerciseId: exercise.id,
         setNumber,
         reps,
         weightKg,
-      ),
-    ]);
-
-    setWeightByExercise((current) => ({
-      ...current,
-      [exercise.id]: weightKg === null ? "" : formatWeightKg(weightKg),
-    }));
-    setRepsByExercise((current) => ({
-      ...current,
-      [exercise.id]: String(getTargetRepsForSet(exercise, setNumber + 1)),
-    }));
-
-    const restSec = getRestSecForSet(exercise, setNumber, defaultRestSec);
-    const exerciseDone = isExerciseComplete(exercise, nextLoggedCount);
-
-    if (restSec > 0 && !exerciseDone) {
-      void timer.start(restSec, exercise.id).catch(() => {
-        // Notifiche possono fallire (permessi): il set resta in buffer locale.
       });
-    }
 
-    if (exerciseDone) {
-      const nextIndex = exercises.findIndex(
-        (item, index) =>
-          index > safeFocusIndex &&
-          !isExerciseComplete(
-            item,
-            (setsByExercise.get(item.id) ?? []).length +
-              (item.id === exercise.id ? 1 : 0),
-          ),
-      );
-      if (nextIndex >= 0) {
-        setFocusIndex(nextIndex);
+      const nextLoggedCount = loggedForExercise.length + 1;
+
+      setLocalSets((current) => [...current, logged]);
+
+      setWeightByExercise((current) => ({
+        ...current,
+        [exercise.id]: weightKg === null ? "" : formatWeightKg(weightKg),
+      }));
+      setRepsByExercise((current) => ({
+        ...current,
+        [exercise.id]: String(getTargetRepsForSet(exercise, setNumber + 1)),
+      }));
+
+      const restSec = getRestSecForSet(exercise, setNumber, defaultRestSec);
+      const exerciseDone = isExerciseComplete(exercise, nextLoggedCount);
+
+      if (restSec > 0 && !exerciseDone) {
+        void timer.start(restSec, exercise.id).catch(() => {
+          // Notifiche possono fallire (permessi): il timer in-app resta comunque.
+        });
       }
-    }
 
-    queueMicrotask(() => {
+      if (exerciseDone) {
+        const nextIndex = exercises.findIndex(
+          (item, index) =>
+            index > safeFocusIndex &&
+            !isExerciseComplete(
+              item,
+              (setsByExercise.get(item.id) ?? []).length +
+                (item.id === exercise.id ? 1 : 0),
+            ),
+        );
+        if (nextIndex >= 0) {
+          setFocusIndex(nextIndex);
+        }
+      }
+    } catch (err) {
+      loggedKeysRef.current.delete(key);
+      setError(mutationErrorMessage(err, "Salvataggio serie non riuscito"));
+    } finally {
       loggingLockRef.current = false;
-    });
+      setMutating(false);
+    }
   };
 
-  const onUndoLastSet = (exercise: Exercise) => {
-    if (session.status !== "in_progress") {
+  const onUndoLastSet = async (exercise: Exercise) => {
+    if (session.status !== "in_progress" || mutating || finishing) {
       return;
     }
 
@@ -355,67 +333,93 @@ export default function SessionScreen() {
       return;
     }
 
-    timer.cancel();
-    loggedKeysRef.current.delete(toLoggingKey(exercise.id, last.setNumber));
-
-    setLocalSets((current) =>
-      current.filter(
-        (set) =>
-          !(set.exerciseId === exercise.id && set.setNumber === last.setNumber),
-      ),
-    );
-
-    setWeightByExercise((current) => ({
-      ...current,
-      [exercise.id]:
-        last.weightKg === null ? "" : formatWeightKg(last.weightKg),
-    }));
-    setRepsByExercise((current) => ({
-      ...current,
-      [exercise.id]: String(last.reps),
-    }));
     setError(null);
+    setMutating(true);
+
+    try {
+      await deleteLoggedSet(session.id, last.id);
+      timer.cancel();
+      loggedKeysRef.current.delete(toLoggingKey(exercise.id, last.setNumber));
+
+      setLocalSets((current) =>
+        current.filter(
+          (set) =>
+            !(
+              set.exerciseId === exercise.id && set.setNumber === last.setNumber
+            ),
+        ),
+      );
+
+      setWeightByExercise((current) => ({
+        ...current,
+        [exercise.id]:
+          last.weightKg === null ? "" : formatWeightKg(last.weightKg),
+      }));
+      setRepsByExercise((current) => ({
+        ...current,
+        [exercise.id]: String(last.reps),
+      }));
+    } catch (err) {
+      setError(mutationErrorMessage(err, "Annullamento serie non riuscito"));
+    } finally {
+      setMutating(false);
+    }
   };
 
-  const onEditSet = (
+  const onEditSet = async (
     exercise: Exercise,
     setNumber: number,
     next: { reps: number; weightKg: number | null },
   ) => {
-    if (session.status !== "in_progress") {
+    if (session.status !== "in_progress" || mutating || finishing) {
       return;
     }
 
-    setLocalSets((current) =>
-      current.map((set) =>
-        set.exerciseId === exercise.id && set.setNumber === setNumber
-          ? { ...set, reps: next.reps, weightKg: next.weightKg }
-          : set,
-      ),
+    const existing = localSets.find(
+      (set) => set.exerciseId === exercise.id && set.setNumber === setNumber,
     );
-
-    const loggedForExercise = setsByExercise.get(exercise.id) ?? [];
-    const isLast =
-      loggedForExercise.length > 0 &&
-      loggedForExercise[loggedForExercise.length - 1]?.setNumber === setNumber;
-
-    if (isLast) {
-      setWeightByExercise((current) => ({
-        ...current,
-        [exercise.id]:
-          next.weightKg === null ? "" : formatWeightKg(next.weightKg),
-      }));
-      setRepsByExercise((current) => ({
-        ...current,
-        [exercise.id]: String(getTargetRepsForSet(exercise, setNumber + 1)),
-      }));
+    if (!existing) {
+      return;
     }
 
     setError(null);
+    setMutating(true);
+
+    try {
+      const updated = await patchLoggedSet(session.id, existing.id, {
+        reps: next.reps,
+        weightKg: next.weightKg,
+      });
+
+      setLocalSets((current) =>
+        current.map((set) => (set.id === updated.id ? updated : set)),
+      );
+
+      const loggedForExercise = setsByExercise.get(exercise.id) ?? [];
+      const isLast =
+        loggedForExercise.length > 0 &&
+        loggedForExercise[loggedForExercise.length - 1]?.setNumber === setNumber;
+
+      if (isLast) {
+        setWeightByExercise((current) => ({
+          ...current,
+          [exercise.id]:
+            next.weightKg === null ? "" : formatWeightKg(next.weightKg),
+        }));
+        setRepsByExercise((current) => ({
+          ...current,
+          [exercise.id]: String(getTargetRepsForSet(exercise, setNumber + 1)),
+        }));
+      }
+    } catch (err) {
+      setError(mutationErrorMessage(err, "Modifica serie non riuscita"));
+    } finally {
+      setMutating(false);
+    }
   };
 
   const finish = async (mode: "complete" | "abandon") => {
-    if (finishing) {
+    if (finishing || mutating) {
       return;
     }
 
@@ -426,12 +430,13 @@ export default function SessionScreen() {
       timer.cancel();
       if (mode === "complete") {
         const completedAt = new Date();
-        await completeSession(session.id, toCompleteSetsPayload(localSets));
+        const volumeKg = computeVolumeKg(localSets);
+        await completeSession(session.id);
         router.replace({
           pathname: "/session/complete",
           params: {
             workoutName,
-            volumeKg: String(computeVolumeKg(localSets)),
+            volumeKg: String(volumeKg),
             durationMin: String(
               computeDurationMin(session.startedAt, completedAt),
             ),
@@ -444,14 +449,24 @@ export default function SessionScreen() {
       router.replace("/(app)");
     } catch (err) {
       setFinishing(false);
-      setError(err instanceof ApiError ? err.message : "Operazione fallita");
+      setError(mutationErrorMessage(err, "Operazione fallita"));
     }
   };
 
   return (
     <Screen padded={false}>
-      <BackHeader onPress={() => router.back()} />
-      <View style={styles.body}>
+      <BackHeader
+        onPress={() => {
+          if (chromeBusy) {
+            return;
+          }
+          router.back();
+        }}
+      />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={styles.body}
+      >
         <ScrollView
           style={styles.scroll}
           contentContainerStyle={[
@@ -495,6 +510,7 @@ export default function SessionScreen() {
                 sets={setsByExercise.get(focusedExercise.id) ?? []}
                 resting={timer.restingExerciseId === focusedExercise.id}
                 readOnly={false}
+                busy={mutating}
                 focus
                 weight={weightByExercise[focusedExercise.id] ?? ""}
                 reps={repsByExercise[focusedExercise.id] ?? ""}
@@ -511,27 +527,23 @@ export default function SessionScreen() {
                   }))
                 }
                 onLog={() => {
-                  onLogSet(focusedExercise);
+                  void onLogSet(focusedExercise);
                 }}
                 onUndoLast={() => {
-                  onUndoLastSet(focusedExercise);
+                  void onUndoLastSet(focusedExercise);
                 }}
                 onEditSet={(setNumber, next) => {
-                  onEditSet(focusedExercise, setNumber, next);
+                  void onEditSet(focusedExercise, setNumber, next);
                 }}
-              />
-
-              <RestTimerCard
-                status={timer.status}
-                remainingSec={timer.remainingSec}
-                onSkip={timer.skip}
               />
 
               {exercises.length > 1 ? (
                 <ExercisePager
                   index={safeFocusIndex}
                   total={exercises.length}
-                  onPrev={() => setFocusIndex((current) => Math.max(0, current - 1))}
+                  onPrev={() =>
+                    setFocusIndex((current) => Math.max(0, current - 1))
+                  }
                   onNext={() =>
                     setFocusIndex((current) =>
                       Math.min(exercises.length - 1, current + 1),
@@ -546,17 +558,24 @@ export default function SessionScreen() {
         </ScrollView>
 
         {!readOnly ? (
-          <SessionActionBar
-            busy={finishing}
-            onComplete={() => {
-              void finish("complete");
-            }}
-            onAbandon={() => {
-              void finish("abandon");
-            }}
-          />
+          <>
+            <RestTimerCard
+              status={timer.status}
+              remainingSec={timer.remainingSec}
+              onSkip={timer.skip}
+            />
+            <SessionActionBar
+              busy={chromeBusy}
+              onComplete={() => {
+                void finish("complete");
+              }}
+              onAbandon={() => {
+                void finish("abandon");
+              }}
+            />
+          </>
         ) : null}
-      </View>
+      </KeyboardAvoidingView>
     </Screen>
   );
 }
