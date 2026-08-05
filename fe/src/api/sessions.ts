@@ -79,11 +79,11 @@ export async function patchSession(
   });
 }
 
+/** Completes session without touching logged sets (omit `sets` in PATCH body). */
 export async function completeSession(
   id: number,
-  sets: LogSetInput[] = [],
 ): Promise<WorkoutSessionWithSets> {
-  return patchSession(id, { status: "completed", sets });
+  return patchSession(id, { status: "completed" });
 }
 
 export async function abandonSession(id: number): Promise<WorkoutSessionWithSets> {

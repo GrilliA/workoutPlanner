@@ -31,6 +31,8 @@ export const workoutSettingsSchema = z.object({
 
 export const workoutSchema = z.object({
   id: z.number(),
+  userId: z.number().optional(),
+  createdByUserId: z.number().nullable().optional(),
   name: z.string(),
   defaultRestSec: z.number(),
   workoutType: z.string(),
