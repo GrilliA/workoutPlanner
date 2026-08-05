@@ -67,19 +67,28 @@ export default function StatsScreen() {
         ) : null}
 
         <View style={styles.grid}>
-          <StatCard label="Volume (kg)" value={String(stats?.volumeKg ?? "—")} />
           <StatCard
-            label="Sessioni"
+            label="VOLUME"
+            value={String(stats?.volumeKg ?? "—")}
+            unit="KG"
+          />
+          <StatCard
+            label="SESSIONI"
             value={String(stats?.totalSessions ?? "—")}
           />
-          <StatCard label="Streak" value={String(stats?.streakDays ?? "—")} />
           <StatCard
-            label="Media vol."
+            label="STREAK"
+            value={String(stats?.streakDays ?? "—")}
+            unit="GG"
+          />
+          <StatCard
+            label="MEDIA VOL."
             value={
               stats?.averageSessionVolumeKg != null
                 ? String(Math.round(stats.averageSessionVolumeKg))
                 : "—"
             }
+            unit="KG"
           />
         </View>
 

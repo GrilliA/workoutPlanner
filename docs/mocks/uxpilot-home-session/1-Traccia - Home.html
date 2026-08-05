@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <script>
+        window.FontAwesomeConfig = {
+          autoReplaceSvg: 'nest'
+        };
+      </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - Traccia</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            bg: '#1D1F25',
+                            surface: '#252830',
+                            elevated: '#2C3038',
+                            border: 'rgba(224, 224, 224, 0.12)',
+                            accent: '#C7F464',
+                            accentSoft: 'rgba(199, 244, 100, 0.12)',
+                            accentBorder: 'rgba(199, 244, 100, 0.40)',
+                            textHeading: '#E0E0E0',
+                            textBody: '#AAAAAA',
+                            muted: '#666666',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Roboto', 'sans-serif'],
+                    },
+                    borderRadius: {
+                        'button': '4px',
+                        'card': '12px',
+                    },
+                    boxShadow: {
+                        'premium': 'rgba(0,0,0,0.45) 0 12px 24px -6px, rgba(0,0,0,0.3) 0 4px 8px -2px',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #1D1F25;
+            color: #AAAAAA;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .today-card-glow {
+            background: radial-gradient(circle at top right, rgba(199, 244, 100, 0.08), transparent 70%);
+        }
+        .active-day {
+            background-color: rgba(199, 244, 100, 0.12);
+            border: 1px solid rgba(199, 244, 100, 0.40);
+        }
+        .workout-day {
+            border: 1px solid rgba(199, 244, 100, 0.20);
+        }
+    </style>
+</head>
+<body class="font-sans antialiased pb-24">
+
+    <!-- Header / Top Bar -->
+    <header id="header" class="px-4 pt-6 pb-2 flex justify-between items-center">
+        <div>
+            <p class="text-brand-accent text-[12px] font-bold uppercase tracking-[1px] mb-1">BENTORNATO</p>
+            <h1 class="text-brand-textHeading text-2xl font-bold">Marco Rossi</h1>
+        </div>
+        <div class="w-10 h-10 rounded-full border border-brand-border overflow-hidden">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" alt="Profile" class="w-full h-full object-cover">
+        </div>
+    </header>
+
+    <!-- Week Strip -->
+    <section id="week-strip" class="px-4 py-4">
+        <div class="grid grid-cols-7 gap-2">
+            <div class="flex flex-col items-center py-3 rounded-card border border-brand-border opacity-50">
+                <span class="text-[10px] font-bold uppercase mb-1">LUN</span>
+                <span class="text-sm font-bold text-brand-textHeading">12</span>
+            </div>
+            <div class="flex flex-col items-center py-3 rounded-card workout-day">
+                <span class="text-[10px] font-bold uppercase mb-1">MAR</span>
+                <span class="text-sm font-bold text-brand-textHeading">13</span>
+                <div class="w-1 h-1 rounded-full bg-brand-accent mt-1"></div>
+            </div>
+            <div class="flex flex-col items-center py-3 rounded-card border border-brand-border opacity-50">
+                <span class="text-[10px] font-bold uppercase mb-1">MER</span>
+                <span class="text-sm font-bold text-brand-textHeading">14</span>
+            </div>
+            <div class="flex flex-col items-center py-3 rounded-card active-day">
+                <span class="text-[10px] font-bold uppercase mb-1 text-brand-accent">GIO</span>
+                <span class="text-sm font-bold text-brand-textHeading">15</span>
+            </div>
+            <div class="flex flex-col items-center py-3 rounded-card border border-brand-border">
+                <span class="text-[10px] font-bold uppercase mb-1">VEN</span>
+                <span class="text-sm font-bold text-brand-textHeading">16</span>
+            </div>
+            <div class="flex flex-col items-center py-3 rounded-card workout-day">
+                <span class="text-[10px] font-bold uppercase mb-1">SAB</span>
+                <span class="text-sm font-bold text-brand-textHeading">17</span>
+                <div class="w-1 h-1 rounded-full bg-brand-accent mt-1"></div>
+            </div>
+            <div class="flex flex-col items-center py-3 rounded-card border border-brand-border">
+                <span class="text-[10px] font-bold uppercase mb-1">DOM</span>
+                <span class="text-sm font-bold text-brand-textHeading">18</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Today Card -->
+    <section id="today-workout" class="px-4 py-4">
+        <div class="bg-brand-elevated rounded-card border border-brand-accentBorder today-card-glow shadow-premium p-5">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <p class="text-brand-accent text-[12px] font-bold uppercase tracking-[1px] mb-1">OGGI • 15 OTTOBRE</p>
+                    <h2 class="text-brand-textHeading text-2xl font-bold">Push Day A</h2>
+                </div>
+                <div class="px-2 py-1 bg-brand-accentSoft border border-brand-accentBorder rounded-full">
+                    <span class="text-brand-accent text-[10px] font-bold uppercase">FORZA</span>
+                </div>
+            </div>
+            
+            <div class="flex gap-4 mb-6">
+                <div class="flex items-center gap-2">
+                    <i class="fa-regular fa-clock text-brand-muted text-xs"></i>
+                    <span class="text-xs text-brand-textBody">75 min</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-dumbbell text-brand-muted text-xs"></i>
+                    <span class="text-xs text-brand-textBody">6 Esercizi</span>
+                </div>
+            </div>
+
+            <button class="w-full bg-brand-accent text-[#111111] font-bold py-4 rounded-button transition-opacity active:opacity-80">
+                AVVIA WORKOUT
+            </button>
+        </div>
+    </section>
+
+    <!-- Stats Grid -->
+    <section id="quick-stats" class="px-4 py-4">
+        <div class="grid grid-cols-2 gap-4">
+            <div class="bg-brand-surface border border-brand-border rounded-card p-4">
+                <p class="text-brand-muted text-[10px] font-bold uppercase mb-1 tracking-wider">VOLUME TOTALE</p>
+                <div class="flex items-baseline gap-1">
+                    <span class="text-brand-textHeading text-xl font-bold">12.450</span>
+                    <span class="text-brand-muted text-[10px]">KG</span>
+                </div>
+                <div class="flex items-center gap-1 mt-1">
+                    <i class="fa-solid fa-arrow-trend-up text-brand-accent text-[10px]"></i>
+                    <span class="text-brand-accent text-[10px] font-bold">+12%</span>
+                </div>
+            </div>
+            <div class="bg-brand-surface border border-brand-border rounded-card p-4">
+                <p class="text-brand-muted text-[10px] font-bold uppercase mb-1 tracking-wider">FREQUENZA</p>
+                <div class="flex items-baseline gap-1">
+                    <span class="text-brand-textHeading text-xl font-bold">4.2</span>
+                    <span class="text-brand-muted text-[10px]">/SETT</span>
+                </div>
+                <div class="flex items-center gap-1 mt-1 text-brand-muted">
+                    <span class="text-[10px] font-bold">STABILE</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Recent Workouts -->
+    <section id="recent-workouts" class="px-4 py-4">
+        <div class="flex justify-between items-end mb-4">
+            <h3 class="text-brand-textHeading font-bold">Ultimi Allenamenti</h3>
+            <a href="#" class="text-brand-accent text-[12px] font-bold uppercase tracking-wider">Vedi tutti</a>
+        </div>
+        
+        <div class="space-y-3">
+            <!-- Workout Item -->
+            <div class="flex items-center gap-4 bg-brand-surface border border-brand-border rounded-card p-3">
+                <div class="w-12 h-12 rounded-lg bg-brand-elevated flex items-center justify-center border border-brand-border">
+                    <i class="fa-solid fa-person-running text-brand-accent text-xl"></i>
+                </div>
+                <div class="flex-1">
+                    <h4 class="text-brand-textHeading font-bold text-sm">Pull Day (Focus Schiena)</h4>
+                    <p class="text-brand-muted text-[11px] mt-0.5">13 Ottobre • 68 min</p>
+                </div>
+                <div class="text-right">
+                    <span class="text-brand-textHeading font-bold text-sm">8.9k kg</span>
+                </div>
+            </div>
+
+            <!-- Workout Item -->
+            <div class="flex items-center gap-4 bg-brand-surface border border-brand-border rounded-card p-3">
+                <div class="w-12 h-12 rounded-lg bg-brand-elevated flex items-center justify-center border border-brand-border">
+                    <i class="fa-solid fa-person-running text-brand-accent text-xl"></i>
+                </div>
+                <div class="flex-1">
+                    <h4 class="text-brand-textHeading font-bold text-sm">Leg Day B (Quad focus)</h4>
+                    <p class="text-brand-muted text-[11px] mt-0.5">11 Ottobre • 82 min</p>
+                </div>
+                <div class="text-right">
+                    <span class="text-brand-textHeading font-bold text-sm">14.2k kg</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Bottom Navigation -->
+    <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 bg-brand-surface border-t border-brand-border px-6 py-3 flex justify-between items-center z-50">
+        <a href="#" class="flex flex-col items-center gap-1 text-brand-accent">
+            <i class="fa-solid fa-house text-lg"></i>
+            <span class="text-[10px] font-bold uppercase">Home</span>
+        </a>
+        <a href="#" class="flex flex-col items-center gap-1 text-brand-muted">
+            <i class="fa-solid fa-chart-line text-lg"></i>
+            <span class="text-[10px] font-bold uppercase">Progressi</span>
+        </a>
+        <div class="mb-6">
+            <button class="w-14 h-14 bg-brand-accent text-[#111111] rounded-full flex items-center justify-center shadow-lg border-4 border-brand-bg">
+                <i class="fa-solid fa-plus text-xl"></i>
+            </button>
+        </div>
+        <a href="#" class="flex flex-col items-center gap-1 text-brand-muted">
+            <i class="fa-solid fa-dumbbell text-lg"></i>
+            <span class="text-[10px] font-bold uppercase">Schede</span>
+        </a>
+        <a href="#" class="flex flex-col items-center gap-1 text-brand-muted">
+            <i class="fa-solid fa-user text-lg"></i>
+            <span class="text-[10px] font-bold uppercase">Profilo</span>
+        </a>
+    </nav>
+
+</body>
+</html>

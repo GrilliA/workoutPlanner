@@ -43,6 +43,7 @@ How to use:
 
 ## What we did
 
+- 2026-08-04 — U1 mobile Home density (UX Pilot): WeekStrip 7 giorni, TodayCard densità + badge, KPI 2-up da `/stats`, recent con volume; mock HTML in `docs/mocks/uxpilot-home-session/`.
 - 2026-08-02 — A3 athlete dual-mode: mobile self-register; invite codes (generate/redeem/unlink, 1 coach); self vs coach program permissions; session priority on active coach assignment (revoke by athlete or coach); mobile create (DIY + AI TXT prompt); coach client detail shows session history.
 - 2026-07-30 — Assignment lifecycle: sync `isActive` ↔ assignment status/dates, session start gate per atleta, assign program/TXT in transazione, migration `0006` cleanup programmi legacy; doc `fe/src/pages/ATHLETE_WEB_DEPRECATED.md`.
 - 2026-07-30 — Parser TXT: weekday sequenziali Lun→Dom per ordine giorno quando assenti nel testo.
@@ -149,5 +150,6 @@ Merge **in order** (stacked branches). Each PR is one concern.
 - [ ] Route `/forgot-password` (link già presente in login).
 - [ ] (Later) Cleanup PR: rimuovere pagine web atleta orfane (`home/`, `sessions/`, `stats/`, …); tenere solo `workouts/new` condiviso col coach.
 - [ ] (Later) Optional wger IT names or user custom exercises on top of B5.
-- [ ] (Later) Mobile: polish UI atleta vs Figma (execute/log only — niente create/edit programmi).
+- [ ] Mobile UI vs UX Pilot: U2 Active Session density; U3 Coach Dashboard density (web).
+- [ ] (Later) Mobile: polish restante atleta vs mock (override DayPicker su WeekStrip, empty states).
 - [ ] (Later) Extract `packages/shared` if Zod/API copy between `fe` and `mobile` hurts.

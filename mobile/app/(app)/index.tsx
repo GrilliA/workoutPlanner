@@ -4,15 +4,18 @@ import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-n
 import { ApiError } from "../../src/api/client";
 import {
   getActiveAssignment,
-  getWorkouts,
   getSessions,
+  getStats,
+  getWorkoutDayExercises,
   getWorkoutDays,
   getWorkoutScheduleToday,
+  getWorkouts,
   startSession,
   type ActiveAssignment,
+  type UserStats,
   type Workout,
   type WorkoutDay,
-  type WorkoutSessionSummary,
+  type WorkoutSchedule,
 } from "../../src/api";
 import { useAuth } from "../../src/auth";
 import {
@@ -21,23 +24,50 @@ import {
   ErrorBanner,
   Eyebrow,
   Heading,
-  ListRow,
   LoadingBlock,
   Meta,
   PrimaryButton,
   Screen,
   SecondaryButton,
   SectionLabel,
+  StatCard,
   Title,
 } from "../../src/components";
+import {
+  RecentRow,
+  WeekStrip,
+  buildRestWeekStrip,
+  mapHomeRecentSessions,
+  mapHomeStats,
+  mapWeekStrip,
+  type HomeRecentSession,
+  type HomeStat,
+  type WeekStripDay,
+} from "../../src/features/home";
 import { colors, radii, spacing } from "../../src/theme";
+import {
+  buildRomeWeekDateKeys,
+  formatRomeLongDate,
+} from "../../src/utils/romeCalendar";
 
 type StartSelection = {
   workoutId: number;
   workoutDayId: number;
 };
 
-/** Home: scegli scheda attiva + giorno, poi avvia. */
+const EMPTY_STATS: HomeStat[] = mapHomeStats({
+  period: { from: new Date(0), to: new Date(0) },
+  volumeKg: 0,
+  workoutsPerWeek: 0,
+  streakDays: 0,
+  recordVolumeKg: 0,
+  totalSessions: 0,
+  averageSessionVolumeKg: 0,
+  dailyBreakdown: [],
+  recentSessions: [],
+});
+
+/** Home densità mock: header, week strip, today card, KPI, recenti. */
 export default function HomeScreen() {
   const { user } = useAuth();
   const [activeWorkouts, setActiveWorkouts] = useState<Workout[]>([]);
@@ -47,7 +77,12 @@ export default function HomeScreen() {
   );
   const [selection, setSelection] = useState<StartSelection | null>(null);
   const [scheduledLabel, setScheduledLabel] = useState<string | null>(null);
-  const [recent, setRecent] = useState<WorkoutSessionSummary[]>([]);
+  const [weekDays, setWeekDays] = useState<WeekStripDay[]>(() =>
+    buildRestWeekStrip(),
+  );
+  const [homeStats, setHomeStats] = useState<HomeStat[]>(EMPTY_STATS);
+  const [recent, setRecent] = useState<HomeRecentSession[]>([]);
+  const [exerciseCount, setExerciseCount] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -72,9 +107,9 @@ export default function HomeScreen() {
       setError(null);
 
       try {
-        const [workouts, sessions, activeAssignment] = await Promise.all([
+        const [workouts, stats, activeAssignment] = await Promise.all([
           getWorkouts(),
-          getSessions(),
+          getStats({ recentLimit: 5 }),
           getActiveAssignment(),
         ]);
 
@@ -82,7 +117,7 @@ export default function HomeScreen() {
           return;
         }
 
-        setRecent(sessions.slice(0, 5));
+        applyStats(stats);
         setAssignment(activeAssignment);
 
         const active = (
@@ -101,6 +136,8 @@ export default function HomeScreen() {
           setSelection(null);
           setDaysByWorkout({});
           setScheduledLabel(null);
+          setWeekDays(buildRestWeekStrip());
+          setExerciseCount(null);
           return;
         }
 
@@ -120,6 +157,15 @@ export default function HomeScreen() {
           nextDays[workoutId] = days;
         }
         setDaysByWorkout(nextDays);
+
+        const primaryWorkout = active[0]!;
+        const weekSchedules = await fetchWeekSchedule(primaryWorkout.id);
+
+        if (cancelled) {
+          return;
+        }
+
+        setWeekDays(mapWeekStrip(weekSchedules));
 
         let preferred: StartSelection | null = null;
         let preferredLabel: string | null = null;
@@ -170,7 +216,43 @@ export default function HomeScreen() {
     return () => {
       cancelled = true;
     };
-  }, [fetchId]);
+  }, [fetchId, user?.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadExercises = async () => {
+      if (!selection) {
+        setExerciseCount(null);
+        return;
+      }
+
+      try {
+        const exercises = await getWorkoutDayExercises(
+          selection.workoutId,
+          selection.workoutDayId,
+        );
+        if (!cancelled) {
+          setExerciseCount(exercises.length);
+        }
+      } catch {
+        if (!cancelled) {
+          setExerciseCount(null);
+        }
+      }
+    };
+
+    void loadExercises();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selection?.workoutId, selection?.workoutDayId]);
+
+  const applyStats = (stats: UserStats) => {
+    setHomeStats(mapHomeStats(stats));
+    setRecent(mapHomeRecentSessions(stats, 5));
+  };
 
   const selectedWorkout =
     activeWorkouts.find((workout) => workout.id === selection?.workoutId) ??
@@ -180,6 +262,9 @@ export default function HomeScreen() {
     : [];
   const selectedDay =
     selectedDays.find((day) => day.id === selection?.workoutDayId) ?? null;
+
+  const todayTitle = selectedDay?.name ?? "Nessun giorno";
+  const todayEyebrow = `OGGI • ${formatRomeLongDate()}`;
 
   const onStart = async () => {
     if (!selection) {
@@ -211,9 +296,37 @@ export default function HomeScreen() {
     }
   };
 
+  const onWeekDayPress = (day: WeekStripDay) => {
+    if (!day.workoutDayId || activeWorkouts.length === 0) {
+      return;
+    }
+
+    const primary = activeWorkouts[0]!;
+    const ownsDay = (daysByWorkout[primary.id] ?? []).some(
+      (workoutDay) => workoutDay.id === day.workoutDayId,
+    );
+
+    if (!ownsDay) {
+      return;
+    }
+
+    setSelection({
+      workoutId: primary.id,
+      workoutDayId: day.workoutDayId,
+    });
+    setScheduledLabel(`${primary.name} · ${day.workoutDayName ?? day.weekdayLabel}`);
+  };
+
   if (loading) {
     return <LoadingBlock />;
   }
+
+  const initials = (user?.name ?? "U")
+    .split(/\s+/)
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
     <Screen padded={false}>
@@ -230,7 +343,22 @@ export default function HomeScreen() {
           />
         }
       >
-        <Title>Ciao{user?.name ? `, ${user.name}` : ""}</Title>
+        <View style={styles.header}>
+          <View style={styles.headerText}>
+            <Eyebrow>BENTORNATO</Eyebrow>
+            <Title style={styles.userName}>
+              {user?.name ?? "Atleta"}
+            </Title>
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Account"
+            onPress={() => router.push("/(app)/settings")}
+            style={styles.avatar}
+          >
+            <Meta style={styles.avatarLabel}>{initials}</Meta>
+          </Pressable>
+        </View>
 
         {error ? (
           <ErrorBanner
@@ -242,8 +370,10 @@ export default function HomeScreen() {
           />
         ) : null}
 
-        <Card highlight>
-          <Eyebrow>OGGI</Eyebrow>
+        <WeekStrip days={weekDays} onDayPress={onWeekDayPress} />
+
+        <Card highlight style={styles.todayCard}>
+          <Eyebrow>{todayEyebrow}</Eyebrow>
           {activeWorkouts.length === 0 ? (
             <>
               <Heading>Nessuna scheda attiva</Heading>
@@ -262,21 +392,29 @@ export default function HomeScreen() {
             </>
           ) : (
             <>
-              <Heading>Cosa alleni?</Heading>
+              <View style={styles.todayTitleRow}>
+                <Heading style={styles.todayTitle}>{todayTitle}</Heading>
+                {selectedWorkout ? (
+                  <View style={styles.badge}>
+                    <AppBadgeLabel>{selectedWorkout.name}</AppBadgeLabel>
+                  </View>
+                ) : null}
+              </View>
+
               {assignment ? (
-                <Meta style={styles.scheduleHint}>
-                  Valida fino al {assignment.expiresAt}
-                </Meta>
+                <Meta>Valida fino al {assignment.expiresAt}</Meta>
               ) : null}
               {scheduledLabel ? (
-                <Meta style={styles.scheduleHint}>
-                  In programma: {scheduledLabel}
-                </Meta>
+                <Meta>In programma: {scheduledLabel}</Meta>
               ) : (
-                <Meta style={styles.scheduleHint}>
-                  Nessun giorno in calendario — scegli tu.
-                </Meta>
+                <Meta>Nessun giorno in calendario — scegli tu.</Meta>
               )}
+
+              <View style={styles.metaRow}>
+                {exerciseCount != null ? (
+                  <Meta>{exerciseCount} esercizi</Meta>
+                ) : null}
+              </View>
 
               <SectionLabel>SCHEDA</SectionLabel>
               <View style={styles.chipRow}>
@@ -296,6 +434,7 @@ export default function HomeScreen() {
                               }
                             : null,
                         );
+                        setScheduledLabel(null);
                       }}
                       style={[styles.chip, selected && styles.chipSelected]}
                     >
@@ -340,12 +479,6 @@ export default function HomeScreen() {
                 </View>
               )}
 
-              {selectedWorkout && selectedDay ? (
-                <Body style={styles.summary}>
-                  {selectedWorkout.name} · {selectedDay.name}
-                </Body>
-              ) : null}
-
               <PrimaryButton
                 label={starting ? "Avvio…" : "AVVIA WORKOUT"}
                 onPress={() => {
@@ -357,31 +490,127 @@ export default function HomeScreen() {
           )}
         </Card>
 
-        <SectionLabel>ULTIMI ALLENAMENTI</SectionLabel>
+        <View style={styles.statGrid}>
+          {homeStats.map((stat) => (
+            <StatCard
+              key={stat.id}
+              label={stat.label}
+              value={stat.value}
+              unit={stat.unit}
+              trend={stat.trend}
+              trendAccent={stat.id === "volume" && stat.value !== "—"}
+            />
+          ))}
+        </View>
+
+        <View style={styles.recentHeader}>
+          <Heading style={styles.recentTitle}>Ultimi Allenamenti</Heading>
+          <Pressable onPress={() => router.push("/(app)/stats")}>
+            <Eyebrow>VEDI TUTTI</Eyebrow>
+          </Pressable>
+        </View>
+
         {recent.length === 0 ? (
           <Body>Nessuna sessione ancora.</Body>
         ) : (
-          recent.map((session) => (
-            <ListRow
-              key={session.id}
-              title={session.workoutName}
-              meta={`${session.status} · ${new Date(session.startedAt).toLocaleDateString("it-IT")}`}
-              onPress={() => router.push(`/session/${session.id}`)}
-            />
-          ))
+          <View style={styles.recentList}>
+            {recent.map((session) => (
+              <RecentRow
+                key={session.id}
+                session={session}
+                onPress={() => router.push(`/session/${session.id}`)}
+              />
+            ))}
+          </View>
         )}
       </ScrollView>
     </Screen>
   );
 }
 
+function AppBadgeLabel({ children }: { children: string }) {
+  return (
+    <Meta style={styles.badgeLabel} numberOfLines={1}>
+      {children}
+    </Meta>
+  );
+}
+
+async function fetchWeekSchedule(workoutId: number): Promise<WorkoutSchedule[]> {
+  const dateKeys = buildRomeWeekDateKeys();
+  return Promise.all(
+    dateKeys.map((date) => getWorkoutScheduleToday(workoutId, date)),
+  );
+}
+
 const styles = StyleSheet.create({
   content: {
-    padding: spacing.lg,
+    padding: spacing.md,
     paddingBottom: spacing.xl,
     gap: spacing.md,
   },
-  scheduleHint: {
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingTop: spacing.sm,
+  },
+  headerText: {
+    gap: 2,
+    flex: 1,
+    paddingRight: spacing.md,
+  },
+  userName: {
+    fontSize: 24,
+    lineHeight: 30,
+  },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  avatarLabel: {
+    color: colors.textHeading,
+    fontWeight: "700",
+    fontSize: 12,
+  },
+  todayCard: {
+    gap: spacing.sm,
+  },
+  todayTitleRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: spacing.sm,
+  },
+  todayTitle: {
+    flex: 1,
+    fontSize: 24,
+    lineHeight: 30,
+  },
+  badge: {
+    maxWidth: "40%",
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.pill,
+    backgroundColor: colors.accentBg,
+    borderWidth: 1,
+    borderColor: colors.accentBorder,
+  },
+  badgeLabel: {
+    color: colors.accent,
+    fontSize: 10,
+    fontWeight: "700",
+    textTransform: "uppercase",
+  },
+  metaRow: {
+    flexDirection: "row",
+    gap: spacing.md,
     marginBottom: spacing.xs,
   },
   chipRow: {
@@ -406,7 +635,22 @@ const styles = StyleSheet.create({
     color: colors.textHeading,
     fontWeight: "700",
   },
-  summary: {
-    marginBottom: spacing.sm,
+  statGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.sm,
+  },
+  recentHeader: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    marginTop: spacing.xs,
+  },
+  recentTitle: {
+    fontSize: 18,
+    lineHeight: 22,
+  },
+  recentList: {
+    gap: spacing.sm,
   },
 });

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <script>
+        window.FontAwesomeConfig = {
+          autoReplaceSvg: 'nest'
+        };
+      </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traccia — Coach Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            bg: '#1D1F25',
+                            surface: '#252830',
+                            elevated: '#2C3038',
+                            border: 'rgba(224, 224, 224, 0.12)',
+                            accent: '#C7F464',
+                            accentSoft: 'rgba(199, 244, 100, 0.12)',
+                            accentBorder: 'rgba(199, 244, 100, 0.40)',
+                            textHeading: '#E0E0E0',
+                            textBody: '#AAAAAA',
+                            muted: '#666666',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Roboto', 'sans-serif'],
+                    },
+                    borderRadius: {
+                        'button': '4px',
+                        'card': '12px',
+                    },
+                    boxShadow: {
+                        'premium': 'rgba(0,0,0,0.45) 0 12px 24px -6px, rgba(0,0,0,0.3) 0 4px 8px -2px',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #1D1F25; }
+        ::-webkit-scrollbar-thumb { background: #2C3038; border-radius: 10px; }
+        body { background-color: #1D1F25; color: #AAAAAA; }
+        .glow-lime { box-shadow: 0 0 14px rgba(199, 244, 100, 0.15); }
+    </style>
+</head>
+<body class="font-sans antialiased flex w-full h-screen overflow-hidden">
+
+    <!-- SIDEBAR -->
+    <aside class="w-72 bg-brand-surface border-r border-brand-border flex flex-col shrink-0">
+        <div class="h-20 flex items-center px-8 border-b border-brand-border">
+            <div class="text-xl font-bold text-brand-textHeading uppercase tracking-tight">
+                Tracci<span class="text-brand-accent">a</span>
+            </div>
+        </div>
+
+        <div class="p-6">
+            <div class="flex items-center gap-3 p-2 bg-brand-bg rounded-card border border-brand-border">
+                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg" class="w-10 h-10 rounded-full border border-brand-border object-cover" alt="Coach">
+                <div>
+                    <p class="text-sm font-bold text-brand-textHeading">Marco V.</p>
+                    <p class="text-[10px] font-bold text-brand-accent uppercase">Coach Senior</p>
+                </div>
+            </div>
+        </div>
+
+        <nav class="flex-1 px-4 space-y-1">
+            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-card bg-brand-accentSoft text-brand-accent font-bold text-sm border border-brand-accentBorder">
+                <i class="fa-solid fa-house"></i>
+                Dashboard
+            </a>
+            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-card text-brand-textBody hover:bg-brand-bg transition-colors text-sm">
+                <i class="fa-solid fa-users"></i>
+                Clienti
+                <span class="ml-auto bg-brand-bg border border-brand-border px-2 py-0.5 rounded text-[10px]">42</span>
+            </a>
+            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-card text-brand-textBody hover:bg-brand-bg transition-colors text-sm">
+                <i class="fa-solid fa-file-invoice"></i>
+                Template Schede
+            </a>
+            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-card text-brand-textBody hover:bg-brand-bg transition-colors text-sm">
+                <i class="fa-solid fa-message"></i>
+                Messaggi
+                <span class="ml-auto w-2 h-2 bg-brand-accent rounded-full"></span>
+            </a>
+            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-card text-brand-textBody hover:bg-brand-bg transition-colors text-sm">
+                <i class="fa-solid fa-chart-column"></i>
+                Analytics
+            </a>
+        </nav>
+
+        <div class="p-4 mt-auto">
+            <div class="bg-brand-elevated border border-brand-border rounded-card p-4 relative overflow-hidden">
+                <div class="relative z-10">
+                    <p class="text-[10px] font-bold text-brand-muted uppercase mb-1">PRO PIAN</p>
+                    <p class="text-xs text-brand-textHeading mb-3">Scade il 12 Nov 2026</p>
+                    <button class="w-full bg-brand-bg border border-brand-border text-brand-textHeading text-[10px] font-bold py-2 rounded-button uppercase hover:border-brand-accent transition-colors">
+                        GESTISCI ABBONAMENTO
+                    </button>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+        <header class="h-20 px-10 flex items-center justify-between border-b border-brand-border shrink-0">
+            <div class="relative w-96">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-brand-muted text-sm"></i>
+                <input type="text" placeholder="Cerca atleta, scheda o esercizio..." class="w-full bg-brand-bg border border-brand-border rounded-button pl-10 pr-4 py-2.5 text-sm text-brand-textHeading placeholder-brand-muted focus:outline-none focus:border-brand-accent transition-colors">
+            </div>
+            <div class="flex items-center gap-4">
+                <button class="bg-brand-surface border border-brand-border rounded-button px-4 py-2.5 text-xs font-bold text-brand-textHeading flex items-center gap-2">
+                    <i class="fa-solid fa-calendar"></i>
+                    OTTOBRE 2024
+                </button>
+                <button class="bg-brand-accent text-[#111111] px-4 py-2.5 rounded-button text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-plus"></i>
+                    NUOVA SCHEDA
+                </button>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-10">
+            <!-- KPI Grid -->
+            <div class="grid grid-cols-4 gap-6 mb-10">
+                <div class="bg-brand-surface border border-brand-border rounded-card p-6 shadow-premium">
+                    <p class="text-brand-muted text-[10px] font-bold uppercase mb-2 tracking-widest">Clienti Attivi</p>
+                    <div class="flex items-end gap-2">
+                        <span class="text-brand-textHeading text-3xl font-bold">34</span>
+                        <span class="text-brand-muted text-sm mb-1">/ 42</span>
+                        <span class="ml-auto text-brand-accent text-[10px] font-bold border border-brand-accentBorder bg-brand-accentSoft px-2 py-1 rounded">+3 MESE</span>
+                    </div>
+                </div>
+                <div class="bg-brand-surface border border-brand-border rounded-card p-6 shadow-premium">
+                    <p class="text-brand-muted text-[10px] font-bold uppercase mb-2 tracking-widest">Completamento</p>
+                    <div class="flex items-end gap-2">
+                        <span class="text-brand-textHeading text-3xl font-bold">88%</span>
+                        <span class="ml-auto text-brand-accent text-[10px] font-bold">OTTIMO</span>
+                    </div>
+                </div>
+                <div class="bg-brand-surface border border-brand-border rounded-card p-6 shadow-premium">
+                    <p class="text-brand-muted text-[10px] font-bold uppercase mb-2 tracking-widest">Allenamenti (Sett)</p>
+                    <div class="flex items-end gap-2">
+                        <span class="text-brand-textHeading text-3xl font-bold">184</span>
+                        <i class="fa-solid fa-arrow-up text-brand-accent mb-2 text-xs"></i>
+                    </div>
+                </div>
+                <div class="bg-brand-surface border border-brand-border rounded-card p-6 shadow-premium">
+                    <p class="text-brand-muted text-[10px] font-bold uppercase mb-2 tracking-widest">Richieste</p>
+                    <div class="flex items-end gap-2">
+                        <span class="text-brand-textHeading text-3xl font-bold">5</span>
+                        <span class="ml-auto text-brand-accent text-[10px] font-bold underline cursor-pointer">VEDI TUTTE</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Sections Grid -->
+            <div class="grid grid-cols-3 gap-8">
+                <!-- Clients Table Area -->
+                <div class="col-span-2 space-y-8">
+                    <section>
+                        <div class="flex justify-between items-end mb-6">
+                            <h2 class="text-brand-textHeading text-lg font-bold italic underline decoration-brand-accent decoration-2 underline-offset-8">Gestione Atleti</h2>
+                            <button class="text-brand-muted text-[10px] font-bold uppercase hover:text-brand-accent">Filtra stato <i class="fa-solid fa-chevron-down ml-1"></i></button>
+                        </div>
+                        <div class="bg-brand-surface border border-brand-border rounded-card overflow-hidden shadow-premium">
+                            <table class="w-full text-left">
+                                <thead class="bg-brand-bg border-b border-brand-border">
+                                    <tr class="text-[10px] font-bold uppercase text-brand-muted">
+                                        <th class="px-6 py-5">ATLETA</th>
+                                        <th class="px-6 py-5">STATO PROGRAMMA</th>
+                                        <th class="px-6 py-5">ULTIMO CHECK-IN</th>
+                                        <th class="px-6 py-5 text-right">AZIONE</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-brand-border">
+                                    <tr class="hover:bg-brand-elevated transition-colors">
+                                        <td class="px-6 py-5">
+                                            <div class="flex items-center gap-3">
+                                                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg" class="w-8 h-8 rounded-full border border-brand-border" alt="">
+                                                <span class="text-sm font-bold text-brand-textHeading">Alessandro Rossi</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-5">
+                                            <span class="text-[10px] font-bold text-brand-accent border border-brand-accentBorder bg-brand-accentSoft px-3 py-1 rounded-full uppercase">Attivo</span>
+                                        </td>
+                                        <td class="px-6 py-5 italic text-xs text-brand-textBody font-medium">Oggi, 09:15</td>
+                                        <td class="px-6 py-5 text-right text-brand-muted">
+                                            <button class="hover:text-brand-textHeading"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                                        </td>
+                                    </tr>
+                                    <tr class="hover:bg-brand-elevated transition-colors">
+                                        <td class="px-6 py-5">
+                                            <div class="flex items-center gap-3">
+                                                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-6.jpg" class="w-8 h-8 rounded-full border border-brand-border" alt="">
+                                                <span class="text-sm font-bold text-brand-textHeading">Elena Bianchi</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-5">
+                                            <span class="text-[10px] font-bold text-[#F87171] border border-[#F8717144] bg-[#F8717111] px-3 py-1 rounded-full uppercase">In Scadenza</span>
+                                        </td>
+                                        <td class="px-6 py-5 italic text-xs text-brand-textBody font-medium">Ieri, 18:40</td>
+                                        <td class="px-6 py-5 text-right text-brand-muted">
+                                            <button class="hover:text-brand-textHeading"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                                        </td>
+                                    </tr>
+                                    <tr class="hover:bg-brand-elevated transition-colors">
+                                        <td class="px-6 py-5">
+                                            <div class="flex items-center gap-3">
+                                                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-7.jpg" class="w-8 h-8 rounded-full border border-brand-border" alt="">
+                                                <span class="text-sm font-bold text-brand-textHeading">Marco Vitali</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-5">
+                                            <span class="text-[10px] font-bold text-brand-muted border border-brand-border bg-brand-bg px-3 py-1 rounded-full uppercase">In Pausa</span>
+                                        </td>
+                                        <td class="px-6 py-5 italic text-xs text-brand-textBody font-medium">12 Ott, 11:02</td>
+                                        <td class="px-6 py-5 text-right text-brand-muted">
+                                            <button class="hover:text-brand-textHeading"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Right Sidebar / Tasks & Library -->
+                <div class="col-span-1 space-y-8">
+                    <section>
+                        <h2 class="text-brand-textHeading text-lg font-bold mb-6 italic underline decoration-brand-accent decoration-2 underline-offset-8">Task Prioritari</h2>
+                        <div class="space-y-4">
+                            <div class="bg-brand-surface border border-brand-border p-4 rounded-card hover:border-brand-accentBorder transition-colors cursor-pointer group">
+                                <div class="flex gap-4">
+                                    <div class="w-10 h-10 rounded bg-brand-accentSoft flex items-center justify-center text-brand-accent shrink-0 border border-brand-accentBorder group-hover:bg-brand-accent group-hover:text-[#111111] transition-all">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-bold text-brand-textHeading">Aggiorna Elena B.</p>
+                                        <p class="text-[11px] text-brand-muted mt-1 leading-relaxed italic">Scheda scaduta. Focus richiesto: ipertrofia arti inferiori.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-brand-surface border border-brand-border p-4 rounded-card hover:border-brand-accentBorder transition-colors cursor-pointer group">
+                                <div class="flex gap-4">
+                                    <div class="w-10 h-10 rounded bg-brand-bg flex items-center justify-center text-brand-muted shrink-0 border border-brand-border group-hover:text-brand-accent transition-all">
+                                        <i class="fa-solid fa-video"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-bold text-brand-textHeading">Call onboarding</p>
+                                        <p class="text-[11px] text-brand-muted mt-1 leading-relaxed italic">Nuovo atleta: Luca Ferrari • 16:30 oggi.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="bg-brand-elevated rounded-card p-6 border border-brand-accentBorder relative overflow-hidden shadow-premium group">
+                        <div class="absolute -right-6 -bottom-6 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <i class="fa-solid fa-dumbbell text-9xl text-brand-accent"></i>
+                        </div>
+                        <h3 class="text-brand-textHeading font-bold mb-2 text-lg italic">Library Template</h3>
+                        <p class="text-xs text-brand-textBody mb-8 leading-relaxed font-medium">Assegna velocemente programmi pre-impostati per ottimizzare i tempi di programmazione.</p>
+                        <button class="text-brand-accent text-[11px] font-bold uppercase tracking-widest flex items-center gap-2 group-hover:gap-4 transition-all">
+                            SFOGLIA LIBRERIA <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </section>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
