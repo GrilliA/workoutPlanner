@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, View } from "react-native";
-import { AppText, Meta } from "../../components";
-import { colors, radii, spacing } from "../../theme";
+import { AppText } from "../../components";
+import { colors, spacing } from "../../theme";
 
 type ExercisePagerProps = {
   index: number;
@@ -9,6 +9,7 @@ type ExercisePagerProps = {
   onNext: () => void;
 };
 
+/** Nav esercizi stile mock: PRECEDENTE / PROSSIMO. */
 export function ExercisePager({
   index,
   total,
@@ -31,28 +32,25 @@ export function ExercisePager({
         accessibilityRole="button"
         accessibilityLabel="Esercizio precedente"
       >
-        <AppText style={[styles.btnLabel, !canPrev && styles.btnLabelDisabled]}>
-          ← Prec
+        <AppText style={[styles.prevLabel, !canPrev && styles.disabledLabel]}>
+          ‹ PRECEDENTE
         </AppText>
       </Pressable>
-
-      <Meta style={styles.counter}>
-        {index + 1} / {total}
-      </Meta>
 
       <Pressable
         onPress={onNext}
         disabled={!canNext}
         style={({ pressed }) => [
           styles.btn,
+          styles.btnEnd,
           !canNext && styles.btnDisabled,
           pressed && canNext && styles.btnPressed,
         ]}
         accessibilityRole="button"
         accessibilityLabel="Esercizio successivo"
       >
-        <AppText style={[styles.btnLabel, !canNext && styles.btnLabelDisabled]}>
-          Succ →
+        <AppText style={[styles.nextLabel, !canNext && styles.disabledLabel]}>
+          PROSSIMO ›
         </AppText>
       </Pressable>
     </View>
@@ -65,36 +63,37 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     gap: spacing.sm,
-    marginTop: spacing.sm,
+    marginTop: spacing.lg,
+    paddingBottom: spacing.md,
   },
   btn: {
-    flex: 1,
     minHeight: 44,
-    borderRadius: radii.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.sm,
+  },
+  btnEnd: {
+    alignItems: "flex-end",
   },
   btnPressed: {
-    opacity: 0.75,
-    borderColor: colors.accentBorder,
+    opacity: 0.7,
   },
   btnDisabled: {
-    opacity: 0.4,
+    opacity: 0.35,
   },
-  btnLabel: {
+  prevLabel: {
     fontWeight: "700",
-    color: colors.textHeading,
-  },
-  btnLabelDisabled: {
+    fontSize: 12,
+    letterSpacing: 0.6,
     color: colors.muted,
   },
-  counter: {
-    minWidth: 48,
-    textAlign: "center",
+  nextLabel: {
     fontWeight: "700",
+    fontSize: 12,
+    letterSpacing: 0.8,
+    color: colors.accent,
+    textTransform: "uppercase",
+  },
+  disabledLabel: {
+    color: colors.muted,
   },
 });
