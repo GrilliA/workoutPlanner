@@ -3,7 +3,7 @@ import {
   REST_SEC_OPTIONS,
   WORKOUT_TYPE_OPTIONS,
   type WorkoutSettings,
-} from "../../../api/schemas/workout";
+} from "@api/schemas/workout";
 
 export type DraftSetPrescription = {
   setNumber: number;
