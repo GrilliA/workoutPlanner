@@ -23,7 +23,6 @@ import {
 } from "../../src/api";
 import { ApiError } from "../../src/api/client";
 import {
-  BackHeader,
   ErrorBanner,
   LoadingBlock,
   Screen,
@@ -31,6 +30,7 @@ import {
 import { ExerciseCard } from "../../src/features/session/ExerciseCard";
 import { ExercisePager } from "../../src/features/session/ExercisePager";
 import { groupSetsByExercise } from "../../src/features/session/groupSetsByExercise";
+import { loadPreviousSetsByExercise } from "../../src/features/session/loadPreviousSets";
 import {
   formatWeightKg,
   getRestSecForSet,
@@ -63,7 +63,7 @@ function formatElapsed(startedAt: Date, nowMs: number): string {
     return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
   }
 
-  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
 function firstIncompleteIndex(
@@ -81,12 +81,30 @@ function mutationErrorMessage(err: unknown, fallback: string): string {
   return err instanceof ApiError ? err.message : fallback;
 }
 
+function sessionProgress(
+  exercises: Exercise[],
+  setsByExercise: Map<number, LoggedSet[]>,
+): number {
+  if (exercises.length === 0) {
+    return 0;
+  }
+
+  const completed = exercises.filter((exercise) =>
+    isExerciseComplete(exercise, (setsByExercise.get(exercise.id) ?? []).length),
+  ).length;
+
+  return completed / exercises.length;
+}
+
 export default function SessionScreen() {
   const { sessionId: rawId } = useLocalSearchParams<{ sessionId: string }>();
   const sessionId = Number(rawId);
   const [session, setSession] = useState<WorkoutSessionWithSets | null>(null);
   const [localSets, setLocalSets] = useState<LoggedSet[]>([]);
   const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [previousByExercise, setPreviousByExercise] = useState<
+    Map<number, LoggedSet[]>
+  >(() => new Map());
   const [workoutName, setWorkoutName] = useState("");
   const [defaultRestSec, setDefaultRestSec] = useState(90);
   const [error, setError] = useState<string | null>(null);
@@ -121,12 +139,15 @@ export default function SessionScreen() {
       try {
         const nextSession = await getSession(sessionId);
         const workout = await getWorkout(nextSession.workoutId);
-        const nextExercises = nextSession.workoutDayId
-          ? await getWorkoutDayExercises(
-              nextSession.workoutId,
-              nextSession.workoutDayId,
-            )
-          : await getExercisesByWorkout(nextSession.workoutId);
+        const [nextExercises, previousMap] = await Promise.all([
+          nextSession.workoutDayId
+            ? getWorkoutDayExercises(
+                nextSession.workoutId,
+                nextSession.workoutDayId,
+              )
+            : getExercisesByWorkout(nextSession.workoutId),
+          loadPreviousSetsByExercise(nextSession.workoutId, nextSession.id),
+        ]);
 
         if (cancelled) {
           return;
@@ -153,6 +174,7 @@ export default function SessionScreen() {
         setSession(nextSession);
         setLocalSets(hydratedSets);
         setExercises(nextExercises);
+        setPreviousByExercise(previousMap);
         setWorkoutName(workout.name);
         setDefaultRestSec(workout.defaultRestSec);
         setWeightByExercise(nextWeights);
@@ -217,6 +239,16 @@ export default function SessionScreen() {
       ? "Sessione completata"
       : "Sessione abbandonata"
     : "Sessione in corso";
+  const progress = sessionProgress(exercises, setsByExercise);
+
+  const suggestedRestSec =
+    !readOnly && focusedExercise
+      ? getRestSecForSet(
+          focusedExercise,
+          (setsByExercise.get(focusedExercise.id) ?? []).length + 1,
+          defaultRestSec,
+        )
+      : 0;
 
   const onLogSet = async (exercise: Exercise) => {
     if (
@@ -453,20 +485,48 @@ export default function SessionScreen() {
     }
   };
 
+  const onBack = () => {
+    if (chromeBusy) {
+      return;
+    }
+    router.back();
+  };
+
   return (
     <Screen padded={false}>
-      <BackHeader
-        onPress={() => {
-          if (chromeBusy) {
-            return;
-          }
-          router.back();
-        }}
-      />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={styles.body}
       >
+        <View style={styles.headerPad}>
+          <SessionFocusHeader
+            workoutName={workoutName}
+            exerciseIndex={safeFocusIndex}
+            exerciseTotal={exercises.length}
+            elapsedLabel={elapsedLabel}
+            statusLabel={statusLabel}
+            progress={progress}
+            onBack={onBack}
+          />
+        </View>
+
+        {!readOnly ? (
+          <RestTimerCard
+            status={timer.status}
+            remainingSec={timer.remainingSec}
+            suggestedSec={suggestedRestSec}
+            onSkip={timer.skip}
+            onStartSuggested={() => {
+              if (!focusedExercise || suggestedRestSec <= 0) {
+                return;
+              }
+              void timer.start(suggestedRestSec, focusedExercise.id).catch(() => {
+                // Notifiche opzionali.
+              });
+            }}
+          />
+        ) : null}
+
         <ScrollView
           style={styles.scroll}
           contentContainerStyle={[
@@ -475,26 +535,21 @@ export default function SessionScreen() {
           ]}
           keyboardShouldPersistTaps="handled"
         >
-          <SessionFocusHeader
-            workoutName={workoutName}
-            exerciseIndex={safeFocusIndex}
-            exerciseTotal={exercises.length}
-            elapsedLabel={elapsedLabel}
-            statusLabel={statusLabel}
-          />
-
           {error ? <ErrorBanner message={error} /> : null}
 
           {readOnly ? (
-            exercises.map((exercise) => (
+            exercises.map((exercise, index) => (
               <ExerciseCard
                 key={exercise.id}
                 exercise={exercise}
                 sets={setsByExercise.get(exercise.id) ?? []}
+                previousSets={previousByExercise.get(exercise.id) ?? []}
                 resting={false}
                 readOnly
                 weight={weightByExercise[exercise.id] ?? ""}
                 reps={repsByExercise[exercise.id] ?? ""}
+                exerciseOrdinal={index + 1}
+                exerciseTotal={exercises.length}
                 onChangeWeight={() => undefined}
                 onChangeReps={() => undefined}
                 onLog={() => undefined}
@@ -508,10 +563,13 @@ export default function SessionScreen() {
                 key={focusedExercise.id}
                 exercise={focusedExercise}
                 sets={setsByExercise.get(focusedExercise.id) ?? []}
+                previousSets={previousByExercise.get(focusedExercise.id) ?? []}
                 resting={timer.restingExerciseId === focusedExercise.id}
                 readOnly={false}
                 busy={mutating}
                 focus
+                exerciseOrdinal={safeFocusIndex + 1}
+                exerciseTotal={exercises.length}
                 weight={weightByExercise[focusedExercise.id] ?? ""}
                 reps={repsByExercise[focusedExercise.id] ?? ""}
                 onChangeWeight={(value) =>
@@ -558,22 +616,15 @@ export default function SessionScreen() {
         </ScrollView>
 
         {!readOnly ? (
-          <>
-            <RestTimerCard
-              status={timer.status}
-              remainingSec={timer.remainingSec}
-              onSkip={timer.skip}
-            />
-            <SessionActionBar
-              busy={chromeBusy}
-              onComplete={() => {
-                void finish("complete");
-              }}
-              onAbandon={() => {
-                void finish("abandon");
-              }}
-            />
-          </>
+          <SessionActionBar
+            busy={chromeBusy}
+            onComplete={() => {
+              void finish("complete");
+            }}
+            onAbandon={() => {
+              void finish("abandon");
+            }}
+          />
         ) : null}
       </KeyboardAvoidingView>
     </Screen>
@@ -585,11 +636,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.bg,
   },
+  headerPad: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.xs,
+  },
   scroll: {
     flex: 1,
   },
   content: {
-    padding: spacing.lg,
+    padding: spacing.md,
     paddingBottom: spacing.xl,
     gap: spacing.sm,
   },

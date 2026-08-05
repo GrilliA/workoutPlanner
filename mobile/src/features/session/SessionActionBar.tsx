@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Alert, Pressable, StyleSheet, View } from "react-native";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Meta, PrimaryButton } from "../../components";
-import { colors, spacing } from "../../theme";
+import { Meta } from "../../components";
+import { colors, radii, spacing } from "../../theme";
 
 type SessionActionBarProps = {
   busy?: boolean;
@@ -10,7 +10,7 @@ type SessionActionBarProps = {
   onAbandon: () => void;
 };
 
-/** Barra fissa: TERMINA dominante; ABBANDONA nascosto + conferma. */
+/** Barra fissa: TERMINA rosso dominante (mock); ABBANDONA dietro conferma. */
 export function SessionActionBar({
   busy = false,
   onComplete,
@@ -41,11 +41,18 @@ export function SessionActionBar({
         { paddingBottom: Math.max(insets.bottom, spacing.sm) },
       ]}
     >
-      <PrimaryButton
-        label="TERMINA ALLENAMENTO"
+      <Pressable
         onPress={onComplete}
         disabled={busy}
-      />
+        accessibilityRole="button"
+        accessibilityLabel="Termina allenamento"
+        style={({ pressed }) => [
+          styles.completeBtn,
+          (busy || pressed) && styles.dimmed,
+        ]}
+      >
+        <Text style={styles.completeLabel}>TERMINA ALLENAMENTO</Text>
+      </Pressable>
 
       {showAbandon ? (
         <Pressable
@@ -74,12 +81,25 @@ export function SessionActionBar({
 
 const styles = StyleSheet.create({
   bar: {
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    backgroundColor: colors.surface,
-    paddingHorizontal: spacing.lg,
+    backgroundColor: colors.bg,
+    paddingHorizontal: spacing.md,
     paddingTop: spacing.sm,
     gap: spacing.xs,
+  },
+  completeBtn: {
+    backgroundColor: colors.danger,
+    borderRadius: radii.sm,
+    paddingVertical: 16,
+    alignItems: "center",
+  },
+  completeLabel: {
+    color: "#ffffff",
+    fontWeight: "800",
+    fontSize: 15,
+    letterSpacing: 0.4,
+  },
+  dimmed: {
+    opacity: 0.55,
   },
   moreBtn: {
     alignSelf: "center",

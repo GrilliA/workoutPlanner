@@ -22,6 +22,8 @@ import {
 type ExerciseCardProps = {
   exercise: Exercise;
   sets: LoggedSet[];
+  /** Serie dalla sessione precedente (stesso esercizio), per colonna PRECEDENTE. */
+  previousSets?: LoggedSet[];
   resting: boolean;
   readOnly: boolean;
   /** Disables log/undo/edit while a set mutation is in flight. */
@@ -36,8 +38,11 @@ type ExerciseCardProps = {
     setNumber: number,
     next: { reps: number; weightKg: number | null },
   ) => void;
-  /** Focus mode: larger type, kg/reps always visible, set chips. */
+  /** Focus mode: larger type, tabella set densità mock. */
   focus?: boolean;
+  /** Indice 1-based per eyebrow "ESERCIZIO N DI M". */
+  exerciseOrdinal?: number;
+  exerciseTotal?: number;
 };
 
 type EditingField = "weight" | "reps" | null;
@@ -62,18 +67,19 @@ function formatLogLabel(weight: string, reps: string, setNumber: number): string
   return `LOG ${kg} × ${repValue}  ·  #${setNumber}`;
 }
 
-function formatChipLabel(logged: LoggedSet | undefined, setNumber: number): string {
-  if (!logged) {
-    return `#${setNumber}`;
+function formatPreviousLabel(previous: LoggedSet | undefined): string {
+  if (!previous) {
+    return "—";
   }
-  const kg = logged.weightKg == null ? "—" : formatWeightKg(logged.weightKg);
-  return `#${setNumber} ${kg}×${logged.reps}`;
+  const kg = previous.weightKg == null ? "—" : `${formatWeightKg(previous.weightKg)}kg`;
+  return `${kg} × ${previous.reps}`;
 }
 
 /** Card esercizio: one-tap log, edit/undo set, stepper kg/reps. */
 export function ExerciseCard({
   exercise,
   sets,
+  previousSets = [],
   resting,
   readOnly,
   busy = false,
@@ -85,6 +91,8 @@ export function ExerciseCard({
   onUndoLast,
   onEditSet,
   focus = false,
+  exerciseOrdinal,
+  exerciseTotal,
 }: ExerciseCardProps) {
   const [editing, setEditing] = useState<EditingField>(null);
   const [editDraft, setEditDraft] = useState<EditDraft | null>(null);
@@ -172,20 +180,39 @@ export function ExerciseCard({
         complete && styles.cardDone,
       ]}
     >
-      <AppText tone="heading" style={[styles.name, focus && styles.nameFocus]}>
+      {focus && exerciseOrdinal != null && exerciseTotal != null ? (
+        <AppText variant="eyebrow" tone="accent" style={styles.ordinal}>
+          ESERCIZIO {exerciseOrdinal} DI {exerciseTotal}
+        </AppText>
+      ) : null}
+      <AppText
+        tone="heading"
+        style={[styles.name, focus && styles.nameFocus]}
+      >
         {exercise.name}
       </AppText>
-      <Meta>
-        Serie {Math.min(sets.length, targetSets)} / {targetSets}
-        {canLog ? ` · target ${targetReps} reps` : ""}
-      </Meta>
+      {!focus ? (
+        <Meta>
+          Serie {Math.min(sets.length, targetSets)} / {targetSets}
+          {canLog ? ` · target ${targetReps} reps` : ""}
+        </Meta>
+      ) : null}
 
       {focus ? (
-        <View style={styles.chipRow}>
+        <View style={styles.setTable}>
+          <View style={styles.setHeader}>
+            <AppText style={[styles.setCol, styles.setColSet]}>SET</AppText>
+            <AppText style={[styles.setCol, styles.setColPrev]}>PRECEDENTE</AppText>
+            <AppText style={[styles.setCol, styles.setColVal]}>KG</AppText>
+            <AppText style={[styles.setCol, styles.setColVal]}>REPS</AppText>
+          </View>
           {Array.from({ length: targetSets }, (_, index) => {
             const setNumber = index + 1;
             const logged = sets.find((set) => set.setNumber === setNumber);
+            const previous = previousSets.find((set) => set.setNumber === setNumber);
             const isNext = !logged && setNumber === nextSetNumber && canLog;
+            const isPending = !logged && !isNext;
+
             return (
               <Pressable
                 key={setNumber}
@@ -196,9 +223,10 @@ export function ExerciseCard({
                 }}
                 disabled={locked || !logged || editDraft !== null}
                 style={[
-                  styles.chip,
-                  logged ? styles.chipDone : styles.chipPending,
-                  isNext && styles.chipNext,
+                  styles.setRow,
+                  logged && styles.setRowDone,
+                  isNext && styles.setRowActive,
+                  isPending && styles.setRowPending,
                 ]}
                 accessibilityRole={logged && !locked ? "button" : "text"}
                 accessibilityLabel={
@@ -207,14 +235,37 @@ export function ExerciseCard({
                     : `Serie ${setNumber} in attesa`
                 }
               >
+                <AppText tone="heading" style={[styles.setCol, styles.setColSet]}>
+                  {setNumber}
+                </AppText>
+                <AppText style={[styles.setCol, styles.setColPrev, styles.prevText]}>
+                  {formatPreviousLabel(previous)}
+                </AppText>
                 <AppText
-                  style={[
-                    styles.chipLabel,
-                    !logged && styles.chipLabelPending,
-                    isNext && styles.chipLabelNext,
-                  ]}
+                  tone="heading"
+                  style={[styles.setCol, styles.setColVal]}
                 >
-                  {formatChipLabel(logged, setNumber)}
+                  {logged
+                    ? logged.weightKg == null
+                      ? "—"
+                      : formatWeightKg(logged.weightKg)
+                    : isNext
+                      ? weight.trim() === ""
+                        ? "—"
+                        : weight.trim()
+                      : "—"}
+                </AppText>
+                <AppText
+                  tone="heading"
+                  style={[styles.setCol, styles.setColVal]}
+                >
+                  {logged
+                    ? String(logged.reps)
+                    : isNext
+                      ? reps.trim() === ""
+                        ? "—"
+                        : reps.trim()
+                      : "—"}
                 </AppText>
               </Pressable>
             );
@@ -564,8 +615,67 @@ const styles = StyleSheet.create({
     fontSize: 17,
   },
   nameFocus: {
-    fontSize: 22,
-    lineHeight: 28,
+    fontSize: 24,
+    lineHeight: 30,
+    fontStyle: "italic",
+  },
+  ordinal: {
+    marginBottom: spacing.xs,
+    letterSpacing: 1,
+  },
+  setTable: {
+    marginTop: spacing.md,
+    gap: spacing.xs,
+  },
+  setHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: spacing.xs,
+    marginBottom: 2,
+  },
+  setRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.xs,
+  },
+  setRowDone: {
+    backgroundColor: colors.accentBg,
+    borderColor: colors.accentBorder,
+  },
+  setRowActive: {
+    backgroundColor: colors.surfaceElevated,
+    borderColor: colors.border,
+  },
+  setRowPending: {
+    opacity: 0.55,
+  },
+  setCol: {
+    fontSize: 11,
+    fontWeight: "700",
+    textAlign: "center",
+    color: colors.muted,
+  },
+  setColSet: {
+    width: 40,
+    color: colors.textHeading,
+  },
+  setColPrev: {
+    flex: 1.4,
+  },
+  setColVal: {
+    flex: 1,
+    color: colors.textHeading,
+    fontVariant: ["tabular-nums"],
+  },
+  prevText: {
+    fontSize: 11,
+    fontWeight: "500",
+    color: colors.muted,
   },
   chipRow: {
     flexDirection: "row",
