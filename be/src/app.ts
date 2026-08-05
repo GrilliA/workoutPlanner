@@ -13,3 +13,18 @@ app.use("/api", apiRouter);
 app.get("/", (_req, res) => {
   res.send("Workout Planner API");
 });
+
+app.use(
+  (
+    err: unknown,
+    _req: express.Request,
+    res: express.Response,
+    _next: express.NextFunction,
+  ) => {
+    console.error(err);
+    if (res.headersSent) {
+      return;
+    }
+    res.status(500).json({ error: "Internal server error" });
+  },
+);
