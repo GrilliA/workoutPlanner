@@ -43,8 +43,27 @@ const formatSessionDate = (value: string) =>
 
 export default function ClientDetailPage() {
   const [, params] = useRoute("/clients/:id");
-  const [, setLocation] = useLocation();
   const athleteId = Number(params?.id);
+  const idValid = Number.isInteger(athleteId) && athleteId >= 1;
+
+  if (!idValid) {
+    return (
+      <AppShell>
+        <div className="coach-page page-container page-container--wide">
+          <CoachPageHeader title="Cliente" />
+          <p className="coach-empty" role="alert">
+            Cliente non trovato
+          </p>
+        </div>
+      </AppShell>
+    );
+  }
+
+  return <ClientDetailLoaded key={athleteId} athleteId={athleteId} />;
+}
+
+function ClientDetailLoaded({ athleteId }: { athleteId: number }) {
+  const [, setLocation] = useLocation();
   const [client, setClient] = useState<CoachClient | null>(null);
   const [assignments, setAssignments] = useState<CoachAssignment[]>([]);
   const [recentSessions, setRecentSessions] = useState<
@@ -61,14 +80,7 @@ export default function ClientDetailPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!Number.isInteger(athleteId) || athleteId < 1) {
-      setLoading(false);
-      return;
-    }
-
     let cancelled = false;
-    setLoading(true);
-    setError(null);
 
     void getCoachClient(athleteId)
       .then((data) => {
