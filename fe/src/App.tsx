@@ -1,6 +1,5 @@
 import { Router, Route, Switch } from "wouter";
 import { RequireAuth } from "@auth";
-import { NativeBootstrap } from "@components/nativebootstrap";
 import LandingPage from "@pages/landing";
 import LoginPage from "@pages/login";
 import RegisterPage from "@pages/register";
@@ -17,13 +16,11 @@ import NewAssignmentPage from "@pages/coach/assignments/new";
 import EditClientProgramPage from "@pages/coach/programs/edit";
 import ViewClientProgramPage from "@pages/coach/programs/view";
 
-// Web is coach-only; athlete pages under fe/src/pages/{home,sessions,stats,...} are
-// un routed — see fe/src/pages/ATHLETE_WEB_DEPRECATED.md. Coach reuses workouts/new/**.
+// Web is coach-only. Athletes use mobile/. Coach reuses workouts/new/** for builders.
 
 function App() {
   return (
     <Router>
-      <NativeBootstrap />
       <Switch>
         <Route path="/login" component={LoginPage} />
         <Route path="/register" component={RegisterPage} />
