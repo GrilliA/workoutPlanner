@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@auth";
 import { BrandLogo } from "@components/brandlogo";
+import { getAvatarInitial, getDisplayName } from "@utils/displayName";
 import "./style.css";
 
 type AppShellProps = {
@@ -30,8 +31,10 @@ const bottomNavItems = [
 ];
 
 export function AppShell({ children, hideBottomNav = false }: AppShellProps) {
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const [, setLocation] = useLocation();
+  const displayName = getDisplayName(user);
+  const initials = getAvatarInitial(displayName);
 
   const handleLogout = async () => {
     await logout();
@@ -44,6 +47,19 @@ export function AppShell({ children, hideBottomNav = false }: AppShellProps) {
         <div className="brand">
           <BrandLogo size="sm" layout="inline" mark="coach" />
         </div>
+
+        {displayName ? (
+          <div className="coach-card">
+            <span className="coach-card__avatar" aria-hidden>
+              {initials}
+            </span>
+            <div className="coach-card__meta">
+              <p className="coach-card__name">{displayName}</p>
+              <p className="coach-card__role">Coach</p>
+            </div>
+          </div>
+        ) : null}
+
         <nav className="nav" aria-label="Navigazione desktop">
           {sidebarLinks.map((item) => (
             <Link

@@ -8,13 +8,21 @@
 .coach-dashboard__main {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1rem;
+  gap: 1.75rem;
   align-items: start;
+}
+
+.coach-dashboard__side {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  min-width: 0;
 }
 
 @media (min-width: 64rem) {
   .coach-dashboard__main {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr);
+    gap: 2rem;
   }
 }
 

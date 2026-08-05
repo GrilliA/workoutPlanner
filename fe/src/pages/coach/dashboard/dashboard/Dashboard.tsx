@@ -1,8 +1,9 @@
 import { Link } from "wouter";
 import { CoachPageHeader } from "../../coachpageheader";
-import { ExpirationChart } from "../expirationchart";
-import { ExpirationList } from "../expirationlist";
+import { AthletesTable } from "../athletestable";
 import { KpiGrid } from "../kpigrid";
+import { LibraryCta } from "../librarycta";
+import { TaskPanel } from "../taskpanel";
 import { useDashboard } from "../useDashboard";
 import "../../style.css";
 import "./style.css";
@@ -12,14 +13,14 @@ export function Dashboard() {
 
   const headerAction = (
     <div className="coach-dashboard__actions">
-      <Link href="/clients/new" className="coach-btn-link coach-btn-link--primary">
+      <Link href="/clients/new" className="coach-btn-link coach-btn-link--secondary">
         Invita cliente
       </Link>
       <Link
-        href="/assignments/new"
-        className="coach-btn-link coach-btn-link--secondary"
+        href="/templates/new"
+        className="coach-btn-link coach-btn-link--primary"
       >
-        Assegna scheda
+        Nuova scheda
       </Link>
     </div>
   );
@@ -27,8 +28,8 @@ export function Dashboard() {
   return (
     <div className="coach-page page-container page-container--wide">
       <CoachPageHeader
-        title="Dashboard coach"
-        subtitle="Cosa fare ora: scadenze e rinnovi"
+        title="Dashboard"
+        subtitle="Operatività clienti, scadenze e template"
         action={headerAction}
       />
 
@@ -64,11 +65,11 @@ export function Dashboard() {
         <>
           <KpiGrid items={state.data.kpis} />
           <div className="coach-dashboard__main">
-            <ExpirationList
-              upcoming={state.data.upcoming}
-              expired={state.data.expired}
-            />
-            <ExpirationChart points={state.data.monthPoints} />
+            <AthletesTable rows={state.data.athletes} />
+            <aside className="coach-dashboard__side">
+              <TaskPanel tasks={state.data.tasks} />
+              <LibraryCta templateCount={state.data.templateCount} />
+            </aside>
           </div>
         </>
       ) : null}

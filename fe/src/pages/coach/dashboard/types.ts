@@ -1,9 +1,10 @@
 export type DashboardKpi = {
   id: string;
   label: string;
-  value: number;
+  value: string;
+  hint?: string;
   href?: string;
-  tone?: "default" | "warning" | "danger";
+  tone?: "default" | "warning" | "danger" | "accent";
 };
 
 export type DashboardExpirationRow = {
@@ -17,6 +18,22 @@ export type DashboardExpirationRow = {
   kind: "upcoming" | "expired";
 };
 
+export type DashboardAthleteRow = {
+  id: number;
+  label: string;
+  status: "active" | "expiring" | "paused";
+  statusLabel: string;
+  metaLabel: string;
+};
+
+export type DashboardTask = {
+  id: string;
+  title: string;
+  detail: string;
+  href: string;
+  tone: "accent" | "default";
+};
+
 export type DashboardMonthPoint = {
   month: string;
   monthLabel: string;
@@ -25,8 +42,11 @@ export type DashboardMonthPoint = {
 
 export type DashboardViewModel = {
   clientCount: number;
+  templateCount: number;
   isEmpty: boolean;
   kpis: DashboardKpi[];
+  athletes: DashboardAthleteRow[];
+  tasks: DashboardTask[];
   upcoming: DashboardExpirationRow[];
   expired: DashboardExpirationRow[];
   monthPoints: DashboardMonthPoint[];

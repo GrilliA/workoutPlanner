@@ -1,0 +1,37 @@
+.library-cta {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface-elevated);
+  border: 1px solid var(--accent-border);
+  border-radius: 0.75rem;
+  padding: 1.35rem 1.25rem;
+  box-shadow: rgba(0, 0, 0, 0.35) 0 10px 20px -8px;
+
+  & h3 {
+    margin: 0 0 0.4rem;
+    color: var(--text-h);
+    font-size: 1.05rem;
+    font-style: italic;
+  }
+
+  & p {
+    margin: 0 0 1.25rem;
+    color: var(--text);
+    font-size: 0.8rem;
+    line-height: 1.45;
+    max-width: 28rem;
+  }
+}
+
+.library-cta__link {
+  color: var(--accent);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
