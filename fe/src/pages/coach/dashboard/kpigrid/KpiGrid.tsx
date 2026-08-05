@@ -15,6 +15,7 @@ export function KpiGrid({ items }: KpiGridProps) {
           "coach-kpi--link",
           item.tone === "warning" ? "coach-kpi--warning" : null,
           item.tone === "danger" ? "coach-kpi--danger" : null,
+          item.tone === "accent" ? "coach-kpi--accent" : null,
         ]
           .filter(Boolean)
           .join(" ");
@@ -22,7 +23,10 @@ export function KpiGrid({ items }: KpiGridProps) {
         const body = (
           <>
             <span className="label">{item.label}</span>
-            <span className="value">{item.value}</span>
+            <span className="value-row">
+              <span className="value">{item.value}</span>
+              {item.hint ? <span className="hint">{item.hint}</span> : null}
+            </span>
           </>
         );
 

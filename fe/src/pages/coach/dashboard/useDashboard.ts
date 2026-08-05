@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { ApiError } from "@api";
-import { getCoachDashboard } from "./api";
+import {
+  getCoachAssignments,
+  getCoachClients,
+  getCoachDashboard,
+} from "./api";
 import { mapDashboard } from "./mappers/mapDashboard";
 import type { DashboardStatus } from "./types";
 
@@ -10,10 +14,17 @@ export function useDashboard(): DashboardStatus {
   useEffect(() => {
     let cancelled = false;
 
-    void getCoachDashboard()
-      .then((stats) => {
+    void Promise.all([
+      getCoachDashboard(),
+      getCoachClients(),
+      getCoachAssignments(),
+    ])
+      .then(([stats, clients, assignments]) => {
         if (!cancelled) {
-          setState({ status: "ready", data: mapDashboard(stats) });
+          setState({
+            status: "ready",
+            data: mapDashboard(stats, clients, assignments),
+          });
         }
       })
       .catch((err) => {

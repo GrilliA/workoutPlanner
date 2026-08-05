@@ -43,6 +43,7 @@ How to use:
 
 ## What we did
 
+- 2026-08-05 — U3 coach dashboard density (UX Pilot): KPI 4-col, tabella atleti, task prioritari da scadenze, CTA library template, sidebar coach card; chart scadenze rimosso dalla home coach.
 - 2026-08-04 — U2 mobile Active Session density (UX Pilot): header + progress bar, rest bar compatta, tabella set con PRECEDENTE da sessione precedente, pager PRECEDENTE/PROSSIMO, TERMINA rosso.
 - 2026-08-04 — U1 mobile Home density (UX Pilot): WeekStrip 7 giorni, TodayCard densità + badge, KPI 2-up da `/stats`, recent con volume; mock HTML in `docs/mocks/uxpilot-home-session/`.
 - 2026-08-02 — A3 athlete dual-mode: mobile self-register; invite codes (generate/redeem/unlink, 1 coach); self vs coach program permissions; session priority on active coach assignment (revoke by athlete or coach); mobile create (DIY + AI TXT prompt); coach client detail shows session history.
@@ -151,6 +152,5 @@ Merge **in order** (stacked branches). Each PR is one concern.
 - [ ] Route `/forgot-password` (link già presente in login).
 - [ ] (Later) Cleanup PR: rimuovere pagine web atleta orfane (`home/`, `sessions/`, `stats/`, …); tenere solo `workouts/new` condiviso col coach.
 - [ ] (Later) Optional wger IT names or user custom exercises on top of B5.
-- [ ] Mobile UI vs UX Pilot: U3 Coach Dashboard density (web).
 - [ ] (Later) Mobile: polish restante atleta vs mock (override DayPicker su WeekStrip, empty states).
 - [ ] (Later) Extract `packages/shared` if Zod/API copy between `fe` and `mobile` hurts.
