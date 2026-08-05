@@ -24,6 +24,7 @@ function CardChevron() {
 
 export default function TemplatesPage() {
   const [templates, setTemplates] = useState<CoachTemplate[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -37,6 +38,9 @@ export default function TemplatesPage() {
         if (!cancelled) {
           setError(err instanceof ApiError ? err.message : "Errore caricamento");
         }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
       });
 
     return () => {
@@ -57,28 +61,40 @@ export default function TemplatesPage() {
           }
         />
 
-        {error ? <p className="coach-empty">{error}</p> : null}
-
-        {templates.length === 0 && !error ? (
-          <p className="coach-empty">Nessun template. Creane uno da usare come base.</p>
+        {loading ? (
+          <p className="coach-empty">Caricamento…</p>
         ) : (
-          <div className="coach-card-list">
-            {templates.map((template) => (
-              <Link
-                key={template.id}
-                href={`/templates/${template.id}/edit`}
-                className="coach-card coach-card--nav"
-              >
-                <span className="coach-card__body">
-                  <h2>{template.name}</h2>
-                  <p>
-                    {template.frequency} · {template.exerciseCount} esercizi
-                  </p>
-                </span>
-                <CardChevron />
-              </Link>
-            ))}
-          </div>
+          <>
+            {error ? (
+              <p className="coach-empty" role="alert">
+                {error}
+              </p>
+            ) : null}
+
+            {!error && templates.length === 0 ? (
+              <p className="coach-empty">Nessun template. Creane uno da usare come base.</p>
+            ) : null}
+
+            {templates.length > 0 ? (
+              <div className="coach-card-list">
+                {templates.map((template) => (
+                  <Link
+                    key={template.id}
+                    href={`/templates/${template.id}/edit`}
+                    className="coach-card coach-card--nav"
+                  >
+                    <span className="coach-card__body">
+                      <h2>{template.name}</h2>
+                      <p>
+                        {template.frequency} · {template.exerciseCount} esercizi
+                      </p>
+                    </span>
+                    <CardChevron />
+                  </Link>
+                ))}
+              </div>
+            ) : null}
+          </>
         )}
       </div>
     </AppShell>

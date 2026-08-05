@@ -25,7 +25,8 @@ cd mobile && npm start            # Expo Dev Tools (i / a for simulators)
 cd mobile && npm run typecheck
 ```
 
-**CI:** push o PR su `main` → GitHub Actions (`.github/workflows/ci.yml`): `be` typecheck + test, `fe` lint + build (Node 22).
+**CI:** push o PR su `main` → GitHub Actions (`.github/workflows/ci.yml`): `be` typecheck + test, `fe` lint + build, `mobile` typecheck (Node 22).
+
 
 - `be/.env` credentials: `postgres:postgres` (must match `docker-compose.yml`)
 - Frontend web calls relative `/api/...` URLs; Vite proxies in dev

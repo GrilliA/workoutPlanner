@@ -34,12 +34,6 @@ export type DashboardTask = {
   tone: "accent" | "default";
 };
 
-export type DashboardMonthPoint = {
-  month: string;
-  monthLabel: string;
-  count: number;
-};
-
 export type DashboardViewModel = {
   clientCount: number;
   templateCount: number;
@@ -47,9 +41,6 @@ export type DashboardViewModel = {
   kpis: DashboardKpi[];
   athletes: DashboardAthleteRow[];
   tasks: DashboardTask[];
-  upcoming: DashboardExpirationRow[];
-  expired: DashboardExpirationRow[];
-  monthPoints: DashboardMonthPoint[];
 };
 
 export type DashboardStatus =

@@ -96,6 +96,7 @@ export function ExerciseCard({
 }: ExerciseCardProps) {
   const [editing, setEditing] = useState<EditingField>(null);
   const [editDraft, setEditDraft] = useState<EditDraft | null>(null);
+  const [editError, setEditError] = useState<string | null>(null);
   const weightRef = useRef<TextInputType>(null);
   const repsRef = useRef<TextInputType>(null);
 
@@ -142,12 +143,22 @@ export function ExerciseCard({
     if (locked) {
       return;
     }
+    setEditError(null);
     setEditDraft({
       setNumber: logged.setNumber,
       weight:
         logged.weightKg === null ? "" : formatWeightKg(logged.weightKg),
       reps: String(logged.reps),
     });
+  };
+
+  const rejectEditSave = (message: string) => {
+    setEditError(message);
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(
+      () => {
+        // Simulator / permissions.
+      },
+    );
   };
 
   const saveSetEditor = () => {
@@ -160,13 +171,16 @@ export function ExerciseCard({
     const weightKg = weightRaw === "" ? null : Number(weightRaw);
 
     if (!Number.isFinite(nextReps) || nextReps <= 0) {
+      rejectEditSave("Inserisci un numero di reps valido (maggiore di 0).");
       return;
     }
 
     if (weightKg !== null && (!Number.isFinite(weightKg) || weightKg < 0)) {
+      rejectEditSave("Inserisci un peso valido (0 o più).");
       return;
     }
 
+    setEditError(null);
     onEditSet(editDraft.setNumber, { reps: nextReps, weightKg });
     setEditDraft(null);
   };
@@ -328,7 +342,8 @@ export function ExerciseCard({
             inputRef={weightRef}
             keyboardType="decimal-pad"
             large={focus}
-            onMinus={() =>
+            onMinus={() => {
+              setEditError(null);
               setEditDraft((current) =>
                 current
                   ? {
@@ -336,9 +351,10 @@ export function ExerciseCard({
                       weight: stepWeightKg(current.weight, -1),
                     }
                   : current,
-              )
-            }
-            onPlus={() =>
+              );
+            }}
+            onPlus={() => {
+              setEditError(null);
               setEditDraft((current) =>
                 current
                   ? {
@@ -346,14 +362,15 @@ export function ExerciseCard({
                       weight: stepWeightKg(current.weight, 1),
                     }
                   : current,
-              )
-            }
+              );
+            }}
             onPressValue={() => startEdit("weight")}
-            onChangeText={(value) =>
+            onChangeText={(value) => {
+              setEditError(null);
               setEditDraft((current) =>
                 current ? { ...current, weight: value } : current,
-              )
-            }
+              );
+            }}
             onEndEditing={() => setEditing(null)}
           />
           <StepperRow
@@ -366,31 +383,46 @@ export function ExerciseCard({
             inputRef={repsRef}
             keyboardType="number-pad"
             large={focus}
-            onMinus={() =>
+            onMinus={() => {
+              setEditError(null);
               setEditDraft((current) =>
                 current
                   ? { ...current, reps: stepReps(current.reps, -1) }
                   : current,
-              )
-            }
-            onPlus={() =>
+              );
+            }}
+            onPlus={() => {
+              setEditError(null);
               setEditDraft((current) =>
                 current
                   ? { ...current, reps: stepReps(current.reps, 1) }
                   : current,
-              )
-            }
+              );
+            }}
             onPressValue={() => startEdit("reps")}
-            onChangeText={(value) =>
+            onChangeText={(value) => {
+              setEditError(null);
               setEditDraft((current) =>
                 current ? { ...current, reps: value } : current,
-              )
-            }
+              );
+            }}
             onEndEditing={() => setEditing(null)}
           />
+          {editError ? (
+            <AppText
+              tone="danger"
+              style={styles.editError}
+              accessibilityLiveRegion="polite"
+            >
+              {editError}
+            </AppText>
+          ) : null}
           <View style={styles.editActions}>
             <Pressable
-              onPress={() => setEditDraft(null)}
+              onPress={() => {
+                setEditError(null);
+                setEditDraft(null);
+              }}
               disabled={actionsDisabled}
               style={styles.textAction}
               accessibilityRole="button"
@@ -747,6 +779,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg,
   },
   nextLabel: {
+    fontWeight: "600",
+  },
+  editError: {
+    fontSize: 13,
     fontWeight: "600",
   },
   editActions: {

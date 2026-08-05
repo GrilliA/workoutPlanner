@@ -1,7 +1,13 @@
 import { Router } from "express";
-import { and, count, eq } from "drizzle-orm";
+import { and, count, eq, isNull } from "drizzle-orm";
 import { db } from "../db";
-import { exercises, programAssignments, users, workouts } from "../db/schema";
+import {
+  exercises,
+  programAssignments,
+  refreshTokens,
+  users,
+  workouts,
+} from "../db/schema";
 import { requireAuth } from "../middleware/requireAuth";
 import { requireRole } from "../middleware/requireRole";
 import { validateAssignmentDates, validatePartialAssignmentDates } from "../services/assignmentStatus";
@@ -146,7 +152,23 @@ coachRouter.post("/clients/:athleteId/reset-password", async (req, res) => {
   }
 
   const passwordHash = await hashPassword(parsed.value.password);
-  await db.update(users).set({ passwordHash }).where(eq(users.id, athleteId));
+
+  await db.transaction(async (tx) => {
+    const now = new Date();
+
+    await tx
+      .update(users)
+      .set({ passwordHash, updatedAt: now })
+      .where(eq(users.id, athleteId));
+
+    await tx
+      .update(refreshTokens)
+      .set({ revokedAt: now })
+      .where(
+        and(eq(refreshTokens.userId, athleteId), isNull(refreshTokens.revokedAt)),
+      );
+  });
+
   res.json({ ok: true });
 });
 

@@ -16,6 +16,11 @@ const authenticatedState = (user: AuthUser): AuthState => ({
   user,
 });
 
+const errorState = (): AuthState => ({
+  status: "error",
+  user: null,
+});
+
 async function bootstrapSession(): Promise<AuthState> {
   try {
     await authStore.hydrateRefreshToken();
@@ -28,10 +33,8 @@ async function bootstrapSession(): Promise<AuthState> {
     const { user } = await authApi.getMe();
     return authenticatedState(user);
   } catch (error) {
-    // 401 / rete / SecureStore: non bloccare l'app — vai al login.
-    authStore.clear();
-
     if (error instanceof ApiError && error.status === 401) {
+      authStore.clear();
       return anonymousState();
     }
 
@@ -39,7 +42,8 @@ async function bootstrapSession(): Promise<AuthState> {
       console.warn("[auth] bootstrap failed", error);
     }
 
-    return anonymousState();
+    // Keep SecureStore refresh token; AuthGate shows Riprova.
+    return errorState();
   }
 }
 
@@ -78,9 +82,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         await authStore.setRefreshToken(session.refreshToken);
       } catch (error) {
-        if (__DEV__) {
-          console.warn("[auth] SecureStore setRefreshToken failed", error);
-        }
+        authStore.clear();
+        throw error;
       }
     }
 
@@ -95,9 +98,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         await authStore.setRefreshToken(session.refreshToken);
       } catch (error) {
-        if (__DEV__) {
-          console.warn("[auth] SecureStore setRefreshToken failed", error);
-        }
+        authStore.clear();
+        throw error;
       }
     }
 

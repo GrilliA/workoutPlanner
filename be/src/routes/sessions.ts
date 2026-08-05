@@ -413,8 +413,14 @@ sessionSetsRouter.post("/", async (req, res) => {
       .returning();
 
     res.status(201).json(created);
-  } catch {
-    res.status(409).json({ error: "Set already logged for this exercise and set number" });
+  } catch (error) {
+    if (isUniqueViolation(error)) {
+      res.status(409).json({
+        error: "Set already logged for this exercise and set number",
+      });
+      return;
+    }
+    throw error;
   }
 });
 

@@ -7,7 +7,7 @@ import { ExerciseList } from "../exerciselist";
 import { AddExerciseForm } from "../addexerciseform";
 import { WorkoutSettingsPanel } from "../workoutsettings";
 import { useWorkoutForm, type WorkoutFormAdapters } from "../useCreateWorkout";
-import { SchedaTxtPaste } from "@pages/coach/schedatxt";
+import { SchedaTxtPaste } from "../schedatxt";
 import type { Weekday } from "../types";
 import "./style.css";
 

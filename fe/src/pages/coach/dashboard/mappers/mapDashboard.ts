@@ -3,25 +3,9 @@ import type {
   DashboardAthleteRow,
   DashboardExpirationRow,
   DashboardKpi,
-  DashboardMonthPoint,
   DashboardTask,
   DashboardViewModel,
 } from "../types";
-
-const MONTH_LABELS_IT = [
-  "Gen",
-  "Feb",
-  "Mar",
-  "Apr",
-  "Mag",
-  "Giu",
-  "Lug",
-  "Ago",
-  "Set",
-  "Ott",
-  "Nov",
-  "Dic",
-] as const;
 
 const athleteLabel = (name: string | null, email: string): string =>
   name?.trim() || email;
@@ -34,15 +18,6 @@ const formatDaysLeft = (daysLeft: number): string => {
     return "Scade domani";
   }
   return `Tra ${daysLeft} giorni`;
-};
-
-const formatMonthLabel = (month: string): string => {
-  const [, monthPart] = month.split("-");
-  const index = Number(monthPart) - 1;
-  if (!Number.isInteger(index) || index < 0 || index > 11) {
-    return month;
-  }
-  return MONTH_LABELS_IT[index];
 };
 
 const mapUpcoming = (
@@ -71,15 +46,6 @@ const mapExpired = (
     expiresAt: item.expiresAt,
     timingLabel: `Scaduta il ${item.expiresAt}`,
     kind: "expired" as const,
-  }));
-
-const mapMonthPoints = (
-  points: CoachDashboard["expirationsByMonth"],
-): DashboardMonthPoint[] =>
-  points.map((point) => ({
-    month: point.month,
-    monthLabel: formatMonthLabel(point.month),
-    count: point.count,
   }));
 
 const mapKpis = (stats: CoachDashboard): DashboardKpi[] => {
@@ -240,8 +206,5 @@ export const mapDashboard = (
     kpis: mapKpis(stats),
     athletes: mapAthletes(clients, assignments),
     tasks: mapTasks(upcoming, expired),
-    upcoming,
-    expired,
-    monthPoints: mapMonthPoints(stats.expirationsByMonth),
   };
 };

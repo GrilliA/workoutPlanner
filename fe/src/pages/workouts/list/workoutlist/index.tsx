@@ -1,1 +1,0 @@
-export { WorkoutList } from "./WorkoutList";

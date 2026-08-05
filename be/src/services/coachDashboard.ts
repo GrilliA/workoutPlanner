@@ -6,7 +6,10 @@ import {
   daysUntilExpiry,
   todayInRome,
 } from "./assignmentStatus";
-import { syncAssignmentStatusesForAthlete } from "./programAssignment";
+import {
+  syncAssignmentStatusesForAthlete,
+  syncAssignmentStatusesForCoach,
+} from "./programAssignment";
 
 const LIST_LIMIT = 8;
 
@@ -45,33 +48,10 @@ export type CoachDashboardStats = {
   expiredAssignmentsList: CoachDashboardExpiredItem[];
 };
 
-const refreshAssignmentStatuses = async (coachId: number) => {
-  const today = todayInRome();
-  const rows = await db
-    .select()
-    .from(programAssignments)
-    .where(
-      and(
-        eq(programAssignments.coachId, coachId),
-        ne(programAssignments.status, "revoked"),
-      ),
-    );
-
-  for (const row of rows) {
-    const next = computeAssignmentStatus(row.startsAt, row.expiresAt, today);
-    if (next !== row.status) {
-      await db
-        .update(programAssignments)
-        .set({ status: next, updatedAt: new Date() })
-        .where(eq(programAssignments.id, row.id));
-    }
-  }
-};
-
 export const getCoachDashboardStats = async (
   coachId: number,
 ): Promise<CoachDashboardStats> => {
-  await refreshAssignmentStatuses(coachId);
+  await syncAssignmentStatusesForCoach(coachId);
 
   const today = todayInRome();
 
@@ -185,7 +165,7 @@ export const getCoachDashboardStats = async (
 };
 
 export const listCoachAssignments = async (coachId: number) => {
-  await refreshAssignmentStatuses(coachId);
+  await syncAssignmentStatusesForCoach(coachId);
 
   return db
     .select({
@@ -211,7 +191,7 @@ export const listAthleteAssignmentsForCoach = async (
   coachId: number,
   athleteId: number,
 ) => {
-  await refreshAssignmentStatuses(coachId);
+  await syncAssignmentStatusesForCoach(coachId);
 
   return db
     .select({

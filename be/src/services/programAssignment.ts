@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, ne } from "drizzle-orm";
+import { and, asc, eq, inArray, ne, type SQL } from "drizzle-orm";
 import { db } from "../db";
 import {
   exercises,
@@ -78,37 +78,42 @@ const revokeOtherActiveAssignments = async (
   }
 };
 
-export const syncAssignmentStatusesForAthlete = async (
-  athleteId: number,
+/** Refresh derived status + workouts.isActive for non-revoked rows matching the filter. */
+const syncAssignmentStatuses = async (
+  filter: SQL,
   now = new Date(),
 ) => {
   const today = todayInRome(now);
-  const rows = await db
-    .select()
-    .from(programAssignments)
-    .where(
-      and(
-        eq(programAssignments.athleteId, athleteId),
-        ne(programAssignments.status, "revoked"),
-      ),
-    );
 
-  for (const row of rows) {
-    const next = computeAssignmentStatus(row.startsAt, row.expiresAt, today);
-    if (next !== row.status) {
-      await db
-        .update(programAssignments)
-        .set({ status: next, updatedAt: now })
-        .where(eq(programAssignments.id, row.id));
+  await db.transaction(async (tx) => {
+    const rows = await tx
+      .select()
+      .from(programAssignments)
+      .where(and(filter, ne(programAssignments.status, "revoked")));
+
+    for (const row of rows) {
+      const next = computeAssignmentStatus(row.startsAt, row.expiresAt, today);
+      if (next !== row.status) {
+        await tx
+          .update(programAssignments)
+          .set({ status: next, updatedAt: now })
+          .where(eq(programAssignments.id, row.id));
+      }
+
+      await setWorkoutActive(tx, row.workoutId, isActiveForStatus(next));
     }
-
-    const shouldBeActive = isActiveForStatus(next);
-    await db
-      .update(workouts)
-      .set({ isActive: shouldBeActive })
-      .where(eq(workouts.id, row.workoutId));
-  }
+  });
 };
+
+export const syncAssignmentStatusesForAthlete = (
+  athleteId: number,
+  now = new Date(),
+) => syncAssignmentStatuses(eq(programAssignments.athleteId, athleteId), now);
+
+export const syncAssignmentStatusesForCoach = (
+  coachId: number,
+  now = new Date(),
+) => syncAssignmentStatuses(eq(programAssignments.coachId, coachId), now);
 
 const copyWorkoutTree = async (
   tx: Tx,
@@ -365,111 +370,117 @@ export type UpdateAssignmentResult =
   | { ok: false; status: 400; error: string }
   | null;
 
-export const updateAssignmentDates = async (
+export const updateAssignmentDates = (
   coachId: number,
   assignmentId: number,
   dates: AssignmentDatesInput,
-): Promise<UpdateAssignmentResult> => {
-  const [row] = await db
-    .select()
-    .from(programAssignments)
-    .where(
-      and(
-        eq(programAssignments.id, assignmentId),
-        eq(programAssignments.coachId, coachId),
-      ),
+): Promise<UpdateAssignmentResult> =>
+  db.transaction(async (tx) => {
+    const [row] = await tx
+      .select()
+      .from(programAssignments)
+      .where(
+        and(
+          eq(programAssignments.id, assignmentId),
+          eq(programAssignments.coachId, coachId),
+        ),
+      )
+      .for("update");
+
+    if (!row) {
+      return null;
+    }
+
+    if (row.status === "revoked") {
+      return { ok: false, status: 400, error: "Cannot update revoked assignment" };
+    }
+
+    const today = todayInRome();
+    const status = computeAssignmentStatus(
+      dates.startsAt,
+      dates.expiresAt,
+      today,
     );
 
-  if (!row) {
-    return null;
-  }
+    const [updated] = await tx
+      .update(programAssignments)
+      .set({
+        startsAt: dates.startsAt,
+        expiresAt: dates.expiresAt,
+        status,
+        updatedAt: new Date(),
+      })
+      .where(eq(programAssignments.id, assignmentId))
+      .returning();
 
-  if (row.status === "revoked") {
-    return { ok: false, status: 400, error: "Cannot update revoked assignment" };
-  }
+    await setWorkoutActive(tx, row.workoutId, isActiveForStatus(status));
+    await revokeOtherActiveAssignments(
+      tx,
+      coachId,
+      row.athleteId,
+      row.workoutId,
+    );
 
-  const today = todayInRome();
-  const status = computeAssignmentStatus(dates.startsAt, dates.expiresAt, today);
-  const isActive = isActiveForStatus(status);
+    return updated;
+  });
 
-  const [updated] = await db
-    .update(programAssignments)
-    .set({
-      startsAt: dates.startsAt,
-      expiresAt: dates.expiresAt,
-      status,
-      updatedAt: new Date(),
-    })
-    .where(eq(programAssignments.id, assignmentId))
-    .returning();
-
-  await db
-    .update(workouts)
-    .set({ isActive })
-    .where(eq(workouts.id, row.workoutId));
-
-  return updated;
-};
-
-export const revokeAssignment = async (
+export const revokeAssignment = (
   coachId: number,
   assignmentId: number,
-) => {
-  const [row] = await db
-    .select()
-    .from(programAssignments)
-    .where(
-      and(
-        eq(programAssignments.id, assignmentId),
-        eq(programAssignments.coachId, coachId),
-      ),
-    );
+) =>
+  db.transaction(async (tx) => {
+    const [row] = await tx
+      .select()
+      .from(programAssignments)
+      .where(
+        and(
+          eq(programAssignments.id, assignmentId),
+          eq(programAssignments.coachId, coachId),
+        ),
+      )
+      .for("update");
 
-  if (!row) {
-    return null;
-  }
+    if (!row) {
+      return null;
+    }
 
-  const [updated] = await db
-    .update(programAssignments)
-    .set({ status: "revoked", updatedAt: new Date() })
-    .where(eq(programAssignments.id, assignmentId))
-    .returning();
+    const [updated] = await tx
+      .update(programAssignments)
+      .set({ status: "revoked", updatedAt: new Date() })
+      .where(eq(programAssignments.id, assignmentId))
+      .returning();
 
-  await db
-    .update(workouts)
-    .set({ isActive: false })
-    .where(eq(workouts.id, row.workoutId));
+    await setWorkoutActive(tx, row.workoutId, false);
 
-  return updated;
-};
+    return updated;
+  });
 
 /** Either side of an assignment can cancel it. */
-export const revokeAssignmentForParticipant = async (
+export const revokeAssignmentForParticipant = (
   userId: number,
   assignmentId: number,
-) => {
-  const [row] = await db
-    .select()
-    .from(programAssignments)
-    .where(eq(programAssignments.id, assignmentId));
+) =>
+  db.transaction(async (tx) => {
+    const [row] = await tx
+      .select()
+      .from(programAssignments)
+      .where(eq(programAssignments.id, assignmentId))
+      .for("update");
 
-  if (!row || (row.coachId !== userId && row.athleteId !== userId)) {
-    return null;
-  }
+    if (!row || (row.coachId !== userId && row.athleteId !== userId)) {
+      return null;
+    }
 
-  const [updated] = await db
-    .update(programAssignments)
-    .set({ status: "revoked", updatedAt: new Date() })
-    .where(eq(programAssignments.id, assignmentId))
-    .returning();
+    const [updated] = await tx
+      .update(programAssignments)
+      .set({ status: "revoked", updatedAt: new Date() })
+      .where(eq(programAssignments.id, assignmentId))
+      .returning();
 
-  await db
-    .update(workouts)
-    .set({ isActive: false })
-    .where(eq(workouts.id, row.workoutId));
+    await setWorkoutActive(tx, row.workoutId, false);
 
-  return updated;
-};
+    return updated;
+  });
 
 export const coachOwnsAthleteProgram = async (
   coachId: number,

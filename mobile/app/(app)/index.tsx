@@ -80,6 +80,10 @@ export default function HomeScreen() {
   const [weekDays, setWeekDays] = useState<WeekStripDay[]>(() =>
     buildRestWeekStrip(),
   );
+  const [weekStripWorkoutId, setWeekStripWorkoutId] = useState<number | null>(
+    null,
+  );
+  const [selectedDateKey, setSelectedDateKey] = useState<string | null>(null);
   const [homeStats, setHomeStats] = useState<HomeStat[]>(EMPTY_STATS);
   const [recent, setRecent] = useState<HomeRecentSession[]>([]);
   const [exerciseCount, setExerciseCount] = useState<number | null>(null);
@@ -89,6 +93,9 @@ export default function HomeScreen() {
   const [starting, setStarting] = useState(false);
   const [fetchId, setFetchId] = useState(0);
   const skipNextFocusRefresh = useRef(true);
+  /** Bumps on every week-strip fetch so stale chip taps cannot overwrite a newer selection. */
+  const weekStripRequestIdRef = useRef(0);
+  const weekStripCacheRef = useRef<Map<number, WeekStripDay[]>>(new Map());
 
   useFocusEffect(
     useCallback(() => {
@@ -137,16 +144,30 @@ export default function HomeScreen() {
           setDaysByWorkout({});
           setScheduledLabel(null);
           setWeekDays(buildRestWeekStrip());
+          setWeekStripWorkoutId(null);
+          setSelectedDateKey(null);
           setExerciseCount(null);
           return;
         }
 
-        const dayEntries = await Promise.all(
-          active.map(async (workout) => {
-            const days = await getWorkoutDays(workout.id);
-            return [workout.id, [...days].sort((a, b) => a.sortOrder - b.sortOrder)] as const;
-          }),
-        );
+        // Days + today's schedule per scheda in parallel (avoids sequential schedule waterfall).
+        const [dayEntries, todaySchedules] = await Promise.all([
+          Promise.all(
+            active.map(async (workout) => {
+              const days = await getWorkoutDays(workout.id);
+              return [
+                workout.id,
+                [...days].sort((a, b) => a.sortOrder - b.sortOrder),
+              ] as const;
+            }),
+          ),
+          Promise.all(
+            active.map(async (workout) => ({
+              workout,
+              schedule: await getWorkoutScheduleToday(workout.id),
+            })),
+          ),
+        ]);
 
         if (cancelled) {
           return;
@@ -158,37 +179,48 @@ export default function HomeScreen() {
         }
         setDaysByWorkout(nextDays);
 
-        const primaryWorkout = active[0]!;
-        const weekSchedules = await fetchWeekSchedule(primaryWorkout.id);
-
-        if (cancelled) {
-          return;
-        }
-
-        setWeekDays(mapWeekStrip(weekSchedules));
-
         let preferred: StartSelection | null = null;
         let preferredLabel: string | null = null;
+        let preferredDateKey: string | null = null;
 
-        for (const workout of active) {
-          const schedule = await getWorkoutScheduleToday(workout.id);
+        for (const { workout, schedule } of todaySchedules) {
           if (schedule.workoutDay) {
             preferred = {
               workoutId: workout.id,
               workoutDayId: schedule.workoutDay.id,
             };
             preferredLabel = `${workout.name} · ${schedule.workoutDay.name}`;
+            preferredDateKey = schedule.date;
             break;
           }
         }
+
+        const stripWorkoutId = preferred?.workoutId ?? active[0]!.id;
+        const stripRequestId = ++weekStripRequestIdRef.current;
+        weekStripCacheRef.current.clear();
+        const weekSchedules = await fetchWeekSchedule(stripWorkoutId);
 
         if (cancelled) {
           return;
         }
 
+        // Chip tap may have raced ahead — keep that selection/strip, skip home defaults.
+        if (stripRequestId !== weekStripRequestIdRef.current) {
+          return;
+        }
+
+        const mappedWeek = mapWeekStrip(weekSchedules);
+        weekStripCacheRef.current.set(stripWorkoutId, mappedWeek);
+        setWeekDays(mappedWeek);
+        setWeekStripWorkoutId(stripWorkoutId);
+
         if (preferred) {
           setSelection(preferred);
           setScheduledLabel(preferredLabel);
+          setSelectedDateKey(
+            preferredDateKey ??
+              findDateKeyForWorkoutDay(mappedWeek, preferred.workoutDayId),
+          );
         } else {
           const firstWorkout = active[0]!;
           const firstDay = nextDays[firstWorkout.id]?.[0];
@@ -198,6 +230,11 @@ export default function HomeScreen() {
               : null,
           );
           setScheduledLabel(null);
+          setSelectedDateKey(
+            firstDay
+              ? findDateKeyForWorkoutDay(mappedWeek, firstDay.id)
+              : null,
+          );
         }
       } catch (err) {
         if (!cancelled) {
@@ -296,25 +333,95 @@ export default function HomeScreen() {
     }
   };
 
+  const loadWeekStripForWorkout = async (workoutId: number) => {
+    const requestId = ++weekStripRequestIdRef.current;
+    const cached = weekStripCacheRef.current.get(workoutId);
+    if (cached) {
+      setWeekDays(cached);
+      setWeekStripWorkoutId(workoutId);
+      return cached;
+    }
+
+    try {
+      const weekSchedules = await fetchWeekSchedule(workoutId);
+      if (requestId !== weekStripRequestIdRef.current) {
+        return null;
+      }
+      const mappedWeek = mapWeekStrip(weekSchedules);
+      weekStripCacheRef.current.set(workoutId, mappedWeek);
+      setWeekDays(mappedWeek);
+      setWeekStripWorkoutId(workoutId);
+      return mappedWeek;
+    } catch {
+      if (requestId !== weekStripRequestIdRef.current) {
+        return null;
+      }
+      return null;
+    }
+  };
+
   const onWeekDayPress = (day: WeekStripDay) => {
     if (!day.workoutDayId || activeWorkouts.length === 0) {
       return;
     }
 
-    const primary = activeWorkouts[0]!;
-    const ownsDay = (daysByWorkout[primary.id] ?? []).some(
-      (workoutDay) => workoutDay.id === day.workoutDayId,
+    const workoutId = findWorkoutIdForDay(
+      daysByWorkout,
+      day.workoutDayId,
+      weekStripWorkoutId ?? selection?.workoutId ?? null,
     );
 
-    if (!ownsDay) {
+    if (workoutId == null) {
+      return;
+    }
+
+    const workout =
+      activeWorkouts.find((item) => item.id === workoutId) ?? null;
+
+    setSelection({
+      workoutId,
+      workoutDayId: day.workoutDayId,
+    });
+    setSelectedDateKey(day.dateKey);
+    setScheduledLabel(
+      workout
+        ? `${workout.name} · ${day.workoutDayName ?? day.weekdayLabel}`
+        : day.workoutDayName,
+    );
+  };
+
+  const onSelectWorkout = (workout: Workout) => {
+    const days = daysByWorkout[workout.id] ?? [];
+    const firstDay = days[0];
+    setSelection(
+      firstDay
+        ? { workoutId: workout.id, workoutDayId: firstDay.id }
+        : null,
+    );
+    setScheduledLabel(null);
+    if (!firstDay) {
+      setSelectedDateKey(null);
+      return;
+    }
+    void loadWeekStripForWorkout(workout.id).then((mappedWeek) => {
+      // null = stale/error; leave the newer selection's date key alone.
+      if (!mappedWeek) {
+        return;
+      }
+      setSelectedDateKey(findDateKeyForWorkoutDay(mappedWeek, firstDay.id));
+    });
+  };
+
+  const onSelectProgramDay = (workoutDayId: number) => {
+    if (!selectedWorkout) {
       return;
     }
 
     setSelection({
-      workoutId: primary.id,
-      workoutDayId: day.workoutDayId,
+      workoutId: selectedWorkout.id,
+      workoutDayId,
     });
-    setScheduledLabel(`${primary.name} · ${day.workoutDayName ?? day.weekdayLabel}`);
+    setSelectedDateKey(findDateKeyForWorkoutDay(weekDays, workoutDayId));
   };
 
   if (loading) {
@@ -370,7 +477,11 @@ export default function HomeScreen() {
           />
         ) : null}
 
-        <WeekStrip days={weekDays} onDayPress={onWeekDayPress} />
+        <WeekStrip
+          days={weekDays}
+          selectedDateKey={selectedDateKey}
+          onDayPress={onWeekDayPress}
+        />
 
         <Card highlight style={styles.todayCard}>
           <Eyebrow>{todayEyebrow}</Eyebrow>
@@ -423,19 +534,7 @@ export default function HomeScreen() {
                   return (
                     <Pressable
                       key={workout.id}
-                      onPress={() => {
-                        const days = daysByWorkout[workout.id] ?? [];
-                        const firstDay = days[0];
-                        setSelection(
-                          firstDay
-                            ? {
-                                workoutId: workout.id,
-                                workoutDayId: firstDay.id,
-                              }
-                            : null,
-                        );
-                        setScheduledLabel(null);
-                      }}
+                      onPress={() => onSelectWorkout(workout)}
                       style={[styles.chip, selected && styles.chipSelected]}
                     >
                       <Meta
@@ -458,12 +557,7 @@ export default function HomeScreen() {
                     return (
                       <Pressable
                         key={day.id}
-                        onPress={() =>
-                          setSelection({
-                            workoutId: selectedWorkout!.id,
-                            workoutDayId: day.id,
-                          })
-                        }
+                        onPress={() => onSelectProgramDay(day.id)}
                         style={[styles.chip, selected && styles.chipSelected]}
                       >
                         <Meta
@@ -541,6 +635,34 @@ async function fetchWeekSchedule(workoutId: number): Promise<WorkoutSchedule[]> 
   return Promise.all(
     dateKeys.map((date) => getWorkoutScheduleToday(workoutId, date)),
   );
+}
+
+function findDateKeyForWorkoutDay(
+  days: WeekStripDay[],
+  workoutDayId: number,
+): string | null {
+  return days.find((day) => day.workoutDayId === workoutDayId)?.dateKey ?? null;
+}
+
+function findWorkoutIdForDay(
+  daysByWorkout: Record<number, WorkoutDay[]>,
+  workoutDayId: number,
+  preferredWorkoutId: number | null,
+): number | null {
+  if (preferredWorkoutId != null) {
+    const preferredDays = daysByWorkout[preferredWorkoutId] ?? [];
+    if (preferredDays.some((day) => day.id === workoutDayId)) {
+      return preferredWorkoutId;
+    }
+  }
+
+  for (const [workoutId, days] of Object.entries(daysByWorkout)) {
+    if (days.some((day) => day.id === workoutDayId)) {
+      return Number(workoutId);
+    }
+  }
+
+  return null;
 }
 
 const styles = StyleSheet.create({

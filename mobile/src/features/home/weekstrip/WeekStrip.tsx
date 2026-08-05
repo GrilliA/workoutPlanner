@@ -5,27 +5,35 @@ import type { WeekStripDay } from "../types";
 
 type WeekStripProps = {
   days: WeekStripDay[];
+  /** Giorno calendario selezionato (YYYY-MM-DD), distinto da “oggi”. */
+  selectedDateKey?: string | null;
   onDayPress?: (day: WeekStripDay) => void;
 };
 
-/** Strip 7 giorni — stati today / workout / rest come mock Home. */
-export function WeekStrip({ days, onDayPress }: WeekStripProps) {
+/** Strip 7 giorni — stati today / selected / workout / rest. */
+export function WeekStrip({
+  days,
+  selectedDateKey = null,
+  onDayPress,
+}: WeekStripProps) {
   return (
     <View style={styles.row} accessibilityLabel="Programma settimanale">
       {days.map((day) => {
         const interactive = Boolean(onDayPress) && !day.isRest;
+        const isSelected = selectedDateKey === day.dateKey;
         const cellStyle = [
           styles.day,
-          day.isToday && styles.dayToday,
-          !day.isToday && !day.isRest && styles.dayWorkout,
-          !day.isToday && day.isRest && styles.dayRest,
+          day.isToday && !isSelected && styles.dayToday,
+          isSelected && styles.daySelected,
+          !day.isToday && !isSelected && !day.isRest && styles.dayWorkout,
+          !day.isToday && !isSelected && day.isRest && styles.dayRest,
         ];
 
         const content = (
           <>
             <AppText
               variant="eyebrow"
-              tone={day.isToday ? "accent" : "muted"}
+              tone={isSelected || day.isToday ? "accent" : "muted"}
               style={styles.label}
             >
               {day.weekdayLabel}
@@ -49,6 +57,7 @@ export function WeekStrip({ days, onDayPress }: WeekStripProps) {
           <Pressable
             key={day.dateKey}
             accessibilityRole="button"
+            accessibilityState={{ selected: isSelected }}
             accessibilityLabel={`${day.weekdayLabel} ${day.dayNumber}${
               day.workoutDayName ? `: ${day.workoutDayName}` : ""
             }`}
@@ -80,6 +89,11 @@ const styles = StyleSheet.create({
   dayToday: {
     backgroundColor: colors.accentBg,
     borderColor: colors.accentBorder,
+  },
+  daySelected: {
+    backgroundColor: colors.accentBg,
+    borderColor: colors.accent,
+    borderWidth: 1.5,
   },
   dayWorkout: {
     borderColor: "rgba(199, 244, 100, 0.2)",

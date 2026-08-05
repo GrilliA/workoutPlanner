@@ -2,7 +2,8 @@
 
 Usa questo file **prima** di push/redeploy. Spunta i punti dopo averli verificati tu.
 
-API online oggi: `https://workoutplanner-production-974a.up.railway.app`
+API pubblica: `https://workoutplanner-production-974a.up.railway.app`  
+Stato live Railway: **verificare al deploy** (non assumere che production sia già aggiornato o ancora vecchio).
 
 ---
 
@@ -10,13 +11,13 @@ API online oggi: `https://workoutplanner-production-974a.up.railway.app`
 
 | Cosa | Stato attuale |
 | --- | --- |
-| Codice mobile (`X-Client: mobile` + `refreshToken` nel JSON) | Solo sul branch locale `feat/mobile-expo-scaffold` (diff in `be/`) |
-| Railway deployato | **BE vecchio** — register/login mobile **non** restituiscono `refreshToken` nel body |
-| Web (cookie httpOnly) | Deve restare invariato (nessun `refreshToken` nel JSON senza header mobile) |
-| Test unit BE | `npm test` in `be/` → **20 pass** (nessun test dedicato auth mobile) |
-| Typecheck BE | `tsc --noEmit` ok sul branch |
+| Codice mobile (`X-Client: mobile` + `refreshToken` nel JSON) | **In repo** — `be/src/routes/auth.ts` (+ `refreshToken` service, CORS `X-Client`). Non è più isolato su `feat/mobile-expo-scaffold`. |
+| Railway deployato | **Sconosciuto da qui** — ripetere i curl della sezione 6 sul dominio pubblico dopo ogni redeploy |
+| Web (cookie httpOnly) | Contratto invariato: senza `X-Client: mobile` nessun `refreshToken` nel JSON |
+| Test unit BE | `npm test` in `be/` (nessun test dedicato auth mobile) |
+| Typecheck BE | `tsc --noEmit` |
 
-File toccati dal fix mobile:
+File rilevanti (già in codebase):
 
 - `be/src/routes/auth.ts`
 - `be/src/services/refreshToken.ts`
@@ -25,6 +26,8 @@ File toccati dal fix mobile:
 ---
 
 ## 1. Cosa deve fare il BE (contratto)
+
+Stato codice: implementato su questo repo. Checkbox sotto = **verifica runtime** (locale o Railway), non “da scrivere”.
 
 Con header `X-Client: mobile`:
 
@@ -42,9 +45,9 @@ Senza `X-Client: mobile` (client web):
 
 ---
 
-## 2. Verifica su Railway **prima** del redeploy (baseline — deve fallire il pezzo mobile)
+## 2. Baseline Railway (stato deploy corrente)
 
-Da terminale:
+Da terminale — per capire cosa è live **oggi** (non presupporre fail/success):
 
 ```bash
 API=https://workoutplanner-production-974a.up.railway.app
@@ -52,7 +55,7 @@ API=https://workoutplanner-production-974a.up.railway.app
 # Root
 curl -sS -w "\nHTTP %{http_code}\n" "$API/"
 
-# Register mobile — OGGI ti aspetti accessToken ma NON refreshToken
+# Register mobile
 EMAIL="check-$(date +%s)@example.com"
 curl -sS -X POST "$API/api/auth/register" \
   -H "Content-Type: application/json" \
@@ -63,11 +66,11 @@ curl -sS -X POST "$API/api/auth/register" \
 
 - [ ] Root → `200` + testo API
 - [ ] Register → `201` + `accessToken`
-- [ ] Register → **manca** `refreshToken` (conferma che il deploy è ancora vecchio)
+- [ ] Annota se il body include `refreshToken` (deploy aggiornato) o no (deploy ancora senza pezzo mobile)
 
 ---
 
-## 3. Verifica **locale** col codice nuovo (prima di push)
+## 3. Verifica **locale** col codice del repo
 
 Avvia BE locale contro Neon (o Postgres locale) con le stesse env di produzione dove ha senso:
 
@@ -152,12 +155,12 @@ curl -sS -b /tmp/wp-cookies -X POST "$API/api/auth/refresh" \
 
 ---
 
-## 7. Gate “procedi al push”
+## 7. Gate “procedi al redeploy / verify”
 
 Segna OK solo se:
 
-- [ ] Sezione 3 (locale col codice nuovo) tutta verde
+- [ ] Sezione 3 (locale) tutta verde
 - [ ] Sezione 4 (env Railway) controllata
-- [ ] Hai chiaro che il push deve includere almeno i 3 file `be/` sopra (non serve pushare tutto `mobile/` per sbloccare Railway, ma il BE sì)
+- [ ] Dopo redeploy: sezione 6 verde sul dominio pubblico
 
-Quando hai spuntato il gate, dimmi **procedi col deploy** e facciamo commit BE + push / istruzioni Railway.
+Quando hai spuntato il gate, dimmi **procedi col deploy** e facciamo commit/push o istruzioni Railway.
