@@ -233,7 +233,10 @@ export default function SessionScreen() {
     Math.max(0, exercises.length - 1),
   );
   const focusedExercise = exercises[safeFocusIndex] ?? null;
-  const elapsedLabel = formatElapsed(session.startedAt, nowMs);
+  const elapsedEndMs = readOnly
+    ? (session.completedAt?.getTime() ?? session.startedAt.getTime())
+    : nowMs;
+  const elapsedLabel = formatElapsed(session.startedAt, elapsedEndMs);
   const statusLabel = readOnly
     ? session.status === "completed"
       ? "Sessione completata"
