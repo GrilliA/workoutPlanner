@@ -61,3 +61,12 @@ export const formatRomeLongDate = (reference = new Date()): string =>
       month: "long",
     })
     .toUpperCase();
+
+/** Parse a Rome calendar date key (`YYYY-MM-DD`) for display formatting. */
+export const dateFromRomeDateKey = (dateKey: string): Date => {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+};
+
+export const formatRomeLongDateKey = (dateKey: string): string =>
+  formatRomeLongDate(dateFromRomeDateKey(dateKey));

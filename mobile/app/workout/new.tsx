@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   Share,
   StyleSheet,
@@ -18,6 +19,7 @@ import {
   ErrorBanner,
   Field,
   Heading,
+  Meta,
   PrimaryButton,
   Screen,
   SecondaryButton,
@@ -32,18 +34,41 @@ import { colors, radii, spacing } from "../../src/theme";
 
 type Mode = "choose" | "diy" | "ai";
 
+type DraftExercise = {
+  key: string;
+  name: string;
+  reps: string;
+};
+
+function makeDraftKey(): string {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function emptyDraft(): DraftExercise {
+  return { key: makeDraftKey(), name: "", reps: "10" };
+}
+
+function buildPrescriptions(repsValue: number) {
+  return [
+    { setNumber: 1, reps: repsValue, restSec: 90 },
+    { setNumber: 2, reps: repsValue, restSec: 90 },
+    { setNumber: 3, reps: repsValue, restSec: 90 },
+  ];
+}
+
 export default function NewWorkoutScreen() {
   const [mode, setMode] = useState<Mode>("choose");
   const [name, setName] = useState("");
-  const [exerciseName, setExerciseName] = useState("");
-  const [reps, setReps] = useState("10");
+  const [drafts, setDrafts] = useState<DraftExercise[]>([emptyDraft()]);
   const [txt, setTxt] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const diyReady = useMemo(
-    () => name.trim().length > 0 && exerciseName.trim().length > 0,
-    [name, exerciseName],
+    () =>
+      name.trim().length > 0 &&
+      drafts.some((draft) => draft.name.trim().length > 0),
+    [name, drafts],
   );
 
   const onSharePrompt = async () => {
@@ -59,7 +84,18 @@ export default function NewWorkoutScreen() {
     setError(null);
 
     try {
-      const repsValue = Number(reps) || 10;
+      const exercises = drafts
+        .map((draft) => ({
+          name: draft.name.trim(),
+          repsValue: Number(draft.reps) || 10,
+        }))
+        .filter((exercise) => exercise.name.length > 0);
+
+      if (exercises.length === 0) {
+        setError("Aggiungi almeno un esercizio");
+        return;
+      }
+
       await saveWorkoutProgram({
         name: name.trim(),
         defaultRestSec: 90,
@@ -70,16 +106,10 @@ export default function NewWorkoutScreen() {
             name: "Giorno 1",
             sortOrder: 0,
             weekdays: [1],
-            exercises: [
-              {
-                name: exerciseName.trim(),
-                setPrescriptions: [
-                  { setNumber: 1, reps: repsValue, restSec: 90 },
-                  { setNumber: 2, reps: repsValue, restSec: 90 },
-                  { setNumber: 3, reps: repsValue, restSec: 90 },
-                ],
-              },
-            ],
+            exercises: exercises.map((exercise) => ({
+              name: exercise.name,
+              setPrescriptions: buildPrescriptions(exercise.repsValue),
+            })),
           },
         ],
       });
@@ -125,6 +155,25 @@ export default function NewWorkoutScreen() {
     }
   };
 
+  const updateDraft = (
+    key: string,
+    patch: Partial<Pick<DraftExercise, "name" | "reps">>,
+  ) => {
+    setDrafts((current) =>
+      current.map((draft) =>
+        draft.key === key ? { ...draft, ...patch } : draft,
+      ),
+    );
+  };
+
+  const removeDraft = (key: string) => {
+    setDrafts((current) =>
+      current.length <= 1
+        ? current
+        : current.filter((draft) => draft.key !== key),
+    );
+  };
+
   return (
     <Screen padded={false}>
       <KeyboardAvoidingView
@@ -159,19 +208,47 @@ export default function NewWorkoutScreen() {
                 value={name}
                 onChangeText={setName}
               />
-              <Field
-                placeholder="Primo esercizio"
-                value={exerciseName}
-                onChangeText={setExerciseName}
+
+              <SectionLabel>ESERCIZI</SectionLabel>
+              {drafts.map((draft, index) => (
+                <View key={draft.key} style={styles.exerciseBlock}>
+                  <Meta>Esercizio {index + 1}</Meta>
+                  <Field
+                    placeholder="Nome esercizio"
+                    value={draft.name}
+                    onChangeText={(value) =>
+                      updateDraft(draft.key, { name: value })
+                    }
+                  />
+                  <Field
+                    placeholder="Reps per serie"
+                    keyboardType="number-pad"
+                    value={draft.reps}
+                    onChangeText={(value) =>
+                      updateDraft(draft.key, { reps: value })
+                    }
+                  />
+                  {drafts.length > 1 ? (
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={() => removeDraft(draft.key)}
+                      style={styles.removeRow}
+                    >
+                      <Meta style={styles.removeLabel}>Rimuovi</Meta>
+                    </Pressable>
+                  ) : null}
+                </View>
+              ))}
+
+              <SecondaryButton
+                label="Aggiungi esercizio"
+                onPress={() => setDrafts((current) => [...current, emptyDraft()])}
+                disabled={busy}
               />
-              <Field
-                placeholder="Reps per serie"
-                keyboardType="number-pad"
-                value={reps}
-                onChangeText={setReps}
-              />
+
               <Body>
-                Crea una scheda con un giorno e 3 serie. Potrai arricchirla dopo.
+                Ogni esercizio parte con 3 serie. Potrai modificarli dopo dal
+                dettaglio scheda.
               </Body>
               <PrimaryButton
                 label={busy ? "Salvataggio…" : "Salva scheda"}
@@ -240,6 +317,19 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   block: { gap: spacing.sm, marginTop: spacing.md },
+  exerciseBlock: {
+    gap: spacing.xs,
+    paddingBottom: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  removeRow: {
+    alignSelf: "flex-start",
+    paddingVertical: spacing.xs,
+  },
+  removeLabel: {
+    color: colors.danger,
+  },
   txt: {
     minHeight: 180,
     textAlignVertical: "top",

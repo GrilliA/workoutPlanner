@@ -1,8 +1,16 @@
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
+import {
+  Alert,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
 import { ApiError } from "../../src/api/client";
 import {
+  abandonSession,
   getActiveAssignment,
   getSessions,
   getStats,
@@ -48,6 +56,8 @@ import { colors, radii, spacing } from "../../src/theme";
 import {
   buildRomeWeekDateKeys,
   formatRomeLongDate,
+  formatRomeLongDateKey,
+  toRomeDateKey,
 } from "../../src/utils/romeCalendar";
 
 type StartSelection = {
@@ -301,7 +311,20 @@ export default function HomeScreen() {
     selectedDays.find((day) => day.id === selection?.workoutDayId) ?? null;
 
   const todayTitle = selectedDay?.name ?? "Nessun giorno";
-  const todayEyebrow = `OGGI • ${formatRomeLongDate()}`;
+  const todayKey = toRomeDateKey(new Date());
+  const eyebrowDateKey = selectedDateKey ?? todayKey;
+  const todayEyebrow = `${
+    eyebrowDateKey === todayKey ? "OGGI" : "GIORNO"
+  } • ${
+    selectedDateKey
+      ? formatRomeLongDateKey(selectedDateKey)
+      : formatRomeLongDate()
+  }`;
+
+  const launchSession = async (workoutId: number, workoutDayId: number) => {
+    const session = await startSession(workoutId, { workoutDayId });
+    router.push(`/session/${session.id}`);
+  };
 
   const onStart = async () => {
     if (!selection) {
@@ -312,17 +335,52 @@ export default function HomeScreen() {
     setError(null);
 
     try {
-      const session = await startSession(selection.workoutId, {
-        workoutDayId: selection.workoutDayId,
-      });
-      router.push(`/session/${session.id}`);
+      await launchSession(selection.workoutId, selection.workoutDayId);
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
         const sessions = await getSessions();
-        const active = sessions.find((session) => session.status === "in_progress");
+        const active = sessions.find(
+          (session) => session.status === "in_progress",
+        );
 
         if (active) {
-          router.push(`/session/${active.id}`);
+          const selectionSnapshot = selection;
+          Alert.alert(
+            "Sessione già in corso",
+            "Hai una sessione non terminata. Vuoi riprenderla o abbandonarla per iniziarne una nuova?",
+            [
+              {
+                text: "Riprendi",
+                onPress: () => router.push(`/session/${active.id}`),
+              },
+              {
+                text: "Abbandona e avvia",
+                style: "destructive",
+                onPress: () => {
+                  void (async () => {
+                    setStarting(true);
+                    setError(null);
+                    try {
+                      await abandonSession(active.id);
+                      await launchSession(
+                        selectionSnapshot.workoutId,
+                        selectionSnapshot.workoutDayId,
+                      );
+                    } catch (abandonErr) {
+                      setError(
+                        abandonErr instanceof ApiError
+                          ? abandonErr.message
+                          : "Impossibile avviare",
+                      );
+                    } finally {
+                      setStarting(false);
+                    }
+                  })();
+                },
+              },
+              { text: "Annulla", style: "cancel" },
+            ],
+          );
           return;
         }
       }
