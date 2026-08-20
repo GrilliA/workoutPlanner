@@ -13,21 +13,24 @@ type AppShellProps = {
 type SidebarLink = {
   label: string;
   href: string;
+  icon: "home" | "clients" | "analytics" | "template" | "assignments" | "settings";
 };
 
 const sidebarLinks: SidebarLink[] = [
-  { label: "Dashboard", href: "/dashboard" },
-  { label: "Clienti", href: "/clients" },
-  { label: "Template", href: "/templates" },
-  { label: "Schede assegnate", href: "/assignments" },
-  { label: "Impostazioni", href: "/settings" },
+  { label: "Dashboard", href: "/dashboard", icon: "home" },
+  { label: "Clienti", href: "/clients", icon: "clients" },
+  { label: "Analisi", href: "/analytics", icon: "analytics" },
+  { label: "Template", href: "/templates", icon: "template" },
+  { label: "Schede assegnate", href: "/assignments", icon: "assignments" },
+  { label: "Impostazioni", href: "/settings", icon: "settings" },
 ];
 
 const bottomNavItems = [
-  { label: "Home", href: "/dashboard", icon: "home" },
-  { label: "Clienti", href: "/clients", icon: "workout" },
-  { label: "Template", href: "/templates", icon: "stats" },
-  { label: "Schede", href: "/assignments", icon: "history" },
+  { label: "Home", href: "/dashboard", icon: "home" as const },
+  { label: "Clienti", href: "/clients", icon: "clients" as const },
+  { label: "Analisi", href: "/analytics", icon: "analytics" as const },
+  { label: "Template", href: "/templates", icon: "template" as const },
+  { label: "Schede", href: "/assignments", icon: "assignments" as const },
 ];
 
 export function AppShell({ children, hideBottomNav = false }: AppShellProps) {
@@ -67,7 +70,8 @@ export function AppShell({ children, hideBottomNav = false }: AppShellProps) {
               href={item.href}
               className={(active) => (active ? "item active" : "item")}
             >
-              {item.label}
+              <NavIcon name={item.icon} />
+              <span>{item.label}</span>
             </Link>
           ))}
           <button type="button" className="item logout" onClick={() => void handleLogout()}>
@@ -103,7 +107,7 @@ function NavIcon({ name }: { name: string }) {
           fill="currentColor"
         />
       ) : null}
-      {name === "workout" ? (
+      {name === "clients" ? (
         <path
           d="M6.5 8.5 4 11v2l2.5 2.5M17.5 8.5 20 11v2l-2.5 2.5M9 12h6"
           fill="none"
@@ -112,7 +116,7 @@ function NavIcon({ name }: { name: string }) {
           strokeLinecap="round"
         />
       ) : null}
-      {name === "stats" ? (
+      {name === "analytics" ? (
         <path
           d="M5 19V9m7 10V5m7 14v-7"
           fill="none"
@@ -121,13 +125,43 @@ function NavIcon({ name }: { name: string }) {
           strokeLinecap="round"
         />
       ) : null}
-      {name === "history" ? (
+      {name === "template" ? (
+        <>
+          <rect
+            x="5"
+            y="4"
+            width="14"
+            height="16"
+            rx="1.5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+          />
+          <path
+            d="M8 9h8M8 13h8M8 17h5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+          />
+        </>
+      ) : null}
+      {name === "assignments" ? (
         <path
           d="M12 8v5l3 2M4.5 12a7.5 7.5 0 1 0 2.2-5.3L4.5 9"
           fill="none"
           stroke="currentColor"
           strokeWidth="1.8"
           strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      ) : null}
+      {name === "settings" ? (
+        <path
+          d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm7.5-3.5a7.4 7.4 0 0 0-.15-1.63l1.72-1.34-1.63-2.82-2.05.82a7.6 7.6 0 0 0-1.41-.82L15.5 3h-3.26l-.48 2.21a7.6 7.6 0 0 0-1.41.82l-2.05-.82-1.63 2.82 1.72 1.34c-.1.54-.15 1.08-.15 1.63s.05 1.09.15 1.63l-1.72 1.34 1.63 2.82 2.05-.82c.43.33.9.6 1.41.82l.48 2.21h3.26l.48-2.21c.51-.22.98-.49 1.41-.82l2.05.82 1.63-2.82-1.72-1.34c.1-.54.15-1.08.15-1.63Z"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.4"
           strokeLinejoin="round"
         />
       ) : null}

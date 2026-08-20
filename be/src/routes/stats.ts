@@ -3,6 +3,8 @@ import { and, desc, eq, inArray } from "drizzle-orm";
 import { db } from "../db";
 import { loggedSets, workoutSessions, workouts } from "../db/schema";
 import { requireAuth } from "../middleware/requireAuth";
+import { parseStatsRange } from "../services/analytics";
+import { loadAthleteAnalytics } from "../services/analyticsAccess";
 import { buildUserStats, groupLoggedSetsBySession, parseRecentLimit } from "../services/stats";
 import { getAuthUser } from "../types/auth";
 
@@ -12,6 +14,14 @@ statsRouter.use(requireAuth);
 
 statsRouter.get("/", async (req, res) => {
   const user = getAuthUser(req);
+  const range = parseStatsRange(req.query.range);
+
+  if (range) {
+    const analytics = await loadAthleteAnalytics(user.id, range);
+    res.json(analytics);
+    return;
+  }
+
   const recentLimit = parseRecentLimit(req.query.recentLimit);
 
   const sessions = await db

@@ -118,6 +118,7 @@ export {
   getCoachClientProgram,
   updateCoachClientProgram,
 } from "./coach";
+export { getCoachAnalyticsOverview, getCoachAthleteAnalytics } from "./coachAnalytics";
 export type {
   CoachClient,
   CoachAssignment,
@@ -129,6 +130,14 @@ export type {
   ResetPasswordInput,
   UpdateAssignmentDatesInput,
 } from "./schemas/coach";
+export type {
+  StatsRange,
+  CoachAnalyticsOverview,
+  CoachAthleteAnalytics,
+  CoachAlert,
+  AthleteAnalytics,
+  WeeklySeriesPoint,
+} from "./schemas/coachAnalytics";
 export {
   getWorkoutDays,
   getWorkoutDay,

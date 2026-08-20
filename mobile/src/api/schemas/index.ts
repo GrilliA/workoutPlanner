@@ -66,13 +66,25 @@ export {
 } from "./session";
 export {
   statsPeriodSchema,
+  statsPeriodBoundsSchema,
+  statsRangeSchema,
   dailyStatPointSchema,
   recentSessionSummarySchema,
   userStatsSchema,
+  athleteAnalyticsSchema,
+  weeklySeriesPointSchema,
+  exerciseProgressionPointSchema,
+  exerciseProgressionSchema,
   type StatsPeriod,
+  type StatsPeriodBounds,
+  type StatsRange,
   type DailyStatPoint,
   type RecentSessionSummary,
   type UserStats,
+  type WeeklySeriesPoint,
+  type ExerciseProgressionPoint,
+  type ExerciseProgression,
+  type AthleteAnalytics,
 } from "./stats";
 export {
   workoutDaySchema,

@@ -121,3 +121,20 @@ export {
   type CreateClientInput,
   type CreateAssignmentInput,
 } from "./coach";
+export {
+  statsRangeSchema,
+  statsPeriodBoundsSchema,
+  weeklySeriesPointSchema,
+  exerciseProgressionSchema,
+  coachAlertSchema,
+  coachAnalyticsOverviewSchema,
+  coachAthleteAnalyticsSchema,
+  athleteAnalyticsSchema,
+  type StatsRange,
+  type WeeklySeriesPoint,
+  type ExerciseProgression,
+  type CoachAlert,
+  type CoachAnalyticsOverview,
+  type CoachAthleteAnalytics,
+  type AthleteAnalytics,
+} from "./coachAnalytics";

@@ -57,6 +57,20 @@
       "when": 1785600000000,
       "tag": "0007_athlete_dual_mode",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1787232712642,
+      "tag": "0008_wonderful_ricochet",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1787238000000,
+      "tag": "0009_drop_workout_occurrences",
+      "breakpoints": true
     }
   ]
 }

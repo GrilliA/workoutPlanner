@@ -228,13 +228,13 @@ export type AssignProgramResult =
     }
   | { ok: false; status: 400 | 404; error: string };
 
-export const assignFromTemplate = (
+export const assignFromTemplate = async (
   coachId: number,
   athleteId: number,
   templateId: number,
   dates: AssignmentDatesInput,
-): Promise<AssignProgramResult> =>
-  db.transaction(async (tx) => {
+): Promise<AssignProgramResult> => {
+  const result = await db.transaction(async (tx) => {
     const [template] = await tx
       .select()
       .from(workouts)
@@ -247,7 +247,7 @@ export const assignFromTemplate = (
       );
 
     if (!template) {
-      return { ok: false, status: 404, error: "Template not found" };
+      return { ok: false as const, status: 404 as const, error: "Template not found" };
     }
 
     const status = computeAssignmentStatus(dates.startsAt, dates.expiresAt);
@@ -280,13 +280,16 @@ export const assignFromTemplate = (
     return { ok: true, assignment, workout };
   });
 
-export const assignBlankProgram = (
+  return result as AssignProgramResult;
+};
+
+export const assignBlankProgram = async (
   coachId: number,
   athleteId: number,
   dates: AssignmentDatesInput,
   name = "Nuova scheda",
-): Promise<AssignProgramResult> =>
-  db.transaction(async (tx) => {
+): Promise<AssignProgramResult> => {
+  const result = await db.transaction(async (tx) => {
     const status = computeAssignmentStatus(dates.startsAt, dates.expiresAt);
 
     const [workout] = await tx
@@ -323,13 +326,16 @@ export const assignBlankProgram = (
     return { ok: true, assignment, workout };
   });
 
-export const assignFromProgramInput = (
+  return result as AssignProgramResult;
+};
+
+export const assignFromProgramInput = async (
   coachId: number,
   athleteId: number,
   dates: AssignmentDatesInput,
   program: WorkoutProgramInput,
-): Promise<AssignProgramResult> =>
-  db.transaction(async (tx) => {
+): Promise<AssignProgramResult> => {
+  const result = await db.transaction(async (tx) => {
     const status = computeAssignmentStatus(dates.startsAt, dates.expiresAt);
 
     const saved = await saveWorkoutProgram(
@@ -365,17 +371,20 @@ export const assignFromProgramInput = (
     return { ok: true, assignment, workout: saved.workout };
   });
 
+  return result as AssignProgramResult;
+};
+
 export type UpdateAssignmentResult =
   | typeof programAssignments.$inferSelect
   | { ok: false; status: 400; error: string }
   | null;
 
-export const updateAssignmentDates = (
+export const updateAssignmentDates = async (
   coachId: number,
   assignmentId: number,
   dates: AssignmentDatesInput,
-): Promise<UpdateAssignmentResult> =>
-  db.transaction(async (tx) => {
+): Promise<UpdateAssignmentResult> => {
+  const result = await db.transaction(async (tx) => {
     const [row] = await tx
       .select()
       .from(programAssignments)
@@ -424,11 +433,14 @@ export const updateAssignmentDates = (
     return updated;
   });
 
-export const revokeAssignment = (
+  return result as UpdateAssignmentResult;
+};
+
+export const revokeAssignment = async (
   coachId: number,
   assignmentId: number,
-) =>
-  db.transaction(async (tx) => {
+) => {
+  const result = await db.transaction(async (tx) => {
     const [row] = await tx
       .select()
       .from(programAssignments)
@@ -455,12 +467,15 @@ export const revokeAssignment = (
     return updated;
   });
 
+  return result;
+};
+
 /** Either side of an assignment can cancel it. */
-export const revokeAssignmentForParticipant = (
+export const revokeAssignmentForParticipant = async (
   userId: number,
   assignmentId: number,
-) =>
-  db.transaction(async (tx) => {
+) => {
+  const result = await db.transaction(async (tx) => {
     const [row] = await tx
       .select()
       .from(programAssignments)
@@ -481,6 +496,9 @@ export const revokeAssignmentForParticipant = (
 
     return updated;
   });
+
+  return result;
+};
 
 export const coachOwnsAthleteProgram = async (
   coachId: number,

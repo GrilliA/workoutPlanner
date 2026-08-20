@@ -1,4 +1,5 @@
-import type { CoachAssignment, CoachClient, CoachDashboard } from "@api";
+import type { CoachAnalyticsOverview, CoachAssignment, CoachClient, CoachDashboard } from "@api";
+import { mapDashboardAnalyticsKpis } from "../../analytics/mappers/mapCoachAnalytics";
 import type {
   DashboardAthleteRow,
   DashboardExpirationRow,
@@ -48,9 +49,11 @@ const mapExpired = (
     kind: "expired" as const,
   }));
 
-const mapKpis = (stats: CoachDashboard): DashboardKpi[] => {
-  const denom = stats.clientCount || 1;
-  const activeShare = Math.round((stats.activeAssignments / denom) * 100);
+const mapKpis = (
+  stats: CoachDashboard,
+  analytics: CoachAnalyticsOverview | null,
+): DashboardKpi[] => {
+  const [activeKpi, reviewKpi] = mapDashboardAnalyticsKpis(analytics);
 
   return [
     {
@@ -64,15 +67,8 @@ const mapKpis = (stats: CoachDashboard): DashboardKpi[] => {
       href: "/clients",
     },
     {
-      id: "completion",
-      label: "Copertura schede",
-      value: `${Math.min(activeShare, 100)}%`,
-      hint:
-        stats.activeAssignments > 0
-          ? "Assegnazioni attive / clienti"
-          : "Nessun dato",
-      href: "/assignments",
-      tone: activeShare >= 70 ? "accent" : "default",
+      ...activeKpi,
+      href: "/analytics",
     },
     {
       id: "expiring7",
@@ -83,12 +79,8 @@ const mapKpis = (stats: CoachDashboard): DashboardKpi[] => {
       tone: stats.expiringIn7Days > 0 ? "warning" : "default",
     },
     {
-      id: "requests",
-      label: "Da rinnovare",
-      value: String(stats.expiredAssignments),
-      hint: stats.expiredAssignments > 0 ? "Vedi tutte" : "Tutto ok",
-      href: "/assignments",
-      tone: stats.expiredAssignments > 0 ? "danger" : "default",
+      ...reviewKpi,
+      href: "/analytics",
     },
   ];
 };
@@ -195,6 +187,7 @@ export const mapDashboard = (
   stats: CoachDashboard,
   clients: CoachClient[] = [],
   assignments: CoachAssignment[] = [],
+  analytics: CoachAnalyticsOverview | null = null,
 ): DashboardViewModel => {
   const upcoming = mapUpcoming(stats.upcomingExpirations);
   const expired = mapExpired(stats.expiredAssignmentsList);
@@ -203,7 +196,7 @@ export const mapDashboard = (
     clientCount: stats.clientCount,
     templateCount: stats.templateCount,
     isEmpty: stats.clientCount === 0,
-    kpis: mapKpis(stats),
+    kpis: mapKpis(stats, analytics),
     athletes: mapAthletes(clients, assignments),
     tasks: mapTasks(upcoming, expired),
   };

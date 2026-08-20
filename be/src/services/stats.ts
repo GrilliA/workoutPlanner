@@ -3,6 +3,8 @@ type LoggedSetRow = {
   reps: number;
 };
 
+export type { LoggedSetRow };
+
 export type RecentSessionSummary = {
   sessionId: number;
   workoutId: number;

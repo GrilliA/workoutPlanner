@@ -13,6 +13,8 @@ How to use:
 
 | Date | Decision | Why |
 | --- | --- | --- |
+| 2026-08-20 | Drop planned occurrences + adherence; analytics are activity-only (sessions, volume, streak, PR, inactivity / program-expiring alerts) | Coach does not need planned-vs-skipped weekdays; simpler stats, no materialization machine |
+| 2026-08-20 | Analytics per ruolo su fondazione condivisa: Progressi motivazionali nella tab mobile, segnali operativi e drill-down sul web coach; ~~aderenza solo da occorrenze pianificate persistite~~ superseded same day by activity-only stats | Separare gli obiettivi atleta/coach mantenendo metriche coerenti |
 | 2026-08-02 | Dual-mode atleta: self-register mobile + schede self editabili; coach via codice invite (max 1); programma coach ha priorità (annulla per cambiare); coach vede storico | Acquisizione senza frizione + coach workflow; reverse-pivot controllato dal self-service totale |
 | 2026-07-30 | Assignment lifecycle hardening: `workouts.isActive` sincronizzato con status/date assegnazione; gate sessione atleta su assignment attiva; assign da TXT atomico in transazione; migration `0006` elimina programmi legacy self-service atleta e normalizza `is_active` | Evitare schede fantasma attive, sessioni su programmi non assegnati, stati incoerenti post-pivot coach |
 | 2026-07-30 | Import TXT: weekday per giorno = ordine sequenziale (Giorno 1 → Lun, Giorno 2 → Mar, …) se non specificati nel testo | Allineare parser AI/TXT al calendario settimanale senza chiedere weekday espliciti |
@@ -43,6 +45,10 @@ How to use:
 
 ## What we did
 
+- 2026-08-20 — Drop adherence/occurrences: migration `0009` drops `workout_occurrences` + `occurrence_id`; analytics activity-only (`athletesActiveInPeriod`, inactivity/expiring alerts); mobile Progressi KPI Sessioni/PR/Serie; coach web KPI atleti attivi / da controllare.
+- 2026-08-20 — U4 coach analytics: pagina `/analytics` con filtri 4/12/52 settimane, KPI portafoglio, trend settimanale e clienti da controllare; dashboard con attività/alert; riepilogo analitico nel dettaglio cliente.
+- 2026-08-20 — M1 mobile Progressi: tab dedicata con KPI sessioni/PR/serie, trend settimanale, carico registrato, progressioni esercizi e storico paginato; Home resta a 2 KPI.
+- 2026-08-20 — B6 analytics foundation: range 4w/12w/52w, e1RM Epley e API atleta/coach autorizzate (occurrences/adherence later dropped).
 - 2026-08-05 — U3 coach dashboard density (UX Pilot): KPI 4-col, tabella atleti, task prioritari da scadenze, CTA library template, sidebar coach card; chart scadenze rimosso dalla home coach.
 - 2026-08-04 — U2 mobile Active Session density (UX Pilot): header + progress bar, rest bar compatta, tabella set con PRECEDENTE da sessione precedente, pager PRECEDENTE/PROSSIMO, TERMINA rosso.
 - 2026-08-04 — U1 mobile Home density (UX Pilot): WeekStrip 7 giorni, TodayCard densità + badge, KPI 2-up da `/stats`, recent con volume; mock HTML in `docs/mocks/uxpilot-home-session/`.
@@ -107,6 +113,8 @@ Legend: ⬜ todo · 🟡 in progress · ✅ done
 - **C9 — Cambio giorno UI (schedule override)** ✅
 - **C10 — WeekStrip schedule polish** ✅
 - **C11 — Session history (lista paginata)** ✅
+- **M1 — Progressi atleta mobile** ✅
+- **U4 — Analytics coach web** ✅
 
 ### Backend track
 
@@ -115,6 +123,7 @@ Legend: ⬜ todo · 🟡 in progress · ✅ done
 - **B3 — Stats endpoints** ✅
 - **B4 — Program days schema + API** ✅ (workout days, weekday schedule, date overrides)
 - **B5 — Exercise catalog (search API)** ✅ — vendored free-exercise-db + `GET /api/catalog/*`
+- **B6 — Analytics per ruolo (activity-only)** ✅ — occurrences/adherence dropped; sessions/volume/PR/inactivity remain
 - **W8 — Exercise picker UI** ✅ — autocomplete in “Aggiungi esercizio” + optional `catalogId`
 
 ### Workout builder track

@@ -30,7 +30,7 @@ export {
   patchLoggedSet,
   deleteLoggedSet,
 } from "./sessions";
-export { getStats } from "./stats";
+export { getStats, getAthleteAnalytics } from "./stats";
 export { getActiveAssignment, revokeActiveAssignment } from "./assignments";
 export type { ActiveAssignment } from "./schemas/assignment";
 export {

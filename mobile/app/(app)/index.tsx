@@ -322,7 +322,9 @@ export default function HomeScreen() {
   }`;
 
   const launchSession = async (workoutId: number, workoutDayId: number) => {
-    const session = await startSession(workoutId, { workoutDayId });
+    const session = await startSession(workoutId, {
+      workoutDayId,
+    });
     router.push(`/session/${session.id}`);
   };
 

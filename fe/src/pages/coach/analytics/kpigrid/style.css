@@ -1,0 +1,65 @@
+.analytics-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 64rem) {
+  .analytics-kpi-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+  }
+}
+
+.analytics-kpi {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  padding: 1rem 1.1rem;
+
+  & .label {
+    display: block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted, #666);
+    margin-bottom: 0.5rem;
+  }
+
+  & .value-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  & .value {
+    font-size: 1.65rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--text-h);
+  }
+
+  & .hint {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--accent);
+    text-align: right;
+    max-width: 45%;
+  }
+}
+
+.analytics-kpi--warning .hint {
+  color: #f0c674;
+}
+
+.analytics-kpi--danger .value,
+.analytics-kpi--danger .hint {
+  color: var(--error, #f87171);
+}
+
+.analytics-kpi--accent .hint {
+  color: var(--accent);
+}
