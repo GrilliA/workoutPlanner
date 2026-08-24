@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ApiError } from "@api";
+import { ApiError, getCoachAnalyticsOverview } from "@api";
 import {
   getCoachAssignments,
   getCoachClients,
@@ -18,12 +18,13 @@ export function useDashboard(): DashboardStatus {
       getCoachDashboard(),
       getCoachClients(),
       getCoachAssignments(),
+      getCoachAnalyticsOverview("4w").catch(() => null),
     ])
-      .then(([stats, clients, assignments]) => {
+      .then(([stats, clients, assignments, analytics]) => {
         if (!cancelled) {
           setState({
             status: "ready",
-            data: mapDashboard(stats, clients, assignments),
+            data: mapDashboard(stats, clients, assignments, analytics),
           });
         }
       })

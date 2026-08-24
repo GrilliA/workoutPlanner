@@ -337,22 +337,26 @@ sessionsRouter.patch("/:id", async (req, res) => {
     }
   }
 
-  const [updated] = await db
-    .update(workoutSessions)
-    .set({
-      status: parsed.value.status,
-      completedAt: new Date(),
-    })
-    .where(eq(workoutSessions.id, id))
-    .returning();
+  const result = await db.transaction(async (tx) => {
+    const [updated] = await tx
+      .update(workoutSessions)
+      .set({
+        status: parsed.value.status,
+        completedAt: new Date(),
+      })
+      .where(eq(workoutSessions.id, id))
+      .returning();
 
-  const sets = await db
-    .select(loggedSetColumns)
-    .from(loggedSets)
-    .where(eq(loggedSets.sessionId, id))
-    .orderBy(loggedSets.exerciseId, loggedSets.setNumber);
+    const sets = await tx
+      .select(loggedSetColumns)
+      .from(loggedSets)
+      .where(eq(loggedSets.sessionId, id))
+      .orderBy(loggedSets.exerciseId, loggedSets.setNumber);
 
-  res.json({ ...updated, sets });
+    return { ...updated, sets };
+  });
+
+  res.json(result);
 });
 
 export const sessionSetsRouter = Router({ mergeParams: true });

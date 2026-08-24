@@ -1,0 +1,12 @@
+.analytics-page__empty {
+  padding: 1.25rem;
+  border-radius: 0.85rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+
+  & h2 {
+    margin: 0 0 0.5rem;
+    font-size: 1.1rem;
+    color: var(--text-h);
+  }
+}

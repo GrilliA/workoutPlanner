@@ -1,0 +1,73 @@
+.analytics-chart {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.85rem;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+
+  & h2 {
+    margin: 0 0 0.85rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted, #666);
+  }
+}
+
+.analytics-chart__empty,
+.analytics-chart__summary,
+.analytics-chart__volume {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
+.analytics-chart__summary {
+  margin-top: 0.75rem;
+}
+
+.analytics-chart__volume {
+  margin-top: 0.35rem;
+  color: var(--muted, #666);
+}
+
+.analytics-chart__scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.analytics-chart__fit {
+  width: 100%;
+}
+
+.analytics-chart__content {
+  min-width: 100%;
+}
+
+.analytics-chart__svg {
+  display: block;
+}
+
+.analytics-chart__bar {
+  fill: var(--accent);
+}
+
+.analytics-chart__labels {
+  display: flex;
+  margin-top: 0.35rem;
+}
+
+.analytics-chart__label-slot {
+  display: flex;
+  justify-content: center;
+  font-size: 0.65rem;
+  color: var(--muted, #666);
+  min-height: 0.9rem;
+}
+
+@media (min-width: 64rem) {
+  .analytics-chart {
+    padding: 1.15rem 1.25rem;
+  }
+}

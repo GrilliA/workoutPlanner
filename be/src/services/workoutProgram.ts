@@ -159,7 +159,7 @@ export type SaveWorkoutProgramOptions = {
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
-export const saveWorkoutProgram = (
+export const saveWorkoutProgram = async (
   userId: number,
   input: WorkoutProgramInput,
   workoutId?: number,
@@ -347,9 +347,5 @@ export const saveWorkoutProgram = (
     };
   };
 
-  if (externalTx) {
-    return run(externalTx);
-  }
-
-  return db.transaction(run);
+  return externalTx ? await run(externalTx) : await db.transaction(run);
 };

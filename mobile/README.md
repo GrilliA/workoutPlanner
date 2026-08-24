@@ -102,6 +102,11 @@ Senza questo pezzo, chiudendo l’app perderesti la sessione.
 
 ## Cosa abbiamo fatto / Perché
 
+### 2026-08-20 — Progressi atleta (attività)
+
+- **Cosa:** la tab Progressi usa intervalli 4/12/52 settimane, KPI sessioni/PR/serie, grafici SVG, progressioni esercizi e storico paginato. La WeekStrip avvia la sessione sul giorno selezionato senza legame a slot pianificati.
+- **Perché:** concentrare l’analisi nella sezione dedicata senza appesantire la Home; le metriche restano orientate all’attività reale, non all’aderenza al calendario coach.
+
 ### 2026-08-02 — API sempre in produzione
 
 - **Cosa:** `API_BASE` hardcoded su Railway; niente override via `.env` / `EXPO_PUBLIC_API_URL`.

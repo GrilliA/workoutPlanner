@@ -6,10 +6,7 @@ import {
   daysUntilExpiry,
   todayInRome,
 } from "./assignmentStatus";
-import {
-  syncAssignmentStatusesForAthlete,
-  syncAssignmentStatusesForCoach,
-} from "./programAssignment";
+import { syncAssignmentStatusesForAthlete, syncAssignmentStatusesForCoach } from "./programAssignment";
 
 const LIST_LIMIT = 8;
 

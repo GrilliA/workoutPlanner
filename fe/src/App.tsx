@@ -5,6 +5,7 @@ import LoginPage from "@pages/login";
 import RegisterPage from "@pages/register";
 import SettingsPage from "@pages/settings";
 import CoachDashboardPage from "@pages/coach/dashboard";
+import CoachAnalyticsPage from "@pages/coach/analytics";
 import CoachClientsPage from "@pages/coach/clients";
 import NewClientPage from "@pages/coach/clients/new";
 import ClientDetailPage from "@pages/coach/clients/detail";
@@ -27,6 +28,11 @@ function App() {
         <Route path="/dashboard">
           <RequireAuth>
             <CoachDashboardPage />
+          </RequireAuth>
+        </Route>
+        <Route path="/analytics">
+          <RequireAuth>
+            <CoachAnalyticsPage />
           </RequireAuth>
         </Route>
         <Route path="/clients/new">

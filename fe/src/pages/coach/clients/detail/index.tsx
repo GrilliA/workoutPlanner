@@ -15,6 +15,7 @@ import { AppShell } from "@components/appshell";
 import { Button } from "@components/button";
 import { Input } from "@components/input";
 import { CoachPageHeader } from "../../coachpageheader";
+import { ClientAnalyticsSection } from "./analytics/clientanalytics";
 import "../../style.css";
 
 const statusLabel: Record<CoachAssignment["status"], string> = {
@@ -224,6 +225,8 @@ function ClientDetailLoaded({ athleteId }: { athleteId: number }) {
                 {error}
               </p>
             ) : null}
+
+            <ClientAnalyticsSection athleteId={athleteId} />
 
             <section className="coach-section">
               <h2>Storico allenamenti</h2>

@@ -42,6 +42,11 @@ import {
 } from "../services/workoutProgram";
 import { getAuthUser } from "../types/auth";
 import { listProgramDaysWithExercises } from "../services/workoutDayAccess";
+import {
+  loadCoachAnalyticsOverview,
+  loadCoachAthleteAnalytics,
+  parseStatsRange,
+} from "../services/coachAnalytics";
 
 export const coachRouter = Router();
 
@@ -73,6 +78,33 @@ coachRouter.get("/dashboard", async (req, res) => {
   const coach = getAuthUser(req);
   const stats = await getCoachDashboardStats(coach.id);
   res.json(stats);
+});
+
+coachRouter.get("/analytics/overview", async (req, res) => {
+  const coach = getAuthUser(req);
+  const range = parseStatsRange(req.query.range) ?? "4w";
+  const overview = await loadCoachAnalyticsOverview(coach.id, range);
+  res.json(overview);
+});
+
+coachRouter.get("/analytics/clients/:athleteId", async (req, res) => {
+  const coach = getAuthUser(req);
+  const athleteId = Number(req.params.athleteId);
+  const range = parseStatsRange(req.query.range) ?? "4w";
+
+  if (!Number.isInteger(athleteId) || athleteId < 1) {
+    res.status(400).json({ error: "Invalid athlete id" });
+    return;
+  }
+
+  const detail = await loadCoachAthleteAnalytics(coach.id, athleteId, range);
+
+  if (!detail) {
+    res.status(404).json({ error: "Client not found" });
+    return;
+  }
+
+  res.json(detail);
 });
 
 coachRouter.get("/invite-code", async (req, res) => {

@@ -1,0 +1,1 @@
+export { ExerciseProgressionSection } from "./ExerciseProgressionSection";

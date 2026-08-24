@@ -1,0 +1,1 @@
+export { AlertsTable } from "./AlertsTable";
