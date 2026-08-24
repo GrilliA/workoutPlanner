@@ -1,5 +1,7 @@
 import { Link } from "wouter";
 import { Button } from "@components/button";
+import { CoachPageHeader } from "../../../coach/coachpageheader";
+import "../../../coach/style.css";
 import "./style.css";
 
 export type PageHeaderProps = {
@@ -15,33 +17,32 @@ export function PageHeader({
   mode = "create",
   backHref = "/dashboard",
 }: PageHeaderProps) {
-  return (
-    <header className="page-header">
-      <Link href={backHref} className="back" aria-label="Torna indietro">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            d="M15 18 9 12l6-6"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+  const action = (
+    <div className="page-header__actions">
+      <Link href={backHref} className="coach-btn-link coach-btn-link--secondary">
+        Indietro
       </Link>
-
-      <h1 className="title">{mode === "edit" ? "MODIFICA SCHEDA" : "CREA SCHEDA"}</h1>
-
       <Button.Root
         variant="primary"
-        size="sm"
-        className="save"
+        className="page-header__save"
         onClick={onSave}
         loading={isSaving}
         disabled={isSaving}
       >
-        <Button.Label>SALVA</Button.Label>
+        <Button.Label>Salva</Button.Label>
       </Button.Root>
-    </header>
+    </div>
+  );
+
+  return (
+    <CoachPageHeader
+      title={mode === "edit" ? "Modifica scheda" : "Crea scheda"}
+      subtitle={
+        mode === "edit"
+          ? "Giorni, esercizi e impostazioni del programma"
+          : "Nuovo template con giorni, esercizi e impostazioni"
+      }
+      action={action}
+    />
   );
 }
