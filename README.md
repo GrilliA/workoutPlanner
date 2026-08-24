@@ -1,6 +1,6 @@
 # traccia
 
-Coach panel on the web + athlete app on iOS. Programs, sessions, and analytics.
+Coach panel on the web + athlete app on iOS/Android. Programs, sessions, and analytics.
 
 <p align="center">
   <img src="docs/screenshots/web-dashboard.png" alt="Coach dashboard" />
