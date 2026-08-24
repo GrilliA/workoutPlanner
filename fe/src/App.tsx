@@ -1,6 +1,6 @@
 import { Router, Route, Switch } from "wouter";
 import { RequireAuth } from "@auth";
-import LandingPage from "@pages/landing";
+import RootPage from "@pages/root";
 import LoginPage from "@pages/login";
 import RegisterPage from "@pages/register";
 import SettingsPage from "@pages/settings";
@@ -95,7 +95,7 @@ function App() {
             <SettingsPage />
           </RequireAuth>
         </Route>
-        <Route path="/" component={LandingPage} />
+        <Route path="/" component={RootPage} />
       </Switch>
     </Router>
   );

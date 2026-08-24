@@ -13,6 +13,7 @@ How to use:
 
 | Date | Decision | Why |
 | --- | --- | --- |
+| 2026-08-24 | Web `/` has no public landing: anonymous → `/login` (logo + form), authenticated → `/dashboard` | Coach web is a private panel; marketing landing was unused and looked generic |
 | 2026-08-24 | Analytics period change keeps previous data under a `BusyRegion` overlay; first load uses a layout skeleton | Avoid collapsing KPI/chart height when switching 4w/12w/52w |
 | 2026-08-20 | Drop planned occurrences + adherence; analytics are activity-only (sessions, volume, streak, PR, inactivity / program-expiring alerts) | Coach does not need planned-vs-skipped weekdays; simpler stats, no materialization machine |
 | 2026-08-20 | Analytics per ruolo su fondazione condivisa: Progressi motivazionali nella tab mobile, segnali operativi e drill-down sul web coach; ~~aderenza solo da occorrenze pianificate persistite~~ superseded same day by activity-only stats | Separare gli obiettivi atleta/coach mantenendo metriche coerenti |
@@ -46,6 +47,7 @@ How to use:
 
 ## What we did
 
+- 2026-08-24 — Drop public landing: `/` redirects to `/login` or `/dashboard`; BrandMark SVG removed; login shows wordmark while session bootstraps.
 - 2026-08-24 — Analytics period loading: `BusyRegion` overlay keeps KPI/chart on 4w/12w/52w refetch; skeleton on first load for client detail and `/analytics`.
 - 2026-08-20 — Drop adherence/occurrences: migration `0009` drops `workout_occurrences` + `occurrence_id`; analytics activity-only (`athletesActiveInPeriod`, inactivity/expiring alerts); mobile Progressi KPI Sessioni/PR/Serie; coach web KPI atleti attivi / da controllare.
 - 2026-08-20 — U4 coach analytics: pagina `/analytics` con filtri 4/12/52 settimane, KPI portafoglio, trend settimanale e clienti da controllare; dashboard con attività/alert; riepilogo analitico nel dettaglio cliente.

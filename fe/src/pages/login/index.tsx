@@ -17,7 +17,7 @@ const Login = () => {
 
   useEffect(() => {
     if (status === "authenticated") {
-      setLocation("/dashboard");
+      setLocation("/dashboard", { replace: true });
     }
   }, [status, setLocation]);
 
@@ -36,8 +36,18 @@ const Login = () => {
     }
   };
 
-  if (status === "loading" || status === "authenticated") {
+  if (status === "authenticated") {
     return null;
+  }
+
+  if (status === "loading") {
+    return (
+      <main aria-busy="true" aria-live="polite" className="auth-page">
+        <div className="auth-brand">
+          <BrandLogo size="md" layout="stack" />
+        </div>
+      </main>
+    );
   }
 
   return (
