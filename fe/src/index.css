@@ -1,7 +1,7 @@
 :root {
-  /* Brand tokens from landing style guide */
-  --accent: #c7f464;
-  --accent-deep: #166534;
+  /* Brand tokens: charcoal surfaces + powder blue accent */
+  --accent: #bfdbf7;
+  --accent-deep: #4a7fb0;
   --text-h: #e0e0e0;
   --text: #aaaaaa;
   --bg: #1d1f25;
@@ -9,8 +9,8 @@
   --code-bg: #252830;
   --surface: #252830;
   --surface-elevated: #2c3038;
-  --accent-bg: rgba(199, 244, 100, 0.12);
-  --accent-border: rgba(199, 244, 100, 0.4);
+  --accent-bg: rgba(191, 219, 247, 0.12);
+  --accent-border: rgba(191, 219, 247, 0.4);
   --on-accent: #111111;
   --error: #f87171;
   --social-bg: rgba(47, 48, 58, 0.5);

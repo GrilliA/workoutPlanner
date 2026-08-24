@@ -74,11 +74,11 @@
   text-decoration: none;
 
   &:hover {
-    color: var(--accent, #c7f464);
+    color: var(--accent, #bfdbf7);
   }
 
   &:focus-visible {
-    outline: 2px solid var(--accent, #c7f464);
+    outline: 2px solid var(--accent, #bfdbf7);
     outline-offset: 2px;
     border-radius: 2px;
   }
@@ -93,7 +93,7 @@
 
   &:hover,
   &:focus-visible {
-    border-color: var(--accent-border, rgba(199, 244, 100, 0.35));
+    border-color: var(--accent-border, rgba(191, 219, 247, 0.4));
     background: var(--surface-elevated, #22222a);
     outline: none;
   }
@@ -130,7 +130,7 @@
 }
 
 .coach-link {
-  color: var(--accent, #c7f464);
+  color: var(--accent, #bfdbf7);
   font-size: 0.85rem;
   font-weight: 600;
   text-decoration: none;
@@ -141,7 +141,7 @@
   }
 
   &:focus-visible {
-    outline: 2px solid var(--accent, #c7f464);
+    outline: 2px solid var(--accent, #bfdbf7);
     outline-offset: 2px;
     border-radius: 2px;
   }
@@ -163,7 +163,7 @@
   padding: 0;
   border: none;
   background: transparent;
-  color: var(--accent, #c7f464);
+  color: var(--accent, #bfdbf7);
   font: inherit;
   font-size: 0.85rem;
   font-weight: 600;
@@ -174,7 +174,7 @@
   }
 
   &:focus-visible {
-    outline: 2px solid var(--accent, #c7f464);
+    outline: 2px solid var(--accent, #bfdbf7);
     outline-offset: 2px;
     border-radius: 2px;
   }
@@ -214,15 +214,15 @@
     filter 0.2s;
 
   &:focus-visible {
-    outline: 2px solid var(--accent, #c7f464);
+    outline: 2px solid var(--accent, #bfdbf7);
     outline-offset: 2px;
   }
 }
 
 .coach-btn-link--primary {
   color: var(--on-accent, #101014);
-  background: var(--accent, #c7f464);
-  border-color: var(--accent-border, rgba(199, 244, 100, 0.35));
+  background: var(--accent, #bfdbf7);
+  border-color: var(--accent-border, rgba(191, 219, 247, 0.4));
 
   &:hover {
     filter: brightness(0.95);
@@ -236,8 +236,8 @@
   font-weight: 500;
 
   &:hover {
-    border-color: var(--accent-border, rgba(199, 244, 100, 0.35));
-    background: var(--accent-bg, rgba(199, 244, 100, 0.12));
+    border-color: var(--accent-border, rgba(191, 219, 247, 0.4));
+    background: var(--accent-bg, rgba(191, 219, 247, 0.12));
   }
 }
 
@@ -261,7 +261,7 @@
   background: rgba(255, 255, 255, 0.06);
 
   &.active {
-    color: var(--accent, #c7f464);
+    color: var(--accent, #bfdbf7);
   }
 
   &.expired,

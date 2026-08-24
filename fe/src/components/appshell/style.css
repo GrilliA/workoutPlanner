@@ -5,9 +5,9 @@
   --surface: #252830;
   --surface-elevated: #2c3038;
   --border: rgba(224, 224, 224, 0.12);
-  --accent: #c7f464;
-  --accent-bg: rgba(199, 244, 100, 0.12);
-  --accent-border: rgba(199, 244, 100, 0.4);
+  --accent: #bfdbf7;
+  --accent-bg: rgba(191, 219, 247, 0.12);
+  --accent-border: rgba(191, 219, 247, 0.4);
   --on-accent: #111111;
 
   display: grid;

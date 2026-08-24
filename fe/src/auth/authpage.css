@@ -14,9 +14,7 @@
   padding-left: max(1.25rem, var(--safe-left));
   overflow: hidden;
   color: var(--text);
-  background:
-    radial-gradient(circle, rgba(22, 101, 52, 0.18) 0%, rgba(29, 31, 37, 0) 70%),
-    var(--bg);
+  background: var(--bg);
 
   & .auth-brand {
     position: relative;

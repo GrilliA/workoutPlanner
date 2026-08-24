@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   dayWorkout: {
-    borderColor: "rgba(199, 244, 100, 0.2)",
+    borderColor: "rgba(191, 219, 247, 0.25)",
   },
   dayRest: {
     opacity: 0.5,
