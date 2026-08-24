@@ -8,7 +8,7 @@ Coach panel on the web + athlete app on iOS. Programs, sessions, and analytics.
 
 ## Coach (web)
 
-Assign programs, follow clients, check analytics and expirations.
+Assign programs, build workouts, follow clients, and check analytics.
 
 <p align="center">
   <img src="docs/screenshots/web-login.png" alt="Coach login" width="48%" />
@@ -16,7 +16,8 @@ Assign programs, follow clients, check analytics and expirations.
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/web-clients.png" alt="Clients" />
+  <img src="docs/screenshots/web-clients.png" alt="Clients" width="48%" />
+  <img src="docs/screenshots/web-create-workout.png" alt="Create workout" width="48%" />
 </p>
 
 ## Athlete (mobile)
