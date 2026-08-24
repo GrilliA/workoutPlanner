@@ -15,7 +15,7 @@ export function RequireAuth({ children }: RequireAuthProps) {
 
   useEffect(() => {
     if (status === "anonymous") {
-      setLocation("/login");
+      setLocation("/login", { replace: true });
     }
   }, [status, setLocation]);
 
