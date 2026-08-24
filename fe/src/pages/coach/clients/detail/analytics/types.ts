@@ -27,4 +27,5 @@ export type ClientAnalyticsViewModel = {
 export type ClientAnalyticsStatus =
   | { status: "loading" }
   | { status: "error"; message: string }
-  | { status: "ready"; data: ClientAnalyticsViewModel };
+  | { status: "ready"; data: ClientAnalyticsViewModel }
+  | { status: "refreshing"; data: ClientAnalyticsViewModel };

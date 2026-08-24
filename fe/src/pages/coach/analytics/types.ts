@@ -58,4 +58,5 @@ export type AnalyticsViewModel = {
 export type AnalyticsStatus =
   | { status: "loading" }
   | { status: "error"; message: string }
-  | { status: "ready"; data: AnalyticsViewModel };
+  | { status: "ready"; data: AnalyticsViewModel }
+  | { status: "refreshing"; data: AnalyticsViewModel };
