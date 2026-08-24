@@ -1,4 +1,4 @@
-/** Design tokens — allineati al landing style guide Traccia. */
+/** Design tokens — charcoal surfaces + powder blue accent. */
 
 export const colors = {
   bg: "#1d1f25",
@@ -7,9 +7,9 @@ export const colors = {
   border: "rgba(224, 224, 224, 0.12)",
   text: "#aaaaaa",
   textHeading: "#e0e0e0",
-  accent: "#c7f464",
-  accentBg: "rgba(199, 244, 100, 0.12)",
-  accentBorder: "rgba(199, 244, 100, 0.4)",
+  accent: "#bfdbf7",
+  accentBg: "rgba(191, 219, 247, 0.12)",
+  accentBorder: "rgba(191, 219, 247, 0.4)",
   onAccent: "#111111",
   danger: "#f87171",
   dangerBg: "rgba(248, 113, 113, 0.12)",

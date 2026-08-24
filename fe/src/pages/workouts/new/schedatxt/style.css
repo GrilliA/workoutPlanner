@@ -36,7 +36,7 @@
 .scheda-txt__link {
   border: none;
   background: transparent;
-  color: var(--accent, #c7f464);
+  color: var(--accent, #bfdbf7);
   font: inherit;
   font-size: 0.85rem;
   font-weight: 600;

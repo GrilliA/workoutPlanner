@@ -30,8 +30,8 @@
 
   & .day.active {
     border-color: var(--accent-border);
-    background: rgba(196, 255, 77, 0.12);
-    color: var(--text-h);
+    background: var(--accent);
+    color: var(--on-accent);
   }
 
   & .day.taken {

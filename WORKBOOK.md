@@ -13,6 +13,7 @@ How to use:
 
 | Date | Decision | Why |
 | --- | --- | --- |
+| 2026-08-24 | Brand accent lime `#c7f464` → powder blue `#bfdbf7` (deep `#4a7fb0`, on-accent `#111111`); charcoal surfaces unchanged | Iterate away from lime/yellow; pale blue reads calmer on the dark coach UI |
 | 2026-08-24 | Web `/` has no public landing: anonymous → `/login` (logo + form), authenticated → `/dashboard` | Coach web is a private panel; marketing landing was unused and looked generic |
 | 2026-08-24 | Analytics period change keeps previous data under a `BusyRegion` overlay; first load uses a layout skeleton | Avoid collapsing KPI/chart height when switching 4w/12w/52w |
 | 2026-08-20 | Drop planned occurrences + adherence; analytics are activity-only (sessions, volume, streak, PR, inactivity / program-expiring alerts) | Coach does not need planned-vs-skipped weekdays; simpler stats, no materialization machine |

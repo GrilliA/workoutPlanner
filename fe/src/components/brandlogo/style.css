@@ -24,7 +24,7 @@
 }
 
 .brand-logo__a {
-  color: var(--accent, #c7f464);
+  color: var(--accent, #bfdbf7);
 }
 
 .brand-logo__badge {
@@ -32,7 +32,7 @@
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--accent, #c7f464);
+  color: var(--accent, #bfdbf7);
 }
 
 .brand-logo--sm .brand-logo__word {
