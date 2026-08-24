@@ -1,6 +1,8 @@
+import { BusyRegion } from "@components/busyregion";
 import { PeriodFilter } from "../../../../analytics/periodfilter";
 import { WeeklyChart } from "../../../../analytics/weeklychart";
 import { useClientAnalytics } from "../useClientAnalytics";
+import { ClientAnalyticsSkeleton } from "./ClientAnalyticsSkeleton";
 import "./style.css";
 
 type ClientAnalyticsSectionProps = {
@@ -9,21 +11,22 @@ type ClientAnalyticsSectionProps = {
 
 export function ClientAnalyticsSection({ athleteId }: ClientAnalyticsSectionProps) {
   const { range, setRange, ...state } = useClientAnalytics(athleteId, "4w");
+  const body = state.status === "ready" || state.status === "refreshing" ? state.data : null;
 
   return (
     <section className="client-analytics coach-section">
       <div className="client-analytics__header">
         <h2>Analisi atleta</h2>
-        {state.status === "ready" ? (
-          <p className="client-analytics__period">{state.data.periodLabel}</p>
-        ) : null}
+        {body ? (
+          <p className="client-analytics__period">{body.periodLabel}</p>
+        ) : (
+          <p className="client-analytics__period" />
+        )}
       </div>
 
       <PeriodFilter value={range} onChange={setRange} />
 
-      {state.status === "loading" ? (
-        <p className="coach-empty">Caricamento analisi…</p>
-      ) : null}
+      {state.status === "loading" ? <ClientAnalyticsSkeleton /> : null}
 
       {state.status === "error" ? (
         <p className="coach-empty" role="alert">
@@ -31,12 +34,12 @@ export function ClientAnalyticsSection({ athleteId }: ClientAnalyticsSectionProp
         </p>
       ) : null}
 
-      {state.status === "ready" ? (
-        <>
-          <p className="client-analytics__insight">{state.data.insight}</p>
+      {body ? (
+        <BusyRegion busy={state.status === "refreshing"} label="Aggiornamento analisi…">
+          <p className="client-analytics__insight">{body.insight}</p>
 
           <div className="client-analytics__kpis">
-            {state.data.kpis.map((kpi) => (
+            {body.kpis.map((kpi) => (
               <div key={kpi.id} className="client-analytics__kpi">
                 <span className="label">{kpi.label}</span>
                 <span className="value">{kpi.value}</span>
@@ -45,13 +48,13 @@ export function ClientAnalyticsSection({ athleteId }: ClientAnalyticsSectionProp
             ))}
           </div>
 
-          <WeeklyChart model={state.data.weeklyChart} />
+          <WeeklyChart model={body.weeklyChart} />
 
-          {state.data.exercises.length > 0 ? (
+          {body.exercises.length > 0 ? (
             <div className="client-analytics__progressions">
               <h3>Progressioni esercizi</h3>
               <ul>
-                {state.data.exercises.map((exercise) => (
+                {body.exercises.map((exercise) => (
                   <li key={exercise.exerciseId}>
                     <strong>{exercise.name}</strong>
                     <span>
@@ -61,10 +64,10 @@ export function ClientAnalyticsSection({ athleteId }: ClientAnalyticsSectionProp
                 ))}
               </ul>
             </div>
-          ) : state.data.hasData ? (
+          ) : body.hasData ? (
             <p className="coach-empty">Nessuna progressione esercizio nel periodo.</p>
           ) : null}
-        </>
+        </BusyRegion>
       ) : null}
     </section>
   );

@@ -39,9 +39,15 @@ export function useClientAnalytics(
   }, [athleteId, range]);
 
   const handleSetRange = (next: StatsRange) => {
-    if (next !== range) {
-      setState({ status: "loading" });
+    if (next === range) {
+      return;
     }
+
+    setState((current) =>
+      current.status === "ready" || current.status === "refreshing"
+        ? { status: "refreshing", data: current.data }
+        : { status: "loading" },
+    );
     setRange(next);
   };
 
