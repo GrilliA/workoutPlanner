@@ -53,14 +53,14 @@ export function CreateWorkout({
 
   if (isLoading) {
     return (
-      <div className="create-workout page-container">
+      <div className="create-workout coach-page page-container page-container--wide">
         <p className="form-error">Caricamento scheda…</p>
       </div>
     );
   }
 
   return (
-    <div className="create-workout page-container">
+    <div className="create-workout coach-page page-container page-container--wide">
       <PageHeader
         mode={isEditMode ? "edit" : "create"}
         onSave={() => void save()}

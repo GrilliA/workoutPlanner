@@ -1,33 +1,10 @@
-.page-header {
-  display: grid;
-  grid-template-columns: 2.5rem 1fr auto;
+.page-header__actions {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.75rem;
-  margin-bottom: 1.5rem;
+}
 
-  & .back {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2.5rem;
-    height: 2.5rem;
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    background: var(--surface);
-    color: var(--text-h);
-    text-decoration: none;
-
-    & svg {
-      width: 1.1rem;
-      height: 1.1rem;
-    }
-  }
-
-  & .title {
-    margin: 0;
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: var(--text-h);
-    text-align: center;
-  }
+.page-header__save {
+  border-radius: 4px;
 }
