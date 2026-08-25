@@ -294,25 +294,9 @@
   }
 }
 
-.coach-program-exercise {
+.coach-program-exercises {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
-  padding: 0.75rem 0;
-  border-top: 1px solid var(--border, #2a2a32);
-
-  &:first-of-type {
-    border-top: none;
-    padding-top: 0;
-  }
-
-  & .name {
-    font-weight: 600;
-    color: var(--text-h, #f4f4f8);
-  }
-
-  & .meta {
-    font-size: 0.85rem;
-    color: var(--text, #9a9aad);
-  }
+  gap: 0.65rem;
+  margin-top: 0.85rem;
 }

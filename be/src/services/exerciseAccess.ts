@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { db } from "../db";
-import { exercises, exerciseSets } from "../db/schema";
+import { exerciseCatalog, exercises, exerciseSets } from "../db/schema";
 import {
   getSetPrescriptionsByExerciseIds,
 } from "./exerciseSetAccess";
@@ -9,8 +9,16 @@ import {
   validateSetPrescriptions,
   type SetPrescription,
 } from "./exerciseSetValidation";
+import { deriveImageUrlEnd } from "./catalogI18n";
 
 type ExerciseRow = typeof exercises.$inferSelect;
+
+export type CatalogExerciseFields = {
+  nameIt?: string | null;
+  nameEn?: string | null;
+  imageUrl?: string | null;
+  imageUrlEnd?: string | null;
+};
 
 export type ExerciseInput = {
   name: string;
@@ -20,16 +28,46 @@ export type ExerciseInput = {
   catalogId?: string | null;
 };
 
-export async function enrichExercises<T extends { id: number }>(
+export async function enrichExercises<T extends { id: number; catalogId?: string | null }>(
   rows: T[],
-): Promise<Array<T & { setPrescriptions: SetPrescription[] }>> {
+): Promise<Array<T & { setPrescriptions: SetPrescription[] } & CatalogExerciseFields>> {
   const grouped = await getSetPrescriptionsByExerciseIds(rows.map((row) => row.id));
+  const catalogIds = [
+    ...new Set(
+      rows
+        .map((row) => row.catalogId)
+        .filter((id): id is string => typeof id === "string" && id.length > 0),
+    ),
+  ];
 
-  return rows.map((row) => ({
-    ...row,
-    setPrescriptions:
-      grouped.find((entry) => entry.exerciseId === row.id)?.setPrescriptions ?? [],
-  }));
+  const catalogRows =
+    catalogIds.length > 0
+      ? await db
+          .select()
+          .from(exerciseCatalog)
+          .where(inArray(exerciseCatalog.id, catalogIds))
+      : [];
+
+  const catalogById = new Map(catalogRows.map((row) => [row.id, row]));
+
+  return rows.map((row) => {
+    const catalog = row.catalogId ? catalogById.get(row.catalogId) : undefined;
+    const catalogFields: CatalogExerciseFields = catalog
+      ? {
+          nameIt: catalog.nameIt,
+          nameEn: catalog.name,
+          imageUrl: catalog.imageUrl,
+          imageUrlEnd: catalog.imageUrlEnd ?? deriveImageUrlEnd(catalog.imageUrl),
+        }
+      : {};
+
+    return {
+      ...row,
+      setPrescriptions:
+        grouped.find((entry) => entry.exerciseId === row.id)?.setPrescriptions ?? [],
+      ...catalogFields,
+    };
+  });
 }
 
 export async function createExerciseWithSets(

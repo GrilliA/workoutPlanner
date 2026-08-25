@@ -1,3 +1,5 @@
+import { deriveImageUrlEnd } from "./catalogI18n";
+
 export type CatalogSearchInput = {
   q?: string;
   muscle?: string;
@@ -19,6 +21,7 @@ export type CatalogSearchParams = {
 export type CatalogExercise = {
   id: string;
   name: string;
+  nameIt: string | null;
   force: string | null;
   level: string | null;
   mechanic: string | null;
@@ -26,7 +29,9 @@ export type CatalogExercise = {
   primaryMuscles: string[];
   secondaryMuscles: string[];
   category: string | null;
+  aliases: string[];
   imageUrl: string | null;
+  imageUrlEnd: string | null;
 };
 
 export type CatalogFacets = {
@@ -74,11 +79,23 @@ export function parseCatalogSearchInput(input: CatalogSearchInput): CatalogSearc
   };
 }
 
+export function matchesCatalogQuery(exercise: CatalogExercise, q: string): boolean {
+  if (exercise.name.toLowerCase().includes(q)) {
+    return true;
+  }
+
+  if ((exercise.nameIt ?? "").toLowerCase().includes(q)) {
+    return true;
+  }
+
+  return exercise.aliases.some((alias) => alias.toLowerCase().includes(q));
+}
+
 export function matchesCatalogFilters(
   exercise: CatalogExercise,
   params: CatalogSearchParams,
 ): boolean {
-  if (params.q && !exercise.name.toLowerCase().includes(params.q)) {
+  if (params.q && !matchesCatalogQuery(exercise, params.q)) {
     return false;
   }
 
@@ -145,6 +162,7 @@ export function buildCatalogFacets(exercises: CatalogExercise[]): CatalogFacets 
 export function toCatalogExercise(row: {
   id: string;
   name: string;
+  nameIt?: string | null;
   force: string | null;
   level: string | null;
   mechanic: string | null;
@@ -152,11 +170,14 @@ export function toCatalogExercise(row: {
   primaryMuscles: unknown;
   secondaryMuscles: unknown;
   category: string | null;
+  aliases?: unknown;
   imageUrl: string | null;
+  imageUrlEnd?: string | null;
 }): CatalogExercise {
   return {
     id: row.id,
     name: row.name,
+    nameIt: typeof row.nameIt === "string" && row.nameIt.trim().length > 0 ? row.nameIt : null,
     force: row.force,
     level: row.level,
     mechanic: row.mechanic,
@@ -168,6 +189,13 @@ export function toCatalogExercise(row: {
       ? row.secondaryMuscles.filter((value): value is string => typeof value === "string")
       : [],
     category: row.category,
+    aliases: Array.isArray(row.aliases)
+      ? row.aliases.filter((value): value is string => typeof value === "string")
+      : [],
     imageUrl: row.imageUrl,
+    imageUrlEnd:
+      typeof row.imageUrlEnd === "string" && row.imageUrlEnd.length > 0
+        ? row.imageUrlEnd
+        : deriveImageUrlEnd(row.imageUrl),
   };
 }

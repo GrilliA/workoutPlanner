@@ -15,6 +15,7 @@ import {
   deleteExercise,
   getWorkout,
   getWorkoutDayExercises,
+  hydrateExercisesFromCatalog,
   getWorkoutDays,
   setWorkoutDayWeekdays,
   updateExercise,
@@ -26,10 +27,8 @@ import {
 } from "../../src/api";
 import { useAuth } from "../../src/auth";
 import {
-  AppText,
   BackHeader,
   Body,
-  Card,
   ErrorBanner,
   Field,
   Heading,
@@ -43,6 +42,8 @@ import {
 import {
   SetPrescriptionEditor,
   WeekdayChips,
+  ProgramExerciseCard,
+  exerciseHeading,
   prescriptionsFromServer,
   prescriptionsFromUniform,
   toSetPrescriptions,
@@ -69,6 +70,16 @@ function prescriptionMeta(exercise: Exercise): string {
     : `${count} serie`;
 }
 
+type ExerciseFormDraft = {
+  name: string;
+  prescriptions: DraftPrescription[];
+};
+
+const emptyExerciseForm = (restSec = 90): ExerciseFormDraft => ({
+  name: "",
+  prescriptions: prescriptionsFromUniform(3, 10, restSec),
+});
+
 export default function EditWorkoutScreen() {
   const { workoutId: rawId } = useLocalSearchParams<{ workoutId: string }>();
   const workoutId = Number(rawId);
@@ -81,17 +92,12 @@ export default function EditWorkoutScreen() {
   const [name, setName] = useState("");
   const [dayName, setDayName] = useState("");
   const [weekdays, setWeekdays] = useState<number[]>([]);
-  const [newExerciseName, setNewExerciseName] = useState("");
-  const [newPrescriptions, setNewPrescriptions] = useState<DraftPrescription[]>(
-    () => prescriptionsFromUniform(3, 10, 90),
+  const [addForm, setAddForm] = useState<ExerciseFormDraft>(() =>
+    emptyExerciseForm(),
   );
-  const [editingExerciseId, setEditingExerciseId] = useState<number | null>(
-    null,
-  );
-  const [editName, setEditName] = useState("");
-  const [editPrescriptions, setEditPrescriptions] = useState<
-    DraftPrescription[]
-  >([]);
+  const [editForm, setEditForm] = useState<
+    (ExerciseFormDraft & { id: number }) | null
+  >(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -102,7 +108,9 @@ export default function EditWorkoutScreen() {
 
   const loadExercises = useCallback(
     async (dayId: number) => {
-      const next = await getWorkoutDayExercises(workoutId, dayId);
+      const next = await hydrateExercisesFromCatalog(
+        await getWorkoutDayExercises(workoutId, dayId),
+      );
       setExercises(next);
     },
     [workoutId],
@@ -166,7 +174,7 @@ export default function EditWorkoutScreen() {
     setSelectedDayId(day.id);
     setDayName(day.name);
     setWeekdays(day.weekdays);
-    setEditingExerciseId(null);
+    setEditForm(null);
     setError(null);
     void (async () => {
       try {
@@ -228,12 +236,12 @@ export default function EditWorkoutScreen() {
     if (!canEdit || selectedDayId == null) {
       return;
     }
-    const trimmed = newExerciseName.trim();
+    const trimmed = addForm.name.trim();
     if (!trimmed) {
       setError("Nome esercizio obbligatorio");
       return;
     }
-    const validation = validatePrescriptionDrafts(newPrescriptions);
+    const validation = validatePrescriptionDrafts(addForm.prescriptions);
     if (validation) {
       setError(validation);
       return;
@@ -244,10 +252,9 @@ export default function EditWorkoutScreen() {
     try {
       await createWorkoutDayExercise(workoutId, selectedDayId, {
         name: trimmed,
-        setPrescriptions: toSetPrescriptions(newPrescriptions),
+        setPrescriptions: toSetPrescriptions(addForm.prescriptions),
       });
-      setNewExerciseName("");
-      setNewPrescriptions(prescriptionsFromUniform(3, 10, 90));
+      setAddForm(emptyExerciseForm(workout?.defaultRestSec ?? 90));
       await loadExercises(selectedDayId);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Aggiunta fallita");
@@ -257,26 +264,26 @@ export default function EditWorkoutScreen() {
   };
 
   const startEditExercise = (exercise: Exercise) => {
-    setEditingExerciseId(exercise.id);
-    setEditName(exercise.name);
-    setEditPrescriptions(
-      prescriptionsFromServer(
+    setEditForm({
+      id: exercise.id,
+      name: exercise.name,
+      prescriptions: prescriptionsFromServer(
         exercise.setPrescriptions,
         workout?.defaultRestSec ?? 90,
       ),
-    );
+    });
   };
 
   const onSaveExercise = async () => {
-    if (!canEdit || editingExerciseId == null) {
+    if (!canEdit || editForm == null) {
       return;
     }
-    const trimmed = editName.trim();
+    const trimmed = editForm.name.trim();
     if (!trimmed) {
       setError("Nome esercizio obbligatorio");
       return;
     }
-    const validation = validatePrescriptionDrafts(editPrescriptions);
+    const validation = validatePrescriptionDrafts(editForm.prescriptions);
     if (validation) {
       setError(validation);
       return;
@@ -285,11 +292,11 @@ export default function EditWorkoutScreen() {
     setBusy(true);
     setError(null);
     try {
-      await updateExercise(editingExerciseId, {
+      await updateExercise(editForm.id, {
         name: trimmed,
-        setPrescriptions: toSetPrescriptions(editPrescriptions),
+        setPrescriptions: toSetPrescriptions(editForm.prescriptions),
       });
-      setEditingExerciseId(null);
+      setEditForm(null);
       if (selectedDayId != null) {
         await loadExercises(selectedDayId);
       }
@@ -306,7 +313,7 @@ export default function EditWorkoutScreen() {
     }
     Alert.alert(
       "Elimina esercizio",
-      `Rimuovere “${exercise.name}” da questo giorno?`,
+      `Rimuovere “${exerciseHeading(exercise)}” da questo giorno?`,
       [
         { text: "Annulla", style: "cancel" },
         {
@@ -318,8 +325,8 @@ export default function EditWorkoutScreen() {
               setError(null);
               try {
                 await deleteExercise(exercise.id);
-                if (editingExerciseId === exercise.id) {
-                  setEditingExerciseId(null);
+                if (editForm?.id === exercise.id) {
+                  setEditForm(null);
                 }
                 if (selectedDayId != null) {
                   await loadExercises(selectedDayId);
@@ -440,21 +447,30 @@ export default function EditWorkoutScreen() {
               {exercises.length === 0 ? (
                 <Body>Nessun esercizio in questo giorno.</Body>
               ) : (
-                exercises.map((exercise) => {
-                  const editing = editingExerciseId === exercise.id;
+                exercises.map((exercise, index) => {
+                  const editing = editForm?.id === exercise.id;
                   return (
-                    <Card key={exercise.id} style={styles.exerciseCard}>
-                      {editing ? (
+                    <ProgramExerciseCard
+                      key={exercise.id}
+                      exercise={exercise}
+                      index={index + 1}
+                      meta={prescriptionMeta(exercise)}
+                    >
+                      {editing && editForm ? (
                         <View style={styles.editBlock}>
                           <Field
-                            value={editName}
-                            onChangeText={setEditName}
+                            value={editForm.name}
+                            onChangeText={(name) =>
+                              setEditForm({ ...editForm, name })
+                            }
                             editable={!busy}
                             placeholder="Nome esercizio"
                           />
                           <SetPrescriptionEditor
-                            prescriptions={editPrescriptions}
-                            onChange={setEditPrescriptions}
+                            prescriptions={editForm.prescriptions}
+                            onChange={(prescriptions) =>
+                              setEditForm({ ...editForm, prescriptions })
+                            }
                             disabled={busy}
                           />
                           <PrimaryButton
@@ -464,33 +480,25 @@ export default function EditWorkoutScreen() {
                           />
                           <SecondaryButton
                             label="Annulla"
-                            onPress={() => setEditingExerciseId(null)}
+                            onPress={() => setEditForm(null)}
                             disabled={busy}
                           />
                         </View>
-                      ) : (
-                        <>
-                          <AppText tone="heading" style={styles.exerciseTitle}>
-                            {exercise.name}
-                          </AppText>
-                          <Meta>{prescriptionMeta(exercise)}</Meta>
-                          {canEdit ? (
-                            <View style={styles.exerciseActions}>
-                              <SecondaryButton
-                                label="Modifica"
-                                onPress={() => startEditExercise(exercise)}
-                                disabled={busy}
-                              />
-                              <SecondaryButton
-                                label="Elimina"
-                                onPress={() => onDeleteExercise(exercise)}
-                                disabled={busy}
-                              />
-                            </View>
-                          ) : null}
-                        </>
-                      )}
-                    </Card>
+                      ) : canEdit ? (
+                        <View style={styles.exerciseActions}>
+                          <SecondaryButton
+                            label="Modifica"
+                            onPress={() => startEditExercise(exercise)}
+                            disabled={busy}
+                          />
+                          <SecondaryButton
+                            label="Elimina"
+                            onPress={() => onDeleteExercise(exercise)}
+                            disabled={busy}
+                          />
+                        </View>
+                      ) : null}
+                    </ProgramExerciseCard>
                   );
                 })
               )}
@@ -499,20 +507,24 @@ export default function EditWorkoutScreen() {
                 <View style={styles.addBlock}>
                   <SectionLabel>AGGIUNGI ESERCIZIO</SectionLabel>
                   <Field
-                    value={newExerciseName}
-                    onChangeText={setNewExerciseName}
+                    value={addForm.name}
+                    onChangeText={(name) =>
+                      setAddForm((current) => ({ ...current, name }))
+                    }
                     editable={!busy}
                     placeholder="Nome esercizio"
                   />
                   <SetPrescriptionEditor
-                    prescriptions={newPrescriptions}
-                    onChange={setNewPrescriptions}
+                    prescriptions={addForm.prescriptions}
+                    onChange={(prescriptions) =>
+                      setAddForm((current) => ({ ...current, prescriptions }))
+                    }
                     disabled={busy}
                   />
                   <PrimaryButton
                     label={busy ? "Aggiunta…" : "Aggiungi esercizio"}
                     onPress={() => void onAddExercise()}
-                    disabled={busy || !newExerciseName.trim()}
+                    disabled={busy || !addForm.name.trim()}
                   />
                 </View>
               ) : null}
@@ -550,13 +562,6 @@ const styles = StyleSheet.create({
   },
   chipLabelSelected: {
     color: colors.accent,
-    fontWeight: "700",
-  },
-  exerciseCard: {
-    gap: spacing.xs,
-  },
-  exerciseTitle: {
-    fontSize: 16,
     fontWeight: "700",
   },
   exerciseActions: {

@@ -1,0 +1,11 @@
+---
+description: Ask with options for new names/helpers; nomenclature check at the end
+alwaysApply: true
+---
+
+# Agent process
+
+Full text: `docs/guidelines/agents.md`.
+
+- New things that are not obvious (type, helper, name, folder): **2–3 options**, then wait. Do not invent and ship.
+- Finish check: names explain themselves; helper with 1–2 vague call sites → inline or rename; fields that travel together = one object, not N state/props; no dead exports; no extra scope.

@@ -1,0 +1,12 @@
+---
+description: Thin routes and lowercase files in the backend
+globs: be/**/*.ts
+alwaysApply: false
+---
+
+# Backend
+
+Full text: `docs/guidelines/be.md`.
+
+- Thin handlers; validation/query in pure helpers
+- Lowercase files: `routes/workouts.ts`

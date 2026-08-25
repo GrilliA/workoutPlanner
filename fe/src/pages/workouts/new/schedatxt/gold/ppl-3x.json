@@ -1,0 +1,99 @@
+{
+  "name": "PPL palestra 3x",
+  "frequency": "3× a settimana",
+  "workoutType": "Ipertrofia",
+  "defaultRestSec": 90,
+  "days": [
+    {
+      "name": "Push",
+      "weekdays": [0],
+      "exercises": [
+        {
+          "name": "Panca piana",
+          "sets": [
+            { "reps": 12, "restSec": 90 },
+            { "reps": 10, "restSec": 90 },
+            { "reps": 8, "restSec": 120 },
+            { "reps": 6, "restSec": 120 }
+          ]
+        },
+        {
+          "name": "Panca inclinata manubri",
+          "sets": [
+            { "reps": 10, "restSec": 90 },
+            { "reps": 10, "restSec": 90 },
+            { "reps": 8, "restSec": 90 }
+          ]
+        },
+        {
+          "name": "Military press",
+          "sets": [
+            { "reps": 8, "restSec": 120 },
+            { "reps": 8, "restSec": 120 },
+            { "reps": 6, "restSec": 120 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Pull",
+      "weekdays": [1],
+      "exercises": [
+        {
+          "name": "Stacco rumeno",
+          "sets": [
+            { "reps": 8, "restSec": 150 },
+            { "reps": 8, "restSec": 150 },
+            { "reps": 6, "restSec": 150 }
+          ]
+        },
+        {
+          "name": "Rematore bilanciere",
+          "sets": [
+            { "reps": 10, "restSec": 90 },
+            { "reps": 10, "restSec": 90 },
+            { "reps": 8, "restSec": 90 }
+          ]
+        },
+        {
+          "name": "Trazioni",
+          "sets": [
+            { "reps": 8, "restSec": 120 },
+            { "reps": 8, "restSec": 120 },
+            { "reps": 6, "restSec": 120 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Legs",
+      "weekdays": [2],
+      "exercises": [
+        {
+          "name": "Squat",
+          "sets": [
+            { "reps": 8, "restSec": 150 },
+            { "reps": 8, "restSec": 150 },
+            { "reps": 6, "restSec": 150 }
+          ]
+        },
+        {
+          "name": "Leg press",
+          "sets": [
+            { "reps": 12, "restSec": 90 },
+            { "reps": 10, "restSec": 90 },
+            { "reps": 10, "restSec": 90 }
+          ]
+        },
+        {
+          "name": "Affondi",
+          "sets": [
+            { "reps": 10, "restSec": 90 },
+            { "reps": 10, "restSec": 90 },
+            { "reps": 10, "restSec": 90 }
+          ]
+        }
+      ]
+    }
+  ]
+}

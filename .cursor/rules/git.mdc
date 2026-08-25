@@ -1,0 +1,13 @@
+---
+description: Branch naming, one concern per branch, Conventional Commits
+alwaysApply: true
+---
+
+# Git
+
+Full text: `docs/guidelines/git.md`.
+
+- Branch: `<type>/<chunk>-<slug>` (e.g. `feat/B2-session-logging`). No `cursor/...` for ongoing work
+- Before non-trivial code: branch name + plan, then wait
+- Conventional Commits (`feat(fe):`), one concern; no commit unless asked; no Cursor trailers
+- Closing a roadmap chunk → update `WORKBOOK.md`

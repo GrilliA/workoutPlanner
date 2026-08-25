@@ -1,0 +1,22 @@
+# Forza upper lower
+Frequenza: 4× a settimana
+Tipo: Forza
+Recupero default: 150
+
+## Giorno 1: Lower forza
+### Squat
+reps: 5-5-5-5
+recupero: 150
+
+### Stacco da terra
+reps: 5-5-3
+recupero: 150
+
+## Giorno 2: Upper forza
+### Panca piana
+reps: 5-5-5
+recupero: 150
+
+### Rematore bilanciere
+reps: 6-6-6
+recupero: 120

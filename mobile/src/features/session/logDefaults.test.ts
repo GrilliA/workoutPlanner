@@ -117,6 +117,94 @@ describe("resolveLogDefaults", () => {
       { weight: "", reps: "8" },
     );
   });
+
+  it("prefills weight from the previous session when nothing is logged yet", () => {
+    const previous: LoggedSet[] = [
+      {
+        id: 10,
+        sessionId: 2,
+        exerciseId: 1,
+        setNumber: 1,
+        weightKg: 80,
+        reps: 10,
+        rir: null,
+        tutSec: null,
+        loggedAt: new Date(),
+      },
+      {
+        id: 11,
+        sessionId: 2,
+        exerciseId: 1,
+        setNumber: 2,
+        weightKg: 82.5,
+        reps: 8,
+        rir: null,
+        tutSec: null,
+        loggedAt: new Date(),
+      },
+    ];
+
+    assert.deepEqual(
+      resolveLogDefaults(
+        exercise({
+          id: 1,
+          name: "Squat",
+          setPrescriptions: [
+            { setNumber: 1, reps: 10, restSec: 90 },
+            { setNumber: 2, reps: 8, restSec: 90 },
+          ],
+        }),
+        [],
+        previous,
+      ),
+      { weight: "80", reps: "10" },
+    );
+  });
+
+  it("keeps this session's last weight over the previous session", () => {
+    const previous: LoggedSet[] = [
+      {
+        id: 10,
+        sessionId: 2,
+        exerciseId: 1,
+        setNumber: 1,
+        weightKg: 80,
+        reps: 10,
+        rir: null,
+        tutSec: null,
+        loggedAt: new Date(),
+      },
+    ];
+    const logged: LoggedSet[] = [
+      {
+        id: 1,
+        sessionId: 1,
+        exerciseId: 1,
+        setNumber: 1,
+        weightKg: 85,
+        reps: 10,
+        rir: null,
+        tutSec: null,
+        loggedAt: new Date(),
+      },
+    ];
+
+    assert.deepEqual(
+      resolveLogDefaults(
+        exercise({
+          id: 1,
+          name: "Squat",
+          setPrescriptions: [
+            { setNumber: 1, reps: 10, restSec: 90 },
+            { setNumber: 2, reps: 8, restSec: 90 },
+          ],
+        }),
+        logged,
+        previous,
+      ),
+      { weight: "85", reps: "8" },
+    );
+  });
 });
 
 describe("formatWeightKg", () => {

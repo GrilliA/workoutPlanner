@@ -4,7 +4,7 @@ import { ApiError, getCoachClientProgram } from "@api";
 import type { WorkoutDetail } from "@api";
 import { AppShell } from "@components/appshell";
 import { WEEKDAY_LABELS_SHORT } from "@pages/workouts/new/types";
-import { formatExerciseMeta } from "@pages/workouts/new/mappers/mapExerciseMeta";
+import { ExerciseRow } from "@pages/workouts/new/exerciserow";
 import { CoachPageHeader } from "../../coachpageheader";
 import "../../style.css";
 
@@ -39,20 +39,16 @@ function ProgramDays({ program }: { program: WorkoutDetail }) {
             {exercises.length === 0 ? (
               <p className="coach-empty">Nessun esercizio</p>
             ) : (
-              exercises.map((exercise) => (
-                <div key={exercise.id} className="coach-program-exercise">
-                  <span className="name">{exercise.name}</span>
-                  <span className="meta">
-                    {formatExerciseMeta(
-                      exercise.setPrescriptions.map((entry) => ({
-                        reps: entry.reps,
-                        restSec: entry.restSec ?? program.defaultRestSec,
-                      })),
-                      program.defaultRestSec,
-                    )}
-                  </span>
-                </div>
-              ))
+              <div className="coach-program-exercises">
+                {exercises.map((exercise, index) => (
+                  <ExerciseRow
+                    key={exercise.id}
+                    index={index + 1}
+                    exercise={exercise}
+                    defaultRestSec={program.defaultRestSec}
+                  />
+                ))}
+              </div>
             )}
           </section>
         );

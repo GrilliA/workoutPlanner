@@ -1,0 +1,24 @@
+# Full body recupero 120
+Frequenza: 2× a settimana
+Tipo: Forza + Ipertrofia
+Recupero default: 120
+
+## Giorno 1: A
+### Goblet squat
+12 10 8
+
+### Panca manubri
+10 10 8
+
+### Rematore manubrio
+10 10 10
+
+## Giorno 2: B
+### Affondi
+10 10 10
+
+### Military press
+8 8 8
+
+### Curl bilanciere
+12 10 8

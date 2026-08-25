@@ -3,6 +3,7 @@ import { z } from "zod";
 export const catalogExerciseSchema = z.object({
   id: z.string(),
   name: z.string(),
+  nameIt: z.string().nullable().optional(),
   force: z.string().nullable(),
   level: z.string().nullable(),
   mechanic: z.string().nullable(),
@@ -10,7 +11,9 @@ export const catalogExerciseSchema = z.object({
   primaryMuscles: z.array(z.string()),
   secondaryMuscles: z.array(z.string()),
   category: z.string().nullable(),
+  aliases: z.array(z.string()).nullable().optional().default([]),
   imageUrl: z.string().nullable(),
+  imageUrlEnd: z.string().nullable().optional(),
 });
 
 export const catalogSearchResultSchema = z.object({

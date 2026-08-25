@@ -1,0 +1,53 @@
+{
+  "name": "Forza upper lower",
+  "frequency": "4× a settimana",
+  "workoutType": "Forza",
+  "defaultRestSec": 150,
+  "days": [
+    {
+      "name": "Lower forza",
+      "weekdays": [0],
+      "exercises": [
+        {
+          "name": "Squat",
+          "sets": [
+            { "reps": 5, "restSec": 150 },
+            { "reps": 5, "restSec": 150 },
+            { "reps": 5, "restSec": 150 },
+            { "reps": 5, "restSec": 150 }
+          ]
+        },
+        {
+          "name": "Stacco da terra",
+          "sets": [
+            { "reps": 5, "restSec": 150 },
+            { "reps": 5, "restSec": 150 },
+            { "reps": 3, "restSec": 150 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Upper forza",
+      "weekdays": [1],
+      "exercises": [
+        {
+          "name": "Panca piana",
+          "sets": [
+            { "reps": 5, "restSec": 150 },
+            { "reps": 5, "restSec": 150 },
+            { "reps": 5, "restSec": 150 }
+          ]
+        },
+        {
+          "name": "Rematore bilanciere",
+          "sets": [
+            { "reps": 6, "restSec": 120 },
+            { "reps": 6, "restSec": 120 },
+            { "reps": 6, "restSec": 120 }
+          ]
+        }
+      ]
+    }
+  ]
+}

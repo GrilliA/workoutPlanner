@@ -4,8 +4,9 @@ import {
   getWorkoutDays,
   saveWorkoutProgram,
 } from "@api";
-import type { Exercise, WorkoutSettings, WorkoutProgramInput } from "@api";
+import type { WorkoutSettings, WorkoutProgramInput } from "@api";
 import type { DraftWorkoutDay } from "./types";
+import { mapExerciseToDraft } from "./mappers/mapDraftExercise";
 
 const toExercisePayload = (exercise: DraftWorkoutDay["exercises"][number]) => ({
   id: exercise.serverId,
@@ -77,21 +78,6 @@ export async function loadWorkoutDraft(workoutId: number): Promise<{
     days: daysWithExercises,
   };
 }
-
-const mapExerciseToDraft = (exercise: Exercise): DraftWorkoutDay["exercises"][number] => ({
-  clientId: crypto.randomUUID(),
-  serverId: exercise.id,
-  name: exercise.name,
-  catalogId: exercise.catalogId ?? null,
-  setPrescriptions:
-    exercise.setPrescriptions.length > 0
-      ? exercise.setPrescriptions.map((entry) => ({
-          setNumber: entry.setNumber,
-          reps: entry.reps,
-          restSec: entry.restSec ?? 90,
-        }))
-      : [{ setNumber: 1, reps: exercise.reps ?? 10, restSec: 90 }],
-});
 
 export async function updateWorkoutWithDays(
   workoutId: number,

@@ -286,5 +286,6 @@ workoutDaysRouter.post("/:dayId/exercises", async (req, res) => {
     catalogId: parsed.value.catalogId,
   });
 
-  res.status(201).json(created);
+  const [enriched] = await enrichExercises([created]);
+  res.status(201).json(enriched);
 });
