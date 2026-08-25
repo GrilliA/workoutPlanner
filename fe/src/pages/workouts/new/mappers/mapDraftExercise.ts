@@ -1,11 +1,11 @@
 import type { Exercise } from "@api";
-import { catalogSnapshotFrom, type DraftExercise } from "../types";
+import { pickerExerciseFrom, type DraftExercise } from "../types";
 
 export function mapExerciseToDraft(exercise: Exercise): DraftExercise {
   return {
     clientId: crypto.randomUUID(),
     serverId: exercise.id,
-    ...catalogSnapshotFrom(exercise),
+    ...pickerExerciseFrom(exercise),
     setPrescriptions:
       exercise.setPrescriptions.length > 0
         ? exercise.setPrescriptions.map((entry) => ({

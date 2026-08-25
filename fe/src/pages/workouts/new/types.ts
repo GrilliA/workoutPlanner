@@ -34,7 +34,7 @@ export type DraftSetPrescription = {
   restSec: number;
 };
 
-export type CatalogPick = {
+export type PickerExercise = {
   name: string;
   catalogId: string | null;
   nameIt?: string | null;
@@ -43,7 +43,7 @@ export type CatalogPick = {
   imageUrlEnd?: string | null;
 };
 
-export const EMPTY_CATALOG_PICK: CatalogPick = {
+export const EMPTY_PICKER_EXERCISE: PickerExercise = {
   name: "",
   catalogId: null,
   nameIt: null,
@@ -52,14 +52,14 @@ export const EMPTY_CATALOG_PICK: CatalogPick = {
   imageUrlEnd: null,
 };
 
-export function catalogSnapshotFrom(source: {
+export function pickerExerciseFrom(source: {
   name: string;
   catalogId?: string | null;
   nameIt?: string | null;
   nameEn?: string | null;
   imageUrl?: string | null;
   imageUrlEnd?: string | null;
-}): CatalogPick {
+}): PickerExercise {
   return {
     name: source.name,
     catalogId: source.catalogId ?? null,
@@ -70,18 +70,18 @@ export function catalogSnapshotFrom(source: {
   };
 }
 
-export type DraftExercise = CatalogPick & {
+export type DraftExercise = PickerExercise & {
   clientId: string;
   serverId?: number;
   setPrescriptions: DraftSetPrescription[];
 };
 
-export type NewExerciseInput = CatalogPick & {
+export type NewExerciseInput = PickerExercise & {
   setPrescriptions: DraftSetPrescription[];
 };
 
 export type ExerciseDisplay = Pick<
-  CatalogPick,
+  PickerExercise,
   "name" | "nameIt" | "nameEn" | "imageUrl" | "imageUrlEnd"
 > & {
   setPrescriptions: Array<{ reps: number; restSec?: number | null }>;

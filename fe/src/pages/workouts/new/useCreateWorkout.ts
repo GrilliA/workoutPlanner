@@ -16,7 +16,7 @@ import {
   createDefaultWorkoutDay,
   createDefaultSetPrescriptions,
   DEFAULT_WORKOUT_SETTINGS,
-  catalogSnapshotFrom,
+  pickerExerciseFrom,
   type CreateWorkoutStatus,
   type DraftExercise,
   type DraftWorkoutDay,
@@ -38,7 +38,7 @@ const createClientId = (): string => crypto.randomUUID();
 
 const toDraftExercise = (input: NewExerciseInput): DraftExercise => ({
   clientId: createClientId(),
-  ...catalogSnapshotFrom({ ...input, name: input.name.trim() }),
+  ...pickerExerciseFrom({ ...input, name: input.name.trim() }),
   setPrescriptions: input.setPrescriptions.map((entry) => ({ ...entry })),
 });
 

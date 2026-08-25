@@ -3,20 +3,20 @@ import { Input } from "@components/input";
 import type { CatalogExercise } from "@api";
 import { useCatalogSearch } from "../useCatalogSearch";
 import { CatalogFlip } from "../catalogflip";
-import { EMPTY_CATALOG_PICK, type CatalogPick } from "../types";
+import { EMPTY_PICKER_EXERCISE, type PickerExercise } from "../types";
 import { catalogDisplayName, equipmentLabelIt, muscleLabelIt } from "./labels";
 import "./style.css";
 
 export type ExercisePickerProps = {
-  value: CatalogPick;
-  onChange: (pick: CatalogPick) => void;
+  pickerExercise: PickerExercise;
+  onChange: (pickerExercise: PickerExercise) => void;
   placeholder?: string;
   required?: boolean;
   autoFocus?: boolean;
 };
 
 export function ExercisePicker({
-  value,
+  pickerExercise,
   onChange,
   placeholder = "Cerca o digita un esercizio",
   required = false,
@@ -30,7 +30,7 @@ export function ExercisePicker({
 
   const handleInputChange = (next: string) => {
     setQuery(next);
-    onChange({ ...EMPTY_CATALOG_PICK, name: next });
+    onChange({ ...EMPTY_PICKER_EXERCISE, name: next });
     setIsOpen(true);
   };
 
@@ -53,10 +53,10 @@ export function ExercisePicker({
       <Input.Root>
         <Input.Label>Nome esercizio</Input.Label>
         <Input.Field
-          value={value.name}
+          value={pickerExercise.name}
           onChange={(event) => handleInputChange(event.target.value)}
           onFocus={() => {
-            setQuery(value.name);
+            setQuery(pickerExercise.name);
             setIsOpen(true);
           }}
           onBlur={() => {
@@ -73,9 +73,9 @@ export function ExercisePicker({
         />
       </Input.Root>
 
-      {value.catalogId ? (
+      {pickerExercise.catalogId ? (
         <p className="hint selected">Dal catalogo</p>
-      ) : value.name.trim().length > 0 ? (
+      ) : pickerExercise.name.trim().length > 0 ? (
         <p className="hint">Testo libero — puoi anche scegliere dal catalogo</p>
       ) : null}
 
