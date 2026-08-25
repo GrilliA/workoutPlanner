@@ -2,11 +2,14 @@ import { useId, useState } from "react";
 import { Input } from "@components/input";
 import type { CatalogExercise } from "@api";
 import { useCatalogSearch } from "../useCatalogSearch";
+import { CatalogFlip } from "../catalogflip";
+import { EMPTY_CATALOG_PICK, type CatalogPick } from "../types";
+import { catalogDisplayName, equipmentLabelIt, muscleLabelIt } from "./labels";
 import "./style.css";
 
 export type ExercisePickerProps = {
-  value: string;
-  onChange: (name: string, catalogId: string | null) => void;
+  value: CatalogPick;
+  onChange: (pick: CatalogPick) => void;
   placeholder?: string;
   required?: boolean;
   autoFocus?: boolean;
@@ -21,22 +24,27 @@ export function ExercisePicker({
 }: ExercisePickerProps) {
   const listId = useId();
   const [isOpen, setIsOpen] = useState(false);
-  const [catalogId, setCatalogId] = useState<string | null>(null);
   const { query, setQuery, results, isSearching, error } = useCatalogSearch();
 
   const showResults = isOpen && query.trim().length >= 2;
 
   const handleInputChange = (next: string) => {
-    setCatalogId(null);
     setQuery(next);
-    onChange(next, null);
+    onChange({ ...EMPTY_CATALOG_PICK, name: next });
     setIsOpen(true);
   };
 
   const handleSelect = (exercise: CatalogExercise) => {
-    setCatalogId(exercise.id);
-    setQuery(exercise.name);
-    onChange(exercise.name, exercise.id);
+    const name = catalogDisplayName(exercise);
+    setQuery(name);
+    onChange({
+      name,
+      catalogId: exercise.id,
+      nameIt: exercise.nameIt,
+      nameEn: exercise.name,
+      imageUrl: exercise.imageUrl,
+      imageUrlEnd: exercise.imageUrlEnd,
+    });
     setIsOpen(false);
   };
 
@@ -45,10 +53,10 @@ export function ExercisePicker({
       <Input.Root>
         <Input.Label>Nome esercizio</Input.Label>
         <Input.Field
-          value={value}
+          value={value.name}
           onChange={(event) => handleInputChange(event.target.value)}
           onFocus={() => {
-            setQuery(value);
+            setQuery(value.name);
             setIsOpen(true);
           }}
           onBlur={() => {
@@ -65,9 +73,9 @@ export function ExercisePicker({
         />
       </Input.Root>
 
-      {catalogId ? (
+      {value.catalogId ? (
         <p className="hint selected">Dal catalogo</p>
-      ) : value.trim().length > 0 ? (
+      ) : value.name.trim().length > 0 ? (
         <p className="hint">Testo libero — puoi anche scegliere dal catalogo</p>
       ) : null}
 
@@ -80,7 +88,12 @@ export function ExercisePicker({
             <li className="status">Nessun risultato — usa il nome digitato</li>
           ) : null}
           {results.map((exercise) => (
-            <li key={exercise.id}>
+            <li key={exercise.id} className="result-row">
+              <CatalogFlip
+                imageUrl={exercise.imageUrl}
+                imageUrlEnd={exercise.imageUrlEnd}
+                variant="thumb"
+              />
               <button
                 type="button"
                 className="result"
@@ -88,9 +101,12 @@ export function ExercisePicker({
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => handleSelect(exercise)}
               >
-                <span className="name">{exercise.name}</span>
+                <span className="name">{catalogDisplayName(exercise)}</span>
+                {exercise.name !== catalogDisplayName(exercise) ? (
+                  <span className="name-en">{exercise.name}</span>
+                ) : null}
                 <span className="meta">
-                  {[exercise.primaryMuscles[0], exercise.equipment]
+                  {[muscleLabelIt(exercise.primaryMuscles[0]), equipmentLabelIt(exercise.equipment)]
                     .filter(Boolean)
                     .join(" · ")}
                 </span>

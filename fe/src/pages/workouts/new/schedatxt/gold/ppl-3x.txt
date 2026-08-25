@@ -1,0 +1,34 @@
+# PPL palestra 3x
+Frequenza: 3× a settimana
+Tipo: Ipertrofia
+Recupero default: 90
+
+## Giorno 1: Push
+### Panca piana
+12@90 10@90 8@120 6@120
+
+### Panca inclinata manubri
+10@90 10@90 8@90
+
+### Military press
+8@120 8@120 6@120
+
+## Giorno 2: Pull
+### Stacco rumeno
+8@150 8@150 6@150
+
+### Rematore bilanciere
+10@90 10@90 8@90
+
+### Trazioni
+8@120 8@120 6@120
+
+## Giorno 3: Legs
+### Squat
+8@150 8@150 6@150
+
+### Leg press
+12@90 10@90 10@90
+
+### Affondi
+10@90 10@90 10@90

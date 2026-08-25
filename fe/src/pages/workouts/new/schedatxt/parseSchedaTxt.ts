@@ -15,7 +15,7 @@ export type DraftExercise = {
   clientId: string;
   serverId?: number;
   name: string;
-  catalogId?: string | null;
+  catalogId: string | null;
   setPrescriptions: DraftSetPrescription[];
 };
 

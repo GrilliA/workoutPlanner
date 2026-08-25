@@ -1,0 +1,68 @@
+{
+  "name": "Full body recupero 120",
+  "frequency": "2× a settimana",
+  "workoutType": "Forza + Ipertrofia",
+  "defaultRestSec": 120,
+  "days": [
+    {
+      "name": "A",
+      "weekdays": [0],
+      "exercises": [
+        {
+          "name": "Goblet squat",
+          "sets": [
+            { "reps": 12, "restSec": 120 },
+            { "reps": 10, "restSec": 120 },
+            { "reps": 8, "restSec": 120 }
+          ]
+        },
+        {
+          "name": "Panca manubri",
+          "sets": [
+            { "reps": 10, "restSec": 120 },
+            { "reps": 10, "restSec": 120 },
+            { "reps": 8, "restSec": 120 }
+          ]
+        },
+        {
+          "name": "Rematore manubrio",
+          "sets": [
+            { "reps": 10, "restSec": 120 },
+            { "reps": 10, "restSec": 120 },
+            { "reps": 10, "restSec": 120 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "B",
+      "weekdays": [1],
+      "exercises": [
+        {
+          "name": "Affondi",
+          "sets": [
+            { "reps": 10, "restSec": 120 },
+            { "reps": 10, "restSec": 120 },
+            { "reps": 10, "restSec": 120 }
+          ]
+        },
+        {
+          "name": "Military press",
+          "sets": [
+            { "reps": 8, "restSec": 120 },
+            { "reps": 8, "restSec": 120 },
+            { "reps": 8, "restSec": 120 }
+          ]
+        },
+        {
+          "name": "Curl bilanciere",
+          "sets": [
+            { "reps": 12, "restSec": 120 },
+            { "reps": 10, "restSec": 120 },
+            { "reps": 8, "restSec": 120 }
+          ]
+        }
+      ]
+    }
+  ]
+}

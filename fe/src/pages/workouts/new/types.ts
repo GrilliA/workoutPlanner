@@ -34,18 +34,57 @@ export type DraftSetPrescription = {
   restSec: number;
 };
 
-export type DraftExercise = {
-  clientId: string;
-  serverId?: number;
+export type CatalogPick = {
+  name: string;
+  catalogId: string | null;
+  nameIt?: string | null;
+  nameEn?: string | null;
+  imageUrl?: string | null;
+  imageUrlEnd?: string | null;
+};
+
+export const EMPTY_CATALOG_PICK: CatalogPick = {
+  name: "",
+  catalogId: null,
+  nameIt: null,
+  nameEn: null,
+  imageUrl: null,
+  imageUrlEnd: null,
+};
+
+export function catalogSnapshotFrom(source: {
   name: string;
   catalogId?: string | null;
+  nameIt?: string | null;
+  nameEn?: string | null;
+  imageUrl?: string | null;
+  imageUrlEnd?: string | null;
+}): CatalogPick {
+  return {
+    name: source.name,
+    catalogId: source.catalogId ?? null,
+    nameIt: source.nameIt ?? null,
+    nameEn: source.nameEn ?? null,
+    imageUrl: source.imageUrl ?? null,
+    imageUrlEnd: source.imageUrlEnd ?? null,
+  };
+}
+
+export type DraftExercise = CatalogPick & {
+  clientId: string;
+  serverId?: number;
   setPrescriptions: DraftSetPrescription[];
 };
 
-export type NewExerciseInput = {
-  name: string;
-  catalogId?: string | null;
+export type NewExerciseInput = CatalogPick & {
   setPrescriptions: DraftSetPrescription[];
+};
+
+export type ExerciseDisplay = Pick<
+  CatalogPick,
+  "name" | "nameIt" | "nameEn" | "imageUrl" | "imageUrlEnd"
+> & {
+  setPrescriptions: Array<{ reps: number; restSec?: number | null }>;
 };
 
 export type DraftWorkoutDay = {

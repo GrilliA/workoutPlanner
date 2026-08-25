@@ -1,6 +1,7 @@
-import type { DraftSetPrescription } from "../types";
-
-type PrescriptionLike = Pick<DraftSetPrescription, "reps" | "restSec">;
+type PrescriptionLike = {
+  reps: number;
+  restSec?: number | null;
+};
 
 export function formatExerciseMeta(
   setPrescriptions: PrescriptionLike[],

@@ -9,6 +9,7 @@ import {
   type WorkoutSettings,
 } from "@api";
 import type { DraftWorkoutDay } from "@pages/workouts/new/types";
+import { mapExerciseToDraft } from "@pages/workouts/new/mappers/mapDraftExercise";
 
 const toExercisePayload = (exercise: DraftWorkoutDay["exercises"][number]) => ({
   id: exercise.serverId,
@@ -37,21 +38,6 @@ export const toProgramInput = (
     weekdays: day.weekdays,
     exercises: day.exercises.map(toExercisePayload),
   })),
-});
-
-const mapExerciseToDraft = (exercise: Exercise): DraftWorkoutDay["exercises"][number] => ({
-  clientId: crypto.randomUUID(),
-  serverId: exercise.id,
-  name: exercise.name,
-  catalogId: exercise.catalogId ?? null,
-  setPrescriptions:
-    exercise.setPrescriptions.length > 0
-      ? exercise.setPrescriptions.map((entry) => ({
-          setNumber: entry.setNumber,
-          reps: entry.reps,
-          restSec: entry.restSec ?? 90,
-        }))
-      : [{ setNumber: 1, reps: exercise.reps ?? 10, restSec: 90 }],
 });
 
 const mapDetailToDraft = (workout: {

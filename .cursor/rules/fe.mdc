@@ -1,0 +1,15 @@
+---
+description: Feature folders, functional React, CSS, and the web API layer
+globs: fe/**/*.{ts,tsx,css}
+alwaysApply: false
+---
+
+# Frontend web
+
+Full text: `docs/guidelines/fe.md`.
+
+- Features live under `pages/<route>/`, not in `components/`
+- Folders lowercase; only the component file is PascalCase; public API = `index.tsx`; `style.css` only in the `.tsx`
+- Pure mappers in `mappers/`; thin hooks; no `Component.Sub =`
+- Snapshot (e.g. catalog) = one object, not parallel `useState` fields
+- Requests only through `@api` + Zod; in-feature imports relative, outside via aliases

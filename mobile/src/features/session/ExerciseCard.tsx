@@ -10,6 +10,8 @@ import {
 import type { Exercise, LoggedSet } from "../../api";
 import { AppText, Meta } from "../../components";
 import { colors, radii, spacing } from "../../theme";
+import { exerciseEnglishLine, exerciseHeading } from "../workoutprogram/exerciseDisplay";
+import { ExerciseMediaFlip } from "./ExerciseMediaFlip";
 import {
   formatWeightKg,
   getTargetRepsForSet,
@@ -108,6 +110,8 @@ export function ExerciseCard({
   const canLog = !readOnly && !complete;
   const canUndo = !readOnly && sets.length > 0 && editDraft === null;
   const actionsDisabled = busy;
+  const heading = exerciseHeading(exercise);
+  const english = exerciseEnglishLine(exercise);
 
   const startEdit = (field: EditingField) => {
     if (actionsDisabled) {
@@ -194,17 +198,27 @@ export function ExerciseCard({
         complete && styles.cardDone,
       ]}
     >
+      <ExerciseMediaFlip
+        imageUrl={exercise.imageUrl}
+        imageUrlEnd={exercise.imageUrlEnd}
+        variant="hero"
+        placeholder
+      />
+      <View style={[styles.body, focus && styles.bodyFocus]}>
       {focus && exerciseOrdinal != null && exerciseTotal != null ? (
         <AppText variant="eyebrow" tone="accent" style={styles.ordinal}>
           ESERCIZIO {exerciseOrdinal} DI {exerciseTotal}
         </AppText>
       ) : null}
-      <AppText
-        tone="heading"
-        style={[styles.name, focus && styles.nameFocus]}
-      >
-        {exercise.name}
-      </AppText>
+      <View style={styles.titleCopy}>
+        <AppText
+          tone="heading"
+          style={[styles.name, focus && styles.nameFocus]}
+        >
+          {heading}
+        </AppText>
+        {english ? <Meta style={styles.nameEn}>{english}</Meta> : null}
+      </View>
       {!focus ? (
         <Meta>
           Serie {Math.min(sets.length, targetSets)} / {targetSets}
@@ -520,6 +534,7 @@ export function ExerciseCard({
           <Meta style={styles.undoLabel}>Annulla ultima serie</Meta>
         </Pressable>
       ) : null}
+      </View>
     </View>
   );
 }
@@ -628,12 +643,11 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
     borderWidth: 1,
     borderColor: colors.border,
-    padding: spacing.md,
+    overflow: "hidden",
     marginTop: spacing.sm,
   },
   cardFocus: {
     marginTop: 0,
-    padding: spacing.lg,
     borderRadius: radii.lg,
   },
   cardResting: {
@@ -650,6 +664,19 @@ const styles = StyleSheet.create({
     fontSize: 24,
     lineHeight: 30,
     fontStyle: "italic",
+  },
+  titleCopy: {
+    minWidth: 0,
+    gap: 2,
+  },
+  nameEn: {
+    marginTop: 2,
+  },
+  body: {
+    padding: spacing.md,
+  },
+  bodyFocus: {
+    padding: spacing.lg,
   },
   ordinal: {
     marginBottom: spacing.xs,

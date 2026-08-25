@@ -15,6 +15,7 @@ import {
   getSession,
   getWorkout,
   getWorkoutDayExercises,
+  hydrateExercisesFromCatalog,
   logSet,
   patchLoggedSet,
   type Exercise,
@@ -139,7 +140,7 @@ export default function SessionScreen() {
       try {
         const nextSession = await getSession(sessionId);
         const workout = await getWorkout(nextSession.workoutId);
-        const [nextExercises, previousMap] = await Promise.all([
+        const [rawExercises, previousMap] = await Promise.all([
           nextSession.workoutDayId
             ? getWorkoutDayExercises(
                 nextSession.workoutId,
@@ -148,6 +149,7 @@ export default function SessionScreen() {
             : getExercisesByWorkout(nextSession.workoutId),
           loadPreviousSetsByExercise(nextSession.workoutId, nextSession.id),
         ]);
+        const nextExercises = await hydrateExercisesFromCatalog(rawExercises);
 
         if (cancelled) {
           return;
@@ -166,6 +168,7 @@ export default function SessionScreen() {
           const defaults = resolveLogDefaults(
             exercise,
             grouped.get(exercise.id) ?? [],
+            previousMap.get(exercise.id) ?? [],
           );
           nextWeights[exercise.id] = defaults.weight;
           nextReps[exercise.id] = defaults.reps;

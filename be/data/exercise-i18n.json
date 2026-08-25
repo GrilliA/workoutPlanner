@@ -1,0 +1,242 @@
+{
+  "Barbell_Bench_Press_-_Medium_Grip": {
+    "nameIt": "Panca piana",
+    "aliases": ["panca", "panca piana", "bench", "bench press"]
+  },
+  "Barbell_Incline_Bench_Press_-_Medium_Grip": {
+    "nameIt": "Panca inclinata",
+    "aliases": ["panca inclinata", "incline bench"]
+  },
+  "Decline_Barbell_Bench_Press": {
+    "nameIt": "Panca declinata",
+    "aliases": ["panca declinata", "decline bench"]
+  },
+  "Dumbbell_Bench_Press": {
+    "nameIt": "Panca manubri",
+    "aliases": ["panca manubri", "dumbbell bench"]
+  },
+  "Incline_Dumbbell_Press": {
+    "nameIt": "Panca inclinata manubri",
+    "aliases": ["panca inclinata"]
+  },
+  "Close-Grip_Barbell_Bench_Press": {
+    "nameIt": "Panca presa stretta",
+    "aliases": ["panca stretta", "close grip bench"]
+  },
+  "Barbell_Deadlift": {
+    "nameIt": "Stacco da terra",
+    "aliases": ["stacco", "stacco da terra", "deadlift"]
+  },
+  "Romanian_Deadlift": {
+    "nameIt": "Stacco rumeno",
+    "aliases": ["stacco rumeno", "rdl"]
+  },
+  "Stiff-Legged_Barbell_Deadlift": {
+    "nameIt": "Stacco a gambe tese",
+    "aliases": ["stacco gambe tese"]
+  },
+  "Barbell_Squat": {
+    "nameIt": "Squat",
+    "aliases": ["squat", "squat bilanciere"]
+  },
+  "Barbell_Full_Squat": {
+    "nameIt": "Squat",
+    "aliases": ["squat"]
+  },
+  "Goblet_Squat": {
+    "nameIt": "Goblet squat",
+    "aliases": ["goblet squat"]
+  },
+  "Smith_Machine_Squat": {
+    "nameIt": "Squat al smith",
+    "aliases": ["smith squat"]
+  },
+  "Leg_Press": {
+    "nameIt": "Leg press",
+    "aliases": ["leg press"]
+  },
+  "Barbell_Hip_Thrust": {
+    "nameIt": "Hip thrust",
+    "aliases": ["hip thrust"]
+  },
+  "Barbell_Glute_Bridge": {
+    "nameIt": "Glute bridge",
+    "aliases": ["glute bridge"]
+  },
+  "Pullups": {
+    "nameIt": "Trazioni",
+    "aliases": ["trazioni", "pull-up", "pull up"]
+  },
+  "Weighted_Pull_Ups": {
+    "nameIt": "Trazioni zavorrate",
+    "aliases": ["trazioni"]
+  },
+  "Chin-Up": {
+    "nameIt": "Trazioni supina",
+    "aliases": ["trazioni", "chin-up"]
+  },
+  "Wide-Grip_Rear_Pull-Up": {
+    "nameIt": "Trazioni presa larga",
+    "aliases": ["trazioni"]
+  },
+  "Wide-Grip_Lat_Pulldown": {
+    "nameIt": "Lat machine",
+    "aliases": ["lat machine", "lat pulldown"]
+  },
+  "Close-Grip_Front_Lat_Pulldown": {
+    "nameIt": "Lat machine presa stretta",
+    "aliases": ["lat machine"]
+  },
+  "Seated_Cable_Rows": {
+    "nameIt": "Rematore ai cavi",
+    "aliases": ["rematore", "seated row"]
+  },
+  "Bent_Over_Barbell_Row": {
+    "nameIt": "Rematore con bilanciere",
+    "aliases": ["rematore"]
+  },
+  "One-Arm_Dumbbell_Row": {
+    "nameIt": "Rematore manubrio",
+    "aliases": ["rematore"]
+  },
+  "T-Bar_Row_with_Handle": {
+    "nameIt": "Rematore T-bar",
+    "aliases": ["rematore t-bar", "t-bar row"]
+  },
+  "Upright_Barbell_Row": {
+    "nameIt": "Rematore verticale",
+    "aliases": ["rematore verticale"]
+  },
+  "Dumbbell_Flyes": {
+    "nameIt": "Croci manubri",
+    "aliases": ["croci", "fly"]
+  },
+  "Cable_Crossover": {
+    "nameIt": "Incroci ai cavi",
+    "aliases": ["croci ai cavi", "crossover"]
+  },
+  "Butterfly": {
+    "nameIt": "Peck deck",
+    "aliases": ["peck deck", "pec deck"]
+  },
+  "Pushups": {
+    "nameIt": "Piegamenti",
+    "aliases": ["piegamenti", "push-up", "push up"]
+  },
+  "Dips_-_Triceps_Version": {
+    "nameIt": "Dip",
+    "aliases": ["dip", "dips"]
+  },
+  "Bench_Dips": {
+    "nameIt": "Dip panca",
+    "aliases": ["dip"]
+  },
+  "Side_Lateral_Raise": {
+    "nameIt": "Alzate laterali",
+    "aliases": ["alzate laterali", "lateral raise"]
+  },
+  "Front_Dumbbell_Raise": {
+    "nameIt": "Alzate frontali",
+    "aliases": ["alzate frontali"]
+  },
+  "Standing_Military_Press": {
+    "nameIt": "Military press",
+    "aliases": ["military press", "overhead press"]
+  },
+  "Dumbbell_Shoulder_Press": {
+    "nameIt": "Military press manubri",
+    "aliases": ["military press"]
+  },
+  "Barbell_Shoulder_Press": {
+    "nameIt": "Military press",
+    "aliases": ["military press"]
+  },
+  "Barbell_Shrug": {
+    "nameIt": "Scrollate",
+    "aliases": ["scrollate", "shrug"]
+  },
+  "Standing_Calf_Raises": {
+    "nameIt": "Alzate polpacci",
+    "aliases": ["polpacci", "calf raise"]
+  },
+  "Crunches": {
+    "nameIt": "Crunch",
+    "aliases": ["crunch"]
+  },
+  "Plank": {
+    "nameIt": "Plank",
+    "aliases": ["plank"]
+  },
+  "Hanging_Leg_Raise": {
+    "nameIt": "Sollevamenti gambe in sospensione",
+    "aliases": ["sollevamenti gambe"]
+  },
+  "Lying_Triceps_Press": {
+    "nameIt": "French press",
+    "aliases": ["french press", "skull crusher"]
+  },
+  "EZ-Bar_Skullcrusher": {
+    "nameIt": "French press",
+    "aliases": ["french press", "skull crusher"]
+  },
+  "Triceps_Pushdown": {
+    "nameIt": "Pushdown tricipiti",
+    "aliases": ["pushdown"]
+  },
+  "Barbell_Curl": {
+    "nameIt": "Curl bilanciere",
+    "aliases": ["curl"]
+  },
+  "EZ-Bar_Curl": {
+    "nameIt": "Curl EZ",
+    "aliases": ["curl ez"]
+  },
+  "Hammer_Curls": {
+    "nameIt": "Hammer curl",
+    "aliases": ["hammer curl"]
+  },
+  "Dumbbell_Lunges": {
+    "nameIt": "Affondi manubri",
+    "aliases": ["affondi"]
+  },
+  "Barbell_Lunge": {
+    "nameIt": "Affondi bilanciere",
+    "aliases": ["affondi"]
+  },
+  "Leg_Extensions": {
+    "nameIt": "Leg extension",
+    "aliases": ["leg extension"]
+  },
+  "Lying_Leg_Curls": {
+    "nameIt": "Leg curl",
+    "aliases": ["leg curl"]
+  },
+  "Face_Pull": {
+    "nameIt": "Face pull",
+    "aliases": ["face pull"]
+  },
+  "Good_Morning": {
+    "nameIt": "Good morning",
+    "aliases": ["good morning"]
+  },
+  "Hyperextensions_Back_Extensions": {
+    "nameIt": "Iperestensioni",
+    "aliases": ["iperestensioni"]
+  },
+  "Arnold_Dumbbell_Press": {
+    "nameIt": "Arnold press",
+    "aliases": ["arnold press"]
+  },
+  "Cable_Crunch": {
+    "nameIt": "Crunch ai cavi",
+    "aliases": ["crunch"]
+  },
+  "Ab_Roller": {
+    "nameIt": "Ab roller",
+    "aliases": ["ab roller"]
+  },
+  "Air_Bike": {
+    "nameIt": "Air bike",
+    "aliases": ["air bike"]
+  }
+}

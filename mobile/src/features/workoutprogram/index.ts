@@ -23,3 +23,5 @@ export {
 };
 export { SetPrescriptionEditor } from "./SetPrescriptionEditor";
 export { WeekdayChips } from "./WeekdayChips";
+export { ProgramExerciseCard } from "./ProgramExerciseCard";
+export { exerciseHeading, exerciseEnglishLine } from "./exerciseDisplay";

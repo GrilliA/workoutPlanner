@@ -69,7 +69,8 @@ exercisesRouter.post("/", async (req, res) => {
     catalogId: parsed.value.catalogId,
   });
 
-  res.status(201).json(created);
+  const [enriched] = await enrichExercises([created]);
+  res.status(201).json(enriched);
 });
 
 export const exerciseByIdRouter = Router();
@@ -163,7 +164,8 @@ exerciseByIdRouter.patch("/:id", async (req, res) => {
   }
 
   const updated = await updateExerciseWithSets(id, parsed.value);
-  res.json(updated);
+  const [enriched] = await enrichExercises([updated]);
+  res.json(enriched);
 });
 
 exerciseByIdRouter.delete("/:id", async (req, res) => {

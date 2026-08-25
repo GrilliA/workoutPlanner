@@ -13,6 +13,7 @@ How to use:
 
 | Date | Decision | Why |
 | --- | --- | --- |
+| 2026-08-25 | Catalog search is bilingual (IT primary + EN secondary). Names come from a glossary + curated overlay at seed (`be/data/exercise-i18n.json`); we do not hand-edit 873 English names. Selecting a catalog row stores the Italian name as `exercises.name`. Movement media is 2-frame 0.jpg/1.jpg flip (`image_url_end`); no videos. | Coaches search `panca` or `bench`; athletes see Italian titles with English subtitle and a start/end photo. Videos (wger / Gym Visual) stay out of scope. |
 | 2026-08-24 | Brand accent lime `#c7f464` → powder blue `#bfdbf7` (deep `#4a7fb0`, on-accent `#111111`); charcoal surfaces unchanged | Iterate away from lime/yellow; pale blue reads calmer on the dark coach UI |
 | 2026-08-24 | Web `/` has no public landing: anonymous → `/login` (logo + form), authenticated → `/dashboard` | Coach web is a private panel; marketing landing was unused and looked generic |
 | 2026-08-24 | Analytics period change keeps previous data under a `BusyRegion` overlay; first load uses a layout skeleton | Avoid collapsing KPI/chart height when switching 4w/12w/52w |
@@ -48,6 +49,7 @@ How to use:
 
 ## What we did
 
+- 2026-08-25 — Mobile scheda + sessione: card esercizio con flip 0/1 sopra, titolo IT e inglese. Lista in `workout/[workoutId]`, gesto in alto anche in sessione attiva/recap.
 - 2026-08-24 — Drop public landing: `/` redirects to `/login` or `/dashboard`; BrandMark SVG removed; login shows wordmark while session bootstraps.
 - 2026-08-24 — Analytics period loading: `BusyRegion` overlay keeps KPI/chart on 4w/12w/52w refetch; skeleton on first load for client detail and `/analytics`.
 - 2026-08-20 — Drop adherence/occurrences: migration `0009` drops `workout_occurrences` + `occurrence_id`; analytics activity-only (`athletesActiveInPeriod`, inactivity/expiring alerts); mobile Progressi KPI Sessioni/PR/Serie; coach web KPI atleti attivi / da controllare.
@@ -157,7 +159,7 @@ Merge **in order** (stacked branches). Each PR is one concern.
 
 **Setup after merge:** `cd be && npm run db:migrate && npm run db:seed-catalog`
 
-**Out of scope:** live wger proxy, video demos, Italian name translation layer, user-owned custom catalog rows.
+**Out of scope:** live wger proxy, video demos, translating historical `exercises.name` rows, user-owned custom catalog rows.
 
 ## Other next steps
 
@@ -165,6 +167,6 @@ Merge **in order** (stacked branches). Each PR is one concern.
 - [ ] Test FE (Vitest su mapper/utils).
 - [ ] Route `/forgot-password` (link già presente in login).
 - [ ] (Later) Cleanup PR: rimuovere pagine web atleta orfane (`home/`, `sessions/`, `stats/`, …); tenere solo `workouts/new` condiviso col coach.
-- [ ] (Later) Optional wger IT names or user custom exercises on top of B5.
+- [ ] (Later) Optional user custom exercises on top of B5; videos remain out of scope.
 - [ ] (Later) Mobile: polish restante atleta vs mock (override DayPicker su WeekStrip, empty states).
 - [ ] (Later) Extract `packages/shared` if Zod/API copy between `fe` and `mobile` hurts.

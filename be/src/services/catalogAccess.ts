@@ -1,4 +1,4 @@
-import { and, asc, count, eq, ilike, sql, type SQL } from "drizzle-orm";
+import { and, asc, count, eq, ilike, or, sql, type SQL } from "drizzle-orm";
 import { db } from "../db";
 import { exerciseCatalog } from "../db/schema";
 import {
@@ -13,7 +13,18 @@ function buildWhere(params: ReturnType<typeof parseCatalogSearchInput>): SQL | u
   const conditions: SQL[] = [];
 
   if (params.q) {
-    conditions.push(ilike(exerciseCatalog.name, `%${params.q}%`));
+    const pattern = `%${params.q}%`;
+    conditions.push(
+      or(
+        ilike(exerciseCatalog.name, pattern),
+        ilike(exerciseCatalog.nameIt, pattern),
+        sql`exists (
+          select 1
+          from jsonb_array_elements_text(${exerciseCatalog.aliases}) as alias
+          where alias ilike ${pattern}
+        )`,
+      )!,
+    );
   }
 
   if (params.muscle) {

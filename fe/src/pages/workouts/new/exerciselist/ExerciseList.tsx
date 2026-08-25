@@ -27,8 +27,7 @@ export function ExerciseList({
             <li key={exercise.clientId}>
               <ExerciseRow
                 index={index + 1}
-                name={exercise.name}
-                setPrescriptions={exercise.setPrescriptions}
+                exercise={exercise}
                 defaultRestSec={defaultRestSec}
                 onRemove={() => onRemove(exercise.clientId)}
               />

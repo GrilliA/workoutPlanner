@@ -16,6 +16,11 @@ export {
   deleteExercise,
 } from "./exercises";
 export { searchCatalogExercises, getCatalogExercise, getCatalogFacets } from "./catalog";
+export {
+  hydrateExercisesFromCatalog,
+  deriveImageUrlEnd,
+  catalogImageUrlsFromId,
+} from "./hydrateCatalog";
 export { login, register, getMe, updateProfile, changePassword, logout } from "./auth";
 export {
   startSession,

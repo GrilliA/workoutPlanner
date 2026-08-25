@@ -85,21 +85,45 @@ export function isExerciseComplete(exercise: Exercise, loggedCount: number): boo
   return loggedCount >= getTargetSetCount(exercise);
 }
 
+function weightFromPreviousSets(
+  previousSets: LoggedSet[],
+  setNumber: number,
+): string {
+  const ordered = [...previousSets].sort((a, b) => a.setNumber - b.setNumber);
+  const sameSet = ordered.find((set) => set.setNumber === setNumber);
+  if (sameSet?.weightKg != null) {
+    return formatWeightKg(sameSet.weightKg);
+  }
+
+  const lastWithWeight = [...ordered]
+    .reverse()
+    .find((set) => set.weightKg != null);
+  return lastWithWeight?.weightKg == null
+    ? ""
+    : formatWeightKg(lastWithWeight.weightKg);
+}
+
 /**
  * Prefill priority:
- * - weight: last logged set (prescriptions have no weight)
+ * - weight: last logged set this session, else previous session (same set, else last)
  * - reps: next set prescription (so 10 → 8 plans advance correctly)
  */
 export function resolveLogDefaults(
   exercise: Exercise,
   loggedSets: LoggedSet[],
+  previousSets: LoggedSet[] = [],
 ): { weight: string; reps: string } {
   const ordered = [...loggedSets].sort((a, b) => a.setNumber - b.setNumber);
   const last = ordered.at(-1);
   const nextSetNumber = (last?.setNumber ?? 0) + 1;
 
   return {
-    weight: last == null || last.weightKg === null ? "" : formatWeightKg(last.weightKg),
+    weight:
+      last != null
+        ? last.weightKg === null
+          ? ""
+          : formatWeightKg(last.weightKg)
+        : weightFromPreviousSets(previousSets, nextSetNumber),
     reps: String(getTargetRepsForSet(exercise, nextSetNumber)),
   };
 }

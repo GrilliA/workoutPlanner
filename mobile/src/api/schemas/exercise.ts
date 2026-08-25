@@ -14,6 +14,10 @@ export const exerciseSchema = z.object({
   workoutId: z.number(),
   workoutDayId: z.number().nullable().optional(),
   catalogId: z.string().nullable().optional(),
+  nameIt: z.string().nullable().optional(),
+  nameEn: z.string().nullable().optional(),
+  imageUrl: z.string().nullable().optional(),
+  imageUrlEnd: z.string().nullable().optional(),
   setPrescriptions: z.array(setPrescriptionSchema).default([]),
 });
 
