@@ -64,6 +64,9 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Build Storybook
+        run: npm run build-storybook
+
   mobile:
     name: Mobile
     runs-on: ubuntu-latest
