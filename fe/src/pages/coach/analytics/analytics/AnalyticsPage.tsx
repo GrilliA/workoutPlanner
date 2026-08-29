@@ -1,4 +1,4 @@
-import { CoachPageHeader } from "../../coachpageheader";
+import { PageHeader } from "@components/pageHeader";
 import { AlertsTable } from "../alertstable";
 import { AnalyticsSkeleton } from "../analyticsskeleton";
 import { KpiGrid } from "../kpigrid";
@@ -13,7 +13,7 @@ export function AnalyticsPage() {
 
   return (
     <div className="coach-page page-container page-container--wide analytics-page">
-      <CoachPageHeader
+      <PageHeader
         title="Analisi"
         subtitle={
           data

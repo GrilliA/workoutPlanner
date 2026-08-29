@@ -1,0 +1,92 @@
+.coach-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.coach-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-4);
+  transition:
+    border-color var(--duration-fast),
+    background var(--duration-fast);
+
+  & h2 {
+    margin: 0 0 var(--space-1-5);
+    font-size: 1.05rem;
+    color: var(--text-h);
+  }
+
+  & p {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--text);
+  }
+}
+
+.coach-card__title-link {
+  color: var(--text-h);
+  font-size: inherit;
+  font-weight: inherit;
+  text-decoration: none;
+
+  &:hover {
+    color: var(--accent);
+  }
+
+  &:focus-visible {
+    outline: var(--focus-ring-width) solid var(--accent);
+    outline-offset: var(--focus-ring-offset);
+    border-radius: var(--radius-sm);
+  }
+}
+
+.coach-card--nav {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    border-color: var(--accent-border);
+    background: var(--surface-elevated);
+    outline: none;
+  }
+
+  & .coach-card__body {
+    min-width: 0;
+  }
+
+  & .coach-card__chevron {
+    flex-shrink: 0;
+    color: var(--text);
+
+    & svg {
+      display: block;
+      width: var(--space-4);
+      height: var(--space-4);
+    }
+  }
+}
+
+.coach-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-4);
+  margin-top: var(--space-3);
+}
+
+.coach-card-dates {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}

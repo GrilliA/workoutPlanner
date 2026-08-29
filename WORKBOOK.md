@@ -13,6 +13,7 @@ How to use:
 
 | Date | Decision | Why |
 | --- | --- | --- |
+| 2026-08-29 | D1 design system web: single token source `fe/src/styles/tokens.css` (color/space/radius/type/shadow/motion/z); Storybook 10 (`@storybook/react-vite` + addon-a11y) as the living catalog inside `fe/`; `PageHeader` promoted to `components/`, `CoachCard` as coach-domain pattern in `pages/coach/coachCard/` | Semantic tokens à la Primer/Polaris without a separate ui package; catalog next to components keeps the DS honest; no Style Dictionary / token sharing with RN until mobile actually needs it |
 | 2026-08-25 | Catalog search is bilingual (IT primary + EN secondary). Names come from a glossary + curated overlay at seed (`be/data/exercise-i18n.json`); we do not hand-edit 873 English names. Selecting a catalog row stores the Italian name as `exercises.name`. Movement media is 2-frame 0.jpg/1.jpg flip (`image_url_end`); no videos. | Coaches search `panca` or `bench`; athletes see Italian titles with English subtitle and a start/end photo. Videos (wger / Gym Visual) stay out of scope. |
 | 2026-08-24 | Brand accent lime `#c7f464` → powder blue `#bfdbf7` (deep `#4a7fb0`, on-accent `#111111`); charcoal surfaces unchanged | Iterate away from lime/yellow; pale blue reads calmer on the dark coach UI |
 | 2026-08-24 | Web `/` has no public landing: anonymous → `/login` (logo + form), authenticated → `/dashboard` | Coach web is a private panel; marketing landing was unused and looked generic |
@@ -49,6 +50,7 @@ How to use:
 
 ## What we did
 
+- 2026-08-29 — D1 design system web: `tokens.css` + refactor token-only dei CSS dei componenti condivisi; Storybook 10 con storie per le 9 primitive + pagina Foundations (`npm run storybook`); `PageHeader` condiviso (legacy `coachpageheader/` eliminato) e `CoachCard`/`CoachCardList` nelle pagine coach. Nota: il commit `82c2169` cita PageError nel messaggio, ma il componente non è entrato nel tree (rimosso prima del commit); le pagine coach restano senza stato di errore dedicato.
 - 2026-08-25 — Mobile scheda + sessione: card esercizio con flip 0/1 sopra, titolo IT e inglese. Lista in `workout/[workoutId]`, gesto in alto anche in sessione attiva/recap.
 - 2026-08-24 — Drop public landing: `/` redirects to `/login` or `/dashboard`; BrandMark SVG removed; login shows wordmark while session bootstraps.
 - 2026-08-24 — Analytics period loading: `BusyRegion` overlay keeps KPI/chart on 4w/12w/52w refetch; skeleton on first load for client detail and `/analytics`.

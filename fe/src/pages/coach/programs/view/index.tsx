@@ -3,7 +3,8 @@ import type { WorkoutDetail } from "@api";
 import { AppShell } from "@components/appShell";
 import { WEEKDAY_LABELS_SHORT } from "@pages/workouts/new/types";
 import { ExerciseRow } from "@pages/workouts/new/exerciserow";
-import { CoachPageHeader } from "../../coachpageheader";
+import { PageHeader } from "@components/pageHeader";
+import { CoachCard, CoachCardList } from "../../coachCard";
 import { useClientProgram } from "./api/useClientProgram";
 import "../../style.css";
 
@@ -27,12 +28,12 @@ function ProgramDays({ program }: { program: WorkoutDetail }) {
   }
 
   return (
-    <div className="coach-card-list">
+    <CoachCardList>
       {days.map((day) => {
         const exercises = day.exercises ?? [];
 
         return (
-          <section key={day.id} className="coach-card coach-program-day">
+          <CoachCard key={day.id} className="coach-program-day">
             <h2>{day.name}</h2>
             <p className="coach-program-day__meta">{formatWeekdays(day.weekdays)}</p>
             {exercises.length === 0 ? (
@@ -49,10 +50,10 @@ function ProgramDays({ program }: { program: WorkoutDetail }) {
                 ))}
               </div>
             )}
-          </section>
+          </CoachCard>
         );
       })}
-    </div>
+    </CoachCardList>
   );
 }
 
@@ -70,7 +71,7 @@ export default function ViewClientProgramPage() {
     return (
       <AppShell>
         <div className="coach-page page-container page-container--wide">
-          <CoachPageHeader title="Scheda" />
+          <PageHeader title="Scheda" />
           <p className="coach-empty">Scheda non trovata</p>
         </div>
       </AppShell>
@@ -100,7 +101,7 @@ function ViewClientProgramLoaded({
   return (
     <AppShell>
       <div className="coach-page page-container page-container--wide">
-        <CoachPageHeader
+        <PageHeader
           title={program?.name ?? "Scheda"}
           subtitle={
             program

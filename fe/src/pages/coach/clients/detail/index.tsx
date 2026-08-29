@@ -12,7 +12,8 @@ import { AppShell } from "@components/appShell";
 import { Button } from "@components/button";
 import { Input } from "@components/input";
 import { toast } from "@components/toast";
-import { CoachPageHeader } from "../../coachpageheader";
+import { PageHeader } from "@components/pageHeader";
+import { CoachCard, CoachCardList } from "../../coachCard";
 import { ClientAnalyticsSection } from "./analytics/clientanalytics";
 import { useClientDetail } from "./api/useClientDetail";
 import "../../style.css";
@@ -50,7 +51,7 @@ export default function ClientDetailPage() {
     return (
       <AppShell>
         <div className="coach-page page-container page-container--wide">
-          <CoachPageHeader title="Cliente" />
+          <PageHeader title="Cliente" />
           <p className="coach-empty">Cliente non trovato</p>
         </div>
       </AppShell>
@@ -174,7 +175,7 @@ function ClientDetailLoaded({ athleteId }: { athleteId: number }) {
   return (
     <AppShell>
       <div className="coach-page page-container page-container--wide">
-        <CoachPageHeader
+        <PageHeader
           title={client?.name ?? client?.email ?? "Cliente"}
           subtitle={client?.email}
           action={
@@ -204,17 +205,15 @@ function ClientDetailLoaded({ athleteId }: { athleteId: number }) {
               {recentSessions.length === 0 ? (
                 <p className="coach-empty">Nessuna sessione completata</p>
               ) : (
-                <div className="coach-card-list">
+                <CoachCardList>
                   {recentSessions.map((session) => (
-                    <div key={session.sessionId} className="coach-card">
-                      <h2>{session.workoutName}</h2>
-                      <p>
-                        {formatSessionDate(session.completedAt)} · {session.durationMin} min ·{" "}
-                        {Math.round(session.volumeKg)} kg
-                      </p>
-                    </div>
+                    <CoachCard
+                      key={session.sessionId}
+                      title={session.workoutName}
+                      subtitle={`${formatSessionDate(session.completedAt)} · ${session.durationMin} min · ${Math.round(session.volumeKg)} kg`}
+                    />
                   ))}
-                </div>
+                </CoachCardList>
               )}
             </section>
 
@@ -249,7 +248,7 @@ function ClientDetailLoaded({ athleteId }: { athleteId: number }) {
               {assignments.length === 0 ? (
                 <p className="coach-empty">Nessuna scheda assegnata</p>
               ) : (
-                <div className="coach-card-list">
+                <CoachCardList>
                   {assignments.map((assignment) => {
                     const draft = drafts[assignment.id] ?? toDraft(assignment);
                     const canEditDates = assignment.status !== "revoked";
@@ -261,7 +260,7 @@ function ClientDetailLoaded({ athleteId }: { athleteId: number }) {
                     const programHref = `/clients/${athleteId}/programs/${assignment.workoutId}`;
 
                     return (
-                      <div key={assignment.id} className="coach-card">
+                      <CoachCard key={assignment.id}>
                         <h2>
                           <Link href={programHref} className="coach-card__title-link">
                             {assignment.workoutName ?? `Scheda #${assignment.workoutId}`}
@@ -334,10 +333,10 @@ function ClientDetailLoaded({ athleteId }: { athleteId: number }) {
                             </button>
                           ) : null}
                         </div>
-                      </div>
+                      </CoachCard>
                     );
                   })}
-                </div>
+                </CoachCardList>
               )}
             </section>
 

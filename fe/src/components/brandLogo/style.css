@@ -16,15 +16,15 @@
 }
 
 .brand-logo__word {
-  font-family: var(--heading, Roboto, system-ui, sans-serif);
+  font-family: var(--heading);
   font-weight: 700;
   letter-spacing: -0.03em;
-  color: var(--text-h, #e0e0e0);
+  color: var(--text-h);
   white-space: nowrap;
 }
 
 .brand-logo__a {
-  color: var(--accent, #bfdbf7);
+  color: var(--accent);
 }
 
 .brand-logo__badge {
@@ -32,7 +32,7 @@
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--accent, #bfdbf7);
+  color: var(--accent);
 }
 
 .brand-logo--sm .brand-logo__word {

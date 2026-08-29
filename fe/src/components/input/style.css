@@ -1,12 +1,12 @@
 .input-root {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-1-5);
   text-align: left;
 }
 
 .input-label {
-  font-size: 14px;
+  font-size: var(--text-sm);
   font-weight: 500;
   color: var(--text);
   line-height: 1.25;
@@ -19,13 +19,13 @@
 .input-field {
   width: 100%;
   box-sizing: border-box;
-  padding: 10px 12px;
+  padding: var(--space-2-5) var(--space-3);
   font: inherit;
   color: var(--text);
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: 6px;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  border-radius: var(--radius-md);
+  transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
 }
 
 .input-field::placeholder {
@@ -34,8 +34,8 @@
 }
 
 .input-field:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  outline: var(--focus-ring-width) solid var(--accent);
+  outline-offset: var(--focus-ring-offset);
   border-color: var(--accent-border);
 }
 
@@ -59,15 +59,15 @@
   display: flex;
   align-items: stretch;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   background: var(--bg);
   overflow: hidden;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
 }
 
 .input-control:focus-within {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  outline: var(--focus-ring-width) solid var(--accent);
+  outline-offset: var(--focus-ring-offset);
   border-color: var(--accent-border);
 }
 
@@ -103,7 +103,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  padding: 0 12px;
+  padding: 0 var(--space-3);
   color: var(--text);
   background: var(--code-bg);
   border: none;
@@ -121,7 +121,7 @@
   cursor: pointer;
   font: inherit;
   color: var(--text);
-  transition: background 0.2s;
+  transition: background var(--duration-fast);
 }
 
 .input-addon--interactive:hover {
@@ -129,20 +129,20 @@
 }
 
 .input-addon--interactive:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
+  outline: var(--focus-ring-width) solid var(--accent);
+  outline-offset: calc(var(--focus-ring-offset) * -1);
 }
 
 .input-helper {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--text-xs);
   line-height: 1.35;
   color: var(--text);
 }
 
 .input-error {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--text-xs);
   line-height: 1.35;
   color: var(--error);
 }

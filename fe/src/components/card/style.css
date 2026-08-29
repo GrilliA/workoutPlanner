@@ -1,20 +1,20 @@
 .card {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  padding: 1rem 1.25rem;
+  gap: var(--space-1);
+  padding: var(--space-4) var(--space-5);
   border: 1px solid var(--border);
-  border-radius: 0.75rem;
+  border-radius: var(--radius-xl);
   background: var(--bg);
   box-shadow: var(--shadow);
 
   & .title {
-    font-size: 1.125rem;
+    font-size: var(--text-lg);
     color: var(--text-h);
   }
 
   & .meta {
-    font-size: 0.875rem;
+    font-size: var(--text-sm);
     color: var(--text);
   }
 }

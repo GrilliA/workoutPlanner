@@ -1,15 +1,4 @@
 .app-shell {
-  --text: #aaaaaa;
-  --text-h: #e0e0e0;
-  --bg: #1d1f25;
-  --surface: #252830;
-  --surface-elevated: #2c3038;
-  --border: rgba(224, 224, 224, 0.12);
-  --accent: #bfdbf7;
-  --accent-bg: rgba(191, 219, 247, 0.12);
-  --accent-border: rgba(191, 219, 247, 0.4);
-  --on-accent: #111111;
-
   display: grid;
   grid-template-columns: 1fr;
   grid-template-rows: auto;
@@ -25,22 +14,22 @@
   & .sidebar {
     display: none;
     flex-direction: column;
-    gap: 1.25rem;
-    padding: 1.5rem 1rem;
+    gap: var(--space-5);
+    padding: var(--space-6) var(--space-4);
     background: var(--surface);
     border-right: 1px solid var(--border);
 
     & .brand {
-      padding: 0.15rem 0.5rem 0.35rem;
+      padding: 0.15rem var(--space-2) 0.35rem;
     }
 
     & .coach-card {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: var(--space-3);
       margin: 0 0.35rem;
-      padding: 0.65rem 0.75rem;
-      border-radius: 0.75rem;
+      padding: 0.65rem var(--space-3);
+      border-radius: var(--radius-xl);
       border: 1px solid var(--border);
       background: var(--bg);
     }
@@ -48,7 +37,7 @@
     & .coach-card__avatar {
       width: 2.4rem;
       height: 2.4rem;
-      border-radius: 999px;
+      border-radius: var(--radius-full);
       border: 1px solid var(--border);
       background: var(--surface-elevated);
       color: var(--accent);
@@ -97,8 +86,8 @@
       text-decoration: none;
       color: var(--text);
       padding: 0.7rem 0.9rem;
-      border-radius: 0.75rem;
-      transition: background-color 0.2s;
+      border-radius: var(--radius-xl);
+      transition: background-color var(--duration-fast);
       border: 1px solid transparent;
       background: transparent;
       font: inherit;
@@ -112,7 +101,7 @@
       }
 
       &:hover {
-        background: rgba(255, 255, 255, 0.06);
+        background: var(--hover-bg);
       }
 
       &.active {
@@ -123,7 +112,7 @@
       }
 
       &.accent {
-        color: var(--on-accent, #101014);
+        color: var(--on-accent);
         background: var(--accent);
         border-color: var(--accent-border);
         font-weight: 700;
@@ -133,7 +122,7 @@
         }
 
         &.active {
-          color: var(--on-accent, #101014);
+          color: var(--on-accent);
           background: var(--accent);
         }
       }
@@ -159,20 +148,20 @@
     position: fixed;
     inset-inline: 0;
     bottom: 0;
-    z-index: 10;
+    z-index: var(--z-nav);
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 0.25rem;
+    gap: var(--space-1);
     box-sizing: border-box;
     width: 100%;
     max-width: 100%;
-    padding-top: 0.5rem;
-    padding-right: calc(0.75rem + var(--safe-right));
-    padding-bottom: calc(0.5rem + var(--safe-bottom));
-    padding-left: calc(0.75rem + var(--safe-left));
-    background: rgba(15, 16, 22, 0.96);
+    padding-top: var(--space-2);
+    padding-right: calc(var(--space-3) + var(--safe-right));
+    padding-bottom: calc(var(--space-2) + var(--safe-bottom));
+    padding-left: calc(var(--space-3) + var(--safe-left));
+    background: var(--bottom-nav-bg);
     border-top: 1px solid var(--border);
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(var(--blur));
 
     & .item {
       display: flex;
@@ -181,7 +170,7 @@
       gap: 0.2rem;
       text-decoration: none;
       color: var(--text);
-      padding: 0.35rem 0.25rem;
+      padding: 0.35rem var(--space-1);
       border-radius: 0.65rem;
       font-size: 0.7rem;
       text-transform: uppercase;
@@ -190,8 +179,8 @@
       -webkit-tap-highlight-color: transparent;
 
       & .icon {
-        width: 1.25rem;
-        height: 1.25rem;
+        width: var(--space-5);
+        height: var(--space-5);
       }
 
       &.active {
@@ -207,7 +196,7 @@
     & .sidebar {
       display: flex;
       grid-row: 1 / -1;
-      padding-top: calc(1.5rem + var(--safe-top));
+      padding-top: calc(var(--space-6) + var(--safe-top));
     }
 
     & .content {

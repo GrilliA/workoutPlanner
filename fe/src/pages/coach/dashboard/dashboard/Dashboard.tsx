@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { CoachPageHeader } from "../../coachpageheader";
+import { PageHeader } from "@components/pageHeader";
 import { AthletesTable } from "../athletestable";
 import { KpiGrid } from "../kpigrid";
 import { LibraryCta } from "../librarycta";
@@ -27,7 +27,7 @@ export function Dashboard() {
 
   return (
     <div className="coach-page page-container page-container--wide">
-      <CoachPageHeader
+      <PageHeader
         title="Dashboard"
         subtitle="Operatività clienti, scadenze e template"
         action={headerAction}

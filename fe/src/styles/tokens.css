@@ -1,0 +1,67 @@
+:root {
+  /* Color — charcoal surfaces + powder blue accent */
+  --accent: #bfdbf7;
+  --accent-deep: #4a7fb0;
+  --text-h: #e0e0e0;
+  --text: #aaaaaa;
+  --bg: #1d1f25;
+  --app-bg: #1d1f25;
+  --border: rgba(224, 224, 224, 0.12);
+  --code-bg: #252830;
+  --surface: #252830;
+  --surface-elevated: #2c3038;
+  --accent-bg: rgba(191, 219, 247, 0.12);
+  --accent-border: rgba(191, 219, 247, 0.4);
+  --on-accent: #111111;
+  --error: #f87171;
+  --social-bg: rgba(47, 48, 58, 0.5);
+  --hover-bg: rgba(255, 255, 255, 0.06);
+  --bottom-nav-bg: rgba(15, 16, 22, 0.96);
+  --overlay: rgba(29, 31, 37, 0.4);
+
+  /* Spacing — 4px (0.25rem) scale */
+  --space-1: 0.25rem;
+  --space-1-5: 0.375rem;
+  --space-2: 0.5rem;
+  --space-2-5: 0.625rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+
+  /* Radius */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-full: 999px;
+
+  /* Typography */
+  --sans: "Roboto", system-ui, sans-serif;
+  --heading: "Roboto", system-ui, sans-serif;
+  --mono: ui-monospace, Consolas, monospace;
+  --text-xs: 0.8125rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+
+  /* Elevation */
+  --shadow:
+    rgba(0, 0, 0, 0.45) 0 12px 24px -6px, rgba(0, 0, 0, 0.3) 0 4px 8px -2px;
+  --blur: 12px;
+
+  /* Duration */
+  --duration-fast: 0.2s;
+  --duration-spin: 0.6s;
+  --duration-pulse: 1.4s;
+
+  /* Focus ring */
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+
+  /* Z-index */
+  --z-overlay: 1;
+  --z-nav: 10;
+  --z-toast: 40;
+}

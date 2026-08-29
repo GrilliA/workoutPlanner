@@ -1,19 +1,19 @@
 .toast-host {
   position: fixed;
-  z-index: 40;
-  right: 1rem;
-  bottom: 1.5rem;
+  z-index: var(--z-toast);
+  right: var(--space-4);
+  bottom: var(--space-6);
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  max-width: min(24rem, calc(100vw - 2rem));
+  gap: var(--space-2);
+  max-width: min(24rem, calc(100vw - var(--space-8)));
   pointer-events: none;
 }
 
 .toast {
   margin: 0;
-  padding: 0.75rem 1rem;
-  border-radius: 0.5rem;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--text-h);

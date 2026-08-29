@@ -1,17 +1,15 @@
 import type { ReactNode } from "react";
-import "../style.css";
+import "./style.css";
 
-export function CoachPageHeader({
-  title,
-  subtitle,
-  action,
-}: {
+export type PageHeaderProps = {
   title: string;
   subtitle?: string;
   action?: ReactNode;
-}) {
+};
+
+export function PageHeader({ title, subtitle, action }: PageHeaderProps) {
   return (
-    <header className="coach-page-header">
+    <header className="page-header">
       <div>
         <h1>{title}</h1>
         {subtitle ? <p>{subtitle}</p> : null}
