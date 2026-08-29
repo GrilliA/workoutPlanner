@@ -1,4 +1,4 @@
-import { AppShell } from "@components/appshell";
+import { AppShell } from "@components/appShell";
 import { AnalyticsPage } from "./analytics";
 
 export default function CoachAnalyticsPage() {

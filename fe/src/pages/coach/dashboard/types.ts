@@ -42,8 +42,3 @@ export type DashboardViewModel = {
   athletes: DashboardAthleteRow[];
   tasks: DashboardTask[];
 };
-
-export type DashboardStatus =
-  | { status: "loading" }
-  | { status: "error"; message: string }
-  | { status: "ready"; data: DashboardViewModel };

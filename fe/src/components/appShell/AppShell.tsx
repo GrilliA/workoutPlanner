@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@auth";
-import { BrandLogo } from "@components/brandlogo";
+import { BrandLogo } from "@components/brandLogo";
 import { getAvatarInitial, getDisplayName } from "@utils/displayName";
 import "./style.css";
 

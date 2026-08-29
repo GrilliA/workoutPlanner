@@ -1,4 +1,4 @@
-import { AppShell } from "@components/appshell";
+import { AppShell } from "@components/appShell";
 import { Dashboard } from "./dashboard";
 
 export default function CoachDashboardPage() {

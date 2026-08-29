@@ -1,5 +1,5 @@
 import { useRoute } from "wouter";
-import { AppShell } from "@components/appshell";
+import { AppShell } from "@components/appShell";
 import { CreateWorkout } from "@pages/workouts/new/createworkout";
 import {
   loadClientProgramDraft,

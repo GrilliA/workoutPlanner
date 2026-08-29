@@ -4,12 +4,12 @@ import { AthletesTable } from "../athletestable";
 import { KpiGrid } from "../kpigrid";
 import { LibraryCta } from "../librarycta";
 import { TaskPanel } from "../taskpanel";
-import { useDashboard } from "../useDashboard";
+import { useDashboard } from "../api/useDashboard";
 import "../../style.css";
 import "./style.css";
 
 export function Dashboard() {
-  const state = useDashboard();
+  const { data, loading } = useDashboard();
 
   const headerAction = (
     <div className="coach-dashboard__actions">
@@ -33,15 +33,11 @@ export function Dashboard() {
         action={headerAction}
       />
 
-      {state.status === "loading" ? (
+      {loading ? (
         <p className="coach-empty">Caricamento…</p>
       ) : null}
 
-      {state.status === "error" ? (
-        <p className="coach-empty">{state.message}</p>
-      ) : null}
-
-      {state.status === "ready" && state.data.isEmpty ? (
+      {!loading && (!data || data.isEmpty) ? (
         <section className="coach-dashboard__empty">
           <h2>Invita il primo cliente</h2>
           <p className="coach-empty">
@@ -61,14 +57,14 @@ export function Dashboard() {
         </section>
       ) : null}
 
-      {state.status === "ready" && !state.data.isEmpty ? (
+      {!loading && data && !data.isEmpty ? (
         <>
-          <KpiGrid items={state.data.kpis} />
+          <KpiGrid items={data.kpis} />
           <div className="coach-dashboard__main">
-            <AthletesTable rows={state.data.athletes} />
+            <AthletesTable rows={data.athletes} />
             <aside className="coach-dashboard__side">
-              <TaskPanel tasks={state.data.tasks} />
-              <LibraryCta templateCount={state.data.templateCount} />
+              <TaskPanel tasks={data.tasks} />
+              <LibraryCta templateCount={data.templateCount} />
             </aside>
           </div>
         </>

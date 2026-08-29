@@ -51,87 +51,91 @@ export function CreateWorkout({
     .filter((day) => day.clientId !== activeDayId)
     .flatMap((day) => day.weekdays);
 
-  if (isLoading) {
-    return (
-      <div className="create-workout coach-page page-container page-container--wide">
-        <p className="form-error">Caricamento scheda…</p>
-      </div>
-    );
-  }
-
   return (
     <div className="create-workout coach-page page-container page-container--wide">
       <PageHeader
         mode={isEditMode ? "edit" : "create"}
-        onSave={() => void save()}
+        onSave={() => {
+          if (isLoading) {
+            return;
+          }
+
+          void save();
+        }}
         isSaving={isSaving}
         backHref={adapters?.backHref ?? adapters?.successPath ?? "/dashboard"}
       />
 
-      {enableTxtImport ? (
-        <SchedaTxtPaste
-          onApply={(parsed) =>
-            applyDraft({
-              name: parsed.name,
-              settings: parsed.settings,
-              days: parsed.days.map((day) => ({
-                ...day,
-                weekdays: day.weekdays as Weekday[],
-              })),
-            })
-          }
-        />
-      ) : null}
+      {isLoading ? <p>Caricamento scheda…</p> : null}
 
-      <WorkoutNameField
-        value={name}
-        onChange={setName}
-        error={nameError}
-      />
-
-      {formError ? (
-        <p className="form-error" role="alert">
-          {formError}
-        </p>
-      ) : null}
-
-      <DaySelector
-        days={days}
-        activeDayId={activeDayId}
-        onSelect={setActiveDayId}
-        onAdd={addDay}
-        onRemove={removeDay}
-      />
-
-      {activeDay ? (
+      {isLoading ? null : (
         <>
-          <DayNameField
-            value={activeDay.name}
-            onChange={setActiveDayName}
-          />
-
-          <WeekdayPicker
-            selected={activeDay.weekdays}
-            taken={takenWeekdays}
-            onToggle={toggleWeekday}
-          />
-
-          <ExerciseList
-            exercises={activeDay.exercises}
-            defaultRestSec={settings.defaultRestSec}
-            onRemove={removeExercise}
-          />
-
-          <div className="add-exercise">
-            <AddExerciseForm
-              defaultRestSec={settings.defaultRestSec}
-              onAdd={addExercise}
+          {enableTxtImport ? (
+            <SchedaTxtPaste
+              onApply={(parsed) =>
+                applyDraft({
+                  name: parsed.name,
+                  settings: parsed.settings,
+                  days: parsed.days.map((day) => ({
+                    ...day,
+                    weekdays: day.weekdays as Weekday[],
+                  })),
+                })
+              }
             />
-          </div>
-        </>
-      ) : null}
+          ) : null}
 
-      <WorkoutSettingsPanel settings={settings} onChange={setSettings} />
+          <WorkoutNameField
+            value={name}
+            onChange={setName}
+            error={nameError}
+          />
+
+          {formError ? (
+            <p className="form-error" role="alert">
+              {formError}
+            </p>
+          ) : null}
+
+          <DaySelector
+            days={days}
+            activeDayId={activeDayId}
+            onSelect={setActiveDayId}
+            onAdd={addDay}
+            onRemove={removeDay}
+          />
+
+          {activeDay ? (
+            <>
+              <DayNameField
+                value={activeDay.name}
+                onChange={setActiveDayName}
+              />
+
+              <WeekdayPicker
+                selected={activeDay.weekdays}
+                taken={takenWeekdays}
+                onToggle={toggleWeekday}
+              />
+
+              <ExerciseList
+                exercises={activeDay.exercises}
+                defaultRestSec={settings.defaultRestSec}
+                onRemove={removeExercise}
+              />
+
+              <div className="add-exercise">
+                <AddExerciseForm
+                  defaultRestSec={settings.defaultRestSec}
+                  onAdd={addExercise}
+                />
+              </div>
+            </>
+          ) : null}
+
+          <WorkoutSettingsPanel settings={settings} onChange={setSettings} />
+        </>
+      )}
     </div>
   );
 }

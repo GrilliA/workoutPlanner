@@ -4,6 +4,9 @@ import { apiErrorSchema } from "./schemas";
 import { accessTokenSchema } from "./schemas/auth";
 import { authStore } from "@auth/authStore";
 
+const UNKNOWN_ERROR_MESSAGE = "Richiesta non riuscita";
+const INVALID_RESPONSE_MESSAGE = "Risposta API non valida";
+
 export class ApiError extends Error {
   readonly status: number;
 
@@ -11,6 +14,26 @@ export class ApiError extends Error {
     super(message);
     this.name = "ApiError";
     this.status = status;
+  }
+
+  static messageFrom(err: unknown, fallback: string): string {
+    if (!(err instanceof ApiError)) {
+      return fallback;
+    }
+
+    if (err.status === 0) {
+      return "Connessione non disponibile";
+    }
+
+    if (err.status === 401) {
+      return "Sessione scaduta. Accedi di nuovo.";
+    }
+
+    if (err.status >= 500) {
+      return "Errore del server. Riprova.";
+    }
+
+    return err.message.trim() !== "" ? err.message : fallback;
   }
 }
 
@@ -36,7 +59,11 @@ const parseJsonBody = async (response: Response): Promise<unknown> => {
     return undefined;
   }
 
-  return JSON.parse(text) as unknown;
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    throw new ApiError(response.status, INVALID_RESPONSE_MESSAGE);
+  }
 };
 
 let refreshPromise: Promise<string | null> | null = null;
@@ -46,6 +73,8 @@ const refreshAccessTokenDirect = async (): Promise<string | null> => {
     method: "POST",
     credentials: "include",
     headers: { Accept: "application/json" },
+  }).catch(() => {
+    throw new ApiError(0, "Connessione non disponibile");
   });
 
   if (response.status === 401) {
@@ -53,18 +82,23 @@ const refreshAccessTokenDirect = async (): Promise<string | null> => {
     return null;
   }
 
+  const json = await parseJsonBody(response);
+
   if (!response.ok) {
-    const json = await parseJsonBody(response);
     const parsed = apiErrorSchema.safeParse(json);
     throw new ApiError(
       response.status,
-      parsed.success ? parsed.data.error : "Request failed",
+      parsed.success ? parsed.data.error : UNKNOWN_ERROR_MESSAGE,
     );
   }
 
-  const json: unknown = await response.json();
-  const { accessToken } = accessTokenSchema.parse(json);
-  return accessToken;
+  const parsed = accessTokenSchema.safeParse(json);
+
+  if (!parsed.success) {
+    throw new ApiError(response.status, INVALID_RESPONSE_MESSAGE);
+  }
+
+  return parsed.data.accessToken;
 };
 
 export const refreshAccessToken = async (): Promise<string | null> => {
@@ -94,8 +128,19 @@ async function sendRequest<TResponse>(
   let encodedBody: string | undefined;
 
   if (body !== undefined) {
-    const payload = requestSchema ? requestSchema.parse(body) : body;
-    encodedBody = JSON.stringify(payload);
+    if (requestSchema) {
+      const parsedBody = requestSchema.safeParse(body);
+
+      if (!parsedBody.success) {
+        const detail = parsedBody.error.issues[0]?.message ?? "dati non validi";
+        throw new ApiError(400, detail);
+      }
+
+      encodedBody = JSON.stringify(parsedBody.data);
+    } else {
+      encodedBody = JSON.stringify(body);
+    }
+
     headers.set("Content-Type", "application/json");
   }
 
@@ -110,13 +155,11 @@ async function sendRequest<TResponse>(
     headers,
     body: encodedBody,
     credentials: "include",
+  }).catch(() => {
+    throw new ApiError(0, "Connessione non disponibile");
   });
 
-  if (
-    response.status === 401 &&
-    !isRetry &&
-    !isAuthPath(path)
-  ) {
+  if (response.status === 401 && !isRetry && !isAuthPath(path)) {
     const newToken = await refreshAccessToken();
 
     if (newToken) {
@@ -132,11 +175,17 @@ async function sendRequest<TResponse>(
     const parsed = apiErrorSchema.safeParse(json);
     throw new ApiError(
       response.status,
-      parsed.success ? parsed.data.error : "Request failed",
+      parsed.success ? parsed.data.error : UNKNOWN_ERROR_MESSAGE,
     );
   }
 
-  return schema.parse(json);
+  const decoded = schema.safeParse(json);
+
+  if (!decoded.success) {
+    throw new ApiError(response.status, INVALID_RESPONSE_MESSAGE);
+  }
+
+  return decoded.data;
 }
 
 export async function apiRequest<TResponse>(
