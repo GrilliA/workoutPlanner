@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { ApiError } from "@api";
 import type { Weekday } from "@api/schemas/workoutday";
+import { toast } from "@components/toast";
 import {
   loadWorkoutDraft,
   saveWorkoutWithDays,
@@ -95,6 +96,7 @@ export function useWorkoutForm(
   );
   const [nameError, setNameError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const isEditMode = workoutId !== undefined;
 
   const applyDraft = (draft: WorkoutDraftSeed) => {
     const nextDays =
@@ -124,9 +126,6 @@ export function useWorkoutForm(
     const loadDraft = adaptersRef.current.loadDraft ?? loadWorkoutDraft;
 
     const load = async () => {
-      setStatus("loading");
-      setFormError(null);
-
       try {
         const draft = await loadDraft(workoutId);
 
@@ -134,18 +133,11 @@ export function useWorkoutForm(
           return;
         }
 
-        setName(draft.name);
-        setSettings(draft.settings);
-        setDays(draft.days);
-        setActiveDayId(draft.days[0]?.clientId ?? "");
-        setStatus("idle");
+        applyDraft(draft);
       } catch {
-        if (cancelled) {
-          return;
+        if (!cancelled) {
+          setStatus("idle");
         }
-
-        setStatus("error");
-        setFormError("Impossibile caricare la scheda");
       }
     };
 
@@ -319,11 +311,12 @@ export function useWorkoutForm(
         await create(trimmedName, settings, normalizedDays);
       }
 
+      toast.success("Scheda salvata");
       setLocation(adaptersRef.current.successPath ?? "/dashboard");
     } catch (err) {
-      setStatus("error");
-      setFormError(
-        err instanceof ApiError ? err.message : "Impossibile salvare la scheda",
+      setStatus("idle");
+      toast.error(
+        ApiError.messageFrom(err, "Impossibile salvare la scheda"),
       );
     }
   };
@@ -350,7 +343,7 @@ export function useWorkoutForm(
     applyDraft,
     isSaving: status === "saving",
     isLoading: status === "loading",
-    isEditMode: workoutId !== undefined,
+    isEditMode,
   };
 }
 

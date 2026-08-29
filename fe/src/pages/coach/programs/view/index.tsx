@@ -1,11 +1,10 @@
-import { useEffect, useState } from "react";
 import { Link, useRoute } from "wouter";
-import { ApiError, getCoachClientProgram } from "@api";
 import type { WorkoutDetail } from "@api";
-import { AppShell } from "@components/appshell";
+import { AppShell } from "@components/appShell";
 import { WEEKDAY_LABELS_SHORT } from "@pages/workouts/new/types";
 import { ExerciseRow } from "@pages/workouts/new/exerciserow";
 import { CoachPageHeader } from "../../coachpageheader";
+import { useClientProgram } from "./api/useClientProgram";
 import "../../style.css";
 
 function formatWeekdays(weekdays: number[]): string {
@@ -61,41 +60,40 @@ export default function ViewClientProgramPage() {
   const [, params] = useRoute("/clients/:athleteId/programs/:workoutId");
   const athleteId = Number(params?.athleteId);
   const workoutId = Number(params?.workoutId);
-  const [program, setProgram] = useState<WorkoutDetail | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
   const idsValid =
     Number.isInteger(athleteId) &&
     athleteId >= 1 &&
     Number.isInteger(workoutId) &&
     workoutId >= 1;
 
-  useEffect(() => {
-    if (!idsValid) {
-      return;
-    }
-
-    let cancelled = false;
-
-    void getCoachClientProgram(athleteId, workoutId)
-      .then((data) => {
-        if (!cancelled) setProgram(data);
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err instanceof ApiError ? err.message : "Errore caricamento");
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [athleteId, workoutId, idsValid]);
-
   if (!idsValid) {
-    return null;
+    return (
+      <AppShell>
+        <div className="coach-page page-container page-container--wide">
+          <CoachPageHeader title="Scheda" />
+          <p className="coach-empty">Scheda non trovata</p>
+        </div>
+      </AppShell>
+    );
   }
 
+  return (
+    <ViewClientProgramLoaded
+      key={`${athleteId}-${workoutId}`}
+      athleteId={athleteId}
+      workoutId={workoutId}
+    />
+  );
+}
+
+function ViewClientProgramLoaded({
+  athleteId,
+  workoutId,
+}: {
+  athleteId: number;
+  workoutId: number;
+}) {
+  const { program, loading } = useClientProgram(athleteId, workoutId);
   const editHref = `/clients/${athleteId}/programs/${workoutId}/edit`;
   const clientHref = `/clients/${athleteId}`;
 
@@ -107,7 +105,7 @@ export default function ViewClientProgramPage() {
           subtitle={
             program
               ? `${program.frequency} · ${program.exerciseCount} esercizi · recupero ${program.defaultRestSec}s`
-              : "Caricamento scheda…"
+              : undefined
           }
           action={
             <Link href={editHref} className="coach-btn-link coach-btn-link--primary">
@@ -122,9 +120,11 @@ export default function ViewClientProgramPage() {
           </Link>
         </nav>
 
-        {error ? <p className="coach-empty">{error}</p> : null}
+        {loading ? <p className="coach-empty">Caricamento…</p> : null}
 
-        {!program && !error ? <p className="coach-empty">Caricamento…</p> : null}
+        {!loading && !program ? (
+          <p className="coach-empty">Scheda non trovata</p>
+        ) : null}
 
         {program ? <ProgramDays program={program} /> : null}
       </div>

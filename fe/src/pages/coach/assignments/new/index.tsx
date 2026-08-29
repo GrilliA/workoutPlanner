@@ -1,21 +1,16 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { useLocation, useSearch } from "wouter";
-import {
-  ApiError,
-  createCoachAssignment,
-  getCoachClients,
-  getCoachTemplates,
-  type CoachClient,
-  type CoachTemplate,
-} from "@api";
-import { AppShell } from "@components/appshell";
+import { ApiError, createCoachAssignment } from "@api";
+import { AppShell } from "@components/appShell";
 import { Button } from "@components/button";
 import { Input } from "@components/input";
+import { toast } from "@components/toast";
 import { CoachPageHeader } from "../../coachpageheader";
 import { SchedaTxtPaste } from "@pages/workouts/new/schedatxt";
 import type { ParsedScheda } from "@pages/workouts/new/schedatxt/parseSchedaTxt";
 import { toProgramInput } from "../../programapi";
 import type { Weekday } from "@pages/workouts/new/types";
+import { useAssignmentOptions } from "./api/useAssignmentOptions";
 import "../../style.css";
 
 export default function NewAssignmentPage() {
@@ -27,35 +22,20 @@ export default function NewAssignmentPage() {
     return Number.isInteger(id) && id > 0 ? id : null;
   }, [search]);
 
-  const [clients, setClients] = useState<CoachClient[]>([]);
-  const [templates, setTemplates] = useState<CoachTemplate[]>([]);
-  const [athleteId, setAthleteId] = useState("");
+  const { clients, templates, loading } = useAssignmentOptions();
+  const [athleteId, setAthleteId] = useState(
+    presetAthleteId ? String(presetAthleteId) : "",
+  );
   const [templateId, setTemplateId] = useState("");
   const [name, setName] = useState("Nuova scheda");
   const [startsAt, setStartsAt] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
   const [parsedTxt, setParsedTxt] = useState<ParsedScheda | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    void Promise.all([getCoachClients(), getCoachTemplates()])
-      .then(([clientRows, templateRows]) => {
-        setClients(clientRows);
-        setTemplates(templateRows);
-        if (presetAthleteId) {
-          setAthleteId(String(presetAthleteId));
-        }
-      })
-      .catch((err) => {
-        setError(err instanceof ApiError ? err.message : "Errore caricamento");
-      });
-  }, [presetAthleteId]);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setSubmitting(true);
-    setError(null);
 
     try {
       const days = parsedTxt
@@ -79,11 +59,12 @@ export default function NewAssignmentPage() {
             : undefined,
       });
 
+      toast.success("Scheda assegnata");
       setLocation(
         `/clients/${athleteId}/programs/${result.workout.id}/edit`,
       );
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Assegnazione fallita");
+      toast.error(ApiError.messageFrom(err, "Assegnazione fallita"));
     } finally {
       setSubmitting(false);
     }
@@ -97,6 +78,9 @@ export default function NewAssignmentPage() {
           subtitle="Da template (copia) oppure da zero sul cliente"
         />
 
+        {loading ? (
+          <p className="coach-empty">Caricamento…</p>
+        ) : (
         <form className="coach-form" onSubmit={(event) => void handleSubmit(event)}>
           <label>
             Cliente
@@ -153,7 +137,6 @@ export default function NewAssignmentPage() {
                 onApply={(parsed) => {
                   setParsedTxt(parsed);
                   setName(parsed.name);
-                  setError(null);
                 }}
               />
 
@@ -190,12 +173,11 @@ export default function NewAssignmentPage() {
             />
           </Input.Root>
 
-          {error ? <p className="coach-empty">{error}</p> : null}
-
           <Button.Root type="submit" variant="primary" loading={submitting} disabled={submitting}>
             <Button.Label>Assegna e modifica</Button.Label>
           </Button.Root>
         </form>
+        )}
       </div>
     </AppShell>
   );

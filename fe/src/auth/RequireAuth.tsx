@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from "react";
 import { useLocation } from "wouter";
-import { BrandLogo } from "@components/brandlogo";
+import { BrandLogo } from "@components/brandLogo";
 import { Button } from "@components/button";
 import { useAuth } from "./useAuth";
 import "./authpage.css";

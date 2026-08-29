@@ -54,9 +54,3 @@ export type AnalyticsViewModel = {
   isEmpty: boolean;
   hasAlerts: boolean;
 };
-
-export type AnalyticsStatus =
-  | { status: "loading" }
-  | { status: "error"; message: string }
-  | { status: "ready"; data: AnalyticsViewModel }
-  | { status: "refreshing"; data: AnalyticsViewModel };

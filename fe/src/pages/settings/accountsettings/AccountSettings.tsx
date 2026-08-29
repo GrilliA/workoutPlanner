@@ -4,6 +4,7 @@ import { ApiError, changePassword, updateProfile } from "@api";
 import { useAuth } from "@auth";
 import { Input } from "@components/input";
 import { Button } from "@components/button";
+import { toast } from "@components/toast";
 import { getAvatarInitial, getDisplayName } from "@utils/displayName";
 import "./style.css";
 
@@ -12,14 +13,11 @@ export function AccountSettings() {
   const [, setLocation] = useLocation();
 
   const [name, setName] = useState(user?.name ?? "");
-  const [profileMessage, setProfileMessage] = useState<string | null>(null);
-  const [profileError, setProfileError] = useState<string | null>(null);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [isSavingPassword, setIsSavingPassword] = useState(false);
 
@@ -30,8 +28,6 @@ export function AccountSettings() {
   const displayName = getDisplayName(user);
 
   const handleSaveProfile = async () => {
-    setProfileMessage(null);
-    setProfileError(null);
     setIsSavingProfile(true);
 
     try {
@@ -40,18 +36,15 @@ export function AccountSettings() {
       });
       setUser(updated);
       setName(updated.name ?? "");
-      setProfileMessage("Profilo aggiornato");
+      toast.success("Profilo aggiornato");
     } catch (err) {
-      setProfileError(
-        err instanceof ApiError ? err.message : "Impossibile aggiornare il profilo",
-      );
+      toast.error(ApiError.messageFrom(err, "Impossibile aggiornare il profilo"));
     } finally {
       setIsSavingProfile(false);
     }
   };
 
   const handleChangePassword = async () => {
-    setPasswordMessage(null);
     setPasswordError(null);
 
     if (newPassword !== confirmPassword) {
@@ -71,10 +64,10 @@ export function AccountSettings() {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      setPasswordMessage("Password aggiornata");
+      toast.success("Password aggiornata");
     } catch (err) {
-      setPasswordError(
-        err instanceof ApiError ? err.message : "Impossibile aggiornare la password",
+      toast.error(
+        ApiError.messageFrom(err, "Impossibile aggiornare la password"),
       );
     } finally {
       setIsSavingPassword(false);
@@ -126,18 +119,6 @@ export function AccountSettings() {
             <Input.Label>Email</Input.Label>
             <Input.Field value={user.email} disabled readOnly />
           </Input.Root>
-
-          {profileError ? (
-            <p className="form-error" role="alert">
-              {profileError}
-            </p>
-          ) : null}
-
-          {profileMessage ? (
-            <p className="form-success" role="status">
-              {profileMessage}
-            </p>
-          ) : null}
 
           <Button.Root
             variant="primary"
@@ -191,12 +172,6 @@ export function AccountSettings() {
           {passwordError ? (
             <p className="form-error" role="alert">
               {passwordError}
-            </p>
-          ) : null}
-
-          {passwordMessage ? (
-            <p className="form-success" role="status">
-              {passwordMessage}
             </p>
           ) : null}
 

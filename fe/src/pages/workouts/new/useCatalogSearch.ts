@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { searchCatalogExercises, type CatalogExercise } from "@api";
+import { ApiError, searchCatalogExercises, type CatalogExercise } from "@api";
 
 const DEBOUNCE_MS = 250;
 
@@ -35,10 +35,12 @@ export function useCatalogSearch(minChars = 2): CatalogSearchState {
             setError(null);
           }
         })
-        .catch(() => {
+        .catch((err) => {
           if (!cancelled) {
             setResults([]);
-            setError("Ricerca catalogo non disponibile");
+            setError(
+              ApiError.messageFrom(err, "Ricerca catalogo non disponibile"),
+            );
           }
         })
         .finally(() => {

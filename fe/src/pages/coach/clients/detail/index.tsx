@@ -1,21 +1,20 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { Link, useLocation, useRoute } from "wouter";
 import {
   ApiError,
-  getCoachClient,
   resetCoachClientPassword,
   revokeCoachAssignment,
   unlinkCoachClient,
   updateCoachAssignment,
   type CoachAssignment,
-  type CoachClient,
-  type CoachClientDetail,
 } from "@api";
-import { AppShell } from "@components/appshell";
+import { AppShell } from "@components/appShell";
 import { Button } from "@components/button";
 import { Input } from "@components/input";
+import { toast } from "@components/toast";
 import { CoachPageHeader } from "../../coachpageheader";
 import { ClientAnalyticsSection } from "./analytics/clientanalytics";
+import { useClientDetail } from "./api/useClientDetail";
 import "../../style.css";
 
 const statusLabel: Record<CoachAssignment["status"], string> = {
@@ -52,9 +51,7 @@ export default function ClientDetailPage() {
       <AppShell>
         <div className="coach-page page-container page-container--wide">
           <CoachPageHeader title="Cliente" />
-          <p className="coach-empty" role="alert">
-            Cliente non trovato
-          </p>
+          <p className="coach-empty">Cliente non trovato</p>
         </div>
       </AppShell>
     );
@@ -65,88 +62,63 @@ export default function ClientDetailPage() {
 
 function ClientDetailLoaded({ athleteId }: { athleteId: number }) {
   const [, setLocation] = useLocation();
-  const [client, setClient] = useState<CoachClient | null>(null);
-  const [assignments, setAssignments] = useState<CoachAssignment[]>([]);
-  const [recentSessions, setRecentSessions] = useState<
-    CoachClientDetail["recentSessions"]
-  >([]);
+  const { detail, setDetail, loading } = useClientDetail(athleteId);
   const [drafts, setDrafts] = useState<Record<number, AssignmentDraft>>({});
   const [password, setPassword] = useState("");
   const [resettingPassword, setResettingPassword] = useState(false);
-  const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
   const [savingAssignmentId, setSavingAssignmentId] = useState<number | null>(null);
   const [revokingAssignmentId, setRevokingAssignmentId] = useState<number | null>(null);
   const [unlinking, setUnlinking] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
+  const client = detail?.client ?? null;
+  const assignments = detail?.assignments ?? [];
+  const recentSessions = detail?.recentSessions ?? [];
 
-    void getCoachClient(athleteId)
-      .then((data) => {
-        if (cancelled) {
-          return;
-        }
+  const replaceAssignment = (updated: CoachAssignment) => {
+    setDetail((existing) => {
+      if (!existing) {
+        return existing;
+      }
 
-        setClient(data.client);
-        setAssignments(data.assignments);
-        setRecentSessions(data.recentSessions);
-        setDrafts(
-          Object.fromEntries(
-            data.assignments.map((assignment) => [assignment.id, toDraft(assignment)]),
-          ),
-        );
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err instanceof ApiError ? err.message : "Errore caricamento");
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [athleteId]);
+      return {
+        ...existing,
+        assignments: existing.assignments.map((row) =>
+          row.id === updated.id ? updated : row,
+        ),
+      };
+    });
+    setDrafts((existing) => ({ ...existing, [updated.id]: toDraft(updated) }));
+  };
 
   const handleResetPassword = async (event: FormEvent) => {
     event.preventDefault();
     setResettingPassword(true);
-    setError(null);
-    setPasswordSuccess(null);
 
     try {
       await resetCoachClientPassword(athleteId, { password });
       setPassword("");
-      setPasswordSuccess("Password aggiornata");
+      toast.success("Password aggiornata");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Reset password fallito");
+      toast.error(ApiError.messageFrom(err, "Reset password fallito"));
     } finally {
       setResettingPassword(false);
     }
   };
 
   const handleSaveAssignment = async (assignment: CoachAssignment) => {
-    const draft = drafts[assignment.id];
-    if (!draft) {
-      return;
-    }
+    const draft = drafts[assignment.id] ?? toDraft(assignment);
 
     setSavingAssignmentId(assignment.id);
-    setError(null);
 
     try {
       const updated = await updateCoachAssignment(assignment.id, {
         startsAt: draft.startsAt !== assignment.startsAt ? draft.startsAt : undefined,
         expiresAt: draft.expiresAt !== assignment.expiresAt ? draft.expiresAt : undefined,
       });
-      setAssignments((rows) => rows.map((row) => (row.id === updated.id ? updated : row)));
-      setDrafts((current) => ({ ...current, [updated.id]: toDraft(updated) }));
+      replaceAssignment(updated);
+      toast.success("Date aggiornate");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Salvataggio date fallito");
+      toast.error(ApiError.messageFrom(err, "Salvataggio date fallito"));
     } finally {
       setSavingAssignmentId(null);
     }
@@ -154,14 +126,13 @@ function ClientDetailLoaded({ athleteId }: { athleteId: number }) {
 
   const handleRevoke = async (assignmentId: number) => {
     setRevokingAssignmentId(assignmentId);
-    setError(null);
 
     try {
       const updated = await revokeCoachAssignment(assignmentId);
-      setAssignments((rows) => rows.map((row) => (row.id === updated.id ? updated : row)));
-      setDrafts((current) => ({ ...current, [updated.id]: toDraft(updated) }));
+      replaceAssignment(updated);
+      toast.success("Scheda revocata");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Revoca fallita");
+      toast.error(ApiError.messageFrom(err, "Revoca fallita"));
     } finally {
       setRevokingAssignmentId(null);
     }
@@ -177,22 +148,26 @@ function ClientDetailLoaded({ athleteId }: { athleteId: number }) {
     }
 
     setUnlinking(true);
-    setError(null);
 
     try {
       await unlinkCoachClient(athleteId);
+      toast.success("Cliente scollegato");
       setLocation("/clients");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Scollegamento fallito");
+      toast.error(ApiError.messageFrom(err, "Scollegamento fallito"));
     } finally {
       setUnlinking(false);
     }
   };
 
-  const updateDraft = (assignmentId: number, patch: Partial<AssignmentDraft>) => {
-    setDrafts((current) => ({
-      ...current,
-      [assignmentId]: { ...current[assignmentId], ...patch },
+  const updateDraft = (assignment: CoachAssignment, patch: Partial<AssignmentDraft>) => {
+    setDrafts((existing) => ({
+      ...existing,
+      [assignment.id]: {
+        ...toDraft(assignment),
+        ...existing[assignment.id],
+        ...patch,
+      },
     }));
   };
 
@@ -214,18 +189,14 @@ function ClientDetailLoaded({ athleteId }: { athleteId: number }) {
 
         {loading ? (
           <p className="coach-empty">Caricamento…</p>
-        ) : !client ? (
-          <p className="coach-empty" role="alert">
-            {error ?? "Cliente non trovato"}
-          </p>
-        ) : (
-          <>
-            {error ? (
-              <p className="coach-empty" role="alert">
-                {error}
-              </p>
-            ) : null}
+        ) : null}
 
+        {!loading && !client ? (
+          <p className="coach-empty">Cliente non trovato</p>
+        ) : null}
+
+        {!loading && client ? (
+          <>
             <ClientAnalyticsSection athleteId={athleteId} />
 
             <section className="coach-section">
@@ -261,8 +232,6 @@ function ClientDetailLoaded({ athleteId }: { athleteId: number }) {
                     placeholder="minimo 8 caratteri"
                   />
                 </Input.Root>
-
-                {passwordSuccess ? <p className="coach-empty">{passwordSuccess}</p> : null}
 
                 <Button.Root
                   type="submit"
@@ -312,7 +281,7 @@ function ClientDetailLoaded({ athleteId }: { athleteId: number }) {
                                 type="date"
                                 value={draft.startsAt}
                                 onChange={(event) =>
-                                  updateDraft(assignment.id, { startsAt: event.target.value })
+                                  updateDraft(assignment, { startsAt: event.target.value })
                                 }
                               />
                             </Input.Root>
@@ -322,7 +291,7 @@ function ClientDetailLoaded({ athleteId }: { athleteId: number }) {
                                 type="date"
                                 value={draft.expiresAt}
                                 onChange={(event) =>
-                                  updateDraft(assignment.id, { expiresAt: event.target.value })
+                                  updateDraft(assignment, { expiresAt: event.target.value })
                                 }
                               />
                             </Input.Root>
@@ -388,7 +357,7 @@ function ClientDetailLoaded({ athleteId }: { athleteId: number }) {
               </Button.Root>
             </section>
           </>
-        )}
+        ) : null}
       </div>
     </AppShell>
   );

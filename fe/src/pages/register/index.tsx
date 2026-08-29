@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link, useLocation } from "wouter";
 import { ApiError } from "@api";
 import { useAuth } from "@auth";
-import { BrandLogo } from "@components/brandlogo";
+import { BrandLogo } from "@components/brandLogo";
 import { Input } from "@components/input";
 import { Button } from "@components/button";
 import "@auth/authpage.css";
@@ -35,7 +35,7 @@ const Register = () => {
       });
       setLocation("/dashboard");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Impossibile registrarsi");
+      setError(ApiError.messageFrom(err, "Impossibile registrarsi"));
     } finally {
       setSubmitting(false);
     }

@@ -1,8 +1,7 @@
-import { useEffect, useState } from "react";
 import { Link } from "wouter";
-import { ApiError, getCoachClients, type CoachClient } from "@api";
-import { AppShell } from "@components/appshell";
+import { AppShell } from "@components/appShell";
 import { CoachPageHeader } from "../coachpageheader";
+import { useClients } from "./api/useClients";
 import "../style.css";
 
 function CardChevron() {
@@ -23,30 +22,7 @@ function CardChevron() {
 }
 
 export default function CoachClientsPage() {
-  const [clients, setClients] = useState<CoachClient[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    void getCoachClients()
-      .then((data) => {
-        if (!cancelled) setClients(data);
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err instanceof ApiError ? err.message : "Errore caricamento");
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const { clients, loading } = useClients();
 
   return (
     <AppShell>
@@ -63,37 +39,29 @@ export default function CoachClientsPage() {
 
         {loading ? (
           <p className="coach-empty">Caricamento…</p>
-        ) : (
-          <>
-            {error ? (
-              <p className="coach-empty" role="alert">
-                {error}
-              </p>
-            ) : null}
+        ) : null}
 
-            {!error && clients.length === 0 ? (
-              <p className="coach-empty">Nessun cliente ancora. Creane uno per iniziare.</p>
-            ) : null}
+        {!loading && clients.length === 0 ? (
+          <p className="coach-empty">Nessun cliente ancora. Creane uno per iniziare.</p>
+        ) : null}
 
-            {clients.length > 0 ? (
-              <div className="coach-card-list">
-                {clients.map((client) => (
-                  <Link
-                    key={client.id}
-                    href={`/clients/${client.id}`}
-                    className="coach-card coach-card--nav"
-                  >
-                    <span className="coach-card__body">
-                      <h2>{client.name ?? client.email}</h2>
-                      <p>{client.email}</p>
-                    </span>
-                    <CardChevron />
-                  </Link>
-                ))}
-              </div>
-            ) : null}
-          </>
-        )}
+        {!loading && clients.length > 0 ? (
+          <div className="coach-card-list">
+            {clients.map((client) => (
+              <Link
+                key={client.id}
+                href={`/clients/${client.id}`}
+                className="coach-card coach-card--nav"
+              >
+                <span className="coach-card__body">
+                  <h2>{client.name ?? client.email}</h2>
+                  <p>{client.email}</p>
+                </span>
+                <CardChevron />
+              </Link>
+            ))}
+          </div>
+        ) : null}
       </div>
     </AppShell>
   );

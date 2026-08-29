@@ -47,9 +47,11 @@ workoutPlanner/
 | Path | Purpose |
 | --- | --- |
 | `fe/src/pages/` | Screen + feature folder (not under `components/`) |
-| `fe/src/components/` | Shared UI primitives only |
+| `fe/src/components/` | Shared UI primitives (`appShell/`, `errorBoundary/`) |
 | `mobile/app/` | Expo Router routes |
 | `mobile/src/api/` | HTTP + Zod (same contract as web, mobile auth) |
+
+FE component folders are **camelCase** (`errorBoundary/ErrorBoundary.tsx`). Details: [`docs/guidelines/fe.md`](docs/guidelines/fe.md).
 
 ## Guidelines
 

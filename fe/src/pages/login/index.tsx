@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link, useLocation } from "wouter";
 import { ApiError } from "@api";
 import { useAuth } from "@auth";
-import { BrandLogo } from "@components/brandlogo";
+import { BrandLogo } from "@components/brandLogo";
 import { Input } from "@components/input";
 import { Button } from "@components/button";
 import "@auth/authpage.css";
@@ -30,7 +30,7 @@ const Login = () => {
       await login({ email, password });
       setLocation("/dashboard");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Impossibile accedere");
+      setError(ApiError.messageFrom(err, "Impossibile accedere"));
     } finally {
       setSubmitting(false);
     }

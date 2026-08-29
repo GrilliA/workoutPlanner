@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@auth";
-import { BrandLogo } from "@components/brandlogo";
+import { BrandLogo } from "@components/brandLogo";
 import "@auth/authpage.css";
 
 export default function RootPage() {

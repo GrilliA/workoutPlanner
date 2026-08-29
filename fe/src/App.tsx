@@ -1,5 +1,6 @@
-import { Router, Route, Switch } from "wouter";
+import { Router, Route, Switch, useLocation } from "wouter";
 import { RequireAuth } from "@auth";
+import { ErrorBoundary } from "@components/errorBoundary";
 import RootPage from "@pages/root";
 import LoginPage from "@pages/login";
 import RegisterPage from "@pages/register";
@@ -19,9 +20,11 @@ import ViewClientProgramPage from "@pages/coach/programs/view";
 
 // Web is coach-only. Athletes use mobile/. Coach reuses workouts/new/** for builders.
 
-function App() {
+function AppRoutes() {
+  const [location] = useLocation();
+
   return (
-    <Router>
+    <ErrorBoundary key={location}>
       <Switch>
         <Route path="/login" component={LoginPage} />
         <Route path="/register" component={RegisterPage} />
@@ -97,6 +100,14 @@ function App() {
         </Route>
         <Route path="/" component={RootPage} />
       </Switch>
+    </ErrorBoundary>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <AppRoutes />
     </Router>
   );
 }
