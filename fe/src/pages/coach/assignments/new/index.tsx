@@ -5,7 +5,7 @@ import { AppShell } from "@components/appShell";
 import { Button } from "@components/button";
 import { Input } from "@components/input";
 import { toast } from "@components/toast";
-import { CoachPageHeader } from "../../coachpageheader";
+import { PageHeader } from "@components/pageHeader";
 import { SchedaTxtPaste } from "@pages/workouts/new/schedatxt";
 import type { ParsedScheda } from "@pages/workouts/new/schedatxt/parseSchedaTxt";
 import { toProgramInput } from "../../programapi";
@@ -73,7 +73,7 @@ export default function NewAssignmentPage() {
   return (
     <AppShell>
       <div className="coach-page page-container">
-        <CoachPageHeader
+        <PageHeader
           title="Assegna scheda"
           subtitle="Da template (copia) oppure da zero sul cliente"
         />

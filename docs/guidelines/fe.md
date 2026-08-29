@@ -2,7 +2,7 @@
 
 React + Vite. UI copy is **Italian**. Style: functions, immutable data, pure mappers.
 
-A feature (e.g. dashboard) lives **under its page**, not in `components/`. `components/` is shared UI primitives only (`button/`, `input/`, `card/`, `skeleton/`, `appShell/`).
+A feature (e.g. dashboard) lives **under its page**, not in `components/`. `components/` is shared UI primitives only (`button/`, `input/`, `card/`, `skeleton/`, `appShell/`, `pageHeader/`).
 
 ```
 pages/home/
@@ -25,7 +25,7 @@ pages/home/
 **Route segments** stay lowercase: `pages/coach/clients/`.  
 No kebab-case. No PascalCase folders (`ErrorBoundary/` is wrong). Single-word names stay as they are (`button/`, `card/`, `toast/`).
 
-Existing **page** feature folders (`coachpageheader/`, `athletestable/`, …) still use concatenated lowercase. Leave them until a dedicated rename; do not mix that into unrelated work.
+Existing **page** feature folders (`athletestable/`, …) still use concatenated lowercase. Leave them until a dedicated rename; do not mix that into unrelated work. (`coachpageheader/` was promoted to the shared `components/pageHeader/`.)
 
 ```
 todayCard/
@@ -67,10 +67,18 @@ export function mapRecentWorkouts(workouts: Workout[]): RecentWorkout[] {
 
 - One `style.css` per component folder, imported only in the `.tsx`
 - One root block (`.today-card`); tokens `--bg`, `--accent`, `--surface`, `--border`, `--text`, `--text-h`
+- **Token-only in components**: colors, spacing, radii, durations come from `src/styles/tokens.css` via `var(--…)` — no hex/`rgba()`/magic px in shared component CSS; no `var(--x, #fallback)` (tokens are always loaded)
 - Mobile-first: `min-width` only (`fe/src/styles/layout.css`, `--bp-*`)
 - Page width: `.page-container` / `--wide`, not copied `max-width`s
 - Shell: sidebar at `64rem` (`--bp-lg`)
 - Grids: `auto-fit` / `minmax` / `@container` on the feature
+
+## Design system / Storybook
+
+- Tokens live only in `src/styles/tokens.css` (imported by `index.css`); `layout.css` keeps breakpoints and page shell
+- Every shared component has `Component.stories.tsx` next to its `.tsx` (CSF3, Italian copy, `tags: ["autodocs"]`)
+- `npm run storybook` / `npm run build-storybook` (Node 22 locally); the preview loads the same CSS entries as the app
+- Coach-only patterns shared across coach pages (e.g. `coachCard/`) live in `pages/coach/`, not in `components/`
 
 ## API
 

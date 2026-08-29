@@ -3,7 +3,8 @@ import { ApiError, rotateCoachInviteCode } from "@api";
 import { AppShell } from "@components/appShell";
 import { Button } from "@components/button";
 import { toast } from "@components/toast";
-import { CoachPageHeader } from "../../coachpageheader";
+import { PageHeader } from "@components/pageHeader";
+import { CoachCard } from "../../coachCard";
 import { useInviteCode } from "./api/useInviteCode";
 import "../../style.css";
 
@@ -42,7 +43,7 @@ export default function InviteClientPage() {
   return (
     <AppShell>
       <div className="coach-page page-container">
-        <CoachPageHeader
+        <PageHeader
           title="Invita cliente"
           subtitle="Condividi il codice: l'atleta lo inserisce nell'app dopo la registrazione"
         />
@@ -61,7 +62,7 @@ export default function InviteClientPage() {
               L&apos;atleta crea da solo l&apos;account su mobile, poi collega il tuo codice
               nella sezione Coach. Un atleta può avere un solo coach alla volta.
             </p>
-            <div className="coach-card" style={{ textAlign: "center" }}>
+            <CoachCard style={{ textAlign: "center" }}>
               <p className="coach-empty" style={{ marginBottom: "0.5rem" }}>
                 Codice invito
               </p>
@@ -93,7 +94,7 @@ export default function InviteClientPage() {
                   <Button.Label>Rigenera</Button.Label>
                 </Button.Root>
               </div>
-            </div>
+            </CoachCard>
           </section>
         ) : null}
       </div>

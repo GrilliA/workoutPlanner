@@ -1,25 +1,9 @@
 import { Link } from "wouter";
 import { AppShell } from "@components/appShell";
-import { CoachPageHeader } from "../coachpageheader";
+import { PageHeader } from "@components/pageHeader";
+import { CoachCard, CoachCardList } from "../coachCard";
 import { useTemplates } from "./api/useTemplates";
 import "../style.css";
-
-function CardChevron() {
-  return (
-    <span className="coach-card__chevron" aria-hidden="true">
-      <svg viewBox="0 0 24 24">
-        <path
-          d="M9 6l6 6-6 6"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    </span>
-  );
-}
 
 export default function TemplatesPage() {
   const { templates, loading } = useTemplates();
@@ -27,7 +11,7 @@ export default function TemplatesPage() {
   return (
     <AppShell>
       <div className="coach-page page-container page-container--wide">
-        <CoachPageHeader
+        <PageHeader
           title="Template"
           subtitle="Schede modello da riusare sui clienti"
           action={
@@ -46,23 +30,16 @@ export default function TemplatesPage() {
         ) : null}
 
         {!loading && templates.length > 0 ? (
-          <div className="coach-card-list">
+          <CoachCardList>
             {templates.map((template) => (
-              <Link
+              <CoachCard
                 key={template.id}
                 href={`/templates/${template.id}/edit`}
-                className="coach-card coach-card--nav"
-              >
-                <span className="coach-card__body">
-                  <h2>{template.name}</h2>
-                  <p>
-                    {template.frequency} · {template.exerciseCount} esercizi
-                  </p>
-                </span>
-                <CardChevron />
-              </Link>
+                title={template.name}
+                subtitle={`${template.frequency} · ${template.exerciseCount} esercizi`}
+              />
             ))}
-          </div>
+          </CoachCardList>
         ) : null}
       </div>
     </AppShell>

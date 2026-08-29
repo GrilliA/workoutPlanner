@@ -3,7 +3,8 @@ import { Link } from "wouter";
 import { ApiError, revokeCoachAssignment, type CoachAssignment } from "@api";
 import { AppShell } from "@components/appShell";
 import { toast } from "@components/toast";
-import { CoachPageHeader } from "../coachpageheader";
+import { PageHeader } from "@components/pageHeader";
+import { CoachCard, CoachCardList } from "../coachCard";
 import { useAssignments } from "./api/useAssignments";
 import "../style.css";
 
@@ -37,7 +38,7 @@ export default function AssignmentsPage() {
   return (
     <AppShell>
       <div className="coach-page page-container page-container--wide">
-        <CoachPageHeader
+        <PageHeader
           title="Schede assegnate"
           subtitle="Validità e stato delle schede clienti"
           action={
@@ -56,9 +57,9 @@ export default function AssignmentsPage() {
         ) : null}
 
         {!loading && assignments.length > 0 ? (
-          <div className="coach-card-list">
+          <CoachCardList>
             {assignments.map((assignment) => (
-              <div key={assignment.id} className="coach-card">
+              <CoachCard key={assignment.id}>
                 <h2>
                   <Link
                     href={`/clients/${assignment.athleteId}/programs/${assignment.workoutId}`}
@@ -89,9 +90,9 @@ export default function AssignmentsPage() {
                     </button>
                   ) : null}
                 </div>
-              </div>
+              </CoachCard>
             ))}
-          </div>
+          </CoachCardList>
         ) : null}
       </div>
     </AppShell>

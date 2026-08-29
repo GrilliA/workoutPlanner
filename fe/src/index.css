@@ -1,27 +1,7 @@
+@import "./styles/tokens.css";
+
 :root {
-  /* Brand tokens: charcoal surfaces + powder blue accent */
-  --accent: #bfdbf7;
-  --accent-deep: #4a7fb0;
-  --text-h: #e0e0e0;
-  --text: #aaaaaa;
-  --bg: #1d1f25;
-  --border: rgba(224, 224, 224, 0.12);
-  --code-bg: #252830;
-  --surface: #252830;
-  --surface-elevated: #2c3038;
-  --accent-bg: rgba(191, 219, 247, 0.12);
-  --accent-border: rgba(191, 219, 247, 0.4);
-  --on-accent: #111111;
-  --error: #f87171;
-  --social-bg: rgba(47, 48, 58, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.45) 0 12px 24px -6px, rgba(0, 0, 0, 0.3) 0 4px 8px -2px;
-
-  --sans: "Roboto", system-ui, sans-serif;
-  --heading: "Roboto", system-ui, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
-
-  font: 16px/1.6 var(--sans);
+  font: var(--text-base) / 1.6 var(--sans);
   font-weight: 400;
   color-scheme: dark;
   color: var(--text);

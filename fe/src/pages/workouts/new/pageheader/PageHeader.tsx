@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { Button } from "@components/button";
-import { CoachPageHeader } from "../../../coach/coachpageheader";
+import { PageHeader as SharedPageHeader } from "@components/pageHeader";
 import "../../../coach/style.css";
 import "./style.css";
 
@@ -35,7 +35,7 @@ export function PageHeader({
   );
 
   return (
-    <CoachPageHeader
+    <SharedPageHeader
       title={mode === "edit" ? "Modifica scheda" : "Crea scheda"}
       subtitle={
         mode === "edit"
