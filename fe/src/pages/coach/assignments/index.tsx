@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { ApiError, revokeCoachAssignment, type CoachAssignment } from "@api";
-import { AppShell } from "@components/appShell";
 import { toast } from "@components/toast";
 import { PageHeader } from "@components/pageHeader";
 import { CoachCard, CoachCardList } from "../coachCard";
@@ -36,65 +35,63 @@ export default function AssignmentsPage() {
   };
 
   return (
-    <AppShell>
-      <div className="coach-page page-container page-container--wide">
-        <PageHeader
-          title="Schede assegnate"
-          subtitle="Validità e stato delle schede clienti"
-          action={
-            <Link href="/assignments/new" className="coach-btn-link coach-btn-link--primary">
-              Assegna scheda
-            </Link>
-          }
-        />
+    <div className="coach-page page-container page-container--wide">
+      <PageHeader
+        title="Schede assegnate"
+        subtitle="Validità e stato delle schede clienti"
+        action={
+          <Link href="/assignments/new" className="coach-btn-link coach-btn-link--primary">
+            Assegna scheda
+          </Link>
+        }
+      />
 
-        {loading ? (
-          <p className="coach-empty">Caricamento…</p>
-        ) : null}
+      {loading ? (
+        <p className="coach-empty">Caricamento…</p>
+      ) : null}
 
-        {!loading && assignments.length === 0 ? (
-          <p className="coach-empty">Nessuna assegnazione</p>
-        ) : null}
+      {!loading && assignments.length === 0 ? (
+        <p className="coach-empty">Nessuna assegnazione</p>
+      ) : null}
 
-        {!loading && assignments.length > 0 ? (
-          <CoachCardList>
-            {assignments.map((assignment) => (
-              <CoachCard key={assignment.id}>
-                <h2>
-                  <Link
-                    href={`/clients/${assignment.athleteId}/programs/${assignment.workoutId}`}
-                    className="coach-card__title-link"
+      {!loading && assignments.length > 0 ? (
+        <CoachCardList>
+          {assignments.map((assignment) => (
+            <CoachCard key={assignment.id}>
+              <h2>
+                <Link
+                  href={`/clients/${assignment.athleteId}/programs/${assignment.workoutId}`}
+                  className="coach-card__title-link"
+                >
+                  {assignment.workoutName ?? `Scheda #${assignment.workoutId}`}
+                </Link>
+              </h2>
+              <p>
+                {assignment.athleteName ?? assignment.athleteEmail} ·{" "}
+                {assignment.startsAt} → {assignment.expiresAt}{" "}
+                <span className={`coach-status ${assignment.status}`}>
+                  {statusLabel[assignment.status]}
+                </span>
+              </p>
+              <div className="coach-card-actions">
+                <Link href={`/clients/${assignment.athleteId}`} className="coach-link">
+                  Cliente
+                </Link>
+                {assignment.status === "active" || assignment.status === "scheduled" ? (
+                  <button
+                    type="button"
+                    className="coach-text-action coach-text-action--danger"
+                    onClick={() => void handleRevoke(assignment.id)}
+                    disabled={revokingId === assignment.id}
                   >
-                    {assignment.workoutName ?? `Scheda #${assignment.workoutId}`}
-                  </Link>
-                </h2>
-                <p>
-                  {assignment.athleteName ?? assignment.athleteEmail} ·{" "}
-                  {assignment.startsAt} → {assignment.expiresAt}{" "}
-                  <span className={`coach-status ${assignment.status}`}>
-                    {statusLabel[assignment.status]}
-                  </span>
-                </p>
-                <div className="coach-card-actions">
-                  <Link href={`/clients/${assignment.athleteId}`} className="coach-link">
-                    Cliente
-                  </Link>
-                  {assignment.status === "active" || assignment.status === "scheduled" ? (
-                    <button
-                      type="button"
-                      className="coach-text-action coach-text-action--danger"
-                      onClick={() => void handleRevoke(assignment.id)}
-                      disabled={revokingId === assignment.id}
-                    >
-                      {revokingId === assignment.id ? "Revoca…" : "Revoca"}
-                    </button>
-                  ) : null}
-                </div>
-              </CoachCard>
-            ))}
-          </CoachCardList>
-        ) : null}
-      </div>
-    </AppShell>
+                    {revokingId === assignment.id ? "Revoca…" : "Revoca"}
+                  </button>
+                ) : null}
+              </div>
+            </CoachCard>
+          ))}
+        </CoachCardList>
+      ) : null}
+    </div>
   );
 }

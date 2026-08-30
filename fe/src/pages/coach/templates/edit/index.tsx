@@ -1,5 +1,4 @@
 import { useRoute } from "wouter";
-import { AppShell } from "@components/appShell";
 import { CreateWorkout } from "@pages/workouts/new/createworkout";
 import { loadTemplateDraft, saveUpdatedTemplate } from "../../programapi";
 
@@ -12,17 +11,15 @@ export default function EditTemplatePage() {
   }
 
   return (
-    <AppShell>
-      <CreateWorkout
-        enableTxtImport
-        workoutId={templateId}
-        adapters={{
-          loadDraft: loadTemplateDraft,
-          saveUpdate: saveUpdatedTemplate,
-          successPath: "/templates",
-          backHref: "/templates",
-        }}
-      />
-    </AppShell>
+    <CreateWorkout
+      enableTxtImport
+      workoutId={templateId}
+      adapters={{
+        loadDraft: loadTemplateDraft,
+        saveUpdate: saveUpdatedTemplate,
+        successPath: "/templates",
+        backHref: "/templates",
+      }}
+    />
   );
 }

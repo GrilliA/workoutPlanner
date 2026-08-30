@@ -1,5 +1,6 @@
 import { Router, Route, Switch, useLocation } from "wouter";
 import { RequireAuth } from "@auth";
+import { AppShell } from "@components/appShell";
 import { ErrorBoundary } from "@components/errorBoundary";
 import RootPage from "@pages/root";
 import LoginPage from "@pages/login";
@@ -24,83 +25,41 @@ function AppRoutes() {
   const [location] = useLocation();
 
   return (
-    <ErrorBoundary key={location}>
-      <Switch>
-        <Route path="/login" component={LoginPage} />
-        <Route path="/register" component={RegisterPage} />
-        <Route path="/dashboard">
-          <RequireAuth>
-            <CoachDashboardPage />
-          </RequireAuth>
-        </Route>
-        <Route path="/analytics">
-          <RequireAuth>
-            <CoachAnalyticsPage />
-          </RequireAuth>
-        </Route>
-        <Route path="/clients/new">
-          <RequireAuth>
-            <NewClientPage />
-          </RequireAuth>
-        </Route>
-        <Route path="/clients/:athleteId/programs/:workoutId/edit">
-          <RequireAuth>
-            <EditClientProgramPage />
-          </RequireAuth>
-        </Route>
-        <Route path="/clients/:athleteId/programs/:workoutId">
-          <RequireAuth>
-            <ViewClientProgramPage />
-          </RequireAuth>
-        </Route>
-        <Route path="/clients/:id">
-          <RequireAuth>
-            <ClientDetailPage />
-          </RequireAuth>
-        </Route>
-        <Route path="/clients">
-          <RequireAuth>
-            <CoachClientsPage />
-          </RequireAuth>
-        </Route>
-        <Route path="/templates/new">
-          <RequireAuth>
-            <NewTemplatePage />
-          </RequireAuth>
-        </Route>
-        <Route path="/templates/:id/edit">
-          <RequireAuth>
-            <EditTemplatePage />
-          </RequireAuth>
-        </Route>
-        <Route path="/templates">
-          <RequireAuth>
-            <TemplatesPage />
-          </RequireAuth>
-        </Route>
-        <Route path="/assignments/new">
-          <RequireAuth>
-            <NewAssignmentPage />
-          </RequireAuth>
-        </Route>
-        <Route path="/assignments">
-          <RequireAuth>
-            <AssignmentsPage />
-          </RequireAuth>
-        </Route>
-        <Route path="/settings">
-          <RequireAuth>
-            <SettingsPage />
-          </RequireAuth>
-        </Route>
-        <Route path="/profile">
-          <RequireAuth>
-            <SettingsPage />
-          </RequireAuth>
-        </Route>
-        <Route path="/" component={RootPage} />
-      </Switch>
-    </ErrorBoundary>
+    <Switch>
+      <Route path="/login" component={LoginPage} />
+      <Route path="/register" component={RegisterPage} />
+      <Route path="/" component={RootPage} />
+      <Route>
+        <RequireAuth>
+          <AppShell>
+            <ErrorBoundary key={location}>
+              <Switch>
+                <Route path="/dashboard" component={CoachDashboardPage} />
+                <Route path="/analytics" component={CoachAnalyticsPage} />
+                <Route path="/clients/new" component={NewClientPage} />
+                <Route
+                  path="/clients/:athleteId/programs/:workoutId/edit"
+                  component={EditClientProgramPage}
+                />
+                <Route
+                  path="/clients/:athleteId/programs/:workoutId"
+                  component={ViewClientProgramPage}
+                />
+                <Route path="/clients/:id" component={ClientDetailPage} />
+                <Route path="/clients" component={CoachClientsPage} />
+                <Route path="/templates/new" component={NewTemplatePage} />
+                <Route path="/templates/:id/edit" component={EditTemplatePage} />
+                <Route path="/templates" component={TemplatesPage} />
+                <Route path="/assignments/new" component={NewAssignmentPage} />
+                <Route path="/assignments" component={AssignmentsPage} />
+                <Route path="/settings" component={SettingsPage} />
+                <Route path="/profile" component={SettingsPage} />
+              </Switch>
+            </ErrorBoundary>
+          </AppShell>
+        </RequireAuth>
+      </Route>
+    </Switch>
   );
 }
 

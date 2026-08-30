@@ -1,5 +1,4 @@
 import { useRoute } from "wouter";
-import { AppShell } from "@components/appShell";
 import { CreateWorkout } from "@pages/workouts/new/createworkout";
 import {
   loadClientProgramDraft,
@@ -21,18 +20,16 @@ export default function EditClientProgramPage() {
   }
 
   return (
-    <AppShell>
-      <CreateWorkout
-        enableTxtImport
-        workoutId={workoutId}
-        adapters={{
-          loadDraft: () => loadClientProgramDraft(athleteId, workoutId),
-          saveUpdate: (id, name, settings, days) =>
-            saveUpdatedClientProgram(athleteId, id, name, settings, days),
-          successPath: `/clients/${athleteId}`,
-          backHref: `/clients/${athleteId}`,
-        }}
-      />
-    </AppShell>
+    <CreateWorkout
+      enableTxtImport
+      workoutId={workoutId}
+      adapters={{
+        loadDraft: () => loadClientProgramDraft(athleteId, workoutId),
+        saveUpdate: (id, name, settings, days) =>
+          saveUpdatedClientProgram(athleteId, id, name, settings, days),
+        successPath: `/clients/${athleteId}`,
+        backHref: `/clients/${athleteId}`,
+      }}
+    />
   );
 }
