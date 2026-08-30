@@ -4,19 +4,21 @@ React + Vite. UI copy is **Italian**. Style: functions, immutable data, pure map
 
 A feature (e.g. dashboard) lives **under its page**, not in `components/`. `components/` is shared UI primitives only (`button/`, `input/`, `card/`, `skeleton/`, `appShell/`, `pageHeader/`).
 
+Authenticated chrome (`AppShell`) lives once in the router (`App.tsx`), around the inner `Switch` of coach routes. Public routes (`/login`, `/register`, `/`) stay outside. A page `index.tsx` is the feature entry, not a layout wrapper.
+
 ```
-pages/home/
-├── index.tsx              # layout only: AppShell + feature
+pages/coach/dashboard/
+├── index.tsx              # page entry: render the feature
 └── dashboard/             # the whole feature
     ├── api/
     │   └── useDashboard.ts  # GET + loading; on error use empty data
     ├── types.ts
     ├── mappers/mapDashboard.ts
     ├── dashboard/
-    └── todayCard/
+    └── athletestable/
 ```
 
-`pages/home/index.tsx` has no business logic.
+Thin page entries have no business logic.
 
 ## Folders and files
 

@@ -1,6 +1,5 @@
 import { Link, useRoute } from "wouter";
 import type { WorkoutDetail } from "@api";
-import { AppShell } from "@components/appShell";
 import { WEEKDAY_LABELS_SHORT } from "@pages/workouts/new/types";
 import { ExerciseRow } from "@pages/workouts/new/exerciserow";
 import { PageHeader } from "@components/pageHeader";
@@ -69,12 +68,10 @@ export default function ViewClientProgramPage() {
 
   if (!idsValid) {
     return (
-      <AppShell>
-        <div className="coach-page page-container page-container--wide">
-          <PageHeader title="Scheda" />
-          <p className="coach-empty">Scheda non trovata</p>
-        </div>
-      </AppShell>
+      <div className="coach-page page-container page-container--wide">
+        <PageHeader title="Scheda" />
+        <p className="coach-empty">Scheda non trovata</p>
+      </div>
     );
   }
 
@@ -99,36 +96,34 @@ function ViewClientProgramLoaded({
   const clientHref = `/clients/${athleteId}`;
 
   return (
-    <AppShell>
-      <div className="coach-page page-container page-container--wide">
-        <PageHeader
-          title={program?.name ?? "Scheda"}
-          subtitle={
-            program
-              ? `${program.frequency} · ${program.exerciseCount} esercizi · recupero ${program.defaultRestSec}s`
-              : undefined
-          }
-          action={
-            <Link href={editHref} className="coach-btn-link coach-btn-link--primary">
-              Modifica scheda
-            </Link>
-          }
-        />
-
-        <nav className="coach-link-row coach-link-row--compact">
-          <Link href={clientHref} className="coach-link">
-            ← Torna al cliente
+    <div className="coach-page page-container page-container--wide">
+      <PageHeader
+        title={program?.name ?? "Scheda"}
+        subtitle={
+          program
+            ? `${program.frequency} · ${program.exerciseCount} esercizi · recupero ${program.defaultRestSec}s`
+            : undefined
+        }
+        action={
+          <Link href={editHref} className="coach-btn-link coach-btn-link--primary">
+            Modifica scheda
           </Link>
-        </nav>
+        }
+      />
 
-        {loading ? <p className="coach-empty">Caricamento…</p> : null}
+      <nav className="coach-link-row coach-link-row--compact">
+        <Link href={clientHref} className="coach-link">
+          ← Torna al cliente
+        </Link>
+      </nav>
 
-        {!loading && !program ? (
-          <p className="coach-empty">Scheda non trovata</p>
-        ) : null}
+      {loading ? <p className="coach-empty">Caricamento…</p> : null}
 
-        {program ? <ProgramDays program={program} /> : null}
-      </div>
-    </AppShell>
+      {!loading && !program ? (
+        <p className="coach-empty">Scheda non trovata</p>
+      ) : null}
+
+      {program ? <ProgramDays program={program} /> : null}
+    </div>
   );
 }

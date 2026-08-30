@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { ApiError, rotateCoachInviteCode } from "@api";
-import { AppShell } from "@components/appShell";
 import { Button } from "@components/button";
 import { toast } from "@components/toast";
 import { PageHeader } from "@components/pageHeader";
@@ -41,63 +40,61 @@ export default function InviteClientPage() {
   };
 
   return (
-    <AppShell>
-      <div className="coach-page page-container">
-        <PageHeader
-          title="Invita cliente"
-          subtitle="Condividi il codice: l'atleta lo inserisce nell'app dopo la registrazione"
-        />
+    <div className="coach-page page-container">
+      <PageHeader
+        title="Invita cliente"
+        subtitle="Condividi il codice: l'atleta lo inserisce nell'app dopo la registrazione"
+      />
 
-        {loading ? (
-          <p className="coach-empty">Caricamento…</p>
-        ) : null}
+      {loading ? (
+        <p className="coach-empty">Caricamento…</p>
+      ) : null}
 
-        {!loading && !code ? (
-          <p className="coach-empty">Codice non disponibile</p>
-        ) : null}
+      {!loading && !code ? (
+        <p className="coach-empty">Codice non disponibile</p>
+      ) : null}
 
-        {!loading && code ? (
-          <section className="coach-section">
-            <p className="coach-empty" style={{ marginBottom: "1rem" }}>
-              L&apos;atleta crea da solo l&apos;account su mobile, poi collega il tuo codice
-              nella sezione Coach. Un atleta può avere un solo coach alla volta.
+      {!loading && code ? (
+        <section className="coach-section">
+          <p className="coach-empty" style={{ marginBottom: "1rem" }}>
+            L&apos;atleta crea da solo l&apos;account su mobile, poi collega il tuo codice
+            nella sezione Coach. Un atleta può avere un solo coach alla volta.
+          </p>
+          <CoachCard style={{ textAlign: "center" }}>
+            <p className="coach-empty" style={{ marginBottom: "0.5rem" }}>
+              Codice invito
             </p>
-            <CoachCard style={{ textAlign: "center" }}>
-              <p className="coach-empty" style={{ marginBottom: "0.5rem" }}>
-                Codice invito
-              </p>
-              <p
-                style={{
-                  fontSize: "2rem",
-                  fontWeight: 700,
-                  letterSpacing: "0.2em",
-                  margin: "0.5rem 0 1rem",
-                }}
+            <p
+              style={{
+                fontSize: "2rem",
+                fontWeight: 700,
+                letterSpacing: "0.2em",
+                margin: "0.5rem 0 1rem",
+              }}
+            >
+              {code}
+            </p>
+            <div className="coach-card-actions" style={{ justifyContent: "center" }}>
+              <Button.Root
+                type="button"
+                variant="primary"
+                onClick={() => void handleCopy()}
               >
-                {code}
-              </p>
-              <div className="coach-card-actions" style={{ justifyContent: "center" }}>
-                <Button.Root
-                  type="button"
-                  variant="primary"
-                  onClick={() => void handleCopy()}
-                >
-                  <Button.Label>{copied ? "Copiato" : "Copia codice"}</Button.Label>
-                </Button.Root>
-                <Button.Root
-                  type="button"
-                  variant="secondary"
-                  loading={busy}
-                  disabled={busy}
-                  onClick={() => void handleRotate()}
-                >
-                  <Button.Label>Rigenera</Button.Label>
-                </Button.Root>
-              </div>
-            </CoachCard>
-          </section>
-        ) : null}
-      </div>
-    </AppShell>
+                <Button.Label>{copied ? "Copiato" : "Copia codice"}</Button.Label>
+              </Button.Root>
+              <Button.Root
+                type="button"
+                variant="secondary"
+                loading={busy}
+                disabled={busy}
+                onClick={() => void handleRotate()}
+              >
+                <Button.Label>Rigenera</Button.Label>
+              </Button.Root>
+            </div>
+          </CoachCard>
+        </section>
+      ) : null}
+    </div>
   );
 }
