@@ -38,9 +38,9 @@ export function RequireAuth({ children }: RequireAuthProps) {
           <p className="auth-tagline">Impossibile verificare la sessione</p>
         </div>
         <div className="form">
-          <Button.Root variant="primary" type="button" onClick={retryBootstrap}>
-            <Button.Label>Riprova</Button.Label>
-          </Button.Root>
+          <Button variant="primary" type="button" onClick={retryBootstrap}>
+            Riprova
+          </Button>
         </div>
       </main>
     );
@@ -64,7 +64,7 @@ export function RequireAuth({ children }: RequireAuthProps) {
           </p>
         </div>
         <div className="form">
-          <Button.Root
+          <Button
             variant="primary"
             type="button"
             className="submit"
@@ -72,8 +72,8 @@ export function RequireAuth({ children }: RequireAuthProps) {
               void logout().then(() => setLocation("/login"));
             }}
           >
-            <Button.Label>Esci</Button.Label>
-          </Button.Root>
+            Esci
+          </Button>
         </div>
       </main>
     );

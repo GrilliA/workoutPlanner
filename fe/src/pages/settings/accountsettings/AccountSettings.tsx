@@ -105,29 +105,30 @@ export function AccountSettings() {
         </h2>
 
         <div className="panel">
-          <Input.Root>
-            <Input.Label>Nome</Input.Label>
-            <Input.Field
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="Il tuo nome"
-              autoComplete="name"
-            />
-          </Input.Root>
+          <Input
+            id="settings-name"
+            label="Nome"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            placeholder="Il tuo nome"
+            autoComplete="name"
+          />
 
-          <Input.Root>
-            <Input.Label>Email</Input.Label>
-            <Input.Field value={user.email} disabled readOnly />
-          </Input.Root>
+          <Input
+            id="settings-email"
+            label="Email"
+            value={user.email}
+            disabled
+            readOnly
+          />
 
-          <Button.Root
+          <Button
             variant="primary"
             loading={isSavingProfile}
-            disabled={isSavingProfile}
             onClick={() => void handleSaveProfile()}
           >
-            <Button.Label>Salva profilo</Button.Label>
-          </Button.Root>
+            Salva profilo
+          </Button>
         </div>
       </section>
 
@@ -137,37 +138,34 @@ export function AccountSettings() {
         </h2>
 
         <div className="panel">
-          <Input.Root>
-            <Input.Label>Password attuale</Input.Label>
-            <Input.Field
-              type="password"
-              value={currentPassword}
-              onChange={(event) => setCurrentPassword(event.target.value)}
-              autoComplete="current-password"
-            />
-          </Input.Root>
+          <Input
+            id="settings-current-password"
+            label="Password attuale"
+            type="password"
+            value={currentPassword}
+            onChange={(event) => setCurrentPassword(event.target.value)}
+            autoComplete="current-password"
+          />
 
-          <Input.Root>
-            <Input.Label>Nuova password</Input.Label>
-            <Input.Field
-              type="password"
-              value={newPassword}
-              onChange={(event) => setNewPassword(event.target.value)}
-              autoComplete="new-password"
-              minLength={8}
-            />
-          </Input.Root>
+          <Input
+            id="settings-new-password"
+            label="Nuova password"
+            type="password"
+            value={newPassword}
+            onChange={(event) => setNewPassword(event.target.value)}
+            autoComplete="new-password"
+            minLength={8}
+          />
 
-          <Input.Root>
-            <Input.Label>Conferma nuova password</Input.Label>
-            <Input.Field
-              type="password"
-              value={confirmPassword}
-              onChange={(event) => setConfirmPassword(event.target.value)}
-              autoComplete="new-password"
-              minLength={8}
-            />
-          </Input.Root>
+          <Input
+            id="settings-confirm-password"
+            label="Conferma nuova password"
+            type="password"
+            value={confirmPassword}
+            onChange={(event) => setConfirmPassword(event.target.value)}
+            autoComplete="new-password"
+            minLength={8}
+          />
 
           {passwordError ? (
             <p className="form-error" role="alert">
@@ -175,21 +173,20 @@ export function AccountSettings() {
             </p>
           ) : null}
 
-          <Button.Root
+          <Button
             variant="secondary"
             loading={isSavingPassword}
-            disabled={isSavingPassword}
             onClick={() => void handleChangePassword()}
           >
-            <Button.Label>Aggiorna password</Button.Label>
-          </Button.Root>
+            Aggiorna password
+          </Button>
         </div>
       </section>
 
       <section className="settings-section">
-        <Button.Root variant="ghost" onClick={() => void handleLogout()}>
-          <Button.Label>Esci dall&apos;account</Button.Label>
-        </Button.Root>
+        <Button variant="ghost" onClick={() => void handleLogout()}>
+          Esci dall&apos;account
+        </Button>
       </section>
     </div>
   );

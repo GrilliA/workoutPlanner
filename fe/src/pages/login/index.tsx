@@ -64,45 +64,42 @@ const Login = () => {
       </div>
 
       <form className="form" onSubmit={handleSubmit}>
-        <Input.Root>
-          <Input.Label>Email</Input.Label>
-          <Input.Field
-            type="email"
-            name="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="you@example.com"
-            autoComplete="email"
-            required
-          />
-        </Input.Root>
+        <Input
+          id="login-email"
+          label="Email"
+          type="email"
+          name="email"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          placeholder="you@example.com"
+          autoComplete="email"
+          required
+        />
 
         <div className="password">
-          <Input.Root>
-            <Input.Label>Password</Input.Label>
-            <Input.Field
-              type="password"
-              name="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder="Password"
-              autoComplete="current-password"
-              required
-            />
-          </Input.Root>
+          <Input
+            id="login-password"
+            label="Password"
+            type="password"
+            name="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder="Password"
+            autoComplete="current-password"
+            required
+          />
         </div>
 
         {error ? <p className="form-error">{error}</p> : null}
 
-        <Button.Root
+        <Button
           variant="primary"
           type="submit"
           className="submit"
           loading={submitting}
-          disabled={submitting}
         >
-          <Button.Label>Accedi</Button.Label>
-        </Button.Root>
+          Accedi
+        </Button>
 
         <p className="footer-link">
           Non hai un account coach? <Link href="/register">Registrati</Link>

@@ -13,18 +13,18 @@ const meta = {
     <>
       <ToastHost />
       <div style={{ display: "flex", gap: "0.75rem" }}>
-        <Button.Root
+        <Button
           variant="primary"
           onClick={() => toast.success("Scheda salvata.")}
         >
-          <Button.Label>Mostra successo</Button.Label>
-        </Button.Root>
-        <Button.Root
+          Mostra successo
+        </Button>
+        <Button
           variant="secondary"
           onClick={() => toast.error("Impossibile salvare.")}
         >
-          <Button.Label>Mostra errore</Button.Label>
-        </Button.Root>
+          Mostra errore
+        </Button>
       </div>
     </>
   ),

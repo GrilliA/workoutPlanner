@@ -3,7 +3,7 @@ import { Card } from "@components/card";
 
 const meta = {
   title: "Componenti/Card",
-  component: Card.Root,
+  component: Card,
   tags: ["autodocs"],
   argTypes: {
     as: {
@@ -13,13 +13,10 @@ const meta = {
   },
   args: {
     as: "article",
-    children: (
-      <>
-        <Card.Title>Push / Pull / Legs</Card.Title>
-        <Card.Meta>4 esercizi · 3 serie</Card.Meta>
-        <Card.Time dateTime="2026-08-29T18:30">Oggi, 18:30</Card.Time>
-      </>
-    ),
+    title: "Push / Pull / Legs",
+    meta: "4 esercizi · 3 serie",
+    time: "Oggi, 18:30",
+    dateTime: "2026-08-29T18:30",
   },
   decorators: [
     (Story) => (
@@ -28,14 +25,7 @@ const meta = {
       </div>
     ),
   ],
-  render: (args) => (
-    <Card.Root {...args}>
-      <Card.Title>Push / Pull / Legs</Card.Title>
-      <Card.Meta>4 esercizi · 3 serie</Card.Meta>
-      <Card.Time dateTime="2026-08-29T18:30">Oggi, 18:30</Card.Time>
-    </Card.Root>
-  ),
-} satisfies Meta<typeof Card.Root>;
+} satisfies Meta<typeof Card>;
 
 export default meta;
 
@@ -44,12 +34,12 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {};
 
 export const TitleAndMeta: Story = {
-  render: (args) => (
-    <Card.Root {...args}>
-      <Card.Title>Full body</Card.Title>
-      <Card.Meta>6 esercizi · 45 min</Card.Meta>
-    </Card.Root>
-  ),
+  args: {
+    title: "Full body",
+    meta: "6 esercizi · 45 min",
+    time: undefined,
+    dateTime: undefined,
+  },
 };
 
 export const AsListItem: Story = {

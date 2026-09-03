@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Button } from "@components/button";
+import { Button, ButtonIcon } from "@components/button";
 
 const ChevronIcon = (
   <svg viewBox="0 0 16 16" fill="none">
@@ -15,7 +15,7 @@ const ChevronIcon = (
 
 const meta = {
   title: "Componenti/Button",
-  component: Button.Root,
+  component: Button,
   tags: ["autodocs"],
   argTypes: {
     variant: {
@@ -35,12 +35,8 @@ const meta = {
     loading: false,
     disabled: false,
   },
-  render: (args) => (
-    <Button.Root {...args}>
-      <Button.Label>Continua</Button.Label>
-    </Button.Root>
-  ),
-} satisfies Meta<typeof Button.Root>;
+  render: (args) => <Button {...args}>Continua</Button>,
+} satisfies Meta<typeof Button>;
 
 export default meta;
 
@@ -62,25 +58,15 @@ export const Ghost: Story = {
   args: {
     variant: "ghost",
   },
-  render: (args) => (
-    <Button.Root {...args}>
-      <Button.Label>Annulla</Button.Label>
-    </Button.Root>
-  ),
+  render: (args) => <Button {...args}>Annulla</Button>,
 };
 
 export const Sizes: Story = {
   render: () => (
     <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-      <Button.Root size="sm">
-        <Button.Label>Piccolo</Button.Label>
-      </Button.Root>
-      <Button.Root size="md">
-        <Button.Label>Medio</Button.Label>
-      </Button.Root>
-      <Button.Root size="lg">
-        <Button.Label>Grande</Button.Label>
-      </Button.Root>
+      <Button size="sm">Piccolo</Button>
+      <Button size="md">Medio</Button>
+      <Button size="lg">Grande</Button>
     </div>
   ),
 };
@@ -89,12 +75,7 @@ export const Loading: Story = {
   args: {
     loading: true,
   },
-  render: (args) => (
-    <Button.Root {...args}>
-      <Button.Spinner />
-      <Button.Label>Caricamento…</Button.Label>
-    </Button.Root>
-  ),
+  render: (args) => <Button {...args}>Caricamento…</Button>,
 };
 
 export const Disabled: Story = {
@@ -103,11 +84,10 @@ export const Disabled: Story = {
   },
 };
 
-export const WithIcon: Story = {
+export const IconOnly: Story = {
   render: (args) => (
-    <Button.Root {...args}>
-      <Button.Icon position="start">{ChevronIcon}</Button.Icon>
-      <Button.Label>Continua</Button.Label>
-    </Button.Root>
+    <ButtonIcon {...args} aria-label="Avanti">
+      {ChevronIcon}
+    </ButtonIcon>
   ),
 };

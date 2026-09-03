@@ -118,17 +118,16 @@ export default function NewAssignmentPage() {
 
         {!templateId ? (
           <>
-            <Input.Root>
-              <Input.Label>Nome scheda</Input.Label>
-              <Input.Field
-                value={parsedTxt?.name ?? name}
-                onChange={(event) => {
-                  setParsedTxt(null);
-                  setName(event.target.value);
-                }}
-                required
-              />
-            </Input.Root>
+            <Input
+              id="assignment-workout-name"
+              label="Nome scheda"
+              value={parsedTxt?.name ?? name}
+              onChange={(event) => {
+                setParsedTxt(null);
+                setName(event.target.value);
+              }}
+              required
+            />
 
             <SchedaTxtPaste
               compact
@@ -151,29 +150,27 @@ export default function NewAssignmentPage() {
           </>
         ) : null}
 
-        <Input.Root>
-          <Input.Label>Data inizio</Input.Label>
-          <Input.Field
-            type="date"
-            required
-            value={startsAt}
-            onChange={(event) => setStartsAt(event.target.value)}
-          />
-        </Input.Root>
+        <Input
+          id="assignment-start-date"
+          label="Data inizio"
+          type="date"
+          required
+          value={startsAt}
+          onChange={(event) => setStartsAt(event.target.value)}
+        />
 
-        <Input.Root>
-          <Input.Label>Data scadenza</Input.Label>
-          <Input.Field
-            type="date"
-            required
-            value={expiresAt}
-            onChange={(event) => setExpiresAt(event.target.value)}
-          />
-        </Input.Root>
+        <Input
+          id="assignment-expires-date"
+          label="Data scadenza"
+          type="date"
+          required
+          value={expiresAt}
+          onChange={(event) => setExpiresAt(event.target.value)}
+        />
 
-        <Button.Root type="submit" variant="primary" loading={submitting} disabled={submitting}>
-          <Button.Label>Assegna e modifica</Button.Label>
-        </Button.Root>
+        <Button type="submit" variant="primary" loading={submitting}>
+          Assegna e modifica
+        </Button>
       </form>
       )}
     </div>

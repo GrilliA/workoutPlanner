@@ -13,6 +13,8 @@ How to use:
 
 | Date | Decision | Why |
 | --- | --- | --- |
+| 2026-09-03 | Recipe DS su primitive flatten: `Button` / `ButtonIcon` / `Input` / `Card` compongono i rispettivi `*Base` (tag nativo); parti (`ButtonLabel`, `InputLabel`, `InputError`, …) private; niente addon Input in questo giro | Call site semplici (`<Input label error />`, `<Button>`, `<Card title meta />`); escape hatch `*Base` per casi avanzati; Storybook cataloga le recipe |
+| 2026-08-30 | Primitive DS senza React context: file fratelli (`ButtonBase`, `InputBase`, `CardBase` + pezzi), props esplicite e cascade CSS al posto di provider/registration; niente throw "must be used within Root" | Il context di Button portava in giro solo l'errore; gli id a11y di Input sono più chiari espliciti; meno indirezione, stesso catalogo Storybook |
 | 2026-08-29 | D1 design system web: single token source `fe/src/styles/tokens.css` (color/space/radius/type/shadow/motion/z); Storybook 10 (`@storybook/react-vite` + addon-a11y) as the living catalog inside `fe/`; `PageHeader` promoted to `components/`, `CoachCard` as coach-domain pattern in `pages/coach/coachCard/` | Semantic tokens à la Primer/Polaris without a separate ui package; catalog next to components keeps the DS honest; no Style Dictionary / token sharing with RN until mobile actually needs it |
 | 2026-08-25 | Catalog search is bilingual (IT primary + EN secondary). Names come from a glossary + curated overlay at seed (`be/data/exercise-i18n.json`); we do not hand-edit 873 English names. Selecting a catalog row stores the Italian name as `exercises.name`. Movement media is 2-frame 0.jpg/1.jpg flip (`image_url_end`); no videos. | Coaches search `panca` or `bench`; athletes see Italian titles with English subtitle and a start/end photo. Videos (wger / Gym Visual) stay out of scope. |
 | 2026-08-24 | Brand accent lime `#c7f464` → powder blue `#bfdbf7` (deep `#4a7fb0`, on-accent `#111111`); charcoal surfaces unchanged | Iterate away from lime/yellow; pale blue reads calmer on the dark coach UI |
@@ -50,6 +52,8 @@ How to use:
 
 ## What we did
 
+- 2026-09-03 — D1 recipe layer: `Button`/`ButtonIcon`/`Input`/`Card` sopra `*Base`; parti private; rimossi `InputField`/`InputAddon`/`InputControl`; call site migrati a recipe; Storybook aggiornato.
+- 2026-08-30 — D1 flatten primitive DS: Button/Input/Card senza React context né namespace compound (`Button.Root` → `ButtonBase` + fratelli, idem Input/Card); spinner di `loading` posseduto da `ButtonBase` (fix: prima restava invisibile ai call site); styling error/disabled/embedded via selettori discendenti CSS; `htmlFor`/`id` espliciti nei form. Netto vs HEAD dopo staging sibling ≈ −330; ButtonSpinner resta privato.
 - 2026-08-29 — D1 design system web: `tokens.css` + refactor token-only dei CSS dei componenti condivisi; Storybook 10 con storie per le 9 primitive + pagina Foundations (`npm run storybook`); `PageHeader` condiviso (legacy `coachpageheader/` eliminato) e `CoachCard`/`CoachCardList` nelle pagine coach. Nota: il commit `82c2169` cita PageError nel messaggio, ma il componente non è entrato nel tree (rimosso prima del commit); le pagine coach restano senza stato di errore dedicato.
 - 2026-08-25 — Mobile scheda + sessione: card esercizio con flip 0/1 sopra, titolo IT e inglese. Lista in `workout/[workoutId]`, gesto in alto anche in sessione attiva/recap.
 - 2026-08-24 — Drop public landing: `/` redirects to `/login` or `/dashboard`; BrandMark SVG removed; login shows wordmark while session bootstraps.

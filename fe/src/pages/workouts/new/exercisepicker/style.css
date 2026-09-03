@@ -4,7 +4,7 @@
   flex-direction: column;
   gap: 0.35rem;
 
-  & .input-field {
+  & .input-base {
     background: var(--surface-elevated);
     border-color: var(--border);
     color: var(--text-h);

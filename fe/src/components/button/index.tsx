@@ -1,28 +1,9 @@
 import "./style.css";
 
-import {
-  ButtonRoot,
-  ButtonLabel,
-  ButtonIcon,
-  ButtonSpinner,
-} from "./primitives";
+export { ButtonBase } from "./ButtonBase";
+export { Button } from "./Button";
+export { ButtonIcon } from "./ButtonIcon";
 
-export type {
-  ButtonRootProps,
-  ButtonLabelProps,
-  ButtonIconProps,
-  ButtonSpinnerProps,
-} from "./primitives";
-
-export type {
-  ButtonVariant,
-  ButtonSize,
-  ButtonIconPosition,
-} from "./context";
-
-export const Button = {
-  Root: ButtonRoot,
-  Label: ButtonLabel,
-  Icon: ButtonIcon,
-  Spinner: ButtonSpinner,
-};
+export type { ButtonBaseProps, ButtonVariant, ButtonSize } from "./ButtonBase";
+export type { ButtonProps } from "./Button";
+export type { ButtonIconProps } from "./ButtonIcon";

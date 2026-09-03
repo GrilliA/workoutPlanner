@@ -3,10 +3,11 @@ import { Input } from "@components/input";
 
 const meta = {
   title: "Componenti/Input",
-  component: Input.Root,
+  component: Input,
   tags: ["autodocs"],
   argTypes: {
     error: { control: "text" },
+    helper: { control: "text" },
     disabled: { control: "boolean" },
   },
   args: {
@@ -20,11 +21,9 @@ const meta = {
     ),
   ],
   render: (args) => (
-    <Input.Root {...args}>
-      <Input.Field placeholder="Push / Pull / Legs" />
-    </Input.Root>
+    <Input id="story-input" placeholder="Push / Pull / Legs" {...args} />
   ),
-} satisfies Meta<typeof Input.Root>;
+} satisfies Meta<typeof Input>;
 
 export default meta;
 
@@ -34,10 +33,12 @@ export const Default: Story = {};
 
 export const WithLabel: Story = {
   render: (args) => (
-    <Input.Root {...args}>
-      <Input.Label>Nome scheda</Input.Label>
-      <Input.Field placeholder="Push / Pull / Legs" />
-    </Input.Root>
+    <Input
+      id="story-input-label"
+      label="Nome scheda"
+      placeholder="Push / Pull / Legs"
+      {...args}
+    />
   ),
 };
 
@@ -46,24 +47,39 @@ export const WithError: Story = {
     error: "Inserisci un nome valido.",
   },
   render: (args) => (
-    <Input.Root {...args}>
-      <Input.Label>Nome scheda</Input.Label>
-      <Input.Field placeholder="Push / Pull / Legs" />
-      <Input.Error />
-    </Input.Root>
+    <Input
+      id="story-input-error"
+      label="Nome scheda"
+      placeholder="Push / Pull / Legs"
+      {...args}
+    />
   ),
 };
 
-export const WithAddon: Story = {
+export const Helper: Story = {
+  args: {
+    helper: "Ultimo carico registrato.",
+  },
   render: (args) => (
-    <Input.Root {...args}>
-      <Input.Label>Peso</Input.Label>
-      <Input.Control>
-        <Input.Field type="number" placeholder="80" />
-        <Input.Addon position="end">kg</Input.Addon>
-      </Input.Control>
-      <Input.Helper>Ultimo carico registrato.</Input.Helper>
-    </Input.Root>
+    <Input
+      id="story-input-helper"
+      label="Peso"
+      type="number"
+      placeholder="80"
+      {...args}
+    />
+  ),
+};
+
+export const Required: Story = {
+  render: (args) => (
+    <Input
+      id="story-input-required"
+      label="Nome scheda"
+      placeholder="Push / Pull / Legs"
+      required
+      {...args}
+    />
   ),
 };
 
@@ -72,9 +88,12 @@ export const Disabled: Story = {
     disabled: true,
   },
   render: (args) => (
-    <Input.Root {...args}>
-      <Input.Label>Email</Input.Label>
-      <Input.Field defaultValue="coach@example.com" readOnly />
-    </Input.Root>
+    <Input
+      id="story-input-disabled"
+      label="Email"
+      defaultValue="coach@example.com"
+      readOnly
+      {...args}
+    />
   ),
 };

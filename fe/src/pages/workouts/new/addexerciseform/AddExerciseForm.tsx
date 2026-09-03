@@ -70,7 +70,7 @@ export function AddExerciseForm({ defaultRestSec, onAdd }: AddExerciseFormProps)
       />
 
       <div className="actions">
-        <Button.Root
+        <Button
           type="button"
           variant="ghost"
           onClick={() => {
@@ -78,12 +78,12 @@ export function AddExerciseForm({ defaultRestSec, onAdd }: AddExerciseFormProps)
             setIsOpen(false);
           }}
         >
-          <Button.Label>Annulla</Button.Label>
-        </Button.Root>
+          Annulla
+        </Button>
 
-        <Button.Root type="submit" variant="primary">
-          <Button.Label>Aggiungi</Button.Label>
-        </Button.Root>
+        <Button type="submit" variant="primary">
+          Aggiungi
+        </Button>
       </div>
     </form>
   );
