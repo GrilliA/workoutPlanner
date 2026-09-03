@@ -14,18 +14,17 @@ export function WorkoutNameField({
 }: WorkoutNameFieldProps) {
   return (
     <section className="workout-name-field" aria-labelledby="workout-name-label">
-      <Input.Root error={error ?? undefined}>
-        <Input.Label id="workout-name-label">NOME SCHEDA</Input.Label>
-        <Input.Field
-          name="workoutName"
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          placeholder="Push / Pull / Legs"
-          autoComplete="off"
-          required
-        />
-        {error ? <Input.Error>{error}</Input.Error> : null}
-      </Input.Root>
+      <Input
+        id="workout-name"
+        label="NOME SCHEDA"
+        name="workoutName"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder="Push / Pull / Legs"
+        autoComplete="off"
+        required
+        error={error ?? undefined}
+      />
     </section>
   );
 }

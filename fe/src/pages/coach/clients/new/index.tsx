@@ -75,22 +75,21 @@ export default function InviteClientPage() {
               {code}
             </p>
             <div className="coach-card-actions" style={{ justifyContent: "center" }}>
-              <Button.Root
+              <Button
                 type="button"
                 variant="primary"
                 onClick={() => void handleCopy()}
               >
-                <Button.Label>{copied ? "Copiato" : "Copia codice"}</Button.Label>
-              </Button.Root>
-              <Button.Root
+                {copied ? "Copiato" : "Copia codice"}
+              </Button>
+              <Button
                 type="button"
                 variant="secondary"
                 loading={busy}
-                disabled={busy}
                 onClick={() => void handleRotate()}
               >
-                <Button.Label>Rigenera</Button.Label>
-              </Button.Root>
+                Rigenera
+              </Button>
             </div>
           </CoachCard>
         </section>

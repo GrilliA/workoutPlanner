@@ -7,7 +7,7 @@
     color: var(--text);
   }
 
-  & .input-field {
+  & .input-base {
     margin-top: 0.5rem;
     border-radius: 0.85rem;
     background: var(--surface);

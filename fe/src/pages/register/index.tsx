@@ -57,56 +57,52 @@ const Register = () => {
       </div>
 
       <form className="form" onSubmit={handleSubmit}>
-        <Input.Root>
-          <Input.Label>Nome</Input.Label>
-          <Input.Field
-            type="text"
-            name="name"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            placeholder="Il tuo nome"
-            autoComplete="name"
-          />
-        </Input.Root>
+        <Input
+          id="register-name"
+          label="Nome"
+          type="text"
+          name="name"
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          placeholder="Il tuo nome"
+          autoComplete="name"
+        />
 
-        <Input.Root>
-          <Input.Label>Email</Input.Label>
-          <Input.Field
-            type="email"
-            name="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="you@example.com"
-            autoComplete="email"
-            required
-          />
-        </Input.Root>
+        <Input
+          id="register-email"
+          label="Email"
+          type="email"
+          name="email"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          placeholder="you@example.com"
+          autoComplete="email"
+          required
+        />
 
-        <Input.Root>
-          <Input.Label>Password</Input.Label>
-          <Input.Field
-            type="password"
-            name="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            placeholder="Minimo 8 caratteri"
-            autoComplete="new-password"
-            minLength={8}
-            required
-          />
-        </Input.Root>
+        <Input
+          id="register-password"
+          label="Password"
+          type="password"
+          name="password"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          placeholder="Minimo 8 caratteri"
+          autoComplete="new-password"
+          minLength={8}
+          required
+        />
 
         {error ? <p className="form-error">{error}</p> : null}
 
-        <Button.Root
+        <Button
           variant="primary"
           type="submit"
           className="submit"
           loading={submitting}
-          disabled={submitting}
         >
-          <Button.Label>Crea account coach</Button.Label>
-        </Button.Root>
+          Crea account coach
+        </Button>
 
         <p className="footer-link">
           Hai già un account? <Link href="/login">Accedi</Link>

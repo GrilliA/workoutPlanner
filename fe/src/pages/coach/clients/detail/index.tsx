@@ -216,26 +216,24 @@ function ClientDetailLoaded({ athleteId }: { athleteId: number }) {
           <section className="coach-section">
             <h2>Password</h2>
             <form className="coach-form" onSubmit={(event) => void handleResetPassword(event)}>
-              <Input.Root>
-                <Input.Label>Nuova password</Input.Label>
-                <Input.Field
-                  type="password"
-                  required
-                  minLength={8}
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  placeholder="minimo 8 caratteri"
-                />
-              </Input.Root>
+              <Input
+                id="client-detail-reset-password"
+                label="Nuova password"
+                type="password"
+                required
+                minLength={8}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder="minimo 8 caratteri"
+              />
 
-              <Button.Root
+              <Button
                 type="submit"
                 variant="secondary"
                 loading={resettingPassword}
-                disabled={resettingPassword}
               >
-                <Button.Label>Reimposta password</Button.Label>
-              </Button.Root>
+                Reimposta password
+              </Button>
             </form>
           </section>
 
@@ -270,26 +268,24 @@ function ClientDetailLoaded({ athleteId }: { athleteId: number }) {
 
                       {canEditDates ? (
                         <div className="coach-card-dates">
-                          <Input.Root>
-                            <Input.Label>Inizio</Input.Label>
-                            <Input.Field
-                              type="date"
-                              value={draft.startsAt}
-                              onChange={(event) =>
-                                updateDraft(assignment, { startsAt: event.target.value })
-                              }
-                            />
-                          </Input.Root>
-                          <Input.Root>
-                            <Input.Label>Fine</Input.Label>
-                            <Input.Field
-                              type="date"
-                              value={draft.expiresAt}
-                              onChange={(event) =>
-                                updateDraft(assignment, { expiresAt: event.target.value })
-                              }
-                            />
-                          </Input.Root>
+                          <Input
+                            id={`client-detail-assignment-${assignment.id}-start`}
+                            label="Inizio"
+                            type="date"
+                            value={draft.startsAt}
+                            onChange={(event) =>
+                              updateDraft(assignment, { startsAt: event.target.value })
+                            }
+                          />
+                          <Input
+                            id={`client-detail-assignment-${assignment.id}-end`}
+                            label="Fine"
+                            type="date"
+                            value={draft.expiresAt}
+                            onChange={(event) =>
+                              updateDraft(assignment, { expiresAt: event.target.value })
+                            }
+                          />
                         </div>
                       ) : (
                         <p>
@@ -342,14 +338,13 @@ function ClientDetailLoaded({ athleteId }: { athleteId: number }) {
               Rimuove il collegamento coach-atleta e revoca le schede assegnate. L&apos;account
               atleta non viene eliminato.
             </p>
-            <Button.Root
+            <Button
               variant="secondary"
               loading={unlinking}
-              disabled={unlinking}
               onClick={() => void handleUnlink()}
             >
-              <Button.Label>Scollega cliente</Button.Label>
-            </Button.Root>
+              Scollega cliente
+            </Button>
           </section>
         </>
       ) : null}

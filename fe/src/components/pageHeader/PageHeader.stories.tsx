@@ -19,9 +19,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 const inviteAction = (
-  <Button.Root variant="primary">
-    <Button.Label>Invita cliente</Button.Label>
-  </Button.Root>
+  <Button variant="primary">Invita cliente</Button>
 );
 
 export const Default: Story = {

@@ -1,17 +1,7 @@
 import "./style.css";
 
-import { CardRoot, CardTitle, CardMeta, CardTime } from "./primitives";
+export { CardBase } from "./CardBase";
+export { Card } from "./Card";
 
-export type {
-  CardRootProps,
-  CardTitleProps,
-  CardMetaProps,
-  CardTimeProps,
-} from "./primitives";
-
-export const Card = {
-  Root: CardRoot,
-  Title: CardTitle,
-  Meta: CardMeta,
-  Time: CardTime,
-};
+export type { CardBaseProps } from "./CardBase";
+export type { CardProps } from "./Card";

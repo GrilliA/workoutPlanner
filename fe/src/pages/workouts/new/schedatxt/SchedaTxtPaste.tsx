@@ -75,14 +75,14 @@ export function SchedaTxtPaste({ onApply, compact = false }: SchedaTxtPasteProps
 
       {error ? <p className="scheda-txt__error">{error}</p> : null}
 
-      <Button.Root
+      <Button
         type="button"
         variant="secondary"
         onClick={handleParse}
         disabled={!text.trim()}
       >
-        <Button.Label>{compact ? "Usa questo TXT" : "Applica al builder"}</Button.Label>
-      </Button.Root>
+        {compact ? "Usa questo TXT" : "Applica al builder"}
+      </Button>
     </section>
   );
 }

@@ -1,4 +1,4 @@
-.input-root {
+.input {
   display: flex;
   flex-direction: column;
   gap: var(--space-1-5);
@@ -16,7 +16,7 @@
   color: var(--error);
 }
 
-.input-field {
+.input-base {
   width: 100%;
   box-sizing: border-box;
   padding: var(--space-2-5) var(--space-3);
@@ -28,109 +28,34 @@
   transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
 }
 
-.input-field::placeholder {
+.input-base::placeholder {
   color: var(--text);
   opacity: 0.7;
 }
 
-.input-field:focus-visible {
+.input-base:focus-visible {
   outline: var(--focus-ring-width) solid var(--accent);
   outline-offset: var(--focus-ring-offset);
   border-color: var(--accent-border);
 }
 
-.input-field--error {
+.input-base--error,
+.input--error .input-base {
   border-color: var(--error);
 }
 
-.input-field--error:focus-visible {
+.input-base--error:focus-visible,
+.input--error .input-base:focus-visible {
   outline-color: var(--error);
   border-color: var(--error);
 }
 
-.input-field--disabled,
-.input-field:disabled {
+.input-base--disabled,
+.input-base:disabled,
+.input--disabled .input-base {
   opacity: 0.6;
   cursor: not-allowed;
   background: var(--code-bg);
-}
-
-.input-control {
-  display: flex;
-  align-items: stretch;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--bg);
-  overflow: hidden;
-  transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
-}
-
-.input-control:focus-within {
-  outline: var(--focus-ring-width) solid var(--accent);
-  outline-offset: var(--focus-ring-offset);
-  border-color: var(--accent-border);
-}
-
-.input-control--error {
-  border-color: var(--error);
-}
-
-.input-control--error:focus-within {
-  outline-color: var(--error);
-  border-color: var(--error);
-}
-
-.input-control--disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  background: var(--code-bg);
-}
-
-.input-field--embedded {
-  flex: 1;
-  min-width: 0;
-  border: none;
-  border-radius: 0;
-  background: transparent;
-}
-
-.input-field--embedded:focus-visible {
-  outline: none;
-}
-
-.input-addon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  padding: 0 var(--space-3);
-  color: var(--text);
-  background: var(--code-bg);
-  border: none;
-}
-
-.input-addon--start {
-  border-right: 1px solid var(--border);
-}
-
-.input-addon--end {
-  border-left: 1px solid var(--border);
-}
-
-.input-addon--interactive {
-  cursor: pointer;
-  font: inherit;
-  color: var(--text);
-  transition: background var(--duration-fast);
-}
-
-.input-addon--interactive:hover {
-  background: var(--accent-bg);
-}
-
-.input-addon--interactive:focus-visible {
-  outline: var(--focus-ring-width) solid var(--accent);
-  outline-offset: calc(var(--focus-ring-offset) * -1);
 }
 
 .input-helper {

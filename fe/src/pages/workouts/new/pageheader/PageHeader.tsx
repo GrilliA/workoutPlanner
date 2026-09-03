@@ -22,15 +22,14 @@ export function PageHeader({
       <Link href={backHref} className="coach-btn-link coach-btn-link--secondary">
         Indietro
       </Link>
-      <Button.Root
+      <Button
         variant="primary"
         className="page-header__save"
         onClick={onSave}
         loading={isSaving}
-        disabled={isSaving}
       >
-        <Button.Label>Salva</Button.Label>
-      </Button.Root>
+        Salva
+      </Button>
     </div>
   );
 

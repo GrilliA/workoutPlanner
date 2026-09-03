@@ -50,28 +50,27 @@ export function ExercisePicker({
 
   return (
     <div className="exercise-picker">
-      <Input.Root>
-        <Input.Label>Nome esercizio</Input.Label>
-        <Input.Field
-          value={pickerExercise.name}
-          onChange={(event) => handleInputChange(event.target.value)}
-          onFocus={() => {
-            setQuery(pickerExercise.name);
-            setIsOpen(true);
-          }}
-          onBlur={() => {
-            window.setTimeout(() => setIsOpen(false), 120);
-          }}
-          placeholder={placeholder}
-          autoFocus={autoFocus}
-          required={required}
-          role="combobox"
-          aria-expanded={showResults}
-          aria-controls={listId}
-          aria-autocomplete="list"
-          autoComplete="off"
-        />
-      </Input.Root>
+      <Input
+        id="picker-exercise-name"
+        label="Nome esercizio"
+        value={pickerExercise.name}
+        onChange={(event) => handleInputChange(event.target.value)}
+        onFocus={() => {
+          setQuery(pickerExercise.name);
+          setIsOpen(true);
+        }}
+        onBlur={() => {
+          window.setTimeout(() => setIsOpen(false), 120);
+        }}
+        placeholder={placeholder}
+        autoFocus={autoFocus}
+        required={required}
+        role="combobox"
+        aria-expanded={showResults}
+        aria-controls={listId}
+        aria-autocomplete="list"
+        autoComplete="off"
+      />
 
       {pickerExercise.catalogId ? (
         <p className="hint selected">Dal catalogo</p>

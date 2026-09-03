@@ -52,7 +52,7 @@
     gap: 0.5rem;
   }
 
-  & .input-field {
+  & .input-base {
     background: var(--surface-elevated);
     border-color: var(--border);
     color: var(--text-h);

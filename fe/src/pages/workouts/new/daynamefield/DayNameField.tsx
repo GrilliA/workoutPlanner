@@ -9,16 +9,15 @@ export type DayNameFieldProps = {
 export function DayNameField({ value, onChange }: DayNameFieldProps) {
   return (
     <section className="day-name-field" aria-labelledby="day-name-label">
-      <Input.Root>
-        <Input.Label id="day-name-label">NOME GIORNO</Input.Label>
-        <Input.Field
-          name="dayName"
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          placeholder="Petto + Bicipiti"
-          autoComplete="off"
-        />
-      </Input.Root>
+      <Input
+        id="day-name"
+        label="NOME GIORNO"
+        name="dayName"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder="Petto + Bicipiti"
+        autoComplete="off"
+      />
     </section>
   );
 }
