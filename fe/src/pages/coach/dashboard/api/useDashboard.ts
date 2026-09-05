@@ -12,7 +12,7 @@ import type { DashboardViewModel } from "../types";
 export function useDashboard() {
   const [data, setData] = useState<DashboardViewModel | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ApiError | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -31,7 +31,9 @@ export function useDashboard() {
       .catch((err) => {
         if (!cancelled) {
           setError(
-            ApiError.messageFrom(err, "Impossibile caricare la dashboard"),
+            err instanceof ApiError
+              ? err
+              : new ApiError(400, "Impossibile caricare la dashboard"),
           );
         }
       })
@@ -47,7 +49,7 @@ export function useDashboard() {
   }, []);
 
   if (error) {
-    throw new Error(error);
+    throw error;
   }
 
   return { data, loading };

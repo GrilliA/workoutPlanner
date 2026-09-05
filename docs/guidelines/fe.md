@@ -54,7 +54,7 @@ Aliases: `@api`, `@components/*`, `@dashboard` → `pages/home/dashboard/`, `@pa
 ## React / functions
 
 - Pure mappers for data transforms (no I/O, no mutation)
-- Thin hooks live under the feature `api/` folder (`api/useClients.ts`): fetch + state; mapping lives in `mappers/`. Page-level GET failure throws so `ErrorBoundary` shows `PageError` once; empty data is for empty success; 404 stays a not-found empty state. Section fetches toast and do not take down the page.
+- Thin hooks live under the feature `api/` folder (`api/useClients.ts`): fetch + state; mapping lives in `mappers/`. Page-level GET failure throws `ApiError` so `ErrorBoundary` shows `PageError` once (other throws stay generic); empty data is for empty success; 404 stays a not-found empty state. Section fetches toast and do not take down the page.
 - Separate components, not `StatCard.Skeleton = …`
 - No business logic in JSX or large `useEffect` blocks
 - Fields that always move together = **one state object**, not N `useState`s

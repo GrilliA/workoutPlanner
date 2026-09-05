@@ -4,7 +4,7 @@ import { ApiError, getCoachClients, type CoachClient } from "@api";
 export function useClients() {
   const [clients, setClients] = useState<CoachClient[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ApiError | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -17,7 +17,11 @@ export function useClients() {
       })
       .catch((err) => {
         if (!cancelled) {
-          setError(ApiError.messageFrom(err, "Impossibile caricare i clienti"));
+          setError(
+            err instanceof ApiError
+              ? err
+              : new ApiError(400, "Impossibile caricare i clienti"),
+          );
         }
       })
       .finally(() => {
@@ -32,7 +36,7 @@ export function useClients() {
   }, []);
 
   if (error) {
-    throw new Error(error);
+    throw error;
   }
 
   return { clients, loading };

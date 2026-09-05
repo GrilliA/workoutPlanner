@@ -4,7 +4,7 @@ import { ApiError, getCoachInviteCode } from "@api";
 export function useInviteCode() {
   const [code, setCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ApiError | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -18,7 +18,9 @@ export function useInviteCode() {
       .catch((err) => {
         if (!cancelled) {
           setError(
-            ApiError.messageFrom(err, "Impossibile caricare il codice invito"),
+            err instanceof ApiError
+              ? err
+              : new ApiError(400, "Impossibile caricare il codice invito"),
           );
         }
       })
@@ -34,7 +36,7 @@ export function useInviteCode() {
   }, []);
 
   if (error) {
-    throw new Error(error);
+    throw error;
   }
 
   return { code, setCode, loading };

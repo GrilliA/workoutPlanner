@@ -8,7 +8,7 @@ export function useCoachAnalytics(initialRange: StatsRange = "4w") {
   const [range, setRange] = useState<StatsRange>(initialRange);
   const [data, setData] = useState<AnalyticsViewModel | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ApiError | null>(null);
   const dataRef = useRef<AnalyticsViewModel | null>(null);
 
   useEffect(() => {
@@ -26,15 +26,17 @@ export function useCoachAnalytics(initialRange: StatsRange = "4w") {
       })
       .catch((err) => {
         if (!cancelled) {
-          const message = ApiError.messageFrom(
-            err,
-            "Impossibile caricare le analisi",
-          );
           if (dataRef.current) {
-            toast.error(message);
+            toast.error(
+              ApiError.messageFrom(err, "Impossibile caricare le analisi"),
+            );
             return;
           }
-          setError(message);
+          setError(
+            err instanceof ApiError
+              ? err
+              : new ApiError(400, "Impossibile caricare le analisi"),
+          );
         }
       })
       .finally(() => {
@@ -57,7 +59,7 @@ export function useCoachAnalytics(initialRange: StatsRange = "4w") {
   };
 
   if (error) {
-    throw new Error(error);
+    throw error;
   }
 
   return { data, loading, range, setRange: handleSetRange };

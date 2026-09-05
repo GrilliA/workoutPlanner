@@ -11,7 +11,7 @@ export function useAssignmentOptions() {
   const [clients, setClients] = useState<CoachClient[]>([]);
   const [templates, setTemplates] = useState<CoachTemplate[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ApiError | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -26,7 +26,9 @@ export function useAssignmentOptions() {
       .catch((err) => {
         if (!cancelled) {
           setError(
-            ApiError.messageFrom(err, "Impossibile caricare i dati di assegnazione"),
+            err instanceof ApiError
+              ? err
+              : new ApiError(400, "Impossibile caricare i dati di assegnazione"),
           );
         }
       })
@@ -42,7 +44,7 @@ export function useAssignmentOptions() {
   }, []);
 
   if (error) {
-    throw new Error(error);
+    throw error;
   }
 
   return { clients, templates, loading };

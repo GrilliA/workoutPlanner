@@ -4,7 +4,7 @@ import { ApiError, getCoachClient, type CoachClientDetail } from "@api";
 export function useClientDetail(athleteId: number) {
   const [detail, setDetail] = useState<CoachClientDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ApiError | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -22,7 +22,9 @@ export function useClientDetail(athleteId: number) {
             return;
           }
           setError(
-            ApiError.messageFrom(err, "Impossibile caricare il cliente"),
+            err instanceof ApiError
+              ? err
+              : new ApiError(400, "Impossibile caricare il cliente"),
           );
         }
       })
@@ -38,7 +40,7 @@ export function useClientDetail(athleteId: number) {
   }, [athleteId]);
 
   if (error) {
-    throw new Error(error);
+    throw error;
   }
 
   return { detail, setDetail, loading };

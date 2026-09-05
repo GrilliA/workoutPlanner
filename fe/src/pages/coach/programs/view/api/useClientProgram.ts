@@ -4,7 +4,7 @@ import { ApiError, getCoachClientProgram, type WorkoutDetail } from "@api";
 export function useClientProgram(athleteId: number, workoutId: number) {
   const [program, setProgram] = useState<WorkoutDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ApiError | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -21,7 +21,11 @@ export function useClientProgram(athleteId: number, workoutId: number) {
             setProgram(null);
             return;
           }
-          setError(ApiError.messageFrom(err, "Impossibile caricare la scheda"));
+          setError(
+            err instanceof ApiError
+              ? err
+              : new ApiError(400, "Impossibile caricare la scheda"),
+          );
         }
       })
       .finally(() => {
@@ -36,7 +40,7 @@ export function useClientProgram(athleteId: number, workoutId: number) {
   }, [athleteId, workoutId]);
 
   if (error) {
-    throw new Error(error);
+    throw error;
   }
 
   return { program, loading };

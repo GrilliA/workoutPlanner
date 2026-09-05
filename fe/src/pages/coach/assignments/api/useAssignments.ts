@@ -4,7 +4,7 @@ import { ApiError, getCoachAssignments, type CoachAssignment } from "@api";
 export function useAssignments() {
   const [assignments, setAssignments] = useState<CoachAssignment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ApiError | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -18,7 +18,9 @@ export function useAssignments() {
       .catch((err) => {
         if (!cancelled) {
           setError(
-            ApiError.messageFrom(err, "Impossibile caricare le assegnazioni"),
+            err instanceof ApiError
+              ? err
+              : new ApiError(400, "Impossibile caricare le assegnazioni"),
           );
         }
       })
@@ -34,7 +36,7 @@ export function useAssignments() {
   }, []);
 
   if (error) {
-    throw new Error(error);
+    throw error;
   }
 
   return { assignments, setAssignments, loading };

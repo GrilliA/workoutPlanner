@@ -1,6 +1,9 @@
 import { Component, type ReactNode } from "react";
+import { ApiError } from "@api";
 import { PageError } from "@components/pageError";
 import "./style.css";
+
+const RELOAD_MESSAGE = "Ricarica la pagina per continuare.";
 
 type ErrorBoundaryProps = {
   children: ReactNode;
@@ -22,12 +25,18 @@ export class ErrorBoundary extends Component<
 
   render() {
     if (this.state.error) {
+      const isLoadError = this.state.error instanceof ApiError;
+
       return (
         <div className="error-boundary">
           <PageError
-            title="Qualcosa è andato storto."
+            title={
+              isLoadError ? "Impossibile caricare" : "Qualcosa è andato storto."
+            }
             message={
-              this.state.error.message || "Ricarica la pagina per continuare."
+              isLoadError
+                ? ApiError.messageFrom(this.state.error, RELOAD_MESSAGE)
+                : RELOAD_MESSAGE
             }
             actionLabel="Ricarica la pagina"
             onRetry={() => window.location.reload()}
