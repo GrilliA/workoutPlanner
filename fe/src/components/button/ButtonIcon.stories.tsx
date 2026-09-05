@@ -35,8 +35,8 @@ const meta = {
     loading: false,
     disabled: false,
     "aria-label": "Avanti",
+    children: ChevronIcon,
   },
-  render: (args) => <ButtonIcon {...args}>{ChevronIcon}</ButtonIcon>,
 } satisfies Meta<typeof ButtonIcon>;
 
 export default meta;
