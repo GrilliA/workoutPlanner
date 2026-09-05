@@ -12,4 +12,5 @@ Full text: `docs/guidelines/fe.md`.
 - Component folders camelCase (`errorBoundary/ErrorBoundary.tsx`); other folders lowercase (`mappers/`); public API = `index.tsx`; `style.css` only in the `.tsx`
 - Feature GET hooks live in `api/useX.ts` (throw on page-level GET failure); mapping in `mappers/`; thin hooks; no `Component.Sub =`
 - Snapshot (e.g. catalog) = one object, not parallel `useState` fields
+- No default `useCallback`/`useMemo`: only if a `memo()` child or a hook dep array needs a stable identity
 - Requests only through `@api` + Zod; in-feature imports relative, outside via aliases

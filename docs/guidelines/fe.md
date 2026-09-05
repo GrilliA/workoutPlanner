@@ -58,6 +58,7 @@ Aliases: `@api`, `@components/*`, `@dashboard` → `pages/home/dashboard/`, `@pa
 - Separate components, not `StatCard.Skeleton = …`
 - No business logic in JSX or large `useEffect` blocks
 - Fields that always move together = **one state object**, not N `useState`s
+- No default `useCallback` / `useMemo`. Use them only when a `memo()` child or a hook dependency array needs a stable identity. A handler passed to `Button`, `onClick`, or any unmemoized component does not. Cheap derived values (query parse, small map) stay inline.
 
 ```ts
 export function mapRecentWorkouts(workouts: Workout[]): RecentWorkout[] {

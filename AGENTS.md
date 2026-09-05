@@ -29,6 +29,7 @@ cd mobile && npm run typecheck
 - Frontend web: relative `/api/...` URLs; Vite proxies them in dev
 - **Native** (`mobile/`): API base in `mobile/src/api/config.ts` (Railway prod). Auth: `X-Client: mobile` header + SecureStore. Web keeps httpOnly cookies.
 - UI copy is **Italian**
+- React: no default `useCallback` / `useMemo` — see [`docs/guidelines/fe.md`](docs/guidelines/fe.md)
 - Log / roadmap: `WORKBOOK.md`
 - Mobile onboarding: [`mobile/README.md`](mobile/README.md)
 

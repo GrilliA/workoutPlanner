@@ -21,6 +21,7 @@ Before calling the work done, verify:
 | Names | The identifier says what it does without knowing the file |
 | Call sites | Helper with 1–2 call sites and a vague name → inline or rename, not “utility for later” |
 | Snapshot | Fields that always travel together (e.g. catalog) are one object, not N `useState` / props |
+| Memo | `useCallback`/`useMemo` with no `memo()` consumer and no dep-array need → remove |
 | Exports | No unused public symbols |
 | Scope | You did not “also fix the rest” beyond what was asked |
 

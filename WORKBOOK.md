@@ -13,6 +13,7 @@ How to use:
 
 | Date | Decision | Why |
 | --- | --- | --- |
+| 2026-09-05 | `useCallback` / `useMemo` solo se un figlio `memo()` o un array di dipendenze serve identità stabile | Wrappare handler/valori di default (retry, parse query) non memoizza niente e rumoreggia i hook |
 | 2026-09-05 | D2 PageError una volta sola: GET di pagina throw → `ErrorBoundary`; sezioni toast; 404 resta not-found. Niente `PageError` nelle pagine | Dipingere l’errore in ogni pagina (come nel commit tagliato) duplica UI e confonde empty vs crash |
 | 2026-09-03 | Recipe DS su primitive flatten: `Button` / `ButtonIcon` / `Input` / `Card` compongono i rispettivi `*Base` (tag nativo); parti (`ButtonLabel`, `InputLabel`, `InputError`, …) private; niente addon Input in questo giro | Call site semplici (`<Input label error />`, `<Button>`, `<Card title meta />`); escape hatch `*Base` per casi avanzati; Storybook cataloga le recipe |
 | 2026-08-30 | Primitive DS senza React context: file fratelli (`ButtonBase`, `InputBase`, `CardBase` + pezzi), props esplicite e cascade CSS al posto di provider/registration; niente throw "must be used within Root" | Il context di Button portava in giro solo l'errore; gli id a11y di Input sono più chiari espliciti; meno indirezione, stesso catalogo Storybook |
