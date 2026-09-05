@@ -35,7 +35,7 @@ Mischiare RN dentro `fe/` mescolerebbe due toolchain. Per questo è una sibling 
 | `localStorage` / cookie | `expo-secure-store` (refresh) + memoria (access JWT) |
 | Capacitor plugins | Moduli Expo (`expo-notifications`, `expo-haptics`, …) |
 
-React (hooks, componenti funzione, stato) è lo stesso. Cambia il “DOM”.
+React (hooks, componenti funzione, stato) è lo stesso. Cambia il “DOM”. Stessa regola di `fe/`: niente `useCallback` / `useMemo` di default.
 
 ---
 

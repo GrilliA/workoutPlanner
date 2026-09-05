@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
-import { getCoachAthleteAnalytics, type StatsRange } from "@api";
+import { useEffect, useRef, useState } from "react";
+import { ApiError, getCoachAthleteAnalytics, type StatsRange } from "@api";
+import { toast } from "@components/toast";
 import { mapClientAnalytics } from "../mappers/mapClientAnalytics";
 import type { ClientAnalyticsViewModel } from "../types";
 
@@ -10,6 +11,11 @@ export function useClientAnalytics(
   const [range, setRange] = useState<StatsRange>(initialRange);
   const [data, setData] = useState<ClientAnalyticsViewModel | null>(null);
   const [loading, setLoading] = useState(true);
+  const dataRef = useRef<ClientAnalyticsViewModel | null>(null);
+
+  useEffect(() => {
+    dataRef.current = data;
+  }, [data]);
 
   useEffect(() => {
     let cancelled = false;
@@ -20,9 +26,14 @@ export function useClientAnalytics(
           setData(mapClientAnalytics(detail));
         }
       })
-      .catch(() => {
+      .catch((err) => {
         if (!cancelled) {
-          setData(null);
+          toast.error(
+            ApiError.messageFrom(err, "Impossibile caricare le analisi"),
+          );
+          if (!dataRef.current) {
+            setData(null);
+          }
         }
       })
       .finally(() => {

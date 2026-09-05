@@ -96,6 +96,8 @@ export function useWorkoutForm(
   );
   const [nameError, setNameError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [error, setError] = useState<ApiError | null>(null);
+  const [notFound, setNotFound] = useState(false);
   const isEditMode = workoutId !== undefined;
 
   const applyDraft = (draft: WorkoutDraftSeed) => {
@@ -134,8 +136,19 @@ export function useWorkoutForm(
         }
 
         applyDraft(draft);
-      } catch {
+      } catch (err) {
         if (!cancelled) {
+          if (err instanceof ApiError && err.status === 404) {
+            setNotFound(true);
+            setStatus("idle");
+            return;
+          }
+
+          setError(
+            err instanceof ApiError
+              ? err
+              : new ApiError(400, "Impossibile caricare la scheda"),
+          );
           setStatus("idle");
         }
       }
@@ -321,6 +334,10 @@ export function useWorkoutForm(
     }
   };
 
+  if (error) {
+    throw error;
+  }
+
   return {
     name,
     setName,
@@ -344,6 +361,7 @@ export function useWorkoutForm(
     isSaving: status === "saving",
     isLoading: status === "loading",
     isEditMode,
+    notFound,
   };
 }
 

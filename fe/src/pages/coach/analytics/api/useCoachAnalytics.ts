@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
-import { getCoachAnalyticsOverview, type StatsRange } from "@api";
+import { useEffect, useRef, useState } from "react";
+import { ApiError, getCoachAnalyticsOverview, type StatsRange } from "@api";
+import { toast } from "@components/toast";
 import { mapCoachAnalytics } from "../mappers/mapCoachAnalytics";
 import type { AnalyticsViewModel } from "../types";
 
@@ -7,6 +8,12 @@ export function useCoachAnalytics(initialRange: StatsRange = "4w") {
   const [range, setRange] = useState<StatsRange>(initialRange);
   const [data, setData] = useState<AnalyticsViewModel | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<ApiError | null>(null);
+  const dataRef = useRef<AnalyticsViewModel | null>(null);
+
+  useEffect(() => {
+    dataRef.current = data;
+  }, [data]);
 
   useEffect(() => {
     let cancelled = false;
@@ -17,9 +24,19 @@ export function useCoachAnalytics(initialRange: StatsRange = "4w") {
           setData(mapCoachAnalytics(overview));
         }
       })
-      .catch(() => {
+      .catch((err) => {
         if (!cancelled) {
-          setData(null);
+          if (dataRef.current) {
+            toast.error(
+              ApiError.messageFrom(err, "Impossibile caricare le analisi"),
+            );
+            return;
+          }
+          setError(
+            err instanceof ApiError
+              ? err
+              : new ApiError(400, "Impossibile caricare le analisi"),
+          );
         }
       })
       .finally(() => {
@@ -40,6 +57,10 @@ export function useCoachAnalytics(initialRange: StatsRange = "4w") {
 
     setRange(next);
   };
+
+  if (error) {
+    throw error;
+  }
 
   return { data, loading, range, setRange: handleSetRange };
 }
