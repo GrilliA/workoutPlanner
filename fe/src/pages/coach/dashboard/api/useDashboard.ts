@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
+  ApiError,
   getCoachAnalyticsOverview,
   getCoachAssignments,
   getCoachClients,
@@ -11,6 +12,8 @@ import type { DashboardViewModel } from "../types";
 export function useDashboard() {
   const [data, setData] = useState<DashboardViewModel | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [reloadToken, setReloadToken] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -26,9 +29,12 @@ export function useDashboard() {
           setData(mapDashboard(stats, clients, assignments, analytics));
         }
       })
-      .catch(() => {
+      .catch((err) => {
         if (!cancelled) {
           setData(null);
+          setError(
+            ApiError.messageFrom(err, "Impossibile caricare la dashboard"),
+          );
         }
       })
       .finally(() => {
@@ -40,7 +46,13 @@ export function useDashboard() {
     return () => {
       cancelled = true;
     };
+  }, [reloadToken]);
+
+  const retry = useCallback(() => {
+    setError(null);
+    setLoading(true);
+    setReloadToken((token) => token + 1);
   }, []);
 
-  return { data, loading };
+  return { data, loading, error, retry };
 }

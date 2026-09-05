@@ -2,7 +2,7 @@
 
 React + Vite. UI copy is **Italian**. Style: functions, immutable data, pure mappers.
 
-A feature (e.g. dashboard) lives **under its page**, not in `components/`. `components/` is shared UI primitives only (`button/`, `input/`, `card/`, `skeleton/`, `appShell/`, `pageHeader/`).
+A feature (e.g. dashboard) lives **under its page**, not in `components/`. `components/` is shared UI primitives only (`button/`, `input/`, `card/`, `skeleton/`, `appShell/`, `pageHeader/`, `pageError/`).
 
 Authenticated chrome (`AppShell`) lives once in the router (`App.tsx`), around the inner `Switch` of coach routes. Public routes (`/login`, `/register`, `/`) stay outside. A page `index.tsx` is the feature entry, not a layout wrapper.
 
@@ -11,7 +11,7 @@ pages/coach/dashboard/
 ├── index.tsx              # page entry: render the feature
 └── dashboard/             # the whole feature
     ├── api/
-    │   └── useDashboard.ts  # GET + loading; on error use empty data
+    │   └── useDashboard.ts  # GET + loading; on error expose retry for PageError
     ├── types.ts
     ├── mappers/mapDashboard.ts
     ├── dashboard/
@@ -54,7 +54,7 @@ Aliases: `@api`, `@components/*`, `@dashboard` → `pages/home/dashboard/`, `@pa
 ## React / functions
 
 - Pure mappers for data transforms (no I/O, no mutation)
-- Thin hooks live under the feature `api/` folder (`api/useClients.ts`): fetch + state; mapping lives in `mappers/`. On GET failure return empty data (array/`null`), do not block the page.
+- Thin hooks live under the feature `api/` folder (`api/useClients.ts`): fetch + state; mapping lives in `mappers/`. On GET failure expose `error` + `retry` and show `PageError`; empty data is for empty success. 404 stays a not-found empty state.
 - Separate components, not `StatCard.Skeleton = …`
 - No business logic in JSX or large `useEffect` blocks
 - Fields that always move together = **one state object**, not N `useState`s

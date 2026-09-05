@@ -2,6 +2,7 @@ import { Link, useRoute } from "wouter";
 import type { WorkoutDetail } from "@api";
 import { WEEKDAY_LABELS_SHORT } from "@pages/workouts/new/types";
 import { ExerciseRow } from "@pages/workouts/new/exerciserow";
+import { PageError } from "@components/pageError";
 import { PageHeader } from "@components/pageHeader";
 import { CoachCard, CoachCardList } from "../../coachCard";
 import { useClientProgram } from "./api/useClientProgram";
@@ -91,7 +92,7 @@ function ViewClientProgramLoaded({
   athleteId: number;
   workoutId: number;
 }) {
-  const { program, loading } = useClientProgram(athleteId, workoutId);
+  const { program, loading, error, retry } = useClientProgram(athleteId, workoutId);
   const editHref = `/clients/${athleteId}/programs/${workoutId}/edit`;
   const clientHref = `/clients/${athleteId}`;
 
@@ -117,13 +118,15 @@ function ViewClientProgramLoaded({
         </Link>
       </nav>
 
-      {loading ? <p className="coach-empty">Caricamento…</p> : null}
+      {error ? <PageError message={error} onRetry={retry} /> : null}
 
-      {!loading && !program ? (
+      {!error && loading ? <p className="coach-empty">Caricamento…</p> : null}
+
+      {!error && !loading && !program ? (
         <p className="coach-empty">Scheda non trovata</p>
       ) : null}
 
-      {program ? <ProgramDays program={program} /> : null}
+      {!error && program ? <ProgramDays program={program} /> : null}
     </div>
   );
 }

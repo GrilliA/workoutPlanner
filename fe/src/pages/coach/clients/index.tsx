@@ -1,11 +1,12 @@
 import { Link } from "wouter";
+import { PageError } from "@components/pageError";
 import { PageHeader } from "@components/pageHeader";
 import { CoachCard, CoachCardList } from "../coachCard";
 import { useClients } from "./api/useClients";
 import "../style.css";
 
 export default function CoachClientsPage() {
-  const { clients, loading } = useClients();
+  const { clients, loading, error, retry } = useClients();
 
   return (
     <div className="coach-page page-container page-container--wide">
@@ -19,15 +20,17 @@ export default function CoachClientsPage() {
         }
       />
 
-      {loading ? (
+      {error ? <PageError message={error} onRetry={retry} /> : null}
+
+      {!error && loading ? (
         <p className="coach-empty">Caricamento…</p>
       ) : null}
 
-      {!loading && clients.length === 0 ? (
+      {!error && !loading && clients.length === 0 ? (
         <p className="coach-empty">Nessun cliente ancora. Creane uno per iniziare.</p>
       ) : null}
 
-      {!loading && clients.length > 0 ? (
+      {!error && !loading && clients.length > 0 ? (
         <CoachCardList>
           {clients.map((client) => (
             <CoachCard

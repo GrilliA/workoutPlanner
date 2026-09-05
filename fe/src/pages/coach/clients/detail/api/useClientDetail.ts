@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
-import { getCoachClient, type CoachClientDetail } from "@api";
+import { useCallback, useEffect, useState } from "react";
+import { ApiError, getCoachClient, type CoachClientDetail } from "@api";
 
 export function useClientDetail(athleteId: number) {
   const [detail, setDetail] = useState<CoachClientDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [reloadToken, setReloadToken] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -14,9 +16,15 @@ export function useClientDetail(athleteId: number) {
           setDetail(data);
         }
       })
-      .catch(() => {
+      .catch((err) => {
         if (!cancelled) {
           setDetail(null);
+          if (err instanceof ApiError && err.status === 404) {
+            return;
+          }
+          setError(
+            ApiError.messageFrom(err, "Impossibile caricare il cliente"),
+          );
         }
       })
       .finally(() => {
@@ -28,7 +36,13 @@ export function useClientDetail(athleteId: number) {
     return () => {
       cancelled = true;
     };
-  }, [athleteId]);
+  }, [athleteId, reloadToken]);
 
-  return { detail, setDetail, loading };
+  const retry = useCallback(() => {
+    setError(null);
+    setLoading(true);
+    setReloadToken((token) => token + 1);
+  }, []);
+
+  return { detail, setDetail, loading, error, retry };
 }

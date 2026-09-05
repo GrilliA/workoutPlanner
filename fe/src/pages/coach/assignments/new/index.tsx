@@ -4,6 +4,7 @@ import { ApiError, createCoachAssignment } from "@api";
 import { Button } from "@components/button";
 import { Input } from "@components/input";
 import { toast } from "@components/toast";
+import { PageError } from "@components/pageError";
 import { PageHeader } from "@components/pageHeader";
 import { SchedaTxtPaste } from "@pages/workouts/new/schedatxt";
 import type { ParsedScheda } from "@pages/workouts/new/schedatxt/parseSchedaTxt";
@@ -21,7 +22,7 @@ export default function NewAssignmentPage() {
     return Number.isInteger(id) && id > 0 ? id : null;
   }, [search]);
 
-  const { clients, templates, loading } = useAssignmentOptions();
+  const { clients, templates, loading, error, retry } = useAssignmentOptions();
   const [athleteId, setAthleteId] = useState(
     presetAthleteId ? String(presetAthleteId) : "",
   );
@@ -76,9 +77,13 @@ export default function NewAssignmentPage() {
         subtitle="Da template (copia) oppure da zero sul cliente"
       />
 
-      {loading ? (
+      {error ? <PageError message={error} onRetry={retry} /> : null}
+
+      {!error && loading ? (
         <p className="coach-empty">Caricamento…</p>
-      ) : (
+      ) : null}
+
+      {!error && !loading ? (
       <form className="coach-form" onSubmit={(event) => void handleSubmit(event)}>
         <label>
           Cliente
@@ -172,7 +177,7 @@ export default function NewAssignmentPage() {
           Assegna e modifica
         </Button>
       </form>
-      )}
+      ) : null}
     </div>
   );
 }

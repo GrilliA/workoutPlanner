@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
-import { getCoachClientProgram, type WorkoutDetail } from "@api";
+import { useCallback, useEffect, useState } from "react";
+import { ApiError, getCoachClientProgram, type WorkoutDetail } from "@api";
 
 export function useClientProgram(athleteId: number, workoutId: number) {
   const [program, setProgram] = useState<WorkoutDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [reloadToken, setReloadToken] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -14,9 +16,13 @@ export function useClientProgram(athleteId: number, workoutId: number) {
           setProgram(data);
         }
       })
-      .catch(() => {
+      .catch((err) => {
         if (!cancelled) {
           setProgram(null);
+          if (err instanceof ApiError && err.status === 404) {
+            return;
+          }
+          setError(ApiError.messageFrom(err, "Impossibile caricare la scheda"));
         }
       })
       .finally(() => {
@@ -28,7 +34,13 @@ export function useClientProgram(athleteId: number, workoutId: number) {
     return () => {
       cancelled = true;
     };
-  }, [athleteId, workoutId]);
+  }, [athleteId, workoutId, reloadToken]);
 
-  return { program, loading };
+  const retry = useCallback(() => {
+    setError(null);
+    setLoading(true);
+    setReloadToken((token) => token + 1);
+  }, []);
+
+  return { program, loading, error, retry };
 }

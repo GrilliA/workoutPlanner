@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
-import { getCoachAthleteAnalytics, type StatsRange } from "@api";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ApiError, getCoachAthleteAnalytics, type StatsRange } from "@api";
+import { toast } from "@components/toast";
 import { mapClientAnalytics } from "../mappers/mapClientAnalytics";
 import type { ClientAnalyticsViewModel } from "../types";
 
@@ -10,6 +11,13 @@ export function useClientAnalytics(
   const [range, setRange] = useState<StatsRange>(initialRange);
   const [data, setData] = useState<ClientAnalyticsViewModel | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [reloadToken, setReloadToken] = useState(0);
+  const dataRef = useRef<ClientAnalyticsViewModel | null>(null);
+
+  useEffect(() => {
+    dataRef.current = data;
+  }, [data]);
 
   useEffect(() => {
     let cancelled = false;
@@ -20,8 +28,17 @@ export function useClientAnalytics(
           setData(mapClientAnalytics(detail));
         }
       })
-      .catch(() => {
+      .catch((err) => {
         if (!cancelled) {
+          const message = ApiError.messageFrom(
+            err,
+            "Impossibile caricare le analisi",
+          );
+          if (dataRef.current) {
+            toast.error(message);
+            return;
+          }
+          setError(message);
           setData(null);
         }
       })
@@ -34,7 +51,7 @@ export function useClientAnalytics(
     return () => {
       cancelled = true;
     };
-  }, [athleteId, range]);
+  }, [athleteId, range, reloadToken]);
 
   const handleSetRange = (next: StatsRange) => {
     if (next === range) {
@@ -44,5 +61,11 @@ export function useClientAnalytics(
     setRange(next);
   };
 
-  return { data, loading, range, setRange: handleSetRange };
+  const retry = useCallback(() => {
+    setError(null);
+    setLoading(true);
+    setReloadToken((token) => token + 1);
+  }, []);
+
+  return { data, loading, error, retry, range, setRange: handleSetRange };
 }

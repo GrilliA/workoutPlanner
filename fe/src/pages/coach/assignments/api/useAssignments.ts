@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
-import { getCoachAssignments, type CoachAssignment } from "@api";
+import { useCallback, useEffect, useState } from "react";
+import { ApiError, getCoachAssignments, type CoachAssignment } from "@api";
 
 export function useAssignments() {
   const [assignments, setAssignments] = useState<CoachAssignment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [reloadToken, setReloadToken] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -14,9 +16,12 @@ export function useAssignments() {
           setAssignments(data);
         }
       })
-      .catch(() => {
+      .catch((err) => {
         if (!cancelled) {
           setAssignments([]);
+          setError(
+            ApiError.messageFrom(err, "Impossibile caricare le assegnazioni"),
+          );
         }
       })
       .finally(() => {
@@ -28,7 +33,13 @@ export function useAssignments() {
     return () => {
       cancelled = true;
     };
+  }, [reloadToken]);
+
+  const retry = useCallback(() => {
+    setError(null);
+    setLoading(true);
+    setReloadToken((token) => token + 1);
   }, []);
 
-  return { assignments, setAssignments, loading };
+  return { assignments, setAssignments, loading, error, retry };
 }

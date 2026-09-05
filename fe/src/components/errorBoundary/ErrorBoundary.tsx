@@ -1,4 +1,5 @@
 import { Component, type ReactNode } from "react";
+import { PageError } from "@components/pageError";
 import "./style.css";
 
 type ErrorBoundaryProps = {
@@ -22,15 +23,13 @@ export class ErrorBoundary extends Component<
   render() {
     if (this.state.hasError) {
       return (
-        <div className="error-boundary" role="alert">
-          <p className="error-boundary__message">Qualcosa è andato storto.</p>
-          <button
-            type="button"
-            className="error-boundary__reload"
-            onClick={() => window.location.reload()}
-          >
-            Ricarica la pagina
-          </button>
+        <div className="error-boundary">
+          <PageError
+            title="Qualcosa è andato storto."
+            message="Ricarica la pagina per continuare."
+            actionLabel="Ricarica la pagina"
+            onRetry={() => window.location.reload()}
+          />
         </div>
       );
     }

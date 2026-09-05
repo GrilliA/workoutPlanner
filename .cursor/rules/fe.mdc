@@ -10,6 +10,6 @@ Full text: `docs/guidelines/fe.md`.
 
 - Features live under `pages/<route>/`, not in `components/`
 - Component folders camelCase (`errorBoundary/ErrorBoundary.tsx`); other folders lowercase (`mappers/`); public API = `index.tsx`; `style.css` only in the `.tsx`
-- Feature GET hooks live in `api/useX.ts` (empty data on error); mapping in `mappers/`; thin hooks; no `Component.Sub =`
+- Feature GET hooks live in `api/useX.ts` (PageError + retry on error); mapping in `mappers/`; thin hooks; no `Component.Sub =`
 - Snapshot (e.g. catalog) = one object, not parallel `useState` fields
 - Requests only through `@api` + Zod; in-feature imports relative, outside via aliases
