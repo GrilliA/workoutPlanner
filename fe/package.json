@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "test": "tsx --tsconfig tsconfig.app.json --test src/pages/workouts/new/schedatxt/*.test.ts"
+    "test": "tsx --tsconfig tsconfig.app.json --test src/pages/workouts/new/schedatxt/*.test.ts src/components/storybookCoverage.test.ts"
   },
   "dependencies": {
     "react": "^19.2.6",

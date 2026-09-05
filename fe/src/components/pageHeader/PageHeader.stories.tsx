@@ -5,6 +5,7 @@ import { PageHeader } from "./PageHeader";
 const meta = {
   title: "Componenti/PageHeader",
   component: PageHeader,
+  tags: ["autodocs"],
   decorators: [
     (Story) => (
       <div style={{ width: "36rem" }}>

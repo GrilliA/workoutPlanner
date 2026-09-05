@@ -52,6 +52,7 @@ How to use:
 
 ## What we did
 
+- 2026-09-05 — Catalogo Storybook FE: storie per ogni export pubblico dei componenti condivisi (`ButtonIcon`, `*Base`) e per `CoachCard`/`CoachCardList`; `PageHeader` con autodocs; test di coverage sul catalogo. Parti private (label/error/spinner) restano fuori.
 - 2026-09-03 — D1 recipe layer: `Button`/`ButtonIcon`/`Input`/`Card` sopra `*Base`; parti private; rimossi `InputField`/`InputAddon`/`InputControl`; call site migrati a recipe; Storybook aggiornato.
 - 2026-08-30 — D1 flatten primitive DS: Button/Input/Card senza React context né namespace compound (`Button.Root` → `ButtonBase` + fratelli, idem Input/Card); spinner di `loading` posseduto da `ButtonBase` (fix: prima restava invisibile ai call site); styling error/disabled/embedded via selettori discendenti CSS; `htmlFor`/`id` espliciti nei form. Netto vs HEAD dopo staging sibling ≈ −330; ButtonSpinner resta privato.
 - 2026-08-29 — D1 design system web: `tokens.css` + refactor token-only dei CSS dei componenti condivisi; Storybook 10 con storie per le 9 primitive + pagina Foundations (`npm run storybook`); `PageHeader` condiviso (legacy `coachpageheader/` eliminato) e `CoachCard`/`CoachCardList` nelle pagine coach. Nota: il commit `82c2169` cita PageError nel messaggio, ma il componente non è entrato nel tree (rimosso prima del commit); le pagine coach restano senza stato di errore dedicato.
