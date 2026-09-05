@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { getCoachInviteCode } from "@api";
+import { ApiError, getCoachInviteCode } from "@api";
 
 export function useInviteCode() {
   const [code, setCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<ApiError | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -14,9 +15,13 @@ export function useInviteCode() {
           setCode(invite.code);
         }
       })
-      .catch(() => {
+      .catch((err) => {
         if (!cancelled) {
-          setCode(null);
+          setError(
+            err instanceof ApiError
+              ? err
+              : new ApiError(400, "Impossibile caricare il codice invito"),
+          );
         }
       })
       .finally(() => {
@@ -29,6 +34,10 @@ export function useInviteCode() {
       cancelled = true;
     };
   }, []);
+
+  if (error) {
+    throw error;
+  }
 
   return { code, setCode, loading };
 }

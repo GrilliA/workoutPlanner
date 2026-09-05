@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { getCoachTemplates, type CoachTemplate } from "@api";
+import { ApiError, getCoachTemplates, type CoachTemplate } from "@api";
 
 export function useTemplates() {
   const [templates, setTemplates] = useState<CoachTemplate[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<ApiError | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -14,9 +15,13 @@ export function useTemplates() {
           setTemplates(data);
         }
       })
-      .catch(() => {
+      .catch((err) => {
         if (!cancelled) {
-          setTemplates([]);
+          setError(
+            err instanceof ApiError
+              ? err
+              : new ApiError(400, "Impossibile caricare i template"),
+          );
         }
       })
       .finally(() => {
@@ -29,6 +34,10 @@ export function useTemplates() {
       cancelled = true;
     };
   }, []);
+
+  if (error) {
+    throw error;
+  }
 
   return { templates, loading };
 }

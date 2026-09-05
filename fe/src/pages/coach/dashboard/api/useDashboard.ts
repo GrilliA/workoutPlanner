@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import {
+  ApiError,
   getCoachAnalyticsOverview,
   getCoachAssignments,
   getCoachClients,
@@ -11,6 +12,7 @@ import type { DashboardViewModel } from "../types";
 export function useDashboard() {
   const [data, setData] = useState<DashboardViewModel | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<ApiError | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -26,9 +28,13 @@ export function useDashboard() {
           setData(mapDashboard(stats, clients, assignments, analytics));
         }
       })
-      .catch(() => {
+      .catch((err) => {
         if (!cancelled) {
-          setData(null);
+          setError(
+            err instanceof ApiError
+              ? err
+              : new ApiError(400, "Impossibile caricare la dashboard"),
+          );
         }
       })
       .finally(() => {
@@ -41,6 +47,10 @@ export function useDashboard() {
       cancelled = true;
     };
   }, []);
+
+  if (error) {
+    throw error;
+  }
 
   return { data, loading };
 }

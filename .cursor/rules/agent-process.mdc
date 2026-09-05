@@ -8,4 +8,4 @@ alwaysApply: true
 Full text: `docs/guidelines/agents.md`.
 
 - New things that are not obvious (type, helper, name, folder): **2–3 options**, then wait. Do not invent and ship.
-- Finish check: names explain themselves; helper with 1–2 vague call sites → inline or rename; fields that travel together = one object, not N state/props; no dead exports; no extra scope.
+- Finish check: names explain themselves; helper with 1–2 vague call sites → inline or rename; fields that travel together = one object, not N state/props; `useCallback`/`useMemo` without a `memo()` consumer or dep array → remove; no dead exports; no extra scope.

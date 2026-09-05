@@ -45,6 +45,7 @@ export function CreateWorkout({
     isSaving,
     isLoading,
     isEditMode,
+    notFound,
   } = useWorkoutForm(workoutId, adapters);
 
   const takenWeekdays = days
@@ -56,7 +57,7 @@ export function CreateWorkout({
       <PageHeader
         mode={isEditMode ? "edit" : "create"}
         onSave={() => {
-          if (isLoading) {
+          if (isLoading || notFound) {
             return;
           }
 
@@ -68,7 +69,9 @@ export function CreateWorkout({
 
       {isLoading ? <p>Caricamento scheda…</p> : null}
 
-      {isLoading ? null : (
+      {notFound ? <p className="coach-empty">Scheda non trovata</p> : null}
+
+      {isLoading || notFound ? null : (
         <>
           {enableTxtImport ? (
             <SchedaTxtPaste

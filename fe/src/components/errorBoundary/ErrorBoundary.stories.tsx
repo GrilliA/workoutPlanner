@@ -1,9 +1,14 @@
 import type { ReactNode } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { ApiError } from "@api";
 import { ErrorBoundary } from "@components/errorBoundary";
 
 function ThrowError(): ReactNode {
-  throw new Error("Errore di esempio");
+  throw new Error("Cannot read properties of undefined");
+}
+
+function ThrowApiError(): ReactNode {
+  throw new ApiError(0, "Connessione non disponibile");
 }
 
 const meta = {
@@ -32,5 +37,11 @@ export const Default: Story = {
 export const Fallback: Story = {
   args: {
     children: <ThrowError />,
+  },
+};
+
+export const FallbackLoad: Story = {
+  args: {
+    children: <ThrowApiError />,
   },
 };

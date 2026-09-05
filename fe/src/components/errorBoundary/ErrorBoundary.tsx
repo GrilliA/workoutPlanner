@@ -1,36 +1,46 @@
 import { Component, type ReactNode } from "react";
+import { ApiError } from "@api";
+import { PageError } from "@components/pageError";
 import "./style.css";
+
+const RELOAD_MESSAGE = "Ricarica la pagina per continuare.";
 
 type ErrorBoundaryProps = {
   children: ReactNode;
 };
 
 type ErrorBoundaryState = {
-  hasError: boolean;
+  error: Error | null;
 };
 
 export class ErrorBoundary extends Component<
   ErrorBoundaryProps,
   ErrorBoundaryState
 > {
-  state: ErrorBoundaryState = { hasError: false };
+  state: ErrorBoundaryState = { error: null };
 
-  static getDerivedStateFromError(): ErrorBoundaryState {
-    return { hasError: true };
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { error };
   }
 
   render() {
-    if (this.state.hasError) {
+    if (this.state.error) {
+      const isLoadError = this.state.error instanceof ApiError;
+
       return (
-        <div className="error-boundary" role="alert">
-          <p className="error-boundary__message">Qualcosa è andato storto.</p>
-          <button
-            type="button"
-            className="error-boundary__reload"
-            onClick={() => window.location.reload()}
-          >
-            Ricarica la pagina
-          </button>
+        <div className="error-boundary">
+          <PageError
+            title={
+              isLoadError ? "Impossibile caricare" : "Qualcosa è andato storto."
+            }
+            message={
+              isLoadError
+                ? ApiError.messageFrom(this.state.error, RELOAD_MESSAGE)
+                : RELOAD_MESSAGE
+            }
+            actionLabel="Ricarica la pagina"
+            onRetry={() => window.location.reload()}
+          />
         </div>
       );
     }
