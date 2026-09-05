@@ -54,6 +54,7 @@ How to use:
 
 ## What we did
 
+- 2026-09-05 — Catalogo Storybook FE: storie per ogni export pubblico dei componenti condivisi (`ButtonIcon`, `*Base`) e per `CoachCard`/`CoachCardList`; `PageHeader` con autodocs; test di coverage sul catalogo. Parti private (label/error/spinner) restano fuori.
 - 2026-09-05 — D2 PageError: primitive + Storybook; un solo call site di produzione (`ErrorBoundary`). GET di pagina throw `ApiError` (builder incluso); il boundary mostra il messaggio solo per `ApiError`. Analytics di sezione toast; 404 not-found. Niente `PageError`/`useCallback` retry nelle pagine.
 - 2026-09-03 — D1 recipe layer: `Button`/`ButtonIcon`/`Input`/`Card` sopra `*Base`; parti private; rimossi `InputField`/`InputAddon`/`InputControl`; call site migrati a recipe; Storybook aggiornato.
 - 2026-08-30 — D1 flatten primitive DS: Button/Input/Card senza React context né namespace compound (`Button.Root` → `ButtonBase` + fratelli, idem Input/Card); spinner di `loading` posseduto da `ButtonBase` (fix: prima restava invisibile ai call site); styling error/disabled/embedded via selettori discendenti CSS; `htmlFor`/`id` espliciti nei form. Netto vs HEAD dopo staging sibling ≈ −330; ButtonSpinner resta privato.

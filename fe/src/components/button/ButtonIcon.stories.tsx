@@ -1,9 +1,21 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Button } from "@components/button";
+import { ButtonIcon } from "@components/button";
+
+const ChevronIcon = (
+  <svg viewBox="0 0 16 16" fill="none">
+    <path
+      d="M6 3.5 10.5 8 6 12.5"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
 
 const meta = {
-  title: "Componenti/Button",
-  component: Button,
+  title: "Componenti/ButtonIcon",
+  component: ButtonIcon,
   tags: ["autodocs"],
   argTypes: {
     variant: {
@@ -22,19 +34,16 @@ const meta = {
     size: "md",
     loading: false,
     disabled: false,
+    "aria-label": "Avanti",
+    children: ChevronIcon,
   },
-  render: (args) => <Button {...args}>Continua</Button>,
-} satisfies Meta<typeof Button>;
+} satisfies Meta<typeof ButtonIcon>;
 
 export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-export const Primary: Story = {
-  args: {
-    variant: "primary",
-  },
-};
+export const Primary: Story = {};
 
 export const Secondary: Story = {
   args: {
@@ -46,15 +55,20 @@ export const Ghost: Story = {
   args: {
     variant: "ghost",
   },
-  render: (args) => <Button {...args}>Annulla</Button>,
 };
 
 export const Sizes: Story = {
   render: () => (
     <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-      <Button size="sm">Piccolo</Button>
-      <Button size="md">Medio</Button>
-      <Button size="lg">Grande</Button>
+      <ButtonIcon size="sm" aria-label="Avanti piccolo">
+        {ChevronIcon}
+      </ButtonIcon>
+      <ButtonIcon size="md" aria-label="Avanti medio">
+        {ChevronIcon}
+      </ButtonIcon>
+      <ButtonIcon size="lg" aria-label="Avanti grande">
+        {ChevronIcon}
+      </ButtonIcon>
     </div>
   ),
 };
@@ -63,7 +77,6 @@ export const Loading: Story = {
   args: {
     loading: true,
   },
-  render: (args) => <Button {...args}>Caricamento…</Button>,
 };
 
 export const Disabled: Story = {
