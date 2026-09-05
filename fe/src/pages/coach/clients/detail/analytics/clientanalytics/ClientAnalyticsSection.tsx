@@ -1,4 +1,3 @@
-import { PageError } from "@components/pageError";
 import { PeriodFilter } from "../../../../analytics/periodfilter";
 import { WeeklyChart } from "../../../../analytics/weeklychart";
 import { useClientAnalytics } from "../api/useClientAnalytics";
@@ -10,7 +9,7 @@ type ClientAnalyticsSectionProps = {
 };
 
 export function ClientAnalyticsSection({ athleteId }: ClientAnalyticsSectionProps) {
-  const { range, setRange, data, loading, error, retry } = useClientAnalytics(athleteId, "4w");
+  const { range, setRange, data, loading } = useClientAnalytics(athleteId, "4w");
 
   return (
     <section className="client-analytics coach-section">
@@ -23,13 +22,11 @@ export function ClientAnalyticsSection({ athleteId }: ClientAnalyticsSectionProp
         )}
       </div>
 
-      {error ? <PageError message={error} onRetry={retry} /> : null}
+      <PeriodFilter value={range} onChange={setRange} />
 
-      {!error ? <PeriodFilter value={range} onChange={setRange} /> : null}
+      {loading ? <ClientAnalyticsSkeleton /> : null}
 
-      {!error && loading ? <ClientAnalyticsSkeleton /> : null}
-
-      {!error && !loading && data ? (
+      {!loading && data ? (
         <>
           <p className="client-analytics__insight">{data.insight}</p>
 

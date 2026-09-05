@@ -13,7 +13,7 @@ How to use:
 
 | Date | Decision | Why |
 | --- | --- | --- |
-| 2026-09-05 | D2 PageError sulle pagine coach: GET falliti mostrano `PageError` + Riprova; empty data resta per successo vuoto; 404 resta not-found | Un fallimento rete non deve sembrare “nessun cliente”; ErrorBoundary riusa la stessa primitive |
+| 2026-09-05 | D2 PageError una volta sola: GET di pagina throw → `ErrorBoundary`; sezioni toast; 404 resta not-found. Niente `PageError` nelle pagine | Dipingere l’errore in ogni pagina (come nel commit tagliato) duplica UI e confonde empty vs crash |
 | 2026-09-03 | Recipe DS su primitive flatten: `Button` / `ButtonIcon` / `Input` / `Card` compongono i rispettivi `*Base` (tag nativo); parti (`ButtonLabel`, `InputLabel`, `InputError`, …) private; niente addon Input in questo giro | Call site semplici (`<Input label error />`, `<Button>`, `<Card title meta />`); escape hatch `*Base` per casi avanzati; Storybook cataloga le recipe |
 | 2026-08-30 | Primitive DS senza React context: file fratelli (`ButtonBase`, `InputBase`, `CardBase` + pezzi), props esplicite e cascade CSS al posto di provider/registration; niente throw "must be used within Root" | Il context di Button portava in giro solo l'errore; gli id a11y di Input sono più chiari espliciti; meno indirezione, stesso catalogo Storybook |
 | 2026-08-29 | D1 design system web: single token source `fe/src/styles/tokens.css` (color/space/radius/type/shadow/motion/z); Storybook 10 (`@storybook/react-vite` + addon-a11y) as the living catalog inside `fe/`; `PageHeader` promoted to `components/`, `CoachCard` as coach-domain pattern in `pages/coach/coachCard/` | Semantic tokens à la Primer/Polaris without a separate ui package; catalog next to components keeps the DS honest; no Style Dictionary / token sharing with RN until mobile actually needs it |
@@ -53,7 +53,7 @@ How to use:
 
 ## What we did
 
-- 2026-09-05 — D2 PageError: primitive condivisa (`pageError/`) con Storybook; ErrorBoundary la riusa; hook GET coach espongono `error` + `retry`; 404 resta empty not-found; refetch analytics con dati già visibili resta toast, senza sostituire la pagina.
+- 2026-09-05 — D2 PageError: primitive + Storybook; un solo call site di produzione (`ErrorBoundary`). GET di pagina throw; analytics di sezione toast; 404 not-found. Niente `PageError`/`useCallback` retry nelle pagine.
 - 2026-09-03 — D1 recipe layer: `Button`/`ButtonIcon`/`Input`/`Card` sopra `*Base`; parti private; rimossi `InputField`/`InputAddon`/`InputControl`; call site migrati a recipe; Storybook aggiornato.
 - 2026-08-30 — D1 flatten primitive DS: Button/Input/Card senza React context né namespace compound (`Button.Root` → `ButtonBase` + fratelli, idem Input/Card); spinner di `loading` posseduto da `ButtonBase` (fix: prima restava invisibile ai call site); styling error/disabled/embedded via selettori discendenti CSS; `htmlFor`/`id` espliciti nei form. Netto vs HEAD dopo staging sibling ≈ −330; ButtonSpinner resta privato.
 - 2026-08-29 — D1 design system web: `tokens.css` + refactor token-only dei CSS dei componenti condivisi; Storybook 10 con storie per le 9 primitive + pagina Foundations (`npm run storybook`); `PageHeader` condiviso (legacy `coachpageheader/` eliminato) e `CoachCard`/`CoachCardList` nelle pagine coach. Nota: il commit `82c2169` cita PageError nel messaggio, ma il componente non è entrato nel tree (rimosso prima del commit); le pagine coach restano senza stato di errore dedicato.

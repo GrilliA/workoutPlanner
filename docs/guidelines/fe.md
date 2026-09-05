@@ -11,7 +11,7 @@ pages/coach/dashboard/
 ├── index.tsx              # page entry: render the feature
 └── dashboard/             # the whole feature
     ├── api/
-    │   └── useDashboard.ts  # GET + loading; on error expose retry for PageError
+    │   └── useDashboard.ts  # GET + loading; on failure throw to ErrorBoundary
     ├── types.ts
     ├── mappers/mapDashboard.ts
     ├── dashboard/
@@ -54,7 +54,7 @@ Aliases: `@api`, `@components/*`, `@dashboard` → `pages/home/dashboard/`, `@pa
 ## React / functions
 
 - Pure mappers for data transforms (no I/O, no mutation)
-- Thin hooks live under the feature `api/` folder (`api/useClients.ts`): fetch + state; mapping lives in `mappers/`. On GET failure expose `error` + `retry` and show `PageError`; empty data is for empty success. 404 stays a not-found empty state.
+- Thin hooks live under the feature `api/` folder (`api/useClients.ts`): fetch + state; mapping lives in `mappers/`. Page-level GET failure throws so `ErrorBoundary` shows `PageError` once; empty data is for empty success; 404 stays a not-found empty state. Section fetches toast and do not take down the page.
 - Separate components, not `StatCard.Skeleton = …`
 - No business logic in JSX or large `useEffect` blocks
 - Fields that always move together = **one state object**, not N `useState`s

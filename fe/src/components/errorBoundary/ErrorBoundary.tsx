@@ -7,26 +7,28 @@ type ErrorBoundaryProps = {
 };
 
 type ErrorBoundaryState = {
-  hasError: boolean;
+  error: Error | null;
 };
 
 export class ErrorBoundary extends Component<
   ErrorBoundaryProps,
   ErrorBoundaryState
 > {
-  state: ErrorBoundaryState = { hasError: false };
+  state: ErrorBoundaryState = { error: null };
 
-  static getDerivedStateFromError(): ErrorBoundaryState {
-    return { hasError: true };
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { error };
   }
 
   render() {
-    if (this.state.hasError) {
+    if (this.state.error) {
       return (
         <div className="error-boundary">
           <PageError
             title="Qualcosa è andato storto."
-            message="Ricarica la pagina per continuare."
+            message={
+              this.state.error.message || "Ricarica la pagina per continuare."
+            }
             actionLabel="Ricarica la pagina"
             onRetry={() => window.location.reload()}
           />

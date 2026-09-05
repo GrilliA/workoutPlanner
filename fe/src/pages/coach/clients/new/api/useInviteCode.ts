@@ -1,11 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { ApiError, getCoachInviteCode } from "@api";
 
 export function useInviteCode() {
   const [code, setCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [reloadToken, setReloadToken] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -18,7 +17,6 @@ export function useInviteCode() {
       })
       .catch((err) => {
         if (!cancelled) {
-          setCode(null);
           setError(
             ApiError.messageFrom(err, "Impossibile caricare il codice invito"),
           );
@@ -33,13 +31,11 @@ export function useInviteCode() {
     return () => {
       cancelled = true;
     };
-  }, [reloadToken]);
-
-  const retry = useCallback(() => {
-    setError(null);
-    setLoading(true);
-    setReloadToken((token) => token + 1);
   }, []);
 
-  return { code, setCode, loading, error, retry };
+  if (error) {
+    throw new Error(error);
+  }
+
+  return { code, setCode, loading };
 }

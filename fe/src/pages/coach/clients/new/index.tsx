@@ -2,14 +2,13 @@ import { useState } from "react";
 import { ApiError, rotateCoachInviteCode } from "@api";
 import { Button } from "@components/button";
 import { toast } from "@components/toast";
-import { PageError } from "@components/pageError";
 import { PageHeader } from "@components/pageHeader";
 import { CoachCard } from "../../coachCard";
 import { useInviteCode } from "./api/useInviteCode";
 import "../../style.css";
 
 export default function InviteClientPage() {
-  const { code, setCode, loading, error, retry } = useInviteCode();
+  const { code, setCode, loading } = useInviteCode();
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -47,17 +46,15 @@ export default function InviteClientPage() {
         subtitle="Condividi il codice: l'atleta lo inserisce nell'app dopo la registrazione"
       />
 
-      {error ? <PageError message={error} onRetry={retry} /> : null}
-
-      {!error && loading ? (
+      {loading ? (
         <p className="coach-empty">Caricamento…</p>
       ) : null}
 
-      {!error && !loading && !code ? (
+      {!loading && !code ? (
         <p className="coach-empty">Codice non disponibile</p>
       ) : null}
 
-      {!error && !loading && code ? (
+      {!loading && code ? (
         <section className="coach-section">
           <p className="coach-empty" style={{ marginBottom: "1rem" }}>
             L&apos;atleta crea da solo l&apos;account su mobile, poi collega il tuo codice

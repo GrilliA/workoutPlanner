@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ApiError,
   getCoachClients,
@@ -12,7 +12,6 @@ export function useAssignmentOptions() {
   const [templates, setTemplates] = useState<CoachTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [reloadToken, setReloadToken] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -26,8 +25,6 @@ export function useAssignmentOptions() {
       })
       .catch((err) => {
         if (!cancelled) {
-          setClients([]);
-          setTemplates([]);
           setError(
             ApiError.messageFrom(err, "Impossibile caricare i dati di assegnazione"),
           );
@@ -42,13 +39,11 @@ export function useAssignmentOptions() {
     return () => {
       cancelled = true;
     };
-  }, [reloadToken]);
-
-  const retry = useCallback(() => {
-    setError(null);
-    setLoading(true);
-    setReloadToken((token) => token + 1);
   }, []);
 
-  return { clients, templates, loading, error, retry };
+  if (error) {
+    throw new Error(error);
+  }
+
+  return { clients, templates, loading };
 }

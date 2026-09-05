@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ApiError, getCoachAthleteAnalytics, type StatsRange } from "@api";
 import { toast } from "@components/toast";
 import { mapClientAnalytics } from "../mappers/mapClientAnalytics";
@@ -11,8 +11,6 @@ export function useClientAnalytics(
   const [range, setRange] = useState<StatsRange>(initialRange);
   const [data, setData] = useState<ClientAnalyticsViewModel | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [reloadToken, setReloadToken] = useState(0);
   const dataRef = useRef<ClientAnalyticsViewModel | null>(null);
 
   useEffect(() => {
@@ -30,16 +28,12 @@ export function useClientAnalytics(
       })
       .catch((err) => {
         if (!cancelled) {
-          const message = ApiError.messageFrom(
-            err,
-            "Impossibile caricare le analisi",
+          toast.error(
+            ApiError.messageFrom(err, "Impossibile caricare le analisi"),
           );
-          if (dataRef.current) {
-            toast.error(message);
-            return;
+          if (!dataRef.current) {
+            setData(null);
           }
-          setError(message);
-          setData(null);
         }
       })
       .finally(() => {
@@ -51,7 +45,7 @@ export function useClientAnalytics(
     return () => {
       cancelled = true;
     };
-  }, [athleteId, range, reloadToken]);
+  }, [athleteId, range]);
 
   const handleSetRange = (next: StatsRange) => {
     if (next === range) {
@@ -61,11 +55,5 @@ export function useClientAnalytics(
     setRange(next);
   };
 
-  const retry = useCallback(() => {
-    setError(null);
-    setLoading(true);
-    setReloadToken((token) => token + 1);
-  }, []);
-
-  return { data, loading, error, retry, range, setRange: handleSetRange };
+  return { data, loading, range, setRange: handleSetRange };
 }

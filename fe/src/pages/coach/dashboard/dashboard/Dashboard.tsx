@@ -1,5 +1,4 @@
 import { Link } from "wouter";
-import { PageError } from "@components/pageError";
 import { PageHeader } from "@components/pageHeader";
 import { AthletesTable } from "../athletestable";
 import { KpiGrid } from "../kpigrid";
@@ -10,7 +9,7 @@ import "../../style.css";
 import "./style.css";
 
 export function Dashboard() {
-  const { data, loading, error, retry } = useDashboard();
+  const { data, loading } = useDashboard();
 
   const headerAction = (
     <div className="coach-dashboard__actions">
@@ -34,13 +33,11 @@ export function Dashboard() {
         action={headerAction}
       />
 
-      {error ? <PageError message={error} onRetry={retry} /> : null}
-
-      {!error && loading ? (
+      {loading ? (
         <p className="coach-empty">Caricamento…</p>
       ) : null}
 
-      {!error && !loading && (!data || data.isEmpty) ? (
+      {!loading && (!data || data.isEmpty) ? (
         <section className="coach-dashboard__empty">
           <h2>Invita il primo cliente</h2>
           <p className="coach-empty">
@@ -60,7 +57,7 @@ export function Dashboard() {
         </section>
       ) : null}
 
-      {!error && !loading && data && !data.isEmpty ? (
+      {!loading && data && !data.isEmpty ? (
         <>
           <KpiGrid items={data.kpis} />
           <div className="coach-dashboard__main">

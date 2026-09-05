@@ -1,4 +1,3 @@
-import { PageError } from "@components/pageError";
 import { PageHeader } from "@components/pageHeader";
 import { AlertsTable } from "../alertstable";
 import { AnalyticsSkeleton } from "../analyticsskeleton";
@@ -10,7 +9,7 @@ import "../../style.css";
 import "./style.css";
 
 export function AnalyticsPage() {
-  const { data, loading, error, retry, range, setRange } = useCoachAnalytics("4w");
+  const { data, loading, range, setRange } = useCoachAnalytics("4w");
 
   return (
     <div className="coach-page page-container page-container--wide analytics-page">
@@ -23,13 +22,11 @@ export function AnalyticsPage() {
         }
       />
 
-      {error ? <PageError message={error} onRetry={retry} /> : null}
+      <PeriodFilter value={range} onChange={setRange} />
 
-      {!error ? <PeriodFilter value={range} onChange={setRange} /> : null}
+      {loading ? <AnalyticsSkeleton /> : null}
 
-      {!error && loading ? <AnalyticsSkeleton /> : null}
-
-      {!error && !loading && (!data || data.isEmpty) ? (
+      {!loading && (!data || data.isEmpty) ? (
         <section className="analytics-page__empty">
           <h2>Nessun cliente collegato</h2>
           <p className="coach-empty">
@@ -39,7 +36,7 @@ export function AnalyticsPage() {
         </section>
       ) : null}
 
-      {!error && !loading && data && !data.isEmpty ? (
+      {!loading && data && !data.isEmpty ? (
         <>
           <KpiGrid items={data.kpis} />
           <WeeklyChart model={data.weeklyChart} />

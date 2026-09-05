@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ApiError, getCoachAnalyticsOverview, type StatsRange } from "@api";
 import { toast } from "@components/toast";
 import { mapCoachAnalytics } from "../mappers/mapCoachAnalytics";
@@ -9,7 +9,6 @@ export function useCoachAnalytics(initialRange: StatsRange = "4w") {
   const [data, setData] = useState<AnalyticsViewModel | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [reloadToken, setReloadToken] = useState(0);
   const dataRef = useRef<AnalyticsViewModel | null>(null);
 
   useEffect(() => {
@@ -36,7 +35,6 @@ export function useCoachAnalytics(initialRange: StatsRange = "4w") {
             return;
           }
           setError(message);
-          setData(null);
         }
       })
       .finally(() => {
@@ -48,7 +46,7 @@ export function useCoachAnalytics(initialRange: StatsRange = "4w") {
     return () => {
       cancelled = true;
     };
-  }, [range, reloadToken]);
+  }, [range]);
 
   const handleSetRange = (next: StatsRange) => {
     if (next === range) {
@@ -58,11 +56,9 @@ export function useCoachAnalytics(initialRange: StatsRange = "4w") {
     setRange(next);
   };
 
-  const retry = useCallback(() => {
-    setError(null);
-    setLoading(true);
-    setReloadToken((token) => token + 1);
-  }, []);
+  if (error) {
+    throw new Error(error);
+  }
 
-  return { data, loading, error, retry, range, setRange: handleSetRange };
+  return { data, loading, range, setRange: handleSetRange };
 }

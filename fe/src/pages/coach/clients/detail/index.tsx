@@ -11,7 +11,6 @@ import {
 import { Button } from "@components/button";
 import { Input } from "@components/input";
 import { toast } from "@components/toast";
-import { PageError } from "@components/pageError";
 import { PageHeader } from "@components/pageHeader";
 import { CoachCard, CoachCardList } from "../../coachCard";
 import { ClientAnalyticsSection } from "./analytics/clientanalytics";
@@ -61,7 +60,7 @@ export default function ClientDetailPage() {
 
 function ClientDetailLoaded({ athleteId }: { athleteId: number }) {
   const [, setLocation] = useLocation();
-  const { detail, setDetail, loading, error, retry } = useClientDetail(athleteId);
+  const { detail, setDetail, loading } = useClientDetail(athleteId);
   const [drafts, setDrafts] = useState<Record<number, AssignmentDraft>>({});
   const [password, setPassword] = useState("");
   const [resettingPassword, setResettingPassword] = useState(false);
@@ -185,17 +184,15 @@ function ClientDetailLoaded({ athleteId }: { athleteId: number }) {
         }
       />
 
-      {error ? <PageError message={error} onRetry={retry} /> : null}
-
-      {!error && loading ? (
+      {loading ? (
         <p className="coach-empty">Caricamento…</p>
       ) : null}
 
-      {!error && !loading && !client ? (
+      {!loading && !client ? (
         <p className="coach-empty">Cliente non trovato</p>
       ) : null}
 
-      {!error && !loading && client ? (
+      {!loading && client ? (
         <>
           <ClientAnalyticsSection athleteId={athleteId} />
 

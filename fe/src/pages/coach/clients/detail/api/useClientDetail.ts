@@ -1,11 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { ApiError, getCoachClient, type CoachClientDetail } from "@api";
 
 export function useClientDetail(athleteId: number) {
   const [detail, setDetail] = useState<CoachClientDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [reloadToken, setReloadToken] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -18,8 +17,8 @@ export function useClientDetail(athleteId: number) {
       })
       .catch((err) => {
         if (!cancelled) {
-          setDetail(null);
           if (err instanceof ApiError && err.status === 404) {
+            setDetail(null);
             return;
           }
           setError(
@@ -36,13 +35,11 @@ export function useClientDetail(athleteId: number) {
     return () => {
       cancelled = true;
     };
-  }, [athleteId, reloadToken]);
+  }, [athleteId]);
 
-  const retry = useCallback(() => {
-    setError(null);
-    setLoading(true);
-    setReloadToken((token) => token + 1);
-  }, []);
+  if (error) {
+    throw new Error(error);
+  }
 
-  return { detail, setDetail, loading, error, retry };
+  return { detail, setDetail, loading };
 }

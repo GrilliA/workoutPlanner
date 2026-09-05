@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Link } from "wouter";
 import { ApiError, revokeCoachAssignment, type CoachAssignment } from "@api";
 import { toast } from "@components/toast";
-import { PageError } from "@components/pageError";
 import { PageHeader } from "@components/pageHeader";
 import { CoachCard, CoachCardList } from "../coachCard";
 import { useAssignments } from "./api/useAssignments";
@@ -16,7 +15,7 @@ const statusLabel: Record<CoachAssignment["status"], string> = {
 };
 
 export default function AssignmentsPage() {
-  const { assignments, setAssignments, loading, error, retry } = useAssignments();
+  const { assignments, setAssignments, loading } = useAssignments();
   const [revokingId, setRevokingId] = useState<number | null>(null);
 
   const handleRevoke = async (id: number) => {
@@ -47,17 +46,15 @@ export default function AssignmentsPage() {
         }
       />
 
-      {error ? <PageError message={error} onRetry={retry} /> : null}
-
-      {!error && loading ? (
+      {loading ? (
         <p className="coach-empty">Caricamento…</p>
       ) : null}
 
-      {!error && !loading && assignments.length === 0 ? (
+      {!loading && assignments.length === 0 ? (
         <p className="coach-empty">Nessuna assegnazione</p>
       ) : null}
 
-      {!error && !loading && assignments.length > 0 ? (
+      {!loading && assignments.length > 0 ? (
         <CoachCardList>
           {assignments.map((assignment) => (
             <CoachCard key={assignment.id}>
