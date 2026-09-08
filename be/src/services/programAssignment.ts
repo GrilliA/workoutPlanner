@@ -11,6 +11,7 @@ import {
 import {
   computeAssignmentStatus,
   isActiveForStatus,
+  planAssignmentCutover,
   todayInRome,
   type AssignmentDatesInput,
 } from "./assignmentStatus";
@@ -29,10 +30,11 @@ const setWorkoutActive = async (
   await tx.update(workouts).set({ isActive }).where(eq(workouts.id, workoutId));
 };
 
-const revokeOtherActiveAssignments = async (
+const applyAssignmentCutover = async (
   tx: Tx,
   coachId: number,
   athleteId: number,
+  incoming: AssignmentDatesInput,
   keepWorkoutId?: number,
 ) => {
   const rows = await tx
@@ -42,7 +44,7 @@ const revokeOtherActiveAssignments = async (
     .for("update");
 
   const today = todayInRome();
-  const toRevoke = rows.filter((row) => {
+  const candidates = rows.filter((row) => {
     if (row.coachId !== coachId) {
       return false;
     }
@@ -55,26 +57,49 @@ const revokeOtherActiveAssignments = async (
       return false;
     }
 
-    const status = computeAssignmentStatus(row.startsAt, row.expiresAt, today);
-    return status === "active" || status === "scheduled";
+    return true;
   });
 
-  if (toRevoke.length === 0) {
-    return;
+  const plan = planAssignmentCutover({
+    rows: candidates.map((row) => ({
+      id: row.id,
+      startsAt: row.startsAt,
+      expiresAt: row.expiresAt,
+    })),
+    incoming,
+    today,
+  });
+
+  const now = new Date();
+  const byId = new Map(candidates.map((row) => [row.id, row]));
+
+  if (plan.revokeIds.length > 0) {
+    await tx
+      .update(programAssignments)
+      .set({ status: "revoked", updatedAt: now })
+      .where(inArray(programAssignments.id, plan.revokeIds));
+
+    for (const id of plan.revokeIds) {
+      const row = byId.get(id);
+      if (row) {
+        await setWorkoutActive(tx, row.workoutId, false);
+      }
+    }
   }
 
-  await tx
-    .update(programAssignments)
-    .set({ status: "revoked", updatedAt: new Date() })
-    .where(
-      inArray(
-        programAssignments.id,
-        toRevoke.map((row) => row.id),
-      ),
-    );
+  for (const item of plan.truncate) {
+    const row = byId.get(item.id);
+    if (!row) {
+      continue;
+    }
 
-  for (const row of toRevoke) {
-    await setWorkoutActive(tx, row.workoutId, false);
+    const status = computeAssignmentStatus(row.startsAt, item.expiresAt, today);
+    await tx
+      .update(programAssignments)
+      .set({ expiresAt: item.expiresAt, status, updatedAt: now })
+      .where(eq(programAssignments.id, item.id));
+
+    await setWorkoutActive(tx, row.workoutId, isActiveForStatus(status));
   }
 };
 
@@ -263,7 +288,7 @@ export const assignFromTemplate = async (
       return { ok: false, status: 404, error: "Template not found" };
     }
 
-    await revokeOtherActiveAssignments(tx, coachId, athleteId, workout.id);
+    await applyAssignmentCutover(tx, coachId, athleteId, dates, workout.id);
 
     const [assignment] = await tx
       .insert(programAssignments)
@@ -309,7 +334,7 @@ export const assignBlankProgram = async (
       sortOrder: 0,
     });
 
-    await revokeOtherActiveAssignments(tx, coachId, athleteId, workout.id);
+    await applyAssignmentCutover(tx, coachId, athleteId, dates, workout.id);
 
     const [assignment] = await tx
       .insert(programAssignments)
@@ -354,7 +379,7 @@ export const assignFromProgramInput = async (
       return { ok: false, status: saved.status, error: saved.error };
     }
 
-    await revokeOtherActiveAssignments(tx, coachId, athleteId, saved.workout.id);
+    await applyAssignmentCutover(tx, coachId, athleteId, dates, saved.workout.id);
 
     const [assignment] = await tx
       .insert(programAssignments)
@@ -423,12 +448,7 @@ export const updateAssignmentDates = async (
       .returning();
 
     await setWorkoutActive(tx, row.workoutId, isActiveForStatus(status));
-    await revokeOtherActiveAssignments(
-      tx,
-      coachId,
-      row.athleteId,
-      row.workoutId,
-    );
+    await applyAssignmentCutover(tx, coachId, row.athleteId, dates, row.workoutId);
 
     return updated;
   });
