@@ -13,6 +13,7 @@ How to use:
 
 | Date | Decision | Why |
 | --- | --- | --- |
+| 2026-09-08 | L'API resta un **contratto in inglese**: la copy italiana degli errori vive nel client. Sul mobile la mappa sta in `ApiError.messageFrom(err, fallback)`, stesso nome dello statico web | Lo stesso backend serve pannello coach web e app atleta; localizzare nell'API significherebbe tradurre tutto e legare il contratto a una lingua |
 | 2026-09-08 | Assegnare un ciclo che parte in futuro **non revoca** più quello attivo: la scheda in corso viene troncata al giorno prima dell'inizio del nuovo (`planAssignmentCutover`), la nuova subentra da sola. Sostituzione immediata (`startsAt <= oggi`) continua a revocare; una sola scheda in coda | Smoke del loop: pianificare il ciclo successivo revocava l'attiva, lasciando il cliente pagante senza scheda (`409 Workout is inactive`) fino alla data di inizio |
 | 2026-09-08 | Roadmap 90g = P0–P3 sul loop a pagamento (first-run + smoke, alert actionable, revisioni scheda, nota sessione). NON-goals: DS/Storybook come obiettivo prodotto, nutrition, video library, white-label, multi-coach, billing UI, `packages/shared` big-bang | Ship the paid loop, not feature parity. Invite/assign/log e alert analytics **già esistono**; i gap sono first-run, feed activity, smoke CI, CTA sugli alert, edit mid-ciclo sicuro |
 | 2026-09-08 | P2 edit mid-ciclo = **revisioni scheda** (non freeze-delete, non snapshot JSON sessione). Freeze v1, clone v2 (`copyWorkoutTree`), stesso assignment (retarget `workoutId`, no revoke), cutover immediato, lineage esercizio copiato nel clone; PUT in-place vietato se il programma ha sessioni | Oggi PUT sovrascrive il documento da cui recap/analytics leggono; delete esercizio → CASCADE sui `logged_sets`. Recap vecchio rilegge v1 congelato; progressioni restano una curva |
@@ -58,6 +59,7 @@ How to use:
 
 ## What we did
 
+- 2026-09-08 — P0a errori del loop in italiano: `ApiError.messageFrom` sul mobile traduce le 8 stringhe backend che l'atleta incontra fra redeem e avvio sessione, più rete assente / 401 / 5xx. Convertiti i soli call site del loop (redeem, unlink, avvio sessione, schede); gli altri ~15 restano da fare.
 - 2026-09-08 — P0c onboarding coach mobile: `resolveNoProgramReason` separa `no-coach` / `coach-pending` / `coach-program-inactive`, la card vuota della Home cambia copy e bottoni di conseguenza, CTA "COLLEGA COACH" su Home e Schede. La copy di `coach-program-inactive` non può citare le date: nessuna API le espone per un'assegnazione non attiva.
 - 2026-09-08 — P0b cutover assegnazioni: `planAssignmentCutover` + `dayBefore` in `assignmentStatus.ts`, `revokeOtherActiveAssignments` → `applyAssignmentCutover` (4 call site passano le date in arrivo). Smoke baseline del loop eseguito su DB reale: invite → redeem → assign → sessione → visibilità coach funziona; trovati errori invite in inglese, dashboard senza activity, `notes` mai scritta.
 - 2026-09-08 — Lock roadmap loop vs codice (traccia-feature-plan v1): P0 = first-run + activity dashboard + smoke CI (invite/assign/log già cablati); P1 = CTA su `inactive` / `program_expiring` già in analytics, non un motore nuovo; P2 = revisioni; P3 = `workout_sessions.notes` (colonna già lì). Corretti todo stale: link forgot-password **assente** in login; pagine web atleta già fuori da `App.tsx`.
@@ -198,7 +200,7 @@ Order: P0 → P0.5 → P1 → P2 → P3. Igiene non blocca P0. Invite / assign /
 
 - [x] Baseline: smoke **manuale** del loop attuale — eseguito 2026-09-08 su DB reale. Il loop gira end-to-end; rotture trovate: assegnare un ciclo futuro revocava l'attiva (**risolto**, P0b), errori invite in inglese verso l'atleta, dashboard senza activity, redeem solo in Impostazioni.
 - [ ] First-run coach: empty states + CTA invite/assign dopo signup; copy clienti non deve puntare a create 410.
-- [ ] Invite → redeem visibile: **fatto** (P0c, CTA "COLLEGA COACH" su Home e Schede → sezione COACH di Impostazioni; Home distingue nessun coach / coach senza scheda / scheda coach non attiva). Restano: **errori in italiano** (P0a) e hardening invalido / doppio / già collegato. Niente expiry codice (solo rotate) in questo giro.
+- [ ] Invite → redeem visibile: **fatto** (P0c, CTA "COLLEGA COACH" su Home e Schede → sezione COACH di Impostazioni; Home distingue nessun coach / coach senza scheda / scheda coach non attiva). Errori in italiano: **fatto** (P0a). Resta l'hardening invalido / doppio / già collegato. Niente expiry codice (solo rotate) in questo giro.
 - [ ] Activity feed sulla dashboard coach (chi / cosa / quando). Storico cliente e `/analytics` ci sono già; la home no.
 - [ ] Smoke E2E **automatizzato** del loop in CI (first-run → invite → redeem → assign → log → visibilità coach). Sostituisce il todo “smoke solo manuale” come gate.
 - [ ] (Cheap) leftover web atleta: `fe/src/api/sessions.ts`, alias/docs. Pagine `home/` / `sessions/` / `stats/` **già** fuori da `App.tsx` — non è un deliverable cartelle da cancellare.

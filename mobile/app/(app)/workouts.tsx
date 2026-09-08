@@ -62,7 +62,7 @@ export default function WorkoutsScreen() {
         await load();
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof ApiError ? err.message : "Errore");
+          setError(ApiError.messageFrom(err, "Errore"));
         }
       } finally {
         if (!cancelled) {
@@ -95,9 +95,7 @@ export default function WorkoutsScreen() {
                 setAssignment(null);
                 await load();
               } catch (err) {
-                setError(
-                  err instanceof ApiError ? err.message : "Annullamento fallito",
-                );
+                setError(ApiError.messageFrom(err, "Annullamento fallito"));
               } finally {
                 setBusy(false);
               }

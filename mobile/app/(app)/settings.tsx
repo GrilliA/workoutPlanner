@@ -99,7 +99,7 @@ export default function SettingsScreen() {
       setInviteCode("");
       setMessage("Coach collegato");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Codice non valido");
+      setError(ApiError.messageFrom(err, "Codice non valido"));
     } finally {
       setBusy(false);
     }
@@ -123,9 +123,7 @@ export default function SettingsScreen() {
                 setCoach(null);
                 setMessage("Coach rimosso");
               } catch (err) {
-                setError(
-                  err instanceof ApiError ? err.message : "Scollegamento fallito",
-                );
+                setError(ApiError.messageFrom(err, "Scollegamento fallito"));
               } finally {
                 setBusy(false);
               }
