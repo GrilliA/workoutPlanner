@@ -7,3 +7,5 @@ const pool = new Pool({
 });
 
 export const db = drizzle(pool, { schema });
+
+export const closeDb = (): Promise<void> => pool.end();
