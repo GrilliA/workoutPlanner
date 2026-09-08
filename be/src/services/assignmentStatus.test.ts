@@ -2,10 +2,12 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   computeAssignmentStatus,
+  dayBefore,
   daysUntilExpiry,
   isActiveForStatus,
   isValidIsoDate,
   mergeAssignmentDates,
+  planAssignmentCutover,
   todayInRome,
   validateAssignmentDates,
 } from "./assignmentStatus";
@@ -119,5 +121,105 @@ describe("assignmentStatus", () => {
   it("formats today in Europe/Rome", () => {
     const noonUtc = new Date("2026-07-30T12:00:00Z");
     assert.equal(todayInRome(noonUtc), "2026-07-30");
+  });
+
+  it("steps dayBefore back across month and year boundaries", () => {
+    assert.equal(dayBefore("2026-03-01"), "2026-02-28");
+    assert.equal(dayBefore("2027-01-01"), "2026-12-31");
+  });
+
+  it("revokes active and scheduled rows when the incoming assignment starts today or earlier", () => {
+    const plan = planAssignmentCutover({
+      today: "2026-09-08",
+      incoming: { startsAt: "2026-09-08", expiresAt: "2026-10-08" },
+      rows: [
+        {
+          id: 1,
+          startsAt: "2026-09-01",
+          expiresAt: "2026-10-01",
+        },
+        {
+          id: 2,
+          startsAt: "2026-09-20",
+          expiresAt: "2026-10-20",
+        },
+        {
+          id: 3,
+          startsAt: "2026-07-01",
+          expiresAt: "2026-08-01",
+        },
+      ],
+    });
+
+    assert.deepEqual(plan.revokeIds, [1, 2]);
+    assert.deepEqual(plan.truncate, []);
+  });
+
+  it("truncates an overlapping active row to the day before a future start", () => {
+    const plan = planAssignmentCutover({
+      today: "2026-09-08",
+      incoming: { startsAt: "2026-09-18", expiresAt: "2026-10-18" },
+      rows: [
+        {
+          id: 1,
+          startsAt: "2026-09-08",
+          expiresAt: "2026-10-08",
+        },
+      ],
+    });
+
+    assert.deepEqual(plan.revokeIds, []);
+    assert.deepEqual(plan.truncate, [{ id: 1, expiresAt: "2026-09-17" }]);
+  });
+
+  it("leaves a non-overlapping active row untouched when the incoming assignment starts later", () => {
+    const plan = planAssignmentCutover({
+      today: "2026-09-08",
+      incoming: { startsAt: "2026-09-18", expiresAt: "2026-10-18" },
+      rows: [
+        {
+          id: 1,
+          startsAt: "2026-08-01",
+          expiresAt: "2026-09-10",
+        },
+      ],
+    });
+
+    assert.deepEqual(plan.revokeIds, []);
+    assert.deepEqual(plan.truncate, []);
+  });
+
+  it("revokes a queued scheduled row when a future assignment is planned", () => {
+    const plan = planAssignmentCutover({
+      today: "2026-09-08",
+      incoming: { startsAt: "2026-09-18", expiresAt: "2026-10-18" },
+      rows: [
+        {
+          id: 1,
+          startsAt: "2026-09-20",
+          expiresAt: "2026-10-20",
+        },
+      ],
+    });
+
+    assert.deepEqual(plan.revokeIds, [1]);
+    assert.deepEqual(plan.truncate, []);
+  });
+
+  it("revokes a row that starts on the incoming start day", () => {
+    const plan = planAssignmentCutover({
+      today: "2026-09-08",
+      incoming: { startsAt: "2026-09-10", expiresAt: "2026-10-18" },
+      rows: [
+        {
+          id: 1,
+          startsAt: "2026-09-10",
+          expiresAt: "2026-10-10",
+        },
+      ],
+    });
+
+    assert.deepEqual(plan.revokeIds, [1]);
+    assert.deepEqual(plan.truncate, []);
   });
 });

@@ -156,3 +156,79 @@ export const daysUntilExpiry = (
   const end = Date.parse(`${expiresAt}T00:00:00Z`);
   return Math.round((end - start) / (24 * 60 * 60 * 1000));
 };
+
+/** Previous calendar day for a YYYY-MM-DD date. */
+export const dayBefore = (isoDate: string): string => {
+  const [year, month, day] = isoDate.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  date.setUTCDate(date.getUTCDate() - 1);
+
+  const prevYear = String(date.getUTCFullYear());
+  const prevMonth = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const prevDay = String(date.getUTCDate()).padStart(2, "0");
+
+  return `${prevYear}-${prevMonth}-${prevDay}`;
+};
+
+export type AssignmentCutoverRow = {
+  id: number;
+  startsAt: string;
+  expiresAt: string;
+};
+
+export type AssignmentCutoverPlan = {
+  revokeIds: number[];
+  truncate: { id: number; expiresAt: string }[];
+};
+
+export const planAssignmentCutover = (input: {
+  rows: AssignmentCutoverRow[];
+  incoming: AssignmentDatesInput;
+  today: string;
+}): AssignmentCutoverPlan => {
+  const revokeIds: number[] = [];
+  const truncate: { id: number; expiresAt: string }[] = [];
+  const incomingStartsNowOrPast = input.incoming.startsAt <= input.today;
+
+  for (const row of input.rows) {
+    const status = computeAssignmentStatus(
+      row.startsAt,
+      row.expiresAt,
+      input.today,
+    );
+
+    if (incomingStartsNowOrPast) {
+      if (status === "active" || status === "scheduled") {
+        revokeIds.push(row.id);
+      }
+      continue;
+    }
+
+    if (status === "scheduled") {
+      revokeIds.push(row.id);
+      continue;
+    }
+
+    if (status !== "active") {
+      continue;
+    }
+
+    if (row.expiresAt < input.incoming.startsAt) {
+      continue;
+    }
+
+    const expiresAt = dayBefore(input.incoming.startsAt);
+
+    // An active row starts on or before today, and here the incoming one starts
+    // after today, so the cutover day cannot precede it. Guard the inverted
+    // range anyway rather than persisting expiresAt < startsAt.
+    if (expiresAt < row.startsAt) {
+      revokeIds.push(row.id);
+      continue;
+    }
+
+    truncate.push({ id: row.id, expiresAt });
+  }
+
+  return { revokeIds, truncate };
+};
