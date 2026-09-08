@@ -4,6 +4,22 @@ import { apiErrorSchema } from "./schemas";
 import { accessTokenSchema } from "./schemas/auth";
 import { authStore } from "../auth/authStore";
 
+const KNOWN_API_ERROR_MESSAGES: Record<string, string> = {
+  "Invite code is required": "Inserisci il codice invito.",
+  "Invalid invite code":
+    "Codice invito non valido. Controlla con il tuo coach.",
+  "Already linked to a coach. Unlink first to join another.":
+    "Sei già collegato a un coach. Rimuovilo prima di collegarne un altro.",
+  "No linked coach": "Nessun coach collegato.",
+  "Workout is inactive": "Questa scheda non è attiva in questo momento.",
+  "A coach program is in progress. Cancel the assignment to train on another program.":
+    "Hai un programma del coach attivo: annullalo per allenarti su un'altra scheda.",
+  "No active program assignment for this workout":
+    "Questa scheda non ti è assegnata dal coach.",
+  "No workout scheduled for today":
+    "Nessun allenamento in programma per oggi.",
+};
+
 export class ApiError extends Error {
   readonly status: number;
 
@@ -11,6 +27,31 @@ export class ApiError extends Error {
     super(message);
     this.name = "ApiError";
     this.status = status;
+  }
+
+  static messageFrom(err: unknown, fallback: string): string {
+    if (!(err instanceof ApiError)) {
+      return fallback;
+    }
+
+    if (err.status === 0) {
+      return "Connessione non disponibile.";
+    }
+
+    if (err.status === 401) {
+      return "Sessione scaduta. Accedi di nuovo.";
+    }
+
+    if (err.status >= 500) {
+      return "Errore del server. Riprova.";
+    }
+
+    const translated = KNOWN_API_ERROR_MESSAGES[err.message];
+    if (translated) {
+      return translated;
+    }
+
+    return err.message.trim() !== "" ? err.message : fallback;
   }
 }
 

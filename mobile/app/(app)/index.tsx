@@ -404,9 +404,7 @@ export default function HomeScreen() {
                       );
                     } catch (abandonErr) {
                       setError(
-                        abandonErr instanceof ApiError
-                          ? abandonErr.message
-                          : "Impossibile avviare",
+                        ApiError.messageFrom(abandonErr, "Impossibile avviare"),
                       );
                     } finally {
                       setStarting(false);
@@ -421,7 +419,7 @@ export default function HomeScreen() {
         }
       }
 
-      setError(err instanceof ApiError ? err.message : "Impossibile avviare");
+      setError(ApiError.messageFrom(err, "Impossibile avviare"));
     } finally {
       setStarting(false);
     }
