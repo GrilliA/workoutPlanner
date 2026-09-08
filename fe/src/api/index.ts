@@ -1,5 +1,7 @@
 export { API_BASE } from "./config";
-export { ApiError, apiRequest, refreshAccessToken } from "./client";
+export { ApiError, apiRequest, isAbortError, refreshAccessToken } from "./client";
+export { useQuery } from "./useQuery";
+export { useMutation } from "./useMutation";
 export {
   workoutSchema,
   workoutsSchema,

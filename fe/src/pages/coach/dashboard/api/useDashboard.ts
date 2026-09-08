@@ -1,56 +1,33 @@
-import { useEffect, useState } from "react";
 import {
-  ApiError,
   getCoachAnalyticsOverview,
   getCoachAssignments,
   getCoachClients,
   getCoachDashboard,
+  isAbortError,
+  useQuery,
 } from "@api";
 import { mapDashboard } from "../mappers/mapDashboard";
-import type { DashboardViewModel } from "../types";
 
 export function useDashboard() {
-  const [data, setData] = useState<DashboardViewModel | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<ApiError | null>(null);
+  const { data, isPending } = useQuery({
+    queryFn: async ({ signal }) => {
+      const [stats, clients, assignments, analytics] = await Promise.all([
+        getCoachDashboard({ signal }),
+        getCoachClients({ signal }),
+        getCoachAssignments({ signal }),
+        getCoachAnalyticsOverview("4w", { signal }).catch((err) => {
+          if (isAbortError(err)) {
+            throw err;
+          }
 
-  useEffect(() => {
-    let cancelled = false;
+          return null;
+        }),
+      ]);
 
-    void Promise.all([
-      getCoachDashboard(),
-      getCoachClients(),
-      getCoachAssignments(),
-      getCoachAnalyticsOverview("4w").catch(() => null),
-    ])
-      .then(([stats, clients, assignments, analytics]) => {
-        if (!cancelled) {
-          setData(mapDashboard(stats, clients, assignments, analytics));
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(
-            err instanceof ApiError
-              ? err
-              : new ApiError(400, "Impossibile caricare la dashboard"),
-          );
-        }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      });
+      return mapDashboard(stats, clients, assignments, analytics);
+    },
+    fallback: "Impossibile caricare la dashboard",
+  });
 
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  if (error) {
-    throw error;
-  }
-
-  return { data, loading };
+  return { data: data ?? null, loading: isPending };
 }

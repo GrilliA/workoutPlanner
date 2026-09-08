@@ -13,6 +13,9 @@ How to use:
 
 | Date | Decision | Why |
 | --- | --- | --- |
+| 2026-09-08 | Roadmap 90g = P0–P3 sul loop a pagamento (first-run + smoke, alert actionable, revisioni scheda, nota sessione). NON-goals: DS/Storybook come obiettivo prodotto, nutrition, video library, white-label, multi-coach, billing UI, `packages/shared` big-bang | Ship the paid loop, not feature parity. Invite/assign/log e alert analytics **già esistono**; i gap sono first-run, feed activity, smoke CI, CTA sugli alert, edit mid-ciclo sicuro |
+| 2026-09-08 | P2 edit mid-ciclo = **revisioni scheda** (non freeze-delete, non snapshot JSON sessione). Freeze v1, clone v2 (`copyWorkoutTree`), stesso assignment (retarget `workoutId`, no revoke), cutover immediato, lineage esercizio copiato nel clone; PUT in-place vietato se il programma ha sessioni | Oggi PUT sovrascrive il documento da cui recap/analytics leggono; delete esercizio → CASCADE sui `logged_sets`. Recap vecchio rilegge v1 congelato; progressioni restano una curva |
+| 2026-09-05 | D3 `useQuery` / `useMutation` in-house (no cache): `queryKey` = deps; `throwOnError` default true; `onError` only if we do not throw | Stessa policy D2 senza copiare `useEffect`+`cancelled`; TanStack come modello di API, non come dipendenza finché non serve invalidate/cache |
 | 2026-09-05 | `useCallback` / `useMemo` solo se un figlio `memo()` o un array di dipendenze serve identità stabile | Wrappare handler/valori di default (retry, parse query) non memoizza niente e rumoreggia i hook |
 | 2026-09-05 | D2 PageError una volta sola: GET di pagina throw `ApiError` → `ErrorBoundary` (messaggio solo per `ApiError`); sezioni toast; 404 resta not-found. Niente `PageError` nelle pagine | Dipingere l’errore in ogni pagina (come nel commit tagliato) duplica UI e confonde empty vs crash; `error.message` grezzo espone i TypeError di render |
 | 2026-09-03 | Recipe DS su primitive flatten: `Button` / `ButtonIcon` / `Input` / `Card` compongono i rispettivi `*Base` (tag nativo); parti (`ButtonLabel`, `InputLabel`, `InputError`, …) private; niente addon Input in questo giro | Call site semplici (`<Input label error />`, `<Button>`, `<Card title meta />`); escape hatch `*Base` per casi avanzati; Storybook cataloga le recipe |
@@ -54,6 +57,8 @@ How to use:
 
 ## What we did
 
+- 2026-09-08 — Lock roadmap loop vs codice (traccia-feature-plan v1): P0 = first-run + activity dashboard + smoke CI (invite/assign/log già cablati); P1 = CTA su `inactive` / `program_expiring` già in analytics, non un motore nuovo; P2 = revisioni; P3 = `workout_sessions.notes` (colonna già lì). Corretti todo stale: link forgot-password **assente** in login; pagine web atleta già fuori da `App.tsx`.
+- 2026-09-05 — D3 in-house `useQuery`/`useMutation` (`@api`): GET feature hook e mutation coach/settings migrati; login/register, catalog search e workout form restano speciali. Niente cache, niente TanStack.
 - 2026-09-05 — Catalogo Storybook FE: storie per ogni export pubblico dei componenti condivisi (`ButtonIcon`, `*Base`) e per `CoachCard`/`CoachCardList`; `PageHeader` con autodocs; test di coverage sul catalogo. Parti private (label/error/spinner) restano fuori.
 - 2026-09-05 — D2 PageError: primitive + Storybook; un solo call site di produzione (`ErrorBoundary`). GET di pagina throw `ApiError` (builder incluso); il boundary mostra il messaggio solo per `ApiError`. Analytics di sezione toast; 404 not-found. Niente `PageError`/`useCallback` retry nelle pagine.
 - 2026-09-03 — D1 recipe layer: `Button`/`ButtonIcon`/`Input`/`Card` sopra `*Base`; parti private; rimossi `InputField`/`InputAddon`/`InputControl`; call site migrati a recipe; Storybook aggiornato.
@@ -134,6 +139,7 @@ Legend: ⬜ todo · 🟡 in progress · ✅ done
 - **U4 — Analytics coach web** ✅
 - **D1 — Design system web** ✅
 - **D2 — PageError pagine coach** ✅
+- **D3 — useQuery / useMutation in-house** ✅
 
 ### Backend track
 
@@ -148,6 +154,14 @@ Legend: ⬜ todo · 🟡 in progress · ✅ done
 ### Workout builder track
 
 - **W8 — Exercise picker UI** ✅ (see above)
+
+### Paid loop (90 days) — P0–P3
+
+- **P0 — First-run coach + activity dashboard + smoke E2E CI** ⬜ — invite/assign/log already shipped
+- **P0.5 — Forgot-password** ⬜ — token table exists; no login link; needs mail
+- **P1 — Alert actionable in dashboard** ⬜ — `inactive` / `program_expiring` already in analytics
+- **P2 — Program revisions (freeze v1, clone v2, lineage)** ⬜
+- **P3 — Session note tied to log** ⬜ — `workout_sessions.notes` column exists
 
 ## B5 / W8 — implementation plan (8 PRs)
 
@@ -175,10 +189,36 @@ Merge **in order** (stacked branches). Each PR is one concern.
 
 ## Other next steps
 
-- [ ] Smoke test end-to-end manuale (db + be + fe coach + mobile atleta Expo).
-- [ ] Test FE (Vitest su mapper/utils).
-- [ ] Route `/forgot-password` (link già presente in login).
-- [ ] (Later) Cleanup PR: rimuovere pagine web atleta orfane (`home/`, `sessions/`, `stats/`, …); tenere solo `workouts/new` condiviso col coach.
+Order: P0 → P0.5 → P1 → P2 → P3. Igiene non blocca P0. Invite / assign / log / alert analytics **già esistono** — non ricostruirli.
+
+### P0 — First-run + smoke del loop (M–L)
+
+- [ ] Baseline: smoke **manuale** del loop attuale (dove rompe: redeem in Settings, date assignment, dashboard senza activity).
+- [ ] First-run coach: empty states + CTA invite/assign dopo signup; copy clienti non deve puntare a create 410.
+- [ ] Invite → redeem visibile (register o Home mobile, non solo Settings); errori in italiano; hardening invalido / doppio / già collegato. Niente expiry codice (solo rotate) in questo giro.
+- [ ] Activity feed sulla dashboard coach (chi / cosa / quando). Storico cliente e `/analytics` ci sono già; la home no.
+- [ ] Smoke E2E **automatizzato** del loop in CI (first-run → invite → redeem → assign → log → visibilità coach). Sostituisce il todo “smoke solo manuale” come gate.
+- [ ] (Cheap) leftover web atleta: `fe/src/api/sessions.ts`, alias/docs. Pagine `home/` / `sessions/` / `stats/` **già** fuori da `App.tsx` — non è un deliverable cartelle da cancellare.
+
+### P0.5 — Forgot-password (S–M, non blocca lo smoke)
+
+- [ ] Route + flusso reset. Tabella `password_reset_tokens` e `RESET_LINK_BASE` ci sono; **il link in login non c’è**; manca mail. Messaggio non-enumerating su email sconosciuta.
+
+### P1 — Alert actionable (S–M)
+
+- [ ] `inactive` (≥7g o mai) e `program_expiring` (≤7g) già in `buildCoachAlerts` + tabella `/analytics` + KPI “Da controllare”. Dashboard: lista in-app con atleta + motivo + CTA (apri atleta / rinnovo), non solo count. Email skip (nessuna infra mail).
+
+### P2 — Revisioni scheda mid-ciclo (L)
+
+- [ ] Pubblica modifica: congela v1, clona v2 (`copyWorkoutTree` + lineage esercizio), stesso assignment retarget `workoutId` (no revoke), v1 `isActive: false` non cancellata. Cutover immediato; sessione aperta finisce su v1. Progressioni/PR raggruppano per lineage. PUT in-place vietato se ci sono sessioni. Badge “scheda aggiornata il …”. Solo programma assegnato, non il template coach.
+
+### P3 — Nota sessione (M)
+
+- [ ] Wire `workout_sessions.notes` (colonna + Zod GET già lì) su PATCH e UI contestuale coach↔atleta. Testo breve, niente thread/allegati.
+
+### Igiene / later (non fase prodotto)
+
+- [ ] Test FE puntuali (Vitest mapper/utils) dove si tocca il loop — non gate di mercato.
 - [ ] (Later) Optional user custom exercises on top of B5; videos remain out of scope.
 - [ ] (Later) Mobile: polish restante atleta vs mock (override DayPicker su WeekStrip, empty states).
-- [ ] (Later) Extract `packages/shared` if Zod/API copy between `fe` and `mobile` hurts.
+- [ ] (Later) Extract `packages/shared` only if it unblocks P0–P2.

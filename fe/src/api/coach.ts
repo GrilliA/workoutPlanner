@@ -22,14 +22,14 @@ import {
   type WorkoutProgramInput,
 } from "./schemas/workout";
 
-export const getCoachDashboard = () =>
-  apiRequest("/coach/dashboard", { schema: coachDashboardSchema });
+export const getCoachDashboard = ({ signal }: { signal?: AbortSignal } = {}) =>
+  apiRequest("/coach/dashboard", { schema: coachDashboardSchema, signal });
 
-export const getCoachClients = () =>
-  apiRequest("/coach/clients", { schema: coachClientsSchema });
+export const getCoachClients = ({ signal }: { signal?: AbortSignal } = {}) =>
+  apiRequest("/coach/clients", { schema: coachClientsSchema, signal });
 
-export const getCoachInviteCode = () =>
-  apiRequest("/coach/invite-code", { schema: coachInviteCodeSchema });
+export const getCoachInviteCode = ({ signal }: { signal?: AbortSignal } = {}) =>
+  apiRequest("/coach/invite-code", { schema: coachInviteCodeSchema, signal });
 
 export const rotateCoachInviteCode = () =>
   apiRequest("/coach/invite-code/rotate", {
@@ -37,13 +37,17 @@ export const rotateCoachInviteCode = () =>
     schema: coachInviteCodeSchema,
   });
 
-export const getCoachClient = (athleteId: number) =>
+export const getCoachClient = (
+  athleteId: number,
+  { signal }: { signal?: AbortSignal } = {},
+) =>
   apiRequest(`/coach/clients/${athleteId}`, {
     schema: coachClientDetailSchema,
+    signal,
   });
 
-export const getCoachTemplates = () =>
-  apiRequest("/coach/templates", { schema: coachTemplatesSchema });
+export const getCoachTemplates = ({ signal }: { signal?: AbortSignal } = {}) =>
+  apiRequest("/coach/templates", { schema: coachTemplatesSchema, signal });
 
 export const getCoachTemplate = (id: number) =>
   apiRequest(`/coach/templates/${id}`, { schema: workoutDetailSchema });
@@ -62,8 +66,8 @@ export const updateCoachTemplateProgram = (id: number, input: WorkoutProgramInpu
     schema: workoutSchema,
   });
 
-export const getCoachAssignments = () =>
-  apiRequest("/coach/assignments", { schema: coachAssignmentsSchema });
+export const getCoachAssignments = ({ signal }: { signal?: AbortSignal } = {}) =>
+  apiRequest("/coach/assignments", { schema: coachAssignmentsSchema, signal });
 
 export const createCoachAssignment = (input: CreateAssignmentInput) =>
   apiRequest("/coach/assignments", {
@@ -112,9 +116,14 @@ export const unlinkCoachClient = (athleteId: number) =>
     schema: okResponseSchema,
   });
 
-export const getCoachClientProgram = (athleteId: number, workoutId: number) =>
+export const getCoachClientProgram = (
+  athleteId: number,
+  workoutId: number,
+  { signal }: { signal?: AbortSignal } = {},
+) =>
   apiRequest(`/coach/clients/${athleteId}/programs/${workoutId}`, {
     schema: workoutDetailSchema,
+    signal,
   });
 
 export const updateCoachClientProgram = (

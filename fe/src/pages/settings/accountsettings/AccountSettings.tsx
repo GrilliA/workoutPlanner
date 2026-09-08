@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { ApiError, changePassword, updateProfile } from "@api";
+import { ApiError, changePassword, updateProfile, useMutation } from "@api";
 import { useAuth } from "@auth";
 import { Input } from "@components/input";
 import { Button } from "@components/button";
@@ -13,13 +13,40 @@ export function AccountSettings() {
   const [, setLocation] = useLocation();
 
   const [name, setName] = useState(user?.name ?? "");
-  const [isSavingProfile, setIsSavingProfile] = useState(false);
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [isSavingPassword, setIsSavingPassword] = useState(false);
+
+  const saveProfile = useMutation({
+    mutationFn: updateProfile,
+    fallback: "Impossibile aggiornare il profilo",
+    onSuccess: ({ user: updated }) => {
+      setUser(updated);
+      setName(updated.name ?? "");
+      toast.success("Profilo aggiornato");
+    },
+    onError: (err) => {
+      toast.error(ApiError.messageFrom(err, "Impossibile aggiornare il profilo"));
+    },
+  });
+
+  const savePassword = useMutation({
+    mutationFn: changePassword,
+    fallback: "Impossibile aggiornare la password",
+    onSuccess: () => {
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      toast.success("Password aggiornata");
+    },
+    onError: (err) => {
+      toast.error(
+        ApiError.messageFrom(err, "Impossibile aggiornare la password"),
+      );
+    },
+  });
 
   if (!user) {
     return null;
@@ -27,24 +54,13 @@ export function AccountSettings() {
 
   const displayName = getDisplayName(user);
 
-  const handleSaveProfile = async () => {
-    setIsSavingProfile(true);
-
-    try {
-      const { user: updated } = await updateProfile({
-        name: name.trim() || null,
-      });
-      setUser(updated);
-      setName(updated.name ?? "");
-      toast.success("Profilo aggiornato");
-    } catch (err) {
-      toast.error(ApiError.messageFrom(err, "Impossibile aggiornare il profilo"));
-    } finally {
-      setIsSavingProfile(false);
-    }
+  const handleSaveProfile = () => {
+    saveProfile.mutate({
+      name: name.trim() || null,
+    });
   };
 
-  const handleChangePassword = async () => {
+  const handleChangePassword = () => {
     setPasswordError(null);
 
     if (newPassword !== confirmPassword) {
@@ -57,21 +73,7 @@ export function AccountSettings() {
       return;
     }
 
-    setIsSavingPassword(true);
-
-    try {
-      await changePassword({ currentPassword, newPassword });
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-      toast.success("Password aggiornata");
-    } catch (err) {
-      toast.error(
-        ApiError.messageFrom(err, "Impossibile aggiornare la password"),
-      );
-    } finally {
-      setIsSavingPassword(false);
-    }
+    savePassword.mutate({ currentPassword, newPassword });
   };
 
   const handleLogout = async () => {
@@ -124,7 +126,7 @@ export function AccountSettings() {
 
           <Button
             variant="primary"
-            loading={isSavingProfile}
+            loading={saveProfile.isPending}
             onClick={() => void handleSaveProfile()}
           >
             Salva profilo
@@ -175,7 +177,7 @@ export function AccountSettings() {
 
           <Button
             variant="secondary"
-            loading={isSavingPassword}
+            loading={savePassword.isPending}
             onClick={() => void handleChangePassword()}
           >
             Aggiorna password

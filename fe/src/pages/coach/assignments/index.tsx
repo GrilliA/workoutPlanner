@@ -1,6 +1,10 @@
-import { useState } from "react";
 import { Link } from "wouter";
-import { ApiError, revokeCoachAssignment, type CoachAssignment } from "@api";
+import {
+  ApiError,
+  revokeCoachAssignment,
+  useMutation,
+  type CoachAssignment,
+} from "@api";
 import { toast } from "@components/toast";
 import { PageHeader } from "@components/pageHeader";
 import { CoachCard, CoachCardList } from "../coachCard";
@@ -16,23 +20,19 @@ const statusLabel: Record<CoachAssignment["status"], string> = {
 
 export default function AssignmentsPage() {
   const { assignments, setAssignments, loading } = useAssignments();
-  const [revokingId, setRevokingId] = useState<number | null>(null);
-
-  const handleRevoke = async (id: number) => {
-    setRevokingId(id);
-
-    try {
-      const updated = await revokeCoachAssignment(id);
+  const revoke = useMutation({
+    mutationFn: revokeCoachAssignment,
+    fallback: "Revoca fallita",
+    onSuccess: (updated) => {
       setAssignments((rows) =>
         rows.map((row) => (row.id === updated.id ? updated : row)),
       );
       toast.success("Scheda revocata");
-    } catch (err) {
+    },
+    onError: (err) => {
       toast.error(ApiError.messageFrom(err, "Revoca fallita"));
-    } finally {
-      setRevokingId(null);
-    }
-  };
+    },
+  });
 
   return (
     <div className="coach-page page-container page-container--wide">
@@ -81,10 +81,12 @@ export default function AssignmentsPage() {
                   <button
                     type="button"
                     className="coach-text-action coach-text-action--danger"
-                    onClick={() => void handleRevoke(assignment.id)}
-                    disabled={revokingId === assignment.id}
+                    onClick={() => revoke.mutate(assignment.id)}
+                    disabled={revoke.isPending && revoke.variables === assignment.id}
                   >
-                    {revokingId === assignment.id ? "Revoca…" : "Revoca"}
+                    {revoke.isPending && revoke.variables === assignment.id
+                      ? "Revoca…"
+                      : "Revoca"}
                   </button>
                 ) : null}
               </div>

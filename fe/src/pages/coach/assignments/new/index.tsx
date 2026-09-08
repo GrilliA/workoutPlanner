@@ -1,6 +1,13 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { useLocation, useSearch } from "wouter";
-import { ApiError, createCoachAssignment } from "@api";
+import {
+  ApiError,
+  createCoachAssignment,
+  getCoachClients,
+  getCoachTemplates,
+  useMutation,
+  useQuery,
+} from "@api";
 import { Button } from "@components/button";
 import { Input } from "@components/input";
 import { toast } from "@components/toast";
@@ -9,7 +16,6 @@ import { SchedaTxtPaste } from "@pages/workouts/new/schedatxt";
 import type { ParsedScheda } from "@pages/workouts/new/schedatxt/parseSchedaTxt";
 import { toProgramInput } from "../../programapi";
 import type { Weekday } from "@pages/workouts/new/types";
-import { useAssignmentOptions } from "./api/useAssignmentOptions";
 import "../../style.css";
 
 export default function NewAssignmentPage() {
@@ -21,7 +27,13 @@ export default function NewAssignmentPage() {
     return Number.isInteger(id) && id > 0 ? id : null;
   }, [search]);
 
-  const { clients, templates, loading } = useAssignmentOptions();
+  const { data, isPending } = useQuery({
+    queryFn: ({ signal }) =>
+      Promise.all([getCoachClients({ signal }), getCoachTemplates({ signal })]),
+    fallback: "Impossibile caricare i dati di assegnazione",
+  });
+  const clients = data?.[0] ?? [];
+  const templates = data?.[1] ?? [];
   const [athleteId, setAthleteId] = useState(
     presetAthleteId ? String(presetAthleteId) : "",
   );
@@ -30,43 +42,40 @@ export default function NewAssignmentPage() {
   const [startsAt, setStartsAt] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
   const [parsedTxt, setParsedTxt] = useState<ParsedScheda | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-
-  const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault();
-    setSubmitting(true);
-
-    try {
-      const days = parsedTxt
-        ? parsedTxt.days.map((day) => ({
-            ...day,
-            weekdays: day.weekdays as Weekday[],
-          }))
-        : null;
-
-      const result = await createCoachAssignment({
-        athleteId: Number(athleteId),
-        startsAt,
-        expiresAt,
-        templateId: templateId ? Number(templateId) : undefined,
-        name: templateId
-          ? undefined
-          : parsedTxt?.name.trim() || name,
-        program:
-          !templateId && parsedTxt && days
-            ? toProgramInput(parsedTxt.name, parsedTxt.settings, days)
-            : undefined,
-      });
-
+  const createAssignment = useMutation({
+    mutationFn: createCoachAssignment,
+    fallback: "Assegnazione fallita",
+    onSuccess: (result, variables) => {
       toast.success("Scheda assegnata");
       setLocation(
-        `/clients/${athleteId}/programs/${result.workout.id}/edit`,
+        `/clients/${variables.athleteId}/programs/${result.workout.id}/edit`,
       );
-    } catch (err) {
+    },
+    onError: (err) => {
       toast.error(ApiError.messageFrom(err, "Assegnazione fallita"));
-    } finally {
-      setSubmitting(false);
-    }
+    },
+  });
+
+  const handleSubmit = (event: FormEvent) => {
+    event.preventDefault();
+    const days = parsedTxt
+      ? parsedTxt.days.map((day) => ({
+          ...day,
+          weekdays: day.weekdays as Weekday[],
+        }))
+      : null;
+
+    createAssignment.mutate({
+      athleteId: Number(athleteId),
+      startsAt,
+      expiresAt,
+      templateId: templateId ? Number(templateId) : undefined,
+      name: templateId ? undefined : parsedTxt?.name.trim() || name,
+      program:
+        !templateId && parsedTxt && days
+          ? toProgramInput(parsedTxt.name, parsedTxt.settings, days)
+          : undefined,
+    });
   };
 
   return (
@@ -76,7 +85,7 @@ export default function NewAssignmentPage() {
         subtitle="Da template (copia) oppure da zero sul cliente"
       />
 
-      {loading ? (
+      {isPending ? (
         <p className="coach-empty">Caricamento…</p>
       ) : (
       <form className="coach-form" onSubmit={(event) => void handleSubmit(event)}>
@@ -168,7 +177,7 @@ export default function NewAssignmentPage() {
           onChange={(event) => setExpiresAt(event.target.value)}
         />
 
-        <Button type="submit" variant="primary" loading={submitting}>
+        <Button type="submit" variant="primary" loading={createAssignment.isPending}>
           Assegna e modifica
         </Button>
       </form>

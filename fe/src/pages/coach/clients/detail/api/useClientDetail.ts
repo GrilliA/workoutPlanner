@@ -1,47 +1,33 @@
-import { useEffect, useState } from "react";
-import { ApiError, getCoachClient, type CoachClientDetail } from "@api";
+import { ApiError, getCoachClient, useQuery, type CoachClientDetail } from "@api";
 
 export function useClientDetail(athleteId: number) {
-  const [detail, setDetail] = useState<CoachClientDetail | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<ApiError | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    void getCoachClient(athleteId)
-      .then((data) => {
-        if (!cancelled) {
-          setDetail(data);
+  const { data, isPending, setData } = useQuery({
+    queryKey: [athleteId],
+    queryFn: async ({ signal }) => {
+      try {
+        return await getCoachClient(athleteId, { signal });
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 404) {
+          return null;
         }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          if (err instanceof ApiError && err.status === 404) {
-            setDetail(null);
-            return;
-          }
-          setError(
-            err instanceof ApiError
-              ? err
-              : new ApiError(400, "Impossibile caricare il cliente"),
-          );
-        }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      });
 
-    return () => {
-      cancelled = true;
-    };
-  }, [athleteId]);
+        throw err;
+      }
+    },
+    fallback: "Impossibile caricare il cliente",
+  });
 
-  if (error) {
-    throw error;
-  }
+  const setDetail = (
+    update:
+      | CoachClientDetail
+      | null
+      | ((prev: CoachClientDetail | null) => CoachClientDetail | null),
+  ) => {
+    setData((prev) => {
+      const current = prev ?? null;
+      return typeof update === "function" ? update(current) : update;
+    });
+  };
 
-  return { detail, setDetail, loading };
+  return { detail: data ?? null, setDetail, loading: isPending };
 }

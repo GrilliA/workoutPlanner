@@ -54,7 +54,7 @@ Aliases: `@api`, `@components/*`, `@dashboard` → `pages/home/dashboard/`, `@pa
 ## React / functions
 
 - Pure mappers for data transforms (no I/O, no mutation)
-- Thin hooks live under the feature `api/` folder (`api/useClients.ts`): fetch + state; mapping lives in `mappers/`. Page-level GET failure throws `ApiError` so `ErrorBoundary` shows `PageError` once (other throws stay generic); empty data is for empty success; 404 stays a not-found empty state. Section fetches toast and do not take down the page.
+- Thin hooks live under the feature `api/` folder when they add something beyond `useQuery` (`useDashboard` mapping, analytics range, 404 + `setData`). One-resource GET: call `useQuery` in the page. Mapping lives in `mappers/`. Page-level GET failure throws `ApiError` so `ErrorBoundary` shows `PageError` once (other throws stay generic); empty data is for empty success; 404 stays a not-found empty state. Section fetches toast via `useQuery({ throwOnError: false, onError })` and do not take down the page.
 - Separate components, not `StatCard.Skeleton = …`
 - No business logic in JSX or large `useEffect` blocks
 - Fields that always move together = **one state object**, not N `useState`s
@@ -86,3 +86,7 @@ export function mapRecentWorkouts(workouts: Workout[]): RecentWorkout[] {
 ## API
 
 All requests go through `@api` (`apiRequest` + Zod). Shapes live in `api/schemas/`. No raw `fetch` in components.
+
+GET state lives in `useQuery` (`queryFn({ signal })`, `queryKey` as effect deps — no cache). Unmount and `queryKey` change abort the in-flight request (`apiRequest` forwards `signal` to `fetch`; abort is not a page/toast error). Page GET keeps the default `throwOnError: true` (ErrorBoundary). Section GET sets `throwOnError: false` and toasts in `onError` (`onError` does not run if the query throws). 404-as-empty is handled in that page's `queryFn`. Feature `api/useX.ts` stays only when the GET is more than one call + fallback (`useDashboard`, analytics range, client detail `setData`).
+
+POST/PATCH/DELETE use `useMutation` (`mutate` / `isPending` / `onSuccess` / `onError` toast). Login/register stay inline form errors. Do not copy `useEffect` + `cancelled` into a new page hook.
