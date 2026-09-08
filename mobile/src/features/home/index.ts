@@ -7,4 +7,6 @@ export {
   mapHomeStats,
   mapHomeRecentSessions,
 } from "./mappers/mapHomeStats";
+export { resolveNoProgramReason } from "./mappers/resolveNoProgramReason";
+export type { NoProgramReason } from "./mappers/resolveNoProgramReason";
 export type { WeekStripDay, HomeStat, HomeRecentSession } from "./types";

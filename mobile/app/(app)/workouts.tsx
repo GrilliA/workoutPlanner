@@ -4,6 +4,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { ApiError } from "../../src/api/client";
 import {
   getActiveAssignment,
+  getAthleteCoach,
   getWorkouts,
   revokeActiveAssignment,
   type ActiveAssignment,
@@ -33,20 +34,23 @@ export default function WorkoutsScreen() {
   const { user } = useAuth();
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [assignment, setAssignment] = useState<ActiveAssignment | null>(null);
+  const [hasLinkedCoach, setHasLinkedCoach] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [fetchId, setFetchId] = useState(0);
 
   const load = useCallback(async () => {
-    const [data, active] = await Promise.all([
+    const [data, active, athleteCoach] = await Promise.all([
       getWorkouts(),
       getActiveAssignment(),
+      getAthleteCoach(),
     ]);
     setWorkouts(
       [...data].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
     );
     setAssignment(active);
+    setHasLinkedCoach(athleteCoach.coach != null);
   }, []);
 
   useEffect(() => {
@@ -123,8 +127,16 @@ export default function WorkoutsScreen() {
         <Body>
           {assignment
             ? "Hai un programma coach attivo: ha priorità. Per usare le tue schede, annullalo."
-            : "Crea una scheda da solo o collega un coach dalle Impostazioni."}
+            : hasLinkedCoach
+              ? "Crea una scheda da solo."
+              : "Crea una scheda da solo o collega un coach."}
         </Body>
+        {!assignment && !hasLinkedCoach ? (
+          <SecondaryButton
+            label="COLLEGA COACH"
+            onPress={() => router.push("/(app)/settings")}
+          />
+        ) : null}
 
         {error ? (
           <ErrorBanner

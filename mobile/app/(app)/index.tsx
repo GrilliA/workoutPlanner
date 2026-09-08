@@ -12,6 +12,7 @@ import { ApiError } from "../../src/api/client";
 import {
   abandonSession,
   getActiveAssignment,
+  getAthleteCoach,
   getSessions,
   getStats,
   getWorkoutDayExercises,
@@ -48,8 +49,10 @@ import {
   mapHomeRecentSessions,
   mapHomeStats,
   mapWeekStrip,
+  resolveNoProgramReason,
   type HomeRecentSession,
   type HomeStat,
+  type NoProgramReason,
   type WeekStripDay,
 } from "../../src/features/home";
 import { colors, radii, spacing } from "../../src/theme";
@@ -59,6 +62,24 @@ import {
   formatRomeLongDateKey,
   toRomeDateKey,
 } from "../../src/utils/romeCalendar";
+
+const NO_PROGRAM_COPY: Record<
+  NoProgramReason,
+  { heading: string; body: string }
+> = {
+  "no-coach": {
+    heading: "Collega il tuo coach",
+    body: "Inserisci il codice invito del tuo coach per ricevere le sue schede, oppure creane una da solo.",
+  },
+  "coach-pending": {
+    heading: "Nessuna scheda attiva",
+    body: "Il tuo coach non ti ha ancora assegnato una scheda.",
+  },
+  "coach-program-inactive": {
+    heading: "Nessuna scheda attiva",
+    body: "La scheda del tuo coach non è attiva in questo momento. Scrivigli se pensi sia un errore.",
+  },
+};
 
 type StartSelection = {
   workoutId: number;
@@ -81,6 +102,8 @@ const EMPTY_STATS: HomeStat[] = mapHomeStats({
 export default function HomeScreen() {
   const { user } = useAuth();
   const [activeWorkouts, setActiveWorkouts] = useState<Workout[]>([]);
+  const [noProgramReason, setNoProgramReason] =
+    useState<NoProgramReason | null>(null);
   const [assignment, setAssignment] = useState<ActiveAssignment | null>(null);
   const [daysByWorkout, setDaysByWorkout] = useState<Record<number, WorkoutDay[]>>(
     {},
@@ -124,11 +147,13 @@ export default function HomeScreen() {
       setError(null);
 
       try {
-        const [workouts, stats, activeAssignment] = await Promise.all([
-          getWorkouts(),
-          getStats({ recentLimit: 5 }),
-          getActiveAssignment(),
-        ]);
+        const [workouts, stats, activeAssignment, athleteCoach] =
+          await Promise.all([
+            getWorkouts(),
+            getStats({ recentLimit: 5 }),
+            getActiveAssignment(),
+            getAthleteCoach(),
+          ]);
 
         if (cancelled) {
           return;
@@ -148,6 +173,15 @@ export default function HomeScreen() {
               )
         ).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
         setActiveWorkouts(active);
+        setNoProgramReason(
+          active.length === 0
+            ? resolveNoProgramReason({
+                hasLinkedCoach: athleteCoach.coach != null,
+                workouts,
+                userId: user?.id,
+              })
+            : null,
+        );
 
         if (active.length === 0) {
           setSelection(null);
@@ -546,21 +580,9 @@ export default function HomeScreen() {
         <Card highlight style={styles.todayCard}>
           <Eyebrow>{todayEyebrow}</Eyebrow>
           {activeWorkouts.length === 0 ? (
-            <>
-              <Heading>Nessuna scheda attiva</Heading>
-              <Body>
-                Crea una scheda dalle Schede, oppure collega un coach dalle
-                Impostazioni con il suo codice invito.
-              </Body>
-              <PrimaryButton
-                label="CREA SCHEDA"
-                onPress={() => router.push("/workout/new")}
-              />
-              <SecondaryButton
-                label="VAI ALLE SCHEDE"
-                onPress={() => router.push("/(app)/workouts")}
-              />
-            </>
+            // Unknown reason means the load failed: the error banner above says
+            // so, and guessing here would tell a linked athlete to link a coach.
+            noProgramReason ? <NoProgramEmpty reason={noProgramReason} /> : null
           ) : (
             <>
               <View style={styles.todayTitleRow}>
@@ -679,6 +701,38 @@ export default function HomeScreen() {
         )}
       </ScrollView>
     </Screen>
+  );
+}
+
+function NoProgramEmpty({ reason }: { reason: NoProgramReason }) {
+  const copy = NO_PROGRAM_COPY[reason];
+
+  return (
+    <>
+      <Heading>{copy.heading}</Heading>
+      <Body>{copy.body}</Body>
+      {reason === "no-coach" ? (
+        <>
+          <PrimaryButton
+            label="COLLEGA COACH"
+            onPress={() => router.push("/(app)/settings")}
+          />
+          <SecondaryButton
+            label="CREA SCHEDA"
+            onPress={() => router.push("/workout/new")}
+          />
+        </>
+      ) : (
+        <PrimaryButton
+          label="CREA SCHEDA"
+          onPress={() => router.push("/workout/new")}
+        />
+      )}
+      <SecondaryButton
+        label="VAI ALLE SCHEDE"
+        onPress={() => router.push("/(app)/workouts")}
+      />
+    </>
   );
 }
 
