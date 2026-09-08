@@ -6,12 +6,21 @@ import {
   type StatsRange,
 } from "./schemas/coachAnalytics";
 
-export const getCoachAnalyticsOverview = (range: StatsRange = "4w") =>
+export const getCoachAnalyticsOverview = (
+  range: StatsRange = "4w",
+  { signal }: { signal?: AbortSignal } = {},
+) =>
   apiRequest(`/coach/analytics/overview?range=${statsRangeSchema.parse(range)}`, {
     schema: coachAnalyticsOverviewSchema,
+    signal,
   });
 
-export const getCoachAthleteAnalytics = (athleteId: number, range: StatsRange = "4w") =>
+export const getCoachAthleteAnalytics = (
+  athleteId: number,
+  range: StatsRange = "4w",
+  { signal }: { signal?: AbortSignal } = {},
+) =>
   apiRequest(`/coach/analytics/clients/${athleteId}?range=${statsRangeSchema.parse(range)}`, {
     schema: coachAthleteAnalyticsSchema,
+    signal,
   });

@@ -1,16 +1,35 @@
 import { useState } from "react";
-import { ApiError, rotateCoachInviteCode } from "@api";
+import {
+  ApiError,
+  getCoachInviteCode,
+  rotateCoachInviteCode,
+  useMutation,
+  useQuery,
+  type CoachInviteCode,
+} from "@api";
 import { Button } from "@components/button";
 import { toast } from "@components/toast";
 import { PageHeader } from "@components/pageHeader";
 import { CoachCard } from "../../coachCard";
-import { useInviteCode } from "./api/useInviteCode";
 import "../../style.css";
 
 export default function InviteClientPage() {
-  const { code, setCode, loading } = useInviteCode();
+  const { data: code, isPending, setData: setCode } = useQuery({
+    queryFn: async ({ signal }) => (await getCoachInviteCode({ signal })).code,
+    fallback: "Impossibile caricare il codice invito",
+  });
   const [copied, setCopied] = useState(false);
-  const [busy, setBusy] = useState(false);
+  const rotate = useMutation<void, CoachInviteCode>({
+    mutationFn: () => rotateCoachInviteCode(),
+    fallback: "Rigenerazione fallita",
+    onSuccess: (invite) => {
+      setCode(invite.code);
+      toast.success("Nuovo codice generato");
+    },
+    onError: (err) => {
+      toast.error(ApiError.messageFrom(err, "Rigenerazione fallita"));
+    },
+  });
 
   const handleCopy = async () => {
     if (!code) {
@@ -26,19 +45,6 @@ export default function InviteClientPage() {
     }
   };
 
-  const handleRotate = async () => {
-    setBusy(true);
-    try {
-      const invite = await rotateCoachInviteCode();
-      setCode(invite.code);
-      toast.success("Nuovo codice generato");
-    } catch (err) {
-      toast.error(ApiError.messageFrom(err, "Rigenerazione fallita"));
-    } finally {
-      setBusy(false);
-    }
-  };
-
   return (
     <div className="coach-page page-container">
       <PageHeader
@@ -46,15 +52,15 @@ export default function InviteClientPage() {
         subtitle="Condividi il codice: l'atleta lo inserisce nell'app dopo la registrazione"
       />
 
-      {loading ? (
+      {isPending ? (
         <p className="coach-empty">Caricamento…</p>
       ) : null}
 
-      {!loading && !code ? (
+      {!isPending && !code ? (
         <p className="coach-empty">Codice non disponibile</p>
       ) : null}
 
-      {!loading && code ? (
+      {!isPending && code ? (
         <section className="coach-section">
           <p className="coach-empty" style={{ marginBottom: "1rem" }}>
             L&apos;atleta crea da solo l&apos;account su mobile, poi collega il tuo codice
@@ -85,8 +91,8 @@ export default function InviteClientPage() {
               <Button
                 type="button"
                 variant="secondary"
-                loading={busy}
-                onClick={() => void handleRotate()}
+                loading={rotate.isPending}
+                onClick={() => rotate.mutate()}
               >
                 Rigenera
               </Button>

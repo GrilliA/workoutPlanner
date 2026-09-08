@@ -1,10 +1,9 @@
 import { Link, useRoute } from "wouter";
-import type { WorkoutDetail } from "@api";
+import { ApiError, getCoachClientProgram, useQuery, type WorkoutDetail } from "@api";
 import { WEEKDAY_LABELS_SHORT } from "@pages/workouts/new/types";
 import { ExerciseRow } from "@pages/workouts/new/exerciserow";
 import { PageHeader } from "@components/pageHeader";
 import { CoachCard, CoachCardList } from "../../coachCard";
-import { useClientProgram } from "./api/useClientProgram";
 import "../../style.css";
 
 function formatWeekdays(weekdays: number[]): string {
@@ -91,7 +90,21 @@ function ViewClientProgramLoaded({
   athleteId: number;
   workoutId: number;
 }) {
-  const { program, loading } = useClientProgram(athleteId, workoutId);
+  const { data: program, isPending } = useQuery({
+    queryKey: [athleteId, workoutId],
+    queryFn: async ({ signal }) => {
+      try {
+        return await getCoachClientProgram(athleteId, workoutId, { signal });
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 404) {
+          return null;
+        }
+
+        throw err;
+      }
+    },
+    fallback: "Impossibile caricare la scheda",
+  });
   const editHref = `/clients/${athleteId}/programs/${workoutId}/edit`;
   const clientHref = `/clients/${athleteId}`;
 
@@ -117,9 +130,9 @@ function ViewClientProgramLoaded({
         </Link>
       </nav>
 
-      {loading ? <p className="coach-empty">Caricamento…</p> : null}
+      {isPending ? <p className="coach-empty">Caricamento…</p> : null}
 
-      {!loading && !program ? (
+      {!isPending && !program ? (
         <p className="coach-empty">Scheda non trovata</p>
       ) : null}
 

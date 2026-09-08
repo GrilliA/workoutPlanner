@@ -1,11 +1,15 @@
 import { Link } from "wouter";
+import { getCoachTemplates, useQuery } from "@api";
 import { PageHeader } from "@components/pageHeader";
 import { CoachCard, CoachCardList } from "../coachCard";
-import { useTemplates } from "./api/useTemplates";
 import "../style.css";
 
 export default function TemplatesPage() {
-  const { templates, loading } = useTemplates();
+  const { data, isPending } = useQuery({
+    queryFn: getCoachTemplates,
+    fallback: "Impossibile caricare i template",
+  });
+  const templates = data ?? [];
 
   return (
     <div className="coach-page page-container page-container--wide">
@@ -19,15 +23,15 @@ export default function TemplatesPage() {
         }
       />
 
-      {loading ? (
+      {isPending ? (
         <p className="coach-empty">Caricamento…</p>
       ) : null}
 
-      {!loading && templates.length === 0 ? (
+      {!isPending && templates.length === 0 ? (
         <p className="coach-empty">Nessun template. Creane uno da usare come base.</p>
       ) : null}
 
-      {!loading && templates.length > 0 ? (
+      {!isPending && templates.length > 0 ? (
         <CoachCardList>
           {templates.map((template) => (
             <CoachCard

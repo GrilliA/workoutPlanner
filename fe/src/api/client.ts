@@ -16,6 +16,10 @@ export class ApiError extends Error {
     this.status = status;
   }
 
+  static from(err: unknown, fallback: string): ApiError {
+    return err instanceof ApiError ? err : new ApiError(400, fallback);
+  }
+
   static messageFrom(err: unknown, fallback: string): string {
     if (!(err instanceof ApiError)) {
       return fallback;
@@ -37,11 +41,16 @@ export class ApiError extends Error {
   }
 }
 
+export function isAbortError(err: unknown): boolean {
+  return err instanceof Error && err.name === "AbortError";
+}
+
 type RequestOptions<TResponse> = {
   method?: string;
   body?: unknown;
   requestSchema?: z.ZodType;
   schema: z.ZodType<TResponse>;
+  signal?: AbortSignal;
 };
 
 const AUTH_PATH_PREFIX = "/auth/";
@@ -123,7 +132,7 @@ async function sendRequest<TResponse>(
   options: RequestOptions<TResponse>,
   isRetry = false,
 ): Promise<TResponse> {
-  const { method = "GET", body, requestSchema, schema } = options;
+  const { method = "GET", body, requestSchema, schema, signal } = options;
   const headers = new Headers({ Accept: "application/json" });
   let encodedBody: string | undefined;
 
@@ -155,12 +164,25 @@ async function sendRequest<TResponse>(
     headers,
     body: encodedBody,
     credentials: "include",
-  }).catch(() => {
+    signal,
+  }).catch((err: unknown) => {
+    if (isAbortError(err)) {
+      throw err;
+    }
+
     throw new ApiError(0, "Connessione non disponibile");
   });
 
+  if (signal?.aborted) {
+    throw new DOMException("Aborted", "AbortError");
+  }
+
   if (response.status === 401 && !isRetry && !isAuthPath(path)) {
     const newToken = await refreshAccessToken();
+
+    if (signal?.aborted) {
+      throw new DOMException("Aborted", "AbortError");
+    }
 
     if (newToken) {
       return sendRequest(path, options, true);

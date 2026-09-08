@@ -1,11 +1,15 @@
 import { Link } from "wouter";
+import { getCoachClients, useQuery } from "@api";
 import { PageHeader } from "@components/pageHeader";
 import { CoachCard, CoachCardList } from "../coachCard";
-import { useClients } from "./api/useClients";
 import "../style.css";
 
 export default function CoachClientsPage() {
-  const { clients, loading } = useClients();
+  const { data, isPending } = useQuery({
+    queryFn: getCoachClients,
+    fallback: "Impossibile caricare i clienti",
+  });
+  const clients = data ?? [];
 
   return (
     <div className="coach-page page-container page-container--wide">
@@ -19,15 +23,15 @@ export default function CoachClientsPage() {
         }
       />
 
-      {loading ? (
+      {isPending ? (
         <p className="coach-empty">Caricamento…</p>
       ) : null}
 
-      {!loading && clients.length === 0 ? (
+      {!isPending && clients.length === 0 ? (
         <p className="coach-empty">Nessun cliente ancora. Creane uno per iniziare.</p>
       ) : null}
 
-      {!loading && clients.length > 0 ? (
+      {!isPending && clients.length > 0 ? (
         <CoachCardList>
           {clients.map((client) => (
             <CoachCard

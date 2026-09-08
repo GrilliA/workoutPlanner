@@ -1,43 +1,21 @@
-import { useEffect, useState } from "react";
-import { ApiError, getCoachAssignments, type CoachAssignment } from "@api";
+import { getCoachAssignments, useQuery, type CoachAssignment } from "@api";
 
 export function useAssignments() {
-  const [assignments, setAssignments] = useState<CoachAssignment[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<ApiError | null>(null);
+  const { data, isPending, setData } = useQuery({
+    queryFn: getCoachAssignments,
+    fallback: "Impossibile caricare le assegnazioni",
+  });
 
-  useEffect(() => {
-    let cancelled = false;
+  const setAssignments = (
+    update:
+      | CoachAssignment[]
+      | ((prev: CoachAssignment[]) => CoachAssignment[]),
+  ) => {
+    setData((prev) => {
+      const current = prev ?? [];
+      return typeof update === "function" ? update(current) : update;
+    });
+  };
 
-    void getCoachAssignments()
-      .then((data) => {
-        if (!cancelled) {
-          setAssignments(data);
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(
-            err instanceof ApiError
-              ? err
-              : new ApiError(400, "Impossibile caricare le assegnazioni"),
-          );
-        }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  if (error) {
-    throw error;
-  }
-
-  return { assignments, setAssignments, loading };
+  return { assignments: data ?? [], setAssignments, loading: isPending };
 }

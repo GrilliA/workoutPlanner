@@ -6,6 +6,7 @@ import {
   revokeCoachAssignment,
   unlinkCoachClient,
   updateCoachAssignment,
+  useMutation,
   type CoachAssignment,
 } from "@api";
 import { Button } from "@components/button";
@@ -63,10 +64,6 @@ function ClientDetailLoaded({ athleteId }: { athleteId: number }) {
   const { detail, setDetail, loading } = useClientDetail(athleteId);
   const [drafts, setDrafts] = useState<Record<number, AssignmentDraft>>({});
   const [password, setPassword] = useState("");
-  const [resettingPassword, setResettingPassword] = useState(false);
-  const [savingAssignmentId, setSavingAssignmentId] = useState<number | null>(null);
-  const [revokingAssignmentId, setRevokingAssignmentId] = useState<number | null>(null);
-  const [unlinking, setUnlinking] = useState(false);
 
   const client = detail?.client ?? null;
   const assignments = detail?.assignments ?? [];
@@ -88,55 +85,68 @@ function ClientDetailLoaded({ athleteId }: { athleteId: number }) {
     setDrafts((existing) => ({ ...existing, [updated.id]: toDraft(updated) }));
   };
 
-  const handleResetPassword = async (event: FormEvent) => {
-    event.preventDefault();
-    setResettingPassword(true);
-
-    try {
-      await resetCoachClientPassword(athleteId, { password });
+  const resetPassword = useMutation({
+    mutationFn: (nextPassword: string) =>
+      resetCoachClientPassword(athleteId, { password: nextPassword }),
+    fallback: "Reset password fallito",
+    onSuccess: () => {
       setPassword("");
       toast.success("Password aggiornata");
-    } catch (err) {
+    },
+    onError: (err) => {
       toast.error(ApiError.messageFrom(err, "Reset password fallito"));
-    } finally {
-      setResettingPassword(false);
-    }
-  };
+    },
+  });
 
-  const handleSaveAssignment = async (assignment: CoachAssignment) => {
-    const draft = drafts[assignment.id] ?? toDraft(assignment);
-
-    setSavingAssignmentId(assignment.id);
-
-    try {
-      const updated = await updateCoachAssignment(assignment.id, {
+  const saveDates = useMutation({
+    mutationFn: (assignment: CoachAssignment) => {
+      const draft = drafts[assignment.id] ?? toDraft(assignment);
+      return updateCoachAssignment(assignment.id, {
         startsAt: draft.startsAt !== assignment.startsAt ? draft.startsAt : undefined,
-        expiresAt: draft.expiresAt !== assignment.expiresAt ? draft.expiresAt : undefined,
+        expiresAt:
+          draft.expiresAt !== assignment.expiresAt ? draft.expiresAt : undefined,
       });
+    },
+    fallback: "Salvataggio date fallito",
+    onSuccess: (updated) => {
       replaceAssignment(updated);
       toast.success("Date aggiornate");
-    } catch (err) {
+    },
+    onError: (err) => {
       toast.error(ApiError.messageFrom(err, "Salvataggio date fallito"));
-    } finally {
-      setSavingAssignmentId(null);
-    }
-  };
+    },
+  });
 
-  const handleRevoke = async (assignmentId: number) => {
-    setRevokingAssignmentId(assignmentId);
-
-    try {
-      const updated = await revokeCoachAssignment(assignmentId);
+  const revoke = useMutation({
+    mutationFn: revokeCoachAssignment,
+    fallback: "Revoca fallita",
+    onSuccess: (updated) => {
       replaceAssignment(updated);
       toast.success("Scheda revocata");
-    } catch (err) {
+    },
+    onError: (err) => {
       toast.error(ApiError.messageFrom(err, "Revoca fallita"));
-    } finally {
-      setRevokingAssignmentId(null);
-    }
+    },
+  });
+
+  const unlink = useMutation<void, Awaited<ReturnType<typeof unlinkCoachClient>>>({
+    mutationFn: () => unlinkCoachClient(athleteId),
+    fallback: "Scollegamento fallito",
+    onSuccess: () => {
+      toast.success("Cliente scollegato");
+      setLocation("/clients");
+    },
+    onError: (err) => {
+      toast.error(ApiError.messageFrom(err, "Scollegamento fallito"));
+    },
+  });
+
+  const handleResetPassword = (event: FormEvent) => {
+    event.preventDefault();
+    resetPassword.mutate(password);
   };
 
-  const handleUnlink = async () => {
+  const handleUnlink = () => {
     const confirmed = window.confirm(
       "Scollegare questo cliente? Le schede assegnate verranno revocate. L'account atleta resterà attivo.",
     );
@@ -145,17 +155,7 @@ function ClientDetailLoaded({ athleteId }: { athleteId: number }) {
       return;
     }
 
-    setUnlinking(true);
-
-    try {
-      await unlinkCoachClient(athleteId);
-      toast.success("Cliente scollegato");
-      setLocation("/clients");
-    } catch (err) {
-      toast.error(ApiError.messageFrom(err, "Scollegamento fallito"));
-    } finally {
-      setUnlinking(false);
-    }
+    unlink.mutate();
   };
 
   const updateDraft = (assignment: CoachAssignment, patch: Partial<AssignmentDraft>) => {
@@ -230,7 +230,7 @@ function ClientDetailLoaded({ athleteId }: { athleteId: number }) {
               <Button
                 type="submit"
                 variant="secondary"
-                loading={resettingPassword}
+                loading={resetPassword.isPending}
               >
                 Reimposta password
               </Button>
@@ -306,10 +306,14 @@ function ClientDetailLoaded({ athleteId }: { athleteId: number }) {
                           <button
                             type="button"
                             className="coach-text-action"
-                            onClick={() => void handleSaveAssignment(assignment)}
-                            disabled={savingAssignmentId === assignment.id}
+                            onClick={() => saveDates.mutate(assignment)}
+                            disabled={
+                              saveDates.isPending &&
+                              saveDates.variables?.id === assignment.id
+                            }
                           >
-                            {savingAssignmentId === assignment.id
+                            {saveDates.isPending &&
+                            saveDates.variables?.id === assignment.id
                               ? "Salvataggio…"
                               : "Salva date"}
                           </button>
@@ -318,10 +322,14 @@ function ClientDetailLoaded({ athleteId }: { athleteId: number }) {
                           <button
                             type="button"
                             className="coach-text-action coach-text-action--danger"
-                            onClick={() => void handleRevoke(assignment.id)}
-                            disabled={revokingAssignmentId === assignment.id}
+                            onClick={() => revoke.mutate(assignment.id)}
+                            disabled={
+                              revoke.isPending && revoke.variables === assignment.id
+                            }
                           >
-                            {revokingAssignmentId === assignment.id ? "Revoca…" : "Revoca"}
+                            {revoke.isPending && revoke.variables === assignment.id
+                              ? "Revoca…"
+                              : "Revoca"}
                           </button>
                         ) : null}
                       </div>
@@ -340,8 +348,8 @@ function ClientDetailLoaded({ athleteId }: { athleteId: number }) {
             </p>
             <Button
               variant="secondary"
-              loading={unlinking}
-              onClick={() => void handleUnlink()}
+              loading={unlink.isPending}
+              onClick={handleUnlink}
             >
               Scollega cliente
             </Button>
