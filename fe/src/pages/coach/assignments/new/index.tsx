@@ -1,5 +1,5 @@
 import { useMemo, useState, type FormEvent } from "react";
-import { useLocation, useSearch } from "wouter";
+import { Link, useLocation, useSearch } from "wouter";
 import {
   ApiError,
   createCoachAssignment,
@@ -87,6 +87,21 @@ export default function NewAssignmentPage() {
 
       {isPending ? (
         <p className="coach-empty">Caricamento…</p>
+      ) : clients.length === 0 ? (
+        <section className="coach-dashboard__empty">
+          <h2>Invita il primo cliente</h2>
+          <p className="coach-empty">
+            Condividi il codice invito: l&apos;atleta si registra sull&apos;app e si collega a te.
+          </p>
+          <div className="coach-dashboard__actions">
+            <Link
+              href="/clients/new"
+              className="coach-btn-link coach-btn-link--primary"
+            >
+              Invita cliente
+            </Link>
+          </div>
+        </section>
       ) : (
       <form className="coach-form" onSubmit={(event) => void handleSubmit(event)}>
         <label>

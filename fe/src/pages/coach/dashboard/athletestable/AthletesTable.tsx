@@ -17,7 +17,7 @@ export function AthletesTable({ rows }: AthletesTableProps) {
       </div>
 
       {rows.length === 0 ? (
-        <p className="coach-empty">Nessun cliente ancora.</p>
+        <p className="coach-empty">Nessun cliente collegato.</p>
       ) : (
         <div className="athletes-table__frame">
           <table>
