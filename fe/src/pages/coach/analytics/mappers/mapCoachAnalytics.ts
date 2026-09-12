@@ -9,7 +9,15 @@ import {
   getRangeOption,
 } from "./formatters";
 
-const severityRank = { high: 0, medium: 1 } as const;
+const SIGNAL_LABEL = {
+  inactive: "Inattivo",
+  program_expiring: "In scadenza",
+} as const;
+
+const kindRank = { program_expiring: 0, inactive: 1 } as const;
+
+const hasExpiringSignal = (row: AlertTableRow): boolean =>
+  row.signals.some((signal) => signal.kind === "program_expiring");
 
 const mapAlertRows = (overview: CoachAnalyticsOverview): AlertTableRow[] => {
   const clientById = new Map(
@@ -26,7 +34,7 @@ const mapAlertRows = (overview: CoachAnalyticsOverview): AlertTableRow[] => {
   return [...grouped.entries()]
     .map(([athleteId, alerts]) => {
       const sorted = [...alerts].sort(
-        (a, b) => severityRank[a.severity] - severityRank[b.severity],
+        (a, b) => kindRank[a.type] - kindRank[b.type],
       );
       const primary = sorted[0]!;
       const client = clientById.get(athleteId);
@@ -34,9 +42,11 @@ const mapAlertRows = (overview: CoachAnalyticsOverview): AlertTableRow[] => {
       return {
         athleteId,
         athleteLabel: athleteLabel(primary.athleteName, athleteId),
-        reason: primary.message,
-        extraReasons: sorted.length - 1,
-        severity: primary.severity,
+        signals: sorted.map((alert) => ({
+          kind: alert.type,
+          label: SIGNAL_LABEL[alert.type],
+          detail: alert.message,
+        })),
         sessionsLabel:
           client && client.sessionsCompleted > 0
             ? formatInteger(client.sessionsCompleted)
@@ -46,9 +56,9 @@ const mapAlertRows = (overview: CoachAnalyticsOverview): AlertTableRow[] => {
       };
     })
     .sort((a, b) => {
-      const severityDiff = severityRank[a.severity] - severityRank[b.severity];
-      if (severityDiff !== 0) {
-        return severityDiff;
+      const expiringDiff = Number(hasExpiringSignal(b)) - Number(hasExpiringSignal(a));
+      if (expiringDiff !== 0) {
+        return expiringDiff;
       }
 
       return a.athleteLabel.localeCompare(b.athleteLabel, "it");
