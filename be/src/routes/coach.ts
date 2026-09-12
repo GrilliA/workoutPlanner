@@ -21,6 +21,7 @@ import {
   getCoachDashboardStats,
   listAthleteAssignmentsForCoach,
   listCoachAssignments,
+  listCoachRecentActivity,
 } from "../services/coachDashboard";
 import {
   getOrCreateCoachInviteCode,
@@ -76,8 +77,11 @@ const templateGroupBy = [
 
 coachRouter.get("/dashboard", async (req, res) => {
   const coach = getAuthUser(req);
-  const stats = await getCoachDashboardStats(coach.id);
-  res.json(stats);
+  const [stats, recentActivity] = await Promise.all([
+    getCoachDashboardStats(coach.id),
+    listCoachRecentActivity(coach.id),
+  ]);
+  res.json({ ...stats, recentActivity });
 });
 
 coachRouter.get("/analytics/overview", async (req, res) => {

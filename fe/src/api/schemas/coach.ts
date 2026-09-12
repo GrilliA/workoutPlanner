@@ -71,6 +71,16 @@ export const coachDashboardExpiredItemSchema = z.object({
   expiresAt: z.string(),
 });
 
+export const coachDashboardActivityItemSchema = z.object({
+  sessionId: z.number(),
+  athleteId: z.number(),
+  athleteName: z.string().nullable(),
+  athleteEmail: z.string(),
+  workoutId: z.number(),
+  workoutName: z.string(),
+  completedAt: z.coerce.string(),
+});
+
 export const coachDashboardSchema = z.object({
   clientCount: z.number(),
   templateCount: z.number(),
@@ -88,6 +98,7 @@ export const coachDashboardSchema = z.object({
   ),
   upcomingExpirations: z.array(coachDashboardExpirationItemSchema),
   expiredAssignmentsList: z.array(coachDashboardExpiredItemSchema),
+  recentActivity: z.array(coachDashboardActivityItemSchema),
 });
 
 export const coachTemplateSchema = z.object({
@@ -142,6 +153,9 @@ export type CoachDashboardExpirationItem = z.infer<
 >;
 export type CoachDashboardExpiredItem = z.infer<
   typeof coachDashboardExpiredItemSchema
+>;
+export type CoachDashboardActivityItem = z.infer<
+  typeof coachDashboardActivityItemSchema
 >;
 export type CoachTemplate = z.infer<typeof coachTemplateSchema>;
 export type CreateClientInput = z.input<typeof createClientRequestSchema>;
