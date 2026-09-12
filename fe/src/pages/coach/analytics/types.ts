@@ -34,12 +34,16 @@ export type WeeklyChartModel = {
   hasVolume: boolean;
 };
 
+export type AlertSignal = {
+  kind: "inactive" | "program_expiring";
+  label: string;
+  detail: string;
+};
+
 export type AlertTableRow = {
   athleteId: number;
   athleteLabel: string;
-  reason: string;
-  extraReasons: number;
-  severity: "high" | "medium";
+  signals: AlertSignal[];
   sessionsLabel: string;
   lastSessionLabel: string;
   href: string;
