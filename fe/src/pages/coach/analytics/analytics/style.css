@@ -9,4 +9,8 @@
     font-size: 1.1rem;
     color: var(--text-h);
   }
+
+  & .coach-dashboard__actions {
+    margin-top: 1rem;
+  }
 }

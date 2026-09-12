@@ -1,3 +1,4 @@
+import { Link } from "wouter";
 import { PageHeader } from "@components/pageHeader";
 import { AlertsTable } from "../alertstable";
 import { AnalyticsSkeleton } from "../analyticsskeleton";
@@ -33,6 +34,14 @@ export function AnalyticsPage() {
             Invita il primo atleta per iniziare a monitorare sessioni, attività e segnali
             operativi.
           </p>
+          <div className="coach-dashboard__actions">
+            <Link
+              href="/clients/new"
+              className="coach-btn-link coach-btn-link--primary"
+            >
+              Invita cliente
+            </Link>
+          </div>
         </section>
       ) : null}
 

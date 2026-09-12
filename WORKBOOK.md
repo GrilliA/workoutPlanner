@@ -61,6 +61,7 @@ How to use:
 
 ## What we did
 
+- 2026-09-12 — P0 first-run coach: empty `/clients`, `/assignments`, `/assignments/new` (0 clienti) e `/analytics` puntano a invito/assegnazione; niente “Creane uno” su clienti (resta sui template).
 - 2026-09-08 — P0e smoke del loop in CI: job `Smoke` con service Postgres, schema da `db:migrate`, `be/src/e2e/loop.e2e.test.ts` che percorre invite → redeem → assign → sessione → visibilità coach e blinda la regressione di P0b. Il test rifiuta di girare su `workout_planner`. Verificato che fallisce reintroducendo il codice pre-fix.
 - 2026-09-08 — P0a errori del loop in italiano: `ApiError.messageFrom` sul mobile traduce le 8 stringhe backend che l'atleta incontra fra redeem e avvio sessione, più rete assente / 401 / 5xx. Convertiti i soli call site del loop (redeem, unlink, avvio sessione, schede); gli altri ~15 restano da fare.
 - 2026-09-08 — P0c onboarding coach mobile: `resolveNoProgramReason` separa `no-coach` / `coach-pending` / `coach-program-inactive`, la card vuota della Home cambia copy e bottoni di conseguenza, CTA "COLLEGA COACH" su Home e Schede. La copy di `coach-program-inactive` non può citare le date: nessuna API le espone per un'assegnazione non attiva.
@@ -202,7 +203,7 @@ Order: P0 → P0.5 → P1 → P2 → P3. Igiene non blocca P0. Invite / assign /
 ### P0 — First-run + smoke del loop (M–L)
 
 - [x] Baseline: smoke **manuale** del loop attuale — eseguito 2026-09-08 su DB reale. Il loop gira end-to-end; rotture trovate: assegnare un ciclo futuro revocava l'attiva (**risolto**, P0b), errori invite in inglese verso l'atleta, dashboard senza activity, redeem solo in Impostazioni.
-- [ ] First-run coach: empty states + CTA invite/assign dopo signup; copy clienti non deve puntare a create 410.
+- [x] First-run coach: empty states + CTA invite/assign dopo signup; copy clienti non deve puntare a create 410.
 - [ ] Invite → redeem visibile: **fatto** (P0c, CTA "COLLEGA COACH" su Home e Schede → sezione COACH di Impostazioni; Home distingue nessun coach / coach senza scheda / scheda coach non attiva). Errori in italiano: **fatto** (P0a). Resta l'hardening invalido / doppio / già collegato. Niente expiry codice (solo rotate) in questo giro.
 - [ ] Activity feed sulla dashboard coach (chi / cosa / quando). Storico cliente e `/analytics` ci sono già; la home no.
 - [ ] Smoke E2E **automatizzato** del loop in CI (first-run → invite → redeem → assign → log → visibilità coach). Sostituisce il todo “smoke solo manuale” come gate.
