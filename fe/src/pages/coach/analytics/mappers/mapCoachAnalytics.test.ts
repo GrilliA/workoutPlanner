@@ -7,10 +7,10 @@ import { mapCoachAnalytics } from "./mapCoachAnalytics";
 const baseOverview = (): CoachAnalyticsOverview => ({
   range: "4w",
   period: { from: "2026-07-24", to: "2026-08-20" },
-  clientCount: 2,
-  athletesActiveInPeriod: 2,
-  sessionsCompletedTotal: 9,
-  clientsToReviewCount: 1,
+  clientCount: 3,
+  athletesActiveInPeriod: 3,
+  sessionsCompletedTotal: 15,
+  clientsToReviewCount: 3,
   weeklySeries: [
     {
       weekStart: "2026-07-24",
@@ -33,6 +33,27 @@ const baseOverview = (): CoachAnalyticsOverview => ({
       athleteId: 10,
       athleteName: "Marco Rossi",
     },
+    {
+      type: "program_expiring",
+      severity: "medium",
+      message: "Programma in scadenza tra 3 giorni",
+      athleteId: 10,
+      athleteName: "Marco Rossi",
+    },
+    {
+      type: "program_expiring",
+      severity: "medium",
+      message: "Programma in scadenza oggi",
+      athleteId: 12,
+      athleteName: "Sara Neri",
+    },
+    {
+      type: "inactive",
+      severity: "medium",
+      message: "Nessuna sessione completata da 11 giorni",
+      athleteId: 11,
+      athleteName: "Luca Bianchi",
+    },
   ],
   clients: [
     {
@@ -45,9 +66,16 @@ const baseOverview = (): CoachAnalyticsOverview => ({
     {
       athleteId: 11,
       athleteName: "Luca Bianchi",
-      lastSessionDate: "2026-08-18",
+      lastSessionDate: "2026-08-09",
       sessionsCompleted: 4,
-      alertCount: 0,
+      alertCount: 1,
+    },
+    {
+      athleteId: 12,
+      athleteName: "Sara Neri",
+      lastSessionDate: "2026-08-19",
+      sessionsCompleted: 6,
+      alertCount: 1,
     },
   ],
 });
@@ -67,17 +95,30 @@ describe("buildPortfolioWeeklyChart", () => {
 });
 
 describe("mapCoachAnalytics", () => {
-  it("maps KPIs and deduplicates alert rows per athlete", () => {
+  it("maps KPIs and keeps inactive plus expiring signals on the same row", () => {
     const view = mapCoachAnalytics(baseOverview());
+    const marco = view.alertRows.find((row) => row.athleteId === 10);
+    const sara = view.alertRows.find((row) => row.athleteId === 12);
 
     assert.equal(view.kpis.length, 4);
-    assert.equal(view.kpis[1]?.value, "2");
-    assert.equal(view.kpis[2]?.value, "1");
-    assert.equal(view.alertRows.length, 1);
-    assert.equal(view.alertRows[0]?.extraReasons, 0);
-    assert.equal(view.alertRows[0]?.severity, "medium");
-    assert.equal(view.alertRows[0]?.href, "/clients/10");
-    assert.equal(view.alertRows[0]?.sessionsLabel, "5");
+    assert.equal(view.kpis[1]?.value, "3");
+    assert.equal(view.kpis[2]?.value, "3");
+    assert.equal(view.alertRows.length, 3);
+    assert.deepEqual(
+      view.alertRows.map((row) => row.athleteId),
+      [10, 12, 11],
+    );
+    assert.deepEqual(
+      marco?.signals.map((signal) => signal.kind),
+      ["program_expiring", "inactive"],
+    );
+    assert.equal(marco?.signals[0]?.label, "In scadenza");
+    assert.equal(marco?.href, "/clients/10");
+    assert.equal(marco?.sessionsLabel, "5");
+    assert.deepEqual(
+      sara?.signals.map((signal) => signal.kind),
+      ["program_expiring"],
+    );
   });
 
   it("handles empty portfolio", () => {

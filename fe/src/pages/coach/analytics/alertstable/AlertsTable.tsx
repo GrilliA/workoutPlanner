@@ -1,15 +1,47 @@
 import { Link } from "wouter";
-import type { AlertTableRow } from "../types";
+import type { AlertSignal, AlertTableRow } from "../types";
 import "./style.css";
 
 type AlertsTableProps = {
   rows: AlertTableRow[];
 };
 
+const countKind = (rows: AlertTableRow[], kind: AlertSignal["kind"]): number =>
+  rows.filter((row) => row.signals.some((signal) => signal.kind === kind)).length;
+
+const summaryLabel = (rows: AlertTableRow[]): string => {
+  const inactive = countKind(rows, "inactive");
+  const expiring = countKind(rows, "program_expiring");
+  const parts: string[] = [];
+
+  if (inactive > 0) {
+    parts.push(`${inactive} ${inactive === 1 ? "inattivo" : "inattivi"}`);
+  }
+
+  if (expiring > 0) {
+    parts.push(`${expiring} in scadenza`);
+  }
+
+  return parts.join(" · ");
+};
+
+const rowTone = (row: AlertTableRow): "expiring" | "inactive" =>
+  row.signals.some((signal) => signal.kind === "program_expiring")
+    ? "expiring"
+    : "inactive";
+
+const badgeTone = (kind: AlertSignal["kind"]): "expiring" | "inactive" =>
+  kind === "program_expiring" ? "expiring" : "inactive";
+
 export function AlertsTable({ rows }: AlertsTableProps) {
+  const summary = summaryLabel(rows);
+
   return (
     <section className="analytics-alerts" aria-label="Clienti da controllare">
-      <h2>Da controllare</h2>
+      <div className="analytics-alerts__header">
+        <h2>Da controllare</h2>
+        {summary ? <p className="analytics-alerts__summary">{summary}</p> : null}
+      </div>
 
       {rows.length === 0 ? (
         <p className="analytics-alerts__empty">
@@ -21,7 +53,7 @@ export function AlertsTable({ rows }: AlertsTableProps) {
             <thead>
               <tr>
                 <th scope="col">Atleta</th>
-                <th scope="col">Motivo</th>
+                <th scope="col">Segnali</th>
                 <th scope="col">Sessioni</th>
                 <th scope="col">Ultima sessione</th>
                 <th scope="col">
@@ -33,21 +65,29 @@ export function AlertsTable({ rows }: AlertsTableProps) {
               {rows.map((row) => (
                 <tr
                   key={row.athleteId}
-                  className={
-                    row.severity === "high"
-                      ? "analytics-alerts__row analytics-alerts__row--high"
-                      : "analytics-alerts__row"
-                  }
+                  className={`analytics-alerts__row analytics-alerts__row--${rowTone(row)}`}
                 >
-                  <td data-label="Atleta">{row.athleteLabel}</td>
-                  <td data-label="Motivo">
-                    {row.reason}
-                    {row.extraReasons > 0 ? (
-                      <span className="analytics-alerts__extra">
-                        {" "}
-                        +{row.extraReasons} altri segnali
+                  <td data-label="Atleta">
+                    <span className="analytics-alerts__athlete">
+                      <span className="analytics-alerts__avatar" aria-hidden>
+                        {row.athleteLabel.slice(0, 1).toUpperCase()}
                       </span>
-                    ) : null}
+                      {row.athleteLabel}
+                    </span>
+                  </td>
+                  <td data-label="Segnali">
+                    <ul className="analytics-alerts__signals">
+                      {row.signals.map((signal) => (
+                        <li key={signal.kind} className="analytics-alerts__signal">
+                          <span
+                            className={`analytics-alerts__badge analytics-alerts__badge--${badgeTone(signal.kind)}`}
+                          >
+                            {signal.label}
+                          </span>
+                          <span className="analytics-alerts__detail">{signal.detail}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </td>
                   <td data-label="Sessioni">{row.sessionsLabel}</td>
                   <td data-label="Ultima sessione">{row.lastSessionLabel}</td>
