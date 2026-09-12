@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import { PageHeader } from "@components/pageHeader";
+import { ActivityFeed } from "../activityfeed";
 import { AthletesTable } from "../athletestable";
 import { KpiGrid } from "../kpigrid";
 import { LibraryCta } from "../librarycta";
@@ -61,7 +62,10 @@ export function Dashboard() {
         <>
           <KpiGrid items={data.kpis} />
           <div className="coach-dashboard__main">
-            <AthletesTable rows={data.athletes} />
+            <div className="coach-dashboard__primary">
+              <AthletesTable rows={data.athletes} />
+              <ActivityFeed items={data.recentActivity} />
+            </div>
             <aside className="coach-dashboard__side">
               <TaskPanel tasks={data.tasks} />
               <LibraryCta templateCount={data.templateCount} />

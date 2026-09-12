@@ -1,0 +1,54 @@
+.activity-feed {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+
+  & h2 {
+    margin: 0;
+    color: var(--text-h);
+    font-size: var(--text-lg);
+    font-style: italic;
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.45rem;
+  }
+}
+
+.activity-feed__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.activity-feed__row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color var(--duration-fast);
+
+  &:hover,
+  &:focus-visible {
+    border-color: var(--accent-border);
+    outline: none;
+  }
+}
+
+.activity-feed__athlete {
+  color: var(--text-h);
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.activity-feed__detail {
+  color: var(--text);
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  font-style: italic;
+}

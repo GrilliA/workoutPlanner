@@ -12,6 +12,7 @@
   align-items: start;
 }
 
+.coach-dashboard__primary,
 .coach-dashboard__side {
   display: flex;
   flex-direction: column;

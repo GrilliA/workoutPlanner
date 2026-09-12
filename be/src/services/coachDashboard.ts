@@ -1,6 +1,12 @@
-import { and, count, desc, eq, gte, lte, ne } from "drizzle-orm";
+import { and, count, desc, eq, gte, isNotNull, lte, ne } from "drizzle-orm";
 import { db } from "../db";
-import { coachAthletes, programAssignments, users, workouts } from "../db/schema";
+import {
+  coachAthletes,
+  programAssignments,
+  users,
+  workouts,
+  workoutSessions,
+} from "../db/schema";
 import {
   computeAssignmentStatus,
   daysUntilExpiry,
@@ -43,6 +49,16 @@ export type CoachDashboardStats = {
   expirationsByMonth: Array<{ month: string; count: number }>;
   upcomingExpirations: CoachDashboardExpirationItem[];
   expiredAssignmentsList: CoachDashboardExpiredItem[];
+};
+
+export type CoachDashboardActivityItem = {
+  sessionId: number;
+  athleteId: number;
+  athleteName: string | null;
+  athleteEmail: string;
+  workoutId: number;
+  workoutName: string;
+  completedAt: string;
 };
 
 export const getCoachDashboardStats = async (
@@ -159,6 +175,44 @@ export const getCoachDashboardStats = async (
     upcomingExpirations,
     expiredAssignmentsList,
   };
+};
+
+export const listCoachRecentActivity = async (
+  coachId: number,
+): Promise<CoachDashboardActivityItem[]> => {
+  const rows = await db
+    .select({
+      sessionId: workoutSessions.id,
+      athleteId: workoutSessions.userId,
+      athleteName: users.name,
+      athleteEmail: users.email,
+      workoutId: workouts.id,
+      workoutName: workouts.name,
+      completedAt: workoutSessions.completedAt,
+    })
+    .from(workoutSessions)
+    .innerJoin(workouts, eq(workoutSessions.workoutId, workouts.id))
+    .innerJoin(users, eq(workoutSessions.userId, users.id))
+    .innerJoin(coachAthletes, eq(coachAthletes.athleteId, workoutSessions.userId))
+    .where(
+      and(
+        eq(coachAthletes.coachId, coachId),
+        eq(workoutSessions.status, "completed"),
+        isNotNull(workoutSessions.completedAt),
+      ),
+    )
+    .orderBy(desc(workoutSessions.completedAt), desc(workoutSessions.id))
+    .limit(LIST_LIMIT);
+
+  return rows.map((row) => ({
+    sessionId: row.sessionId,
+    athleteId: row.athleteId,
+    athleteName: row.athleteName,
+    athleteEmail: row.athleteEmail,
+    workoutId: row.workoutId,
+    workoutName: row.workoutName,
+    completedAt: row.completedAt!.toISOString(),
+  }));
 };
 
 export const listCoachAssignments = async (coachId: number) => {

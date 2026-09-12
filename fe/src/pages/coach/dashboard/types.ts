@@ -34,6 +34,14 @@ export type DashboardTask = {
   tone: "accent" | "default";
 };
 
+export type DashboardActivityItem = {
+  sessionId: number;
+  athleteId: number;
+  athleteLabel: string;
+  workoutName: string;
+  completedAtLabel: string;
+};
+
 export type DashboardViewModel = {
   clientCount: number;
   templateCount: number;
@@ -41,4 +49,5 @@ export type DashboardViewModel = {
   kpis: DashboardKpi[];
   athletes: DashboardAthleteRow[];
   tasks: DashboardTask[];
+  recentActivity: DashboardActivityItem[];
 };

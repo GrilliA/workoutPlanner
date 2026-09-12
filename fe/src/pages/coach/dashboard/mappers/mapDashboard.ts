@@ -1,6 +1,7 @@
 import type { CoachAnalyticsOverview, CoachAssignment, CoachClient, CoachDashboard } from "@api";
 import { mapDashboardAnalyticsKpis } from "../../analytics/mappers/mapCoachAnalytics";
 import type {
+  DashboardActivityItem,
   DashboardAthleteRow,
   DashboardExpirationRow,
   DashboardKpi,
@@ -183,6 +184,21 @@ export const mapTasks = (
   return [...fromExpired, ...fromUpcoming].slice(0, 4);
 };
 
+const mapRecentActivity = (
+  items: CoachDashboard["recentActivity"],
+): DashboardActivityItem[] =>
+  items.map((item) => ({
+    sessionId: item.sessionId,
+    athleteId: item.athleteId,
+    athleteLabel: athleteLabel(item.athleteName, item.athleteEmail),
+    workoutName: item.workoutName,
+    completedAtLabel: new Date(item.completedAt).toLocaleDateString("it-IT", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }),
+  }));
+
 export const mapDashboard = (
   stats: CoachDashboard,
   clients: CoachClient[] = [],
@@ -199,5 +215,6 @@ export const mapDashboard = (
     kpis: mapKpis(stats, analytics),
     athletes: mapAthletes(clients, assignments),
     tasks: mapTasks(upcoming, expired),
+    recentActivity: mapRecentActivity(stats.recentActivity),
   };
 };
