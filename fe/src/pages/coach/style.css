@@ -1,7 +1,7 @@
 .coach-page {
   box-sizing: border-box;
+  min-width: 0;
   max-width: 100%;
-  padding: 1.25rem 1rem 5rem;
 }
 
 .coach-section {

@@ -3,7 +3,9 @@
  * Viewport queries control AppShell chrome; feature reflow uses the named
  * `page` container on `.page-container`.
  * Feature thresholds: 40rem dashboard split and alerts table
- * (content box of `.page-container`, so padding is already subtracted).
+ * (content box of `.page-container`; page inset lives on AppShell `.content`).
+ * Athletes table uses the same 40rem on its own container — after the
+ * dashboard split the primary column is narrower than the page.
  *
  * --bp-sm  30rem (480px)  large phone
  * --bp-md  48rem (768px)  tablet
@@ -77,6 +79,7 @@ body {
 
 .page-container {
   width: 100%;
+  min-width: 0;
   max-width: var(--content-max-width);
   margin-inline: auto;
   container: page / inline-size;

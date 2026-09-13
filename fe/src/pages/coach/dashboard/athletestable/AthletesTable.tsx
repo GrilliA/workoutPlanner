@@ -20,19 +20,21 @@ export function AthletesTable({ rows }: AthletesTableProps) {
         <p className="coach-empty">Nessun cliente collegato.</p>
       ) : (
         <div className="athletes-table__frame">
-          <table>
+          <table className="athletes-table__table">
             <thead>
               <tr>
-                <th>Atleta</th>
-                <th>Stato programma</th>
-                <th>Dettaglio</th>
-                <th className="athletes-table__actions">Azione</th>
+                <th scope="col">Atleta</th>
+                <th scope="col">Stato programma</th>
+                <th scope="col">Dettaglio</th>
+                <th scope="col">
+                  <span className="sr-only">Azione</span>
+                </th>
               </tr>
             </thead>
             <tbody>
               {rows.map((row) => (
-                <tr key={row.id}>
-                  <td>
+                <tr key={row.id} className="athletes-table__row">
+                  <td data-label="Atleta">
                     <Link href={`/clients/${row.id}`} className="athletes-table__name">
                       <span className="athletes-table__avatar" aria-hidden>
                         {row.label.slice(0, 1).toUpperCase()}
@@ -40,15 +42,17 @@ export function AthletesTable({ rows }: AthletesTableProps) {
                       {row.label}
                     </Link>
                   </td>
-                  <td>
+                  <td data-label="Stato programma">
                     <span
                       className={`athletes-table__badge athletes-table__badge--${row.status}`}
                     >
                       {row.statusLabel}
                     </span>
                   </td>
-                  <td className="athletes-table__meta">{row.metaLabel}</td>
-                  <td className="athletes-table__actions">
+                  <td data-label="Dettaglio" className="athletes-table__meta">
+                    {row.metaLabel}
+                  </td>
+                  <td data-label="Azione" className="athletes-table__actions">
                     <Link href={`/clients/${row.id}`} className="coach-link">
                       Apri
                     </Link>
