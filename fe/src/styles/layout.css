@@ -1,5 +1,9 @@
 /*
- * Layout tokens — mobile-first breakpoints (min-width only).
+ * Layout tokens — mobile-first. Viewport queries use range syntax.
+ * Viewport queries control AppShell chrome; feature reflow uses the named
+ * `page` container on `.page-container`.
+ * Feature thresholds: 40rem dashboard split and alerts table
+ * (content box of `.page-container`, so padding is already subtracted).
  *
  * --bp-sm  30rem (480px)  large phone
  * --bp-md  48rem (768px)  tablet
@@ -31,7 +35,8 @@
   --bottom-nav-offset: calc(5.5rem + var(--safe-bottom));
 }
 
-@media (min-width: 64rem) {
+/* Custom properties cannot be used in a media query condition. */
+@media (width >= 64rem) {
   :root {
     --page-padding-inline: 2rem;
     --page-padding-block: 1.5rem;
@@ -74,6 +79,7 @@ body {
   width: 100%;
   max-width: var(--content-max-width);
   margin-inline: auto;
+  container: page / inline-size;
 }
 
 .page-container--wide {
