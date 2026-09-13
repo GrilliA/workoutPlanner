@@ -2,7 +2,7 @@
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 0.85rem;
-  padding: 1rem;
+  padding: var(--space-4) var(--space-5);
   margin-bottom: 1.5rem;
 
   & h2 {
@@ -64,10 +64,4 @@
   font-size: 0.65rem;
   color: var(--muted, #666);
   min-height: 0.9rem;
-}
-
-@media (min-width: 64rem) {
-  .analytics-chart {
-    padding: 1.15rem 1.25rem;
-  }
 }

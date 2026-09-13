@@ -190,7 +190,7 @@
     }
   }
 
-  @media (min-width: 64rem) {
+  @media (width >= 64rem) {
     grid-template-columns: var(--sidebar-width) 1fr;
 
     & .sidebar {

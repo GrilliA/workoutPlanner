@@ -20,7 +20,7 @@
   min-width: 0;
 }
 
-@media (min-width: 64rem) {
+@container page (width >= 40rem) {
   .coach-dashboard__main {
     grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr);
     gap: 2rem;
