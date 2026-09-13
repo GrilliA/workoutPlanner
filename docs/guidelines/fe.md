@@ -75,6 +75,7 @@ export function mapRecentWorkouts(workouts: Workout[]): RecentWorkout[] {
 - Feature reflow uses `@container page` on `.page-container` plus `auto-fit` / `minmax`
 - Do not copy `64rem` into feature styles; `var(--bp-*)` cannot be used in `@media` or `@container` conditions
 - Page width: `.page-container` / `--wide`, not copied `max-width`s
+- Page inset: AppShell `.content` (`--page-padding-*` + `--bottom-nav-offset`); do not pad `.coach-page`
 - Shell: sidebar at `64rem` (`--bp-lg`)
 - Grids: `auto-fit` / `minmax` / `@container` on the feature
 
