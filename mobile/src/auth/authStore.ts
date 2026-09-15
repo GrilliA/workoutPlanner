@@ -1,4 +1,5 @@
 import * as SecureStore from "expo-secure-store";
+import { Platform } from "react-native";
 
 const REFRESH_TOKEN_KEY = "traccia.refreshToken";
 
@@ -8,6 +9,26 @@ let refreshTokenMemory: string | null = null;
 type SessionListener = () => void;
 
 const listeners = new Set<SessionListener>();
+
+/** Expo SecureStore has no usable web implementation; Expo web uses localStorage. */
+const persistRefreshToken = async (token: string | null): Promise<void> => {
+  if (Platform.OS === "web") {
+    if (token) {
+      window.localStorage.setItem(REFRESH_TOKEN_KEY, token);
+      return;
+    }
+
+    window.localStorage.removeItem(REFRESH_TOKEN_KEY);
+    return;
+  }
+
+  if (token) {
+    await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, token);
+    return;
+  }
+
+  await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
+};
 
 /**
  * Auth token storage for React Native.
@@ -27,19 +48,16 @@ export const authStore = {
 
   setRefreshToken: async (token: string | null): Promise<void> => {
     refreshTokenMemory = token;
-
-    if (token) {
-      await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, token);
-      return;
-    }
-
-    await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
+    await persistRefreshToken(token);
   },
 
   /** Load refresh token from SecureStore into memory (call once at bootstrap). */
   hydrateRefreshToken: async (): Promise<string | null> => {
     try {
-      const stored = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
+      const stored =
+        Platform.OS === "web"
+          ? window.localStorage.getItem(REFRESH_TOKEN_KEY)
+          : await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
       refreshTokenMemory = stored;
       return stored;
     } catch {
@@ -51,7 +69,7 @@ export const authStore = {
   clear: (): void => {
     accessToken = null;
     refreshTokenMemory = null;
-    void SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
+    void persistRefreshToken(null);
     listeners.forEach((listener) => listener());
   },
 
