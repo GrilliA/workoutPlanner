@@ -1,5 +1,5 @@
-import { useEffect, useState, type FormEvent } from "react";
-import { Link, useLocation } from "wouter";
+import { useState, type FormEvent } from "react";
+import { Link, Redirect } from "wouter";
 import { ApiError } from "@api";
 import { useAuth } from "@auth";
 import { BrandLogo } from "@components/brandLogo";
@@ -9,17 +9,10 @@ import "@auth/authpage.css";
 
 const Login = () => {
   const { login, status } = useAuth();
-  const [, setLocation] = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    if (status === "authenticated") {
-      setLocation("/dashboard", { replace: true });
-    }
-  }, [status, setLocation]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -28,7 +21,6 @@ const Login = () => {
 
     try {
       await login({ email, password });
-      setLocation("/dashboard");
     } catch (err) {
       setError(ApiError.messageFrom(err, "Impossibile accedere"));
     } finally {
@@ -37,7 +29,7 @@ const Login = () => {
   };
 
   if (status === "authenticated") {
-    return null;
+    return <Redirect to="/dashboard" replace />;
   }
 
   if (status === "loading") {
