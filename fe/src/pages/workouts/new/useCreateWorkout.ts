@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
-import { ApiError } from "@api";
+import { ApiError, useQuery } from "@api";
 import type { Weekday } from "@api/schemas/workoutday";
 import { toast } from "@components/toast";
 import {
@@ -77,89 +77,106 @@ export type WorkoutDraftSeed = {
   days: DraftWorkoutDay[];
 };
 
+const seedWorkoutForm = (draft?: WorkoutDraftSeed | null) => {
+  if (!draft) {
+    const initialDay = createDefaultWorkoutDay();
+    return {
+      name: "",
+      days: [initialDay],
+      activeDayId: initialDay.clientId,
+      settings: DEFAULT_WORKOUT_SETTINGS,
+    };
+  }
+
+  const days =
+    draft.days.length > 0
+      ? draft.days.map((day, index) => ({
+          ...day,
+          sortOrder: index,
+          weekdays: day.weekdays as Weekday[],
+        }))
+      : [createDefaultWorkoutDay()];
+
+  return {
+    name: draft.name,
+    days,
+    activeDayId: days[0]?.clientId ?? "",
+    settings: draft.settings,
+  };
+};
+
+export function useWorkoutDraft(
+  workoutId?: number,
+  adapters: WorkoutFormAdapters = {},
+) {
+  const adaptersRef = useRef(adapters);
+  useEffect(() => {
+    adaptersRef.current = adapters;
+  });
+  const isEditMode = workoutId !== undefined;
+
+  const { data, isPending } = useQuery({
+    queryKey: [workoutId ?? "new"],
+    queryFn: async ({ signal }) => {
+      if (workoutId == null) {
+        return null;
+      }
+
+      try {
+        const loadDraft = adaptersRef.current.loadDraft;
+        if (loadDraft) {
+          return await loadDraft(workoutId);
+        }
+
+        return await loadWorkoutDraft(workoutId, { signal });
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 404) {
+          return null;
+        }
+
+        throw err;
+      }
+    },
+    fallback: "Impossibile caricare la scheda",
+  });
+
+  return {
+    draft: data ?? null,
+    isLoading: isEditMode && isPending,
+    notFound: isEditMode && !isPending && data === null,
+  };
+}
+
 export function useWorkoutForm(
   workoutId?: number,
   adapters: WorkoutFormAdapters = {},
+  initialDraft?: WorkoutDraftSeed | null,
 ) {
   const [, setLocation] = useLocation();
   const adaptersRef = useRef(adapters);
   useEffect(() => {
     adaptersRef.current = adapters;
   });
-  const initialDay = createDefaultWorkoutDay();
-  const [name, setName] = useState("");
-  const [days, setDays] = useState<DraftWorkoutDay[]>([initialDay]);
-  const [activeDayId, setActiveDayId] = useState(initialDay.clientId);
-  const [settings, setSettings] = useState<WorkoutSettings>(DEFAULT_WORKOUT_SETTINGS);
-  const [status, setStatus] = useState<CreateWorkoutStatus>(
-    workoutId ? "loading" : "idle",
-  );
+  const [seed] = useState(() => seedWorkoutForm(initialDraft));
+  const [name, setName] = useState(seed.name);
+  const [days, setDays] = useState<DraftWorkoutDay[]>(seed.days);
+  const [activeDayId, setActiveDayId] = useState(seed.activeDayId);
+  const [settings, setSettings] = useState<WorkoutSettings>(seed.settings);
+  const [status, setStatus] = useState<CreateWorkoutStatus>("idle");
   const [nameError, setNameError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
-  const [error, setError] = useState<ApiError | null>(null);
-  const [notFound, setNotFound] = useState(false);
   const isEditMode = workoutId !== undefined;
 
   const applyDraft = (draft: WorkoutDraftSeed) => {
-    const nextDays =
-      draft.days.length > 0
-        ? draft.days.map((day, index) => ({
-            ...day,
-            sortOrder: index,
-            weekdays: day.weekdays as Weekday[],
-          }))
-        : [createDefaultWorkoutDay()];
-
-    setName(draft.name);
-    setSettings(draft.settings);
-    setDays(nextDays);
-    setActiveDayId(nextDays[0]?.clientId ?? "");
+    const next = seedWorkoutForm(draft);
+    setName(next.name);
+    setSettings(next.settings);
+    setDays(next.days);
+    setActiveDayId(next.activeDayId);
     setNameError(null);
     setFormError(null);
     setStatus("idle");
   };
-
-  useEffect(() => {
-    if (!workoutId) {
-      return;
-    }
-
-    let cancelled = false;
-    const loadDraft = adaptersRef.current.loadDraft ?? loadWorkoutDraft;
-
-    const load = async () => {
-      try {
-        const draft = await loadDraft(workoutId);
-
-        if (cancelled) {
-          return;
-        }
-
-        applyDraft(draft);
-      } catch (err) {
-        if (!cancelled) {
-          if (err instanceof ApiError && err.status === 404) {
-            setNotFound(true);
-            setStatus("idle");
-            return;
-          }
-
-          setError(
-            err instanceof ApiError
-              ? err
-              : new ApiError(400, "Impossibile caricare la scheda"),
-          );
-          setStatus("idle");
-        }
-      }
-    };
-
-    void load();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [workoutId]);
 
   const activeDay =
     days.find((day) => day.clientId === activeDayId) ?? days[0] ?? null;
@@ -334,10 +351,6 @@ export function useWorkoutForm(
     }
   };
 
-  if (error) {
-    throw error;
-  }
-
   return {
     name,
     setName,
@@ -359,10 +372,6 @@ export function useWorkoutForm(
     save,
     applyDraft,
     isSaving: status === "saving",
-    isLoading: status === "loading",
     isEditMode,
-    notFound,
   };
 }
-
-export const useCreateWorkout = () => useWorkoutForm();

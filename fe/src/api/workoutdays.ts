@@ -22,8 +22,14 @@ import {
   type WorkoutSchedule,
 } from "./schemas";
 
-export async function getWorkoutDays(workoutId: number): Promise<WorkoutDay[]> {
-  return apiRequest(`/workouts/${workoutId}/days`, { schema: workoutDaysSchema });
+export async function getWorkoutDays(
+  workoutId: number,
+  { signal }: { signal?: AbortSignal } = {},
+): Promise<WorkoutDay[]> {
+  return apiRequest(`/workouts/${workoutId}/days`, {
+    schema: workoutDaysSchema,
+    signal,
+  });
 }
 
 export async function getWorkoutDay(workoutId: number, dayId: number): Promise<WorkoutDay> {
@@ -78,9 +84,11 @@ export async function setWorkoutDayWeekdays(
 export async function getWorkoutDayExercises(
   workoutId: number,
   dayId: number,
+  { signal }: { signal?: AbortSignal } = {},
 ): Promise<Exercise[]> {
   return apiRequest(`/workouts/${workoutId}/days/${dayId}/exercises`, {
     schema: exercisesSchema,
+    signal,
   });
 }
 
