@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Link, Redirect, useLocation } from "wouter";
+import { Link, Redirect } from "wouter";
 import { ApiError } from "@api";
 import { useAuth } from "@auth";
 import { BrandLogo } from "@components/brandLogo";
@@ -9,7 +9,6 @@ import "@auth/authpage.css";
 
 const Login = () => {
   const { login, status } = useAuth();
-  const [, setLocation] = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +21,6 @@ const Login = () => {
 
     try {
       await login({ email, password });
-      setLocation("/dashboard");
     } catch (err) {
       setError(ApiError.messageFrom(err, "Impossibile accedere"));
     } finally {
