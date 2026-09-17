@@ -1,5 +1,5 @@
-import { useEffect, useState, type FormEvent } from "react";
-import { Link, useLocation } from "wouter";
+import { useState, type FormEvent } from "react";
+import { Link, Redirect, useLocation } from "wouter";
 import { ApiError } from "@api";
 import { useAuth } from "@auth";
 import { BrandLogo } from "@components/brandLogo";
@@ -14,12 +14,6 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    if (status === "authenticated") {
-      setLocation("/dashboard", { replace: true });
-    }
-  }, [status, setLocation]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -37,7 +31,7 @@ const Login = () => {
   };
 
   if (status === "authenticated") {
-    return null;
+    return <Redirect to="/dashboard" replace />;
   }
 
   if (status === "loading") {
