@@ -17,8 +17,11 @@ export async function getWorkouts(): Promise<Workout[]> {
   return apiRequest("/workouts", { schema: workoutsSchema });
 }
 
-export async function getWorkout(id: number): Promise<WorkoutDetail> {
-  return apiRequest(`/workouts/${id}`, { schema: workoutDetailSchema });
+export async function getWorkout(
+  id: number,
+  { signal }: { signal?: AbortSignal } = {},
+): Promise<WorkoutDetail> {
+  return apiRequest(`/workouts/${id}`, { schema: workoutDetailSchema, signal });
 }
 
 export async function createWorkout(

@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
-import { ApiError, searchCatalogExercises, type CatalogExercise } from "@api";
+import {
+  ApiError,
+  isAbortError,
+  searchCatalogExercises,
+  useQuery,
+  type CatalogExercise,
+} from "@api";
 
 const DEBOUNCE_MS = 250;
 
@@ -13,54 +19,64 @@ export type CatalogSearchState = {
 
 export function useCatalogSearch(minChars = 2): CatalogSearchState {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<CatalogExercise[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [debounced, setDebounced] = useState("");
 
   const trimmed = query.trim();
   const canSearch = trimmed.length >= minChars;
 
   useEffect(() => {
-    if (!canSearch) {
-      return;
-    }
-
-    let cancelled = false;
     const timer = window.setTimeout(() => {
-      setIsSearching(true);
-      void searchCatalogExercises({ q: trimmed, limit: 8 })
-        .then((response) => {
-          if (!cancelled) {
-            setResults(response.items);
-            setError(null);
-          }
-        })
-        .catch((err) => {
-          if (!cancelled) {
-            setResults([]);
-            setError(
-              ApiError.messageFrom(err, "Ricerca catalogo non disponibile"),
-            );
-          }
-        })
-        .finally(() => {
-          if (!cancelled) {
-            setIsSearching(false);
-          }
-        });
+      setDebounced(trimmed);
     }, DEBOUNCE_MS);
 
     return () => {
-      cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [canSearch, trimmed]);
+  }, [trimmed]);
+
+  const searchKey = canSearch ? debounced : "";
+
+  const { data, isPending } = useQuery({
+    queryKey: [searchKey],
+    queryFn: async ({ signal }) => {
+      if (searchKey.length < minChars) {
+        return {
+          items: [] as CatalogExercise[],
+          error: null as string | null,
+          query: searchKey,
+        };
+      }
+
+      try {
+        const response = await searchCatalogExercises(
+          { q: searchKey, limit: 8 },
+          { signal },
+        );
+        return { items: response.items, error: null, query: searchKey };
+      } catch (err) {
+        if (isAbortError(err)) {
+          throw err;
+        }
+
+        return {
+          items: [] as CatalogExercise[],
+          error: ApiError.messageFrom(err, "Ricerca catalogo non disponibile"),
+          query: searchKey,
+        };
+      }
+    },
+    fallback: "Ricerca catalogo non disponibile",
+    keepPreviousData: true,
+    throwOnError: false,
+  });
 
   return {
     query,
     setQuery,
-    results: canSearch ? results : [],
-    isSearching: canSearch ? isSearching : false,
-    error: canSearch ? error : null,
+    results: canSearch ? (data?.items ?? []) : [],
+    isSearching:
+      canSearch && trimmed === searchKey && (isPending || data?.query !== searchKey),
+    error:
+      canSearch && data?.query === searchKey ? (data.error ?? null) : null,
   };
 }

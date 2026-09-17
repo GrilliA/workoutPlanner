@@ -45,17 +45,22 @@ export async function saveWorkoutWithDays(
   return saveWorkoutProgram(toProgramInput(name, settings, days));
 }
 
-export async function loadWorkoutDraft(workoutId: number): Promise<{
+export async function loadWorkoutDraft(
+  workoutId: number,
+  { signal }: { signal?: AbortSignal } = {},
+): Promise<{
   name: string;
   settings: WorkoutSettings;
   days: DraftWorkoutDay[];
 }> {
-  const workout = await getWorkout(workoutId);
-  const days = workout.days ?? (await getWorkoutDays(workoutId));
+  const workout = await getWorkout(workoutId, { signal });
+  const days = workout.days ?? (await getWorkoutDays(workoutId, { signal }));
 
   const daysWithExercises = await Promise.all(
     days.map(async (day) => {
-      const exercises = await getWorkoutDayExercises(workoutId, day.id);
+      const exercises = await getWorkoutDayExercises(workoutId, day.id, {
+        signal,
+      });
 
       return {
         clientId: crypto.randomUUID(),
