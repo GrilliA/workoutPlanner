@@ -11,7 +11,7 @@
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--muted, #666);
+    color: var(--text);
   }
 }
 
@@ -29,39 +29,9 @@
 
 .analytics-chart__volume {
   margin-top: 0.35rem;
-  color: var(--muted, #666);
 }
 
-.analytics-chart__scroll {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.analytics-chart__fit {
+.analytics-chart__plot {
   width: 100%;
-}
-
-.analytics-chart__content {
-  min-width: 100%;
-}
-
-.analytics-chart__svg {
-  display: block;
-}
-
-.analytics-chart__bar {
-  fill: var(--accent);
-}
-
-.analytics-chart__labels {
-  display: flex;
-  margin-top: 0.35rem;
-}
-
-.analytics-chart__label-slot {
-  display: flex;
-  justify-content: center;
-  font-size: 0.65rem;
-  color: var(--muted, #666);
-  min-height: 0.9rem;
+  height: 14rem;
 }

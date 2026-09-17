@@ -1,13 +1,55 @@
+import { useEffect, useRef } from "react";
+import { LineChart } from "echarts/charts";
+import { GridComponent, TooltipComponent } from "echarts/components";
+import * as echarts from "echarts/core";
+import { CanvasRenderer } from "echarts/renderers";
 import type { WeeklyChartModel } from "../types";
+import { weeklyChartOption, type WeeklyChartTheme } from "./weeklyChartOption";
 import "./style.css";
+
+echarts.use([LineChart, GridComponent, TooltipComponent, CanvasRenderer]);
 
 type WeeklyChartProps = {
   model: WeeklyChartModel;
 };
 
+const themeFromHost = (host: HTMLElement): WeeklyChartTheme => {
+  const styles = getComputedStyle(host);
+
+  return {
+    accent: styles.getPropertyValue("--accent").trim(),
+    text: styles.getPropertyValue("--text").trim(),
+    textH: styles.getPropertyValue("--text-h").trim(),
+    surface: styles.getPropertyValue("--surface").trim(),
+    border: styles.getPropertyValue("--border").trim(),
+    bg: styles.getPropertyValue("--bg").trim(),
+  };
+};
+
 export function WeeklyChart({ model }: WeeklyChartProps) {
-  const slotWidth = model.barWidth + model.barGap;
-  const chartHeight = 120;
+  const hostRef = useRef<HTMLDivElement>(null);
+  const plotRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const host = hostRef.current;
+    const plot = plotRef.current;
+    if (!host || !plot || model.bars.length === 0) {
+      return;
+    }
+
+    const chart = echarts.init(plot, undefined, { renderer: "canvas" });
+    chart.setOption(weeklyChartOption(model, themeFromHost(host)));
+
+    const observer = new ResizeObserver(() => {
+      chart.resize();
+    });
+    observer.observe(plot);
+
+    return () => {
+      observer.disconnect();
+      chart.dispose();
+    };
+  }, [model]);
 
   if (model.bars.length === 0) {
     return (
@@ -21,57 +63,13 @@ export function WeeklyChart({ model }: WeeklyChartProps) {
   }
 
   return (
-    <section className="analytics-chart" aria-label="Trend settimanale portafoglio">
+    <section
+      ref={hostRef}
+      className="analytics-chart"
+      aria-label="Trend settimanale portafoglio"
+    >
       <h2>Trend settimanale</h2>
-      <div className={model.scrollable ? "analytics-chart__scroll" : "analytics-chart__fit"}>
-        <div
-          className="analytics-chart__content"
-          style={{ width: model.scrollable ? model.chartWidth : undefined }}
-        >
-          <svg
-            className="analytics-chart__svg"
-            width={model.chartWidth}
-            height={chartHeight}
-            viewBox={`0 0 ${model.chartWidth} ${chartHeight}`}
-            role="img"
-            aria-label={model.summary}
-          >
-            {model.bars.map((bar, index) => {
-              const height =
-                bar.sessionValue === 0
-                  ? 2
-                  : Math.max(8, (bar.sessionValue / model.maxSessionValue) * (chartHeight - 24));
-              const x = index * slotWidth;
-              const y = chartHeight - height - 8;
-
-              return (
-                <rect
-                  key={`${bar.label}-${index}`}
-                  x={x}
-                  y={y}
-                  width={model.barWidth}
-                  height={height}
-                  rx={3}
-                  className="analytics-chart__bar"
-                >
-                  <title>{bar.accessibilityLabel}</title>
-                </rect>
-              );
-            })}
-          </svg>
-          <div className="analytics-chart__labels" style={{ width: model.chartWidth }}>
-            {model.bars.map((bar, index) => (
-              <div
-                key={`${bar.label}-${index}`}
-                className="analytics-chart__label-slot"
-                style={{ width: slotWidth }}
-              >
-                {bar.showLabel ? <span>{bar.label}</span> : null}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      <div ref={plotRef} className="analytics-chart__plot" aria-hidden="true" />
       <p className="analytics-chart__summary">{model.summary}</p>
       {model.hasVolume ? (
         <p className="analytics-chart__volume">{model.volumeSummary}</p>
