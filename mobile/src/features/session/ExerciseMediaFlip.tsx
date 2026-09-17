@@ -13,7 +13,13 @@ type ExerciseMediaFlipProps = {
 };
 
 /** 0.jpg / 1.jpg flip. Optional empty slot when media is missing. */
-export function ExerciseMediaFlip({
+export function ExerciseMediaFlip(props: ExerciseMediaFlipProps) {
+  const startUrl = props.imageUrl?.trim() || "";
+  const endUrl = props.imageUrlEnd?.trim() || "";
+  return <ExerciseMediaFlipView key={`${startUrl}|${endUrl}`} {...props} />;
+}
+
+function ExerciseMediaFlipView({
   imageUrl,
   imageUrlEnd,
   variant = "thumb",
@@ -33,12 +39,6 @@ export function ExerciseMediaFlip({
       : startFailed
         ? endUrl
         : startUrl ?? endUrl;
-
-  useEffect(() => {
-    setFrame(0);
-    setStartFailed(false);
-    setEndFailed(false);
-  }, [startUrl, endUrl]);
 
   useEffect(() => {
     if (!canFlip) {

@@ -46,12 +46,12 @@ export function useProgressStats(initialRange: StatsRange = "4w") {
   });
 
   const reload = useCallback(() => {
+    setHistoryPage(1);
     setFetchId((id) => id + 1);
   }, []);
 
   const refresh = useCallback(() => {
     setState((current) => ({ ...current, refreshing: true }));
-    setHistoryPage(1);
     reload();
   }, [reload]);
 
@@ -65,10 +65,6 @@ export function useProgressStats(initialRange: StatsRange = "4w") {
     });
     setHistoryPage((page) => page + 1);
   }, []);
-
-  useEffect(() => {
-    setHistoryPage(1);
-  }, [range, fetchId]);
 
   useEffect(() => {
     let cancelled = false;

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import Svg, { Circle, Polyline } from "react-native-svg";
 import { Body, Meta, SectionLabel } from "../../../components";
@@ -19,21 +19,16 @@ export function ExerciseProgressionSection({ options }: ExerciseProgressionSecti
   );
   const [metric, setMetric] = useState<ProgressionMetric>("e1rm");
 
-  useEffect(() => {
-    if (options.length === 0) {
-      setSelectedId(null);
-      return;
-    }
+  const nextId = options.some((option) => option.exerciseId === selectedId)
+    ? selectedId
+    : (options[0]?.exerciseId ?? null);
 
-    if (!options.some((option) => option.exerciseId === selectedId)) {
-      setSelectedId(options[0]!.exerciseId);
-    }
-  }, [options, selectedId]);
+  if (nextId !== selectedId) {
+    setSelectedId(nextId);
+  }
 
-  const selected = useMemo(
-    () => options.find((option) => option.exerciseId === selectedId) ?? options[0] ?? null,
-    [options, selectedId],
-  );
+  const selected =
+    options.find((option) => option.exerciseId === nextId) ?? null;
 
   if (options.length === 0) {
     return (
