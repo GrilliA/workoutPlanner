@@ -13,7 +13,6 @@
     "test": "tsx --tsconfig tsconfig.app.json --test src/pages/workouts/new/schedatxt/*.test.ts src/components/storybookCoverage.test.ts"
   },
   "dependencies": {
-    "echarts": "^6.1.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "wouter": "^3.10.0",

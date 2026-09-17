@@ -18,6 +18,7 @@ export type WeeklyChartBar = {
   label: string;
   sessionValue: number;
   volumeValue: number;
+  showLabel: boolean;
   accessibilityLabel: string;
 };
 
@@ -25,6 +26,11 @@ export type WeeklyChartModel = {
   bars: WeeklyChartBar[];
   summary: string;
   volumeSummary: string;
+  maxSessionValue: number;
+  chartWidth: number;
+  barWidth: number;
+  barGap: number;
+  scrollable: boolean;
   hasVolume: boolean;
 };
 

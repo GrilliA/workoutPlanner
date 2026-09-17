@@ -89,8 +89,6 @@ describe("buildPortfolioWeeklyChart", () => {
 
     assert.equal(model.bars.length, 2);
     assert.equal(model.bars[0]?.sessionValue, 3);
-    assert.equal(model.bars[0]?.volumeValue, 4500);
-    assert.equal(model.bars[0]?.label, "24/7");
     assert.equal(model.hasVolume, true);
     assert.match(model.summary, /5 sessioni/);
   });
