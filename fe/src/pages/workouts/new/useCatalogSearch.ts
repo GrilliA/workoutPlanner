@@ -40,7 +40,11 @@ export function useCatalogSearch(minChars = 2): CatalogSearchState {
     queryKey: [searchKey],
     queryFn: async ({ signal }) => {
       if (searchKey.length < minChars) {
-        return { items: [] as CatalogExercise[], error: null as string | null };
+        return {
+          items: [] as CatalogExercise[],
+          error: null as string | null,
+          query: searchKey,
+        };
       }
 
       try {
@@ -48,7 +52,7 @@ export function useCatalogSearch(minChars = 2): CatalogSearchState {
           { q: searchKey, limit: 8 },
           { signal },
         );
-        return { items: response.items, error: null };
+        return { items: response.items, error: null, query: searchKey };
       } catch (err) {
         if (isAbortError(err)) {
           throw err;
@@ -57,17 +61,22 @@ export function useCatalogSearch(minChars = 2): CatalogSearchState {
         return {
           items: [] as CatalogExercise[],
           error: ApiError.messageFrom(err, "Ricerca catalogo non disponibile"),
+          query: searchKey,
         };
       }
     },
     fallback: "Ricerca catalogo non disponibile",
+    keepPreviousData: true,
+    throwOnError: false,
   });
 
   return {
     query,
     setQuery,
     results: canSearch ? (data?.items ?? []) : [],
-    isSearching: canSearch && trimmed === searchKey && isPending,
-    error: canSearch ? (data?.error ?? null) : null,
+    isSearching:
+      canSearch && trimmed === searchKey && (isPending || data?.query !== searchKey),
+    error:
+      canSearch && data?.query === searchKey ? (data.error ?? null) : null,
   };
 }

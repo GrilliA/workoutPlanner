@@ -51,7 +51,10 @@ const updateDay = (
   days.map((day) => (day.clientId === dayClientId ? updater(day) : day));
 
 export type WorkoutFormAdapters = {
-  loadDraft?: (workoutId: number) => Promise<{
+  loadDraft?: (
+    workoutId: number,
+    options?: { signal?: AbortSignal },
+  ) => Promise<{
     name: string;
     settings: WorkoutSettings;
     days: DraftWorkoutDay[];
@@ -116,7 +119,11 @@ export function useWorkoutDraft(
   const isEditMode = workoutId !== undefined;
 
   const { data, isPending } = useQuery({
-    queryKey: [workoutId ?? "new"],
+    queryKey: [
+      "workout-draft",
+      workoutId ?? "new",
+      adapters.successPath ?? "default",
+    ],
     queryFn: async ({ signal }) => {
       if (workoutId == null) {
         return null;
@@ -125,7 +132,7 @@ export function useWorkoutDraft(
       try {
         const loadDraft = adaptersRef.current.loadDraft;
         if (loadDraft) {
-          return await loadDraft(workoutId);
+          return await loadDraft(workoutId, { signal });
         }
 
         return await loadWorkoutDraft(workoutId, { signal });
