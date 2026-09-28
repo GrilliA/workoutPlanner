@@ -45,7 +45,7 @@
 }
 
 .analytics-kpi--warning .hint {
-  color: #f0c674;
+  color: var(--warning);
 }
 
 .analytics-kpi--danger .value,
