@@ -4,6 +4,7 @@ import { ActivityFeed } from "../activityfeed";
 import { AthletesTable } from "../athletestable";
 import { KpiGrid } from "../kpigrid";
 import { LibraryCta } from "../librarycta";
+import { RenewalChart } from "../renewalchart";
 import { TaskPanel } from "../taskpanel";
 import { useDashboard } from "../api/useDashboard";
 import "../../style.css";
@@ -61,6 +62,7 @@ export function Dashboard() {
       {!loading && data && !data.isEmpty ? (
         <>
           <KpiGrid items={data.kpis} />
+          <RenewalChart model={data.renewalChart} />
           <div className="coach-dashboard__main">
             <div className="coach-dashboard__primary">
               <AthletesTable rows={data.athletes} />

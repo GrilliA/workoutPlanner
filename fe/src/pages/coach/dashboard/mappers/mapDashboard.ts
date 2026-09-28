@@ -7,10 +7,62 @@ import type {
   DashboardKpi,
   DashboardTask,
   DashboardViewModel,
+  RenewalChartModel,
+  RenewalWeekBar,
 } from "../types";
+
+const EXPIRING_WITHIN_DAYS = 7;
 
 const athleteLabel = (name: string | null, email: string): string =>
   name?.trim() || email;
+
+const todayInRome = (): string =>
+  new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Rome",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+
+const daysUntilExpiry = (expiresAt: string, today = todayInRome()): number => {
+  const start = Date.parse(`${today}T00:00:00Z`);
+  const end = Date.parse(`${expiresAt}T00:00:00Z`);
+  return Math.round((end - start) / 86_400_000);
+};
+
+const formatDayMonth = (isoDate: string): string => {
+  const [, month, day] = isoDate.split("-");
+  return `${Number(day)}/${Number(month)}`;
+};
+
+const formatRenewalWeekLabel = (weekStart: string, weekEnd: string): string =>
+  `${formatDayMonth(weekStart)}–${formatDayMonth(weekEnd)}`;
+
+const renewalCountLabel = (count: number): string =>
+  count === 1 ? "1 rinnovo" : `${count} rinnovi`;
+
+const mapRenewalChart = (
+  weeks: CoachDashboard["renewalsByWeek"],
+): RenewalChartModel => {
+  const bars: RenewalWeekBar[] = weeks.map((week) => {
+    const label = formatRenewalWeekLabel(week.weekStart, week.weekEnd);
+    return {
+      label,
+      count: week.count,
+      accessibilityLabel: `Settimana ${label}, ${renewalCountLabel(week.count)}`,
+    };
+  });
+
+  const total = bars.reduce((sum, bar) => sum + bar.count, 0);
+  const summary =
+    total === 0
+      ? "Nessun rinnovo nelle prossime 4 settimane."
+      : total === 1
+        ? "1 scheda scade nelle prossime 4 settimane."
+        : `${total} schede scadono nelle prossime 4 settimane.`;
+
+  return { bars, summary };
+};
 
 const formatDaysLeft = (daysLeft: number): string => {
   if (daysLeft <= 0) {
@@ -55,6 +107,7 @@ const mapKpis = (
   analytics: CoachAnalyticsOverview | null,
 ): DashboardKpi[] => {
   const [activeKpi, reviewKpi] = mapDashboardAnalyticsKpis(analytics);
+  const expiringThisWeek = stats.renewalsByWeek[0]?.count ?? 0;
 
   return [
     {
@@ -74,10 +127,10 @@ const mapKpis = (
     {
       id: "expiring7",
       label: "In scadenza (sett.)",
-      value: String(stats.expiringIn7Days),
-      hint: "Entro 7 giorni",
+      value: String(expiringThisWeek),
+      hint: "Questa settimana",
       href: "/assignments",
-      tone: stats.expiringIn7Days > 0 ? "warning" : "default",
+      tone: expiringThisWeek > 0 ? "warning" : "default",
     },
     {
       ...reviewKpi,
@@ -106,6 +159,7 @@ const pickPrimaryAssignment = (
 export const mapAthletes = (
   clients: CoachClient[],
   assignments: CoachAssignment[],
+  today = todayInRome(),
 ): DashboardAthleteRow[] => {
   const byAthlete = new Map<number, CoachAssignment[]>();
   for (const assignment of assignments) {
@@ -133,8 +187,8 @@ export const mapAthletes = (
         return {
           id: client.id,
           label: athleteLabel(client.name, client.email),
-          status: "expiring" as const,
-          statusLabel: "In scadenza",
+          status: "expired" as const,
+          statusLabel: "Scaduto",
           metaLabel: `Scaduta il ${primary.expiresAt}`,
         };
       }
@@ -146,6 +200,16 @@ export const mapAthletes = (
           status: "paused" as const,
           statusLabel: "Programmata",
           metaLabel: `Parte il ${primary.startsAt}`,
+        };
+      }
+
+      if (daysUntilExpiry(primary.expiresAt, today) <= EXPIRING_WITHIN_DAYS) {
+        return {
+          id: client.id,
+          label: athleteLabel(client.name, client.email),
+          status: "expiring" as const,
+          statusLabel: "In scadenza",
+          metaLabel: `Scade il ${primary.expiresAt}`,
         };
       }
 
@@ -213,6 +277,7 @@ export const mapDashboard = (
     templateCount: stats.templateCount,
     isEmpty: stats.clientCount === 0,
     kpis: mapKpis(stats, analytics),
+    renewalChart: mapRenewalChart(stats.renewalsByWeek),
     athletes: mapAthletes(clients, assignments),
     tasks: mapTasks(upcoming, expired),
     recentActivity: mapRecentActivity(stats.recentActivity),
