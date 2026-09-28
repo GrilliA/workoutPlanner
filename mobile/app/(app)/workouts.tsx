@@ -1,4 +1,4 @@
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { ApiError } from "../../src/api/client";
@@ -76,6 +76,12 @@ export default function WorkoutsScreen() {
       cancelled = true;
     };
   }, [fetchId, load]);
+
+  useFocusEffect(
+    useCallback(() => {
+      setFetchId((id) => id + 1);
+    }, []),
+  );
 
   const onCancelCoachProgram = () => {
     Alert.alert(

@@ -7,7 +7,10 @@ import { colors, radii, spacing } from "../../theme";
 import { exerciseEnglishLine, exerciseHeading } from "./exerciseDisplay";
 
 type ProgramExerciseCardProps = {
-  exercise: Exercise;
+  exercise: Pick<
+    Exercise,
+    "name" | "nameIt" | "nameEn" | "imageUrl" | "imageUrlEnd"
+  >;
   index: number;
   meta: string;
   children?: ReactNode;

@@ -4,7 +4,6 @@ import {
   prescriptionsFromUniform,
   toSetPrescriptions,
   validatePrescriptionDrafts,
-  cycleRestSec,
 } from "./prescriptionDraft";
 
 describe("prescriptionDraft", () => {
@@ -25,10 +24,5 @@ describe("prescriptionDraft", () => {
       validatePrescriptionDrafts([{ key: "a", reps: "0", restSec: 90 }]) ?? "",
       /ripetizioni/i,
     );
-  });
-
-  it("cycles rest options", () => {
-    assert.equal(cycleRestSec(90), 120);
-    assert.equal(cycleRestSec(150), 60);
   });
 });

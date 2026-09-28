@@ -1,19 +1,7 @@
 import { Pressable, StyleSheet, View } from "react-native";
 import { AppText } from "../../components";
 import { colors, radii, spacing } from "../../theme";
-
-/** Monday = 0 … Sunday = 6 (Europe/Rome, same as BE). */
-export const WEEKDAY_LABELS_SHORT = [
-  "Lun",
-  "Mar",
-  "Mer",
-  "Gio",
-  "Ven",
-  "Sab",
-  "Dom",
-] as const;
-
-export type WeekdayIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+import { WEEKDAY_LABELS_SHORT, type WeekdayIndex } from "./workoutDraft";
 
 export function toggleWeekday(
   weekdays: number[],
