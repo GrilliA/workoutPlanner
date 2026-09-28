@@ -1,5 +1,5 @@
 import { router, useFocusEffect } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { ApiError } from "../../src/api/client";
 import {
@@ -53,34 +53,30 @@ export default function WorkoutsScreen() {
     setHasLinkedCoach(athleteCoach.coach != null);
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    const run = async () => {
-      setError(null);
-      try {
-        await load();
-      } catch (err) {
-        if (!cancelled) {
-          setError(ApiError.messageFrom(err, "Errore"));
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    };
-
-    void run();
-    return () => {
-      cancelled = true;
-    };
-  }, [fetchId, load]);
-
   useFocusEffect(
     useCallback(() => {
-      setFetchId((id) => id + 1);
-    }, []),
+      let cancelled = false;
+
+      const run = async () => {
+        setError(null);
+        try {
+          await load();
+        } catch (err) {
+          if (!cancelled) {
+            setError(ApiError.messageFrom(err, "Errore"));
+          }
+        } finally {
+          if (!cancelled) {
+            setLoading(false);
+          }
+        }
+      };
+
+      void run();
+      return () => {
+        cancelled = true;
+      };
+    }, [fetchId, load]),
   );
 
   const onCancelCoachProgram = () => {
