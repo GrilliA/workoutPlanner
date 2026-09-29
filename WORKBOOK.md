@@ -13,6 +13,7 @@ How to use:
 
 | Date | Decision | Why |
 | --- | --- | --- |
+| 2026-09-28 | M2 builder scheda mobile = **una bozza locale** (`WorkoutDraft`: giorni → esercizi → serie) in un solo `WorkoutBuilder` per create/edit, salvata con **un** `saveWorkoutProgram` (POST / PUT upsert per id). Esercizi dal catalogo (o custom), import TXT riempie la bozza. Delete di esercizi già loggati resta com'è (cascade) → P2 | Le vecchie schermate avevano 1 giorno fisso, niente catalogo, 3 "Salva" separati e API per singola operazione; il PUT programma esiste già e fa diff per id |
 | 2026-09-08 | Lo smoke E2E vive in un job CI **separato** (`Smoke`) con Postgres di servizio e schema da `db:migrate`, non dentro il job Backend. `npm test` resta senza database | Un loop rotto deve dare un check rosso distinto, e i 79 unit test devono restare veloci ed eseguibili senza Docker |
 | 2026-09-08 | **Drift noto**: le migrazioni in `be/drizzle/` creano gli unique come indici e tre indici su `exercise_catalog` che lo schema Drizzle non dichiara. Per l'unicità è equivalente, ma un `db:push` in locale **cancella** quegli indici di ricerca | Emerso preparando P0e; da sanare con una migrazione dedicata, non dentro un chunk di test |
 | 2026-09-08 | L'API resta un **contratto in inglese**: la copy italiana degli errori vive nel client. Sul mobile la mappa sta in `ApiError.messageFrom(err, fallback)`, stesso nome dello statico web | Lo stesso backend serve pannello coach web e app atleta; localizzare nell'API significherebbe tradurre tutto e legare il contratto a una lingua |
@@ -61,6 +62,7 @@ How to use:
 
 ## What we did
 
+- 2026-09-28 — M2 chunk 1 builder scheda mobile: `WorkoutDraft` + `WorkoutBuilder` (panoramica giorni → giorno → sheet esercizio con ricerca catalogo), unico "Salva scheda", recupero a 4 opzioni visibili, weekday unici per giorno validati in bozza, import TXT nella bozza, schede coach in sola lettura; lista schede ricarica al focus. Test: `cd mobile && ../be/node_modules/.bin/tsx --test src/features/workoutprogram/*.test.ts`.
 - 2026-09-12 — Activity feed sulla dashboard coach: `GET /coach/dashboard` include `recentActivity` (max 8 sessioni completate), UI “Attività recente” sotto la tabella atleti.
 - 2026-09-12 — P0 first-run coach: empty `/clients`, `/assignments`, `/assignments/new` (0 clienti) e `/analytics` puntano a invito/assegnazione; niente “Creane uno” su clienti (resta sui template).
 - 2026-09-08 — P0e smoke del loop in CI: job `Smoke` con service Postgres, schema da `db:migrate`, `be/src/e2e/loop.e2e.test.ts` che percorre invite → redeem → assign → sessione → visibilità coach e blinda la regressione di P0b. Il test rifiuta di girare su `workout_planner`. Verificato che fallisce reintroducendo il codice pre-fix.
@@ -146,6 +148,7 @@ Legend: ⬜ todo · 🟡 in progress · ✅ done
 - **C10 — WeekStrip schedule polish** ✅
 - **C11 — Session history (lista paginata)** ✅
 - **M1 — Progressi atleta mobile** ✅
+- **M2 — Builder scheda mobile (bozza unica + catalogo)** 🟡 — chunk 1 fatto; chunk 2: riordino esercizi/giorni (frecce), avviso modifiche non salvate
 - **U4 — Analytics coach web** ✅
 - **D1 — Design system web** ✅
 - **D2 — PageError pagine coach** ✅

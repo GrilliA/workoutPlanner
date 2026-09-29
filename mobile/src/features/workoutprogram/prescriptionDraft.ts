@@ -73,11 +73,3 @@ export function validatePrescriptionDrafts(
 
   return null;
 }
-
-export function cycleRestSec(current: number): number {
-  const index = REST_SEC_OPTIONS.indexOf(
-    current as (typeof REST_SEC_OPTIONS)[number],
-  );
-  const nextIndex = index < 0 ? 0 : (index + 1) % REST_SEC_OPTIONS.length;
-  return REST_SEC_OPTIONS[nextIndex]!;
-}
