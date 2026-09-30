@@ -1,5 +1,6 @@
+import { Image } from "expo-image";
 import { useEffect, useState } from "react";
-import { Image, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { colors, radii } from "../../theme";
 
 type ExerciseMediaFlipProps = {
@@ -33,12 +34,8 @@ function ExerciseMediaFlipView({
   const endUrl = imageUrlEnd?.trim() || null;
   const canFlip = Boolean(startUrl && endUrl && !startFailed && !endFailed);
   const isHero = variant === "hero";
-  const uri =
-    frame === 1 && endUrl && !endFailed
-      ? endUrl
-      : startFailed
-        ? endUrl
-        : startUrl ?? endUrl;
+  const showStart = Boolean(startUrl && !startFailed);
+  const showEnd = Boolean(endUrl && (!endFailed || !startUrl));
 
   useEffect(() => {
     if (!canFlip) {
@@ -57,7 +54,7 @@ function ExerciseMediaFlipView({
     !isHero && compact ? styles.thumbCompact : null,
   ];
 
-  if (!uri || (startFailed && (endFailed || !endUrl))) {
+  if ((!startUrl && !endUrl) || (startFailed && (endFailed || !endUrl))) {
     if (!placeholder) {
       return null;
     }
@@ -77,19 +74,29 @@ function ExerciseMediaFlipView({
       accessibilityLabel="Foto movimento esercizio"
       style={frameStyle}
     >
-      <Image
-        source={{ uri }}
-        onError={() => {
-          if (uri === endUrl) {
+      {showStart ? (
+        <Image
+          source={startUrl}
+          cachePolicy="memory-disk"
+          contentFit={isHero ? "contain" : "cover"}
+          transition={0}
+          onError={() => setStartFailed(true)}
+          style={styles.image}
+        />
+      ) : null}
+      {showEnd ? (
+        <Image
+          source={endUrl}
+          cachePolicy="memory-disk"
+          contentFit={isHero ? "contain" : "cover"}
+          transition={0}
+          onError={() => {
             setEndFailed(true);
             setFrame(0);
-            return;
-          }
-          setStartFailed(true);
-        }}
-        style={styles.image}
-        resizeMode={isHero ? "contain" : "cover"}
-      />
+          }}
+          style={[styles.image, { opacity: showStart && frame === 0 ? 0 : 1 }]}
+        />
+      ) : null}
     </View>
   );
 }
@@ -120,7 +127,6 @@ const styles = StyleSheet.create({
     borderStyle: "dashed",
   },
   image: {
-    width: "100%",
-    height: "100%",
+    ...StyleSheet.absoluteFill,
   },
 });
