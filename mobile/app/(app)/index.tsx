@@ -18,6 +18,7 @@ import {
   getWorkoutDayExercises,
   getWorkoutDays,
   getWorkoutScheduleToday,
+  getWorkoutScheduleWeek,
   getWorkouts,
   startSession,
   type ActiveAssignment,
@@ -745,9 +746,7 @@ function AppBadgeLabel({ children }: { children: string }) {
 
 async function fetchWeekSchedule(workoutId: number): Promise<WorkoutSchedule[]> {
   const dateKeys = buildRomeWeekDateKeys();
-  return Promise.all(
-    dateKeys.map((date) => getWorkoutScheduleToday(workoutId, date)),
-  );
+  return getWorkoutScheduleWeek(workoutId, dateKeys[0]);
 }
 
 function findDateKeyForWorkoutDay(

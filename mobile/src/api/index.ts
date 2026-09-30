@@ -54,6 +54,7 @@ export {
   getWorkoutDayExercises,
   createWorkoutDayExercise,
   getWorkoutScheduleToday,
+  getWorkoutScheduleWeek,
   setScheduleOverride,
   deleteScheduleOverride,
 } from "./workoutdays";
