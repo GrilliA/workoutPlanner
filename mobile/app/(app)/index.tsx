@@ -11,6 +11,7 @@ import {
 import { ApiError } from "../../src/api/client";
 import {
   abandonSession,
+  clearApiCache,
   getActiveAssignment,
   getAthleteCoach,
   getSessions,
@@ -537,6 +538,7 @@ export default function HomeScreen() {
             refreshing={refreshing}
             tintColor={colors.accent}
             onRefresh={() => {
+              clearApiCache();
               setRefreshing(true);
               setFetchId((id) => id + 1);
             }}

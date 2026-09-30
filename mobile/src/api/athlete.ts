@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { apiRequest } from "./client";
+import { CACHE_SHORT } from "./responseCache";
 
 export const athleteCoachSchema = z.object({
   coachId: z.number(),
@@ -15,7 +16,10 @@ export const athleteCoachResponseSchema = z.object({
 export type AthleteCoach = z.infer<typeof athleteCoachSchema>;
 
 export function getAthleteCoach() {
-  return apiRequest("/athlete/coach", { schema: athleteCoachResponseSchema });
+  return apiRequest("/athlete/coach", {
+    schema: athleteCoachResponseSchema,
+    cache: CACHE_SHORT,
+  });
 }
 
 export function linkAthleteCoach(code: string) {

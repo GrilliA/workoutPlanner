@@ -1,4 +1,5 @@
 import { apiRequest } from "./client";
+import { CACHE_SHORT } from "./responseCache";
 import {
   createWorkoutRequestSchema,
   updateWorkoutRequestSchema,
@@ -14,11 +15,14 @@ import {
 } from "./schemas";
 
 export async function getWorkouts(): Promise<Workout[]> {
-  return apiRequest("/workouts", { schema: workoutsSchema });
+  return apiRequest("/workouts", { schema: workoutsSchema, cache: CACHE_SHORT });
 }
 
 export async function getWorkout(id: number): Promise<WorkoutDetail> {
-  return apiRequest(`/workouts/${id}`, { schema: workoutDetailSchema });
+  return apiRequest(`/workouts/${id}`, {
+    schema: workoutDetailSchema,
+    cache: CACHE_SHORT,
+  });
 }
 
 export async function createWorkout(

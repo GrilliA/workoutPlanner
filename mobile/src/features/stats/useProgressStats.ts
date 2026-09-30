@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { ApiError } from "../../api/client";
 import {
+  clearApiCache,
   getAthleteAnalytics,
   getSessionHistory,
   type AthleteAnalytics,
@@ -51,6 +52,7 @@ export function useProgressStats(initialRange: StatsRange = "4w") {
   }, []);
 
   const refresh = useCallback(() => {
+    clearApiCache();
     setState((current) => ({ ...current, refreshing: true }));
     reload();
   }, [reload]);

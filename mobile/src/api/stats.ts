@@ -1,4 +1,5 @@
 import { apiRequest } from "./client";
+import { CACHE_SHORT } from "./responseCache";
 import {
   athleteAnalyticsSchema,
   statsRangeSchema,
@@ -22,7 +23,7 @@ export async function getStats(options: GetStatsOptions = {}): Promise<UserStats
   const query = searchParams.toString();
   const path = query ? `/stats?${query}` : "/stats";
 
-  return apiRequest(path, { schema: userStatsSchema });
+  return apiRequest(path, { schema: userStatsSchema, cache: CACHE_SHORT });
 }
 
 export async function getAthleteAnalytics(range: StatsRange): Promise<AthleteAnalytics> {
@@ -30,5 +31,6 @@ export async function getAthleteAnalytics(range: StatsRange): Promise<AthleteAna
 
   return apiRequest(`/stats?range=${parsedRange}`, {
     schema: athleteAnalyticsSchema,
+    cache: CACHE_SHORT,
   });
 }

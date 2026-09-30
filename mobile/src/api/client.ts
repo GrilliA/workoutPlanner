@@ -3,6 +3,16 @@ import { API_BASE, MOBILE_CLIENT_HEADER } from "./config";
 import { apiErrorSchema } from "./schemas";
 import { accessTokenSchema } from "./schemas/auth";
 import { authStore } from "../auth/authStore";
+import {
+  clearApiCache,
+  dedupeRequest,
+  dropCached,
+  getCacheGeneration,
+  readCached,
+  readCachedStale,
+  writeCached,
+  type CachePolicy,
+} from "./responseCache";
 
 const KNOWN_API_ERROR_MESSAGES: Record<string, string> = {
   "Invite code is required": "Inserisci il codice invito.",
@@ -60,6 +70,7 @@ type RequestOptions<TResponse> = {
   body?: unknown;
   requestSchema?: z.ZodType;
   schema: z.ZodType<TResponse>;
+  cache?: CachePolicy;
 };
 
 const AUTH_PATH_PREFIX = "/auth/";
@@ -140,12 +151,12 @@ export const refreshAccessToken = async (): Promise<string | null> => {
   return refreshPromise;
 };
 
-async function sendRequest<TResponse>(
+async function sendRequestJson<TResponse>(
   path: string,
   options: RequestOptions<TResponse>,
   isRetry = false,
-): Promise<TResponse> {
-  const { method = "GET", body, requestSchema, schema } = options;
+): Promise<{ json: unknown; status: number }> {
+  const { method = "GET", body, requestSchema } = options;
   const headers = new Headers({
     Accept: "application/json",
     "X-Client": MOBILE_CLIENT_HEADER,
@@ -188,7 +199,7 @@ async function sendRequest<TResponse>(
     const newToken = await refreshAccessToken();
 
     if (newToken) {
-      return sendRequest(path, options, true);
+      return sendRequestJson(path, options, true);
     }
 
     authStore.clear();
@@ -204,18 +215,86 @@ async function sendRequest<TResponse>(
     );
   }
 
+  return { json, status: response.status };
+}
+
+function decodeJson<TResponse>(
+  schema: z.ZodType<TResponse>,
+  json: unknown,
+  status: number,
+): TResponse {
   const decoded = schema.safeParse(json);
 
   if (!decoded.success) {
-    throw new ApiError(response.status, "Risposta API non valida");
+    throw new ApiError(status, "Risposta API non valida");
   }
 
   return decoded.data;
+}
+
+async function cachedRequest<TResponse>(
+  path: string,
+  options: RequestOptions<TResponse>,
+  policy: CachePolicy,
+): Promise<TResponse> {
+  const cached = await readCached(path, policy);
+
+  if (cached !== null) {
+    const decoded = options.schema.safeParse(cached);
+
+    if (decoded.success) {
+      return decoded.data;
+    }
+
+    dropCached(path, policy);
+  }
+
+  const generation = getCacheGeneration();
+
+  try {
+    const { json, status } = await dedupeRequest(path, () =>
+      sendRequestJson(path, options).then((result) => {
+        writeCached(path, policy, result.json, generation);
+        return result;
+      }),
+    );
+
+    return decodeJson(options.schema, json, status);
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 0) {
+      const stale = await readCachedStale(path, policy);
+
+      if (stale !== null) {
+        const decoded = options.schema.safeParse(stale);
+
+        if (decoded.success) {
+          return decoded.data;
+        }
+      }
+    }
+
+    throw err;
+  }
 }
 
 export async function apiRequest<TResponse>(
   path: string,
   options: RequestOptions<TResponse>,
 ): Promise<TResponse> {
-  return sendRequest(path, options);
+  const method = options.method ?? "GET";
+
+  if (method === "GET" && options.cache) {
+    return cachedRequest(path, options, options.cache);
+  }
+
+  const { json, status } = await sendRequestJson(path, options);
+  const decoded = decodeJson(options.schema, json, status);
+
+  if (method !== "GET") {
+    clearApiCache();
+  }
+
+  return decoded;
 }
+
+authStore.onSessionCleared(clearApiCache);
