@@ -35,6 +35,7 @@ import {
   type ParsedScheda,
 } from "../../schedatxt/parseSchedaTxt";
 import { colors, radii, spacing } from "../../theme";
+import { exerciseHeading } from "./exerciseDisplay";
 import { ProgramExerciseCard } from "./ProgramExerciseCard";
 import { WeekdayChips } from "./WeekdayChips";
 import {
@@ -57,15 +58,6 @@ type WorkoutBuilderProps = {
   workoutId?: number;
   readOnly?: boolean;
 };
-
-function exerciseMeta(exercise: WorkoutDraftExercise): string {
-  const count = exercise.prescriptions.length;
-  if (count <= 0) {
-    return "Senza serie";
-  }
-  const reps = exercise.prescriptions[0]?.reps.trim();
-  return reps ? `${count} serie · ${reps} reps` : `${count} serie`;
-}
 
 function dayMeta(day: WorkoutDraftDay): string {
   const weekdays =
@@ -410,11 +402,21 @@ export function WorkoutBuilder({
                     }
                     disabled={readOnly}
                     accessibilityRole="button"
+                    accessibilityLabel={
+                      exercise.prescriptions.length === 0
+                        ? `${exerciseHeading(exercise)}, Senza serie`
+                        : `${exerciseHeading(exercise)}, ${exercise.prescriptions.length} serie: ${exercise.prescriptions
+                            .map(
+                              (item) =>
+                                `${item.reps.trim() || "—"} reps, recupero ${item.restSec} secondi`,
+                            )
+                            .join("; ")}`
+                    }
                   >
                     <ProgramExerciseCard
                       exercise={exercise}
                       index={index + 1}
-                      meta={exerciseMeta(exercise)}
+                      prescriptions={exercise.prescriptions}
                     />
                   </Pressable>
                 ))
