@@ -1,7 +1,11 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/requireAuth";
+import { requireRole } from "../middleware/requireRole";
 import { getActiveAssignmentForAthlete } from "../services/coachDashboard";
-import { revokeAssignmentForParticipant } from "../services/programAssignment";
+import {
+  markAssignmentSeen,
+  revokeAssignmentForParticipant,
+} from "../services/programAssignment";
 import { getAuthUser } from "../types/auth";
 
 export const assignmentsRouter = Router();
@@ -31,6 +35,19 @@ assignmentsRouter.post("/active/revoke", async (req, res) => {
   }
 
   res.json(revoked);
+});
+
+assignmentsRouter.post("/active/seen", requireRole("athlete"), async (req, res) => {
+  const user = getAuthUser(req);
+  const assignment = await getActiveAssignmentForAthlete(user.id);
+
+  if (!assignment) {
+    res.status(404).json({ error: "No active assignment" });
+    return;
+  }
+
+  await markAssignmentSeen(assignment.id);
+  res.json({ ok: true });
 });
 
 assignmentsRouter.post("/:id/revoke", async (req, res) => {
