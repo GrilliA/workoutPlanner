@@ -8,7 +8,14 @@ import {
   workouts,
 } from "../db/schema";
 import { enrichExercises } from "./exerciseAccess";
-import { getRomeWeekday, toRomeDateKey, type Weekday } from "./workoutSchedule";
+import {
+  addDaysToDateKey,
+  getRomeWeekday,
+  pickWorkoutDayForDate,
+  toRomeDateKey,
+  type ResolvedWorkoutDay,
+  type Weekday,
+} from "./workoutSchedule";
 
 export type WorkoutDayRow = typeof workoutDays.$inferSelect;
 
@@ -160,12 +167,6 @@ export async function listProgramDaysWithExercises(workoutId: number) {
   );
 }
 
-export type ResolvedWorkoutDay = {
-  workoutDayId: number;
-  workoutDayName: string;
-  source: "override" | "schedule" | "default";
-};
-
 export async function resolveWorkoutDayForDate(
   workoutId: number,
   userId: number,
@@ -230,6 +231,63 @@ export async function resolveWorkoutDayForDate(
     workoutDayName: scheduled.workoutDayName,
     source: "schedule",
   };
+}
+
+export async function resolveWorkoutDaysForWeek(
+  workoutId: number,
+  userId: number,
+  fromDateKey: string,
+): Promise<
+  { date: string; weekday: Weekday; resolved: ResolvedWorkoutDay | null }[]
+> {
+  const dateKeys = Array.from({ length: 7 }, (_, index) =>
+    addDaysToDateKey(fromDateKey, index),
+  );
+
+  const [overrides, weekdayDays, days] = await Promise.all([
+    db
+      .select({
+        scheduledDate: workoutScheduleOverrides.scheduledDate,
+        workoutDayId: workoutScheduleOverrides.workoutDayId,
+        workoutDayName: workoutDays.name,
+      })
+      .from(workoutScheduleOverrides)
+      .innerJoin(
+        workoutDays,
+        eq(workoutScheduleOverrides.workoutDayId, workoutDays.id),
+      )
+      .where(
+        and(
+          eq(workoutScheduleOverrides.userId, userId),
+          eq(workoutScheduleOverrides.workoutId, workoutId),
+          inArray(workoutScheduleOverrides.scheduledDate, dateKeys),
+        ),
+      ),
+    db
+      .select({
+        weekday: workoutDayWeekdays.weekday,
+        workoutDayId: workoutDays.id,
+        workoutDayName: workoutDays.name,
+        sortOrder: workoutDays.sortOrder,
+      })
+      .from(workoutDayWeekdays)
+      .innerJoin(workoutDays, eq(workoutDayWeekdays.workoutDayId, workoutDays.id))
+      .where(eq(workoutDays.workoutId, workoutId)),
+    listWorkoutDaysForWorkout(workoutId),
+  ]);
+
+  return dateKeys.map((dateKey) => {
+    const weekday = getRomeWeekday(new Date(`${dateKey}T12:00:00Z`));
+    const resolved = pickWorkoutDayForDate({
+      dateKey,
+      weekday,
+      overrides,
+      weekdayDays,
+      days,
+    });
+
+    return { date: dateKey, weekday, resolved };
+  });
 }
 
 export async function ensureDefaultWorkoutDay(
