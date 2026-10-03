@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, ne, type SQL } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull, ne, type SQL } from "drizzle-orm";
 import { db } from "../db";
 import {
   exercises,
@@ -560,4 +560,11 @@ export const coachOwnsAthleteProgram = async (
     .limit(1);
 
   return Boolean(assignment);
+};
+
+export const markAssignmentSeen = async (assignmentId: number) => {
+  await db
+    .update(programAssignments)
+    .set({ seenAt: new Date() })
+    .where(and(eq(programAssignments.id, assignmentId), isNull(programAssignments.seenAt)));
 };
