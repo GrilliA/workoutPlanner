@@ -291,6 +291,7 @@ export const getActiveAssignmentForAthlete = async (athleteId: number) => {
       startsAt: programAssignments.startsAt,
       expiresAt: programAssignments.expiresAt,
       status: programAssignments.status,
+      seenAt: programAssignments.seenAt,
       workoutName: workouts.name,
       isActive: workouts.isActive,
     })

@@ -43,7 +43,7 @@ const MS_PER_MINUTE = 60_000;
 const MS_PER_DAY = 86_400_000;
 const DEFAULT_RECENT_LIMIT = 5;
 const MAX_RECENT_LIMIT = 20;
-const ROLLING_WINDOW_DAYS = 7;
+export const ROLLING_WINDOW_DAYS = 7;
 
 const WEEKDAY_LABELS = ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"] as const;
 
