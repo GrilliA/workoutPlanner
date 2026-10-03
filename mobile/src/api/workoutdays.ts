@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { apiRequest } from "./client";
+import { CACHE_SHORT } from "./responseCache";
 import {
   createExerciseRequestSchema,
   createWorkoutDayRequestSchema,
@@ -23,7 +24,10 @@ import {
 } from "./schemas";
 
 export async function getWorkoutDays(workoutId: number): Promise<WorkoutDay[]> {
-  return apiRequest(`/workouts/${workoutId}/days`, { schema: workoutDaysSchema });
+  return apiRequest(`/workouts/${workoutId}/days`, {
+    schema: workoutDaysSchema,
+    cache: CACHE_SHORT,
+  });
 }
 
 export async function getWorkoutDay(workoutId: number, dayId: number): Promise<WorkoutDay> {
@@ -81,6 +85,7 @@ export async function getWorkoutDayExercises(
 ): Promise<Exercise[]> {
   return apiRequest(`/workouts/${workoutId}/days/${dayId}/exercises`, {
     schema: exercisesSchema,
+    cache: CACHE_SHORT,
   });
 }
 
@@ -105,6 +110,7 @@ export async function getWorkoutScheduleToday(
 
   return apiRequest(`/workouts/${workoutId}/schedule/today${query}`, {
     schema: workoutScheduleSchema,
+    cache: CACHE_SHORT,
   });
 }
 

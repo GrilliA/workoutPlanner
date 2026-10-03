@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { apiRequest } from "./client";
+import { CACHE_SHORT } from "./responseCache";
 import {
   activeAssignmentResponseSchema,
   activeAssignmentSchema,
@@ -13,6 +14,7 @@ const revokedAssignmentSchema = activeAssignmentSchema
 export async function getActiveAssignment(): Promise<ActiveAssignment | null> {
   const response = await apiRequest("/assignments/active", {
     schema: activeAssignmentResponseSchema,
+    cache: CACHE_SHORT,
   });
   return response.assignment;
 }

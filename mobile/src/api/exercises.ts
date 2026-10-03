@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { apiRequest } from "./client";
+import { CACHE_SHORT } from "./responseCache";
 import {
   createExerciseRequestSchema,
   exerciseSchema,
@@ -11,7 +12,10 @@ import {
 } from "./schemas";
 
 export async function getExercisesByWorkout(workoutId: number): Promise<Exercise[]> {
-  return apiRequest(`/workouts/${workoutId}/exercises`, { schema: exercisesSchema });
+  return apiRequest(`/workouts/${workoutId}/exercises`, {
+    schema: exercisesSchema,
+    cache: CACHE_SHORT,
+  });
 }
 
 export async function getExercise(id: number): Promise<Exercise> {

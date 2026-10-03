@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { apiRequest } from "./client";
+import { CACHE_SHORT } from "./responseCache";
 import {
   logSetRequestSchema,
   loggedSetSchema,
@@ -36,6 +37,7 @@ export async function startSession(
 export async function getSessionsByWorkout(workoutId: number): Promise<WorkoutSession[]> {
   return apiRequest(`/workouts/${workoutId}/sessions`, {
     schema: workoutSessionsSchema,
+    cache: CACHE_SHORT,
   });
 }
 

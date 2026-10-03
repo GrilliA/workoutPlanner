@@ -1,4 +1,5 @@
 import { apiRequest } from "./client";
+import { CACHE_CATALOG } from "./responseCache";
 import {
   catalogExerciseSchema,
   catalogFacetsSchema,
@@ -28,15 +29,20 @@ export async function searchCatalogExercises(
 ): Promise<CatalogSearchResult> {
   return apiRequest(`/catalog/exercises${toQuery(params)}`, {
     schema: catalogSearchResultSchema,
+    cache: CACHE_CATALOG,
   });
 }
 
 export async function getCatalogExercise(id: string): Promise<CatalogExercise> {
   return apiRequest(`/catalog/exercises/${encodeURIComponent(id)}`, {
     schema: catalogExerciseSchema,
+    cache: CACHE_CATALOG,
   });
 }
 
 export async function getCatalogFacets(): Promise<CatalogFacets> {
-  return apiRequest("/catalog/facets", { schema: catalogFacetsSchema });
+  return apiRequest("/catalog/facets", {
+    schema: catalogFacetsSchema,
+    cache: CACHE_CATALOG,
+  });
 }

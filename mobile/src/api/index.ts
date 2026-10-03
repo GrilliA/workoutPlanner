@@ -1,5 +1,6 @@
 export { API_BASE } from "./config";
 export { ApiError, apiRequest, refreshAccessToken } from "./client";
+export { clearApiCache } from "./responseCache";
 export * from "./schemas";
 export {
   getWorkouts,
