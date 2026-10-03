@@ -13,6 +13,7 @@ export const colors = {
   onAccent: "#111111",
   danger: "#f87171",
   dangerBg: "rgba(248, 113, 113, 0.12)",
+  dangerBorder: "rgba(248, 113, 113, 0.35)",
   muted: "#666666",
 } as const;
 
