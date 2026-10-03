@@ -3,6 +3,7 @@ import {
   deleteScheduleOverride,
   findWorkoutDayForUser,
   resolveWorkoutDayForDate,
+  resolveWorkoutDaysForWeek,
   upsertScheduleOverride,
 } from "../services/workoutDayAccess";
 import { validateScheduleOverrideInput } from "../services/workoutDayValidation";
@@ -53,6 +54,45 @@ workoutScheduleRouter.get("/today", async (req, res) => {
       : null,
     source: resolved?.source ?? null,
   });
+});
+
+workoutScheduleRouter.get("/week", async (req, res) => {
+  const user = getAuthUser(req);
+  const workoutId = parseWorkoutId(req.params);
+  const fromParam = typeof req.query.from === "string" ? req.query.from : null;
+
+  if (Number.isNaN(workoutId)) {
+    res.status(400).json({ error: "Invalid workout id" });
+    return;
+  }
+
+  if (!fromParam || !parseScheduledDate(fromParam)) {
+    res.status(400).json({ error: "from must be YYYY-MM-DD" });
+    return;
+  }
+
+  const workout = await findWorkoutForUser(workoutId, user.id);
+
+  if (!workout) {
+    res.status(404).json({ error: "Workout not found" });
+    return;
+  }
+
+  const week = await resolveWorkoutDaysForWeek(workoutId, user.id, fromParam);
+
+  res.json(
+    week.map((entry) => ({
+      date: entry.date,
+      weekday: entry.weekday,
+      workoutDay: entry.resolved
+        ? {
+            id: entry.resolved.workoutDayId,
+            name: entry.resolved.workoutDayName,
+          }
+        : null,
+      source: entry.resolved?.source ?? null,
+    })),
+  );
 });
 
 workoutScheduleRouter.post("/overrides", async (req, res) => {
