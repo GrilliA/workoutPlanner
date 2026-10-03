@@ -6,7 +6,12 @@ import { WeekdayPicker } from "../weekdaypicker";
 import { ExerciseList } from "../exerciselist";
 import { AddExerciseForm } from "../addexerciseform";
 import { WorkoutSettingsPanel } from "../workoutsettings";
-import { useWorkoutForm, type WorkoutFormAdapters } from "../useCreateWorkout";
+import {
+  useWorkoutDraft,
+  useWorkoutForm,
+  type WorkoutDraftSeed,
+  type WorkoutFormAdapters,
+} from "../useCreateWorkout";
 import { SchedaTxtPaste } from "../schedatxt";
 import type { Weekday } from "../types";
 import "./style.css";
@@ -23,6 +28,43 @@ export function CreateWorkout({
   adapters,
   enableTxtImport = false,
 }: CreateWorkoutProps) {
+  const { draft, isLoading, notFound } = useWorkoutDraft(
+    workoutId,
+    adapters ?? {},
+  );
+
+  if (isLoading || notFound) {
+    return (
+      <div className="create-workout coach-page page-container page-container--wide">
+        <PageHeader
+          mode={workoutId ? "edit" : "create"}
+          onSave={() => undefined}
+          isSaving={false}
+          backHref={adapters?.backHref ?? adapters?.successPath ?? "/dashboard"}
+        />
+        {isLoading ? <p>Caricamento scheda…</p> : null}
+        {notFound ? <p className="coach-empty">Scheda non trovata</p> : null}
+      </div>
+    );
+  }
+
+  return (
+    <CreateWorkoutForm
+      key={workoutId ?? "new"}
+      workoutId={workoutId}
+      adapters={adapters}
+      enableTxtImport={enableTxtImport}
+      initialDraft={draft}
+    />
+  );
+}
+
+function CreateWorkoutForm({
+  workoutId,
+  adapters,
+  enableTxtImport = false,
+  initialDraft,
+}: CreateWorkoutProps & { initialDraft?: WorkoutDraftSeed | null }) {
   const {
     name,
     setName,
@@ -43,10 +85,8 @@ export function CreateWorkout({
     save,
     applyDraft,
     isSaving,
-    isLoading,
     isEditMode,
-    notFound,
-  } = useWorkoutForm(workoutId, adapters);
+  } = useWorkoutForm(workoutId, adapters, initialDraft);
 
   const takenWeekdays = days
     .filter((day) => day.clientId !== activeDayId)
@@ -57,88 +97,76 @@ export function CreateWorkout({
       <PageHeader
         mode={isEditMode ? "edit" : "create"}
         onSave={() => {
-          if (isLoading || notFound) {
-            return;
-          }
-
           void save();
         }}
         isSaving={isSaving}
         backHref={adapters?.backHref ?? adapters?.successPath ?? "/dashboard"}
       />
 
-      {isLoading ? <p>Caricamento scheda…</p> : null}
+      {enableTxtImport ? (
+        <SchedaTxtPaste
+          onApply={(parsed) =>
+            applyDraft({
+              name: parsed.name,
+              settings: parsed.settings,
+              days: parsed.days.map((day) => ({
+                ...day,
+                weekdays: day.weekdays as Weekday[],
+              })),
+            })
+          }
+        />
+      ) : null}
 
-      {notFound ? <p className="coach-empty">Scheda non trovata</p> : null}
+      <WorkoutNameField
+        value={name}
+        onChange={setName}
+        error={nameError}
+      />
 
-      {isLoading || notFound ? null : (
+      {formError ? (
+        <p className="form-error" role="alert">
+          {formError}
+        </p>
+      ) : null}
+
+      <DaySelector
+        days={days}
+        activeDayId={activeDayId}
+        onSelect={setActiveDayId}
+        onAdd={addDay}
+        onRemove={removeDay}
+      />
+
+      {activeDay ? (
         <>
-          {enableTxtImport ? (
-            <SchedaTxtPaste
-              onApply={(parsed) =>
-                applyDraft({
-                  name: parsed.name,
-                  settings: parsed.settings,
-                  days: parsed.days.map((day) => ({
-                    ...day,
-                    weekdays: day.weekdays as Weekday[],
-                  })),
-                })
-              }
+          <DayNameField
+            value={activeDay.name}
+            onChange={setActiveDayName}
+          />
+
+          <WeekdayPicker
+            selected={activeDay.weekdays}
+            taken={takenWeekdays}
+            onToggle={toggleWeekday}
+          />
+
+          <ExerciseList
+            exercises={activeDay.exercises}
+            defaultRestSec={settings.defaultRestSec}
+            onRemove={removeExercise}
+          />
+
+          <div className="add-exercise">
+            <AddExerciseForm
+              defaultRestSec={settings.defaultRestSec}
+              onAdd={addExercise}
             />
-          ) : null}
-
-          <WorkoutNameField
-            value={name}
-            onChange={setName}
-            error={nameError}
-          />
-
-          {formError ? (
-            <p className="form-error" role="alert">
-              {formError}
-            </p>
-          ) : null}
-
-          <DaySelector
-            days={days}
-            activeDayId={activeDayId}
-            onSelect={setActiveDayId}
-            onAdd={addDay}
-            onRemove={removeDay}
-          />
-
-          {activeDay ? (
-            <>
-              <DayNameField
-                value={activeDay.name}
-                onChange={setActiveDayName}
-              />
-
-              <WeekdayPicker
-                selected={activeDay.weekdays}
-                taken={takenWeekdays}
-                onToggle={toggleWeekday}
-              />
-
-              <ExerciseList
-                exercises={activeDay.exercises}
-                defaultRestSec={settings.defaultRestSec}
-                onRemove={removeExercise}
-              />
-
-              <div className="add-exercise">
-                <AddExerciseForm
-                  defaultRestSec={settings.defaultRestSec}
-                  onAdd={addExercise}
-                />
-              </div>
-            </>
-          ) : null}
-
-          <WorkoutSettingsPanel settings={settings} onChange={setSettings} />
+          </div>
         </>
-      )}
+      ) : null}
+
+      <WorkoutSettingsPanel settings={settings} onChange={setSettings} />
     </div>
   );
 }

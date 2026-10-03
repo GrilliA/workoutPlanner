@@ -3,6 +3,22 @@ import { Platform } from "react-native";
 
 const REFRESH_TOKEN_KEY = "traccia.refreshToken";
 
+/** expo-secure-store has no web implementation — Expo web preview uses sessionStorage (tab lifetime). */
+const refreshTokenStorage =
+  Platform.OS === "web"
+    ? {
+        getItemAsync: async (key: string) => sessionStorage.getItem(key),
+        setItemAsync: async (key: string, value: string) => sessionStorage.setItem(key, value),
+        deleteItemAsync: async (key: string) => {
+          try {
+            sessionStorage.removeItem(key);
+          } catch {
+            // clear() does not await; a rejection here would be unhandled.
+          }
+        },
+      }
+    : SecureStore;
+
 let accessToken: string | null = null;
 let refreshTokenMemory: string | null = null;
 
@@ -10,30 +26,10 @@ type SessionListener = () => void;
 
 const listeners = new Set<SessionListener>();
 
-/** Expo SecureStore has no usable web implementation; Expo web uses localStorage. */
-const persistRefreshToken = async (token: string | null): Promise<void> => {
-  if (Platform.OS === "web") {
-    if (token) {
-      window.localStorage.setItem(REFRESH_TOKEN_KEY, token);
-      return;
-    }
-
-    window.localStorage.removeItem(REFRESH_TOKEN_KEY);
-    return;
-  }
-
-  if (token) {
-    await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, token);
-    return;
-  }
-
-  await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
-};
-
 /**
  * Auth token storage for React Native.
  * - access token: in-memory only (short-lived JWT)
- * - refresh token: Expo SecureStore (encrypted keychain/keystore) — survives app kill
+ * - refresh token: sessionStorage on the Expo web preview (tab lifetime); Expo SecureStore on iOS/Android (encrypted keychain/keystore, survives app kill)
  *
  * Why not cookies? RN has no browser cookie jar for httpOnly cookies like the web client.
  */
@@ -47,17 +43,26 @@ export const authStore = {
   getRefreshToken: (): string | null => refreshTokenMemory,
 
   setRefreshToken: async (token: string | null): Promise<void> => {
+    const previousRefreshToken = refreshTokenMemory;
     refreshTokenMemory = token;
-    await persistRefreshToken(token);
+
+    try {
+      if (token) {
+        await refreshTokenStorage.setItemAsync(REFRESH_TOKEN_KEY, token);
+        return;
+      }
+
+      await refreshTokenStorage.deleteItemAsync(REFRESH_TOKEN_KEY);
+    } catch (error) {
+      refreshTokenMemory = previousRefreshToken;
+      throw error;
+    }
   },
 
-  /** Load refresh token from SecureStore into memory (call once at bootstrap). */
+  /** Load refresh token from sessionStorage (web) or SecureStore (native) into memory (call once at bootstrap). */
   hydrateRefreshToken: async (): Promise<string | null> => {
     try {
-      const stored =
-        Platform.OS === "web"
-          ? window.localStorage.getItem(REFRESH_TOKEN_KEY)
-          : await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
+      const stored = await refreshTokenStorage.getItemAsync(REFRESH_TOKEN_KEY);
       refreshTokenMemory = stored;
       return stored;
     } catch {
@@ -69,7 +74,7 @@ export const authStore = {
   clear: (): void => {
     accessToken = null;
     refreshTokenMemory = null;
-    void persistRefreshToken(null);
+    void refreshTokenStorage.deleteItemAsync(REFRESH_TOKEN_KEY);
     listeners.forEach((listener) => listener());
   },
 

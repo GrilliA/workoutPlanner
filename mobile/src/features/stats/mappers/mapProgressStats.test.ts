@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import type { AthleteAnalytics } from "../../api";
+import type { AthleteAnalytics } from "../../../api";
 import { buildWeeklyChartModel } from "./buildWeeklyChart";
 import { mapProgressInsight, mapProgressStats } from "./mapProgressStats";
 import { formatPeriodBounds, formatSignedPercent } from "./formatters";

@@ -1,6 +1,5 @@
 import { REST_SEC_OPTIONS } from "../../api/schemas/workout";
 import {
-  cycleRestSec,
   newPrescription,
   prescriptionsFromServer,
   prescriptionsFromUniform,
@@ -13,7 +12,6 @@ import {
 export type { DraftPrescription };
 export {
   REST_SEC_OPTIONS,
-  cycleRestSec,
   newPrescription,
   prescriptionsFromServer,
   prescriptionsFromUniform,
@@ -21,7 +19,22 @@ export {
   validatePrescriptionDrafts,
   DEFAULT_REST_SEC,
 };
+export {
+  emptyWorkoutDraft,
+  newWorkoutDraftDay,
+  toWorkoutProgramInput,
+  validateWorkoutDraft,
+  workoutDraftExerciseFromCatalog,
+  workoutDraftFromSchedaTxt,
+  workoutDraftFromServer,
+  WEEKDAY_LABELS_SHORT,
+  type WeekdayIndex,
+  type WorkoutDraft,
+  type WorkoutDraftDay,
+  type WorkoutDraftExercise,
+} from "./workoutDraft";
 export { SetPrescriptionEditor } from "./SetPrescriptionEditor";
 export { WeekdayChips } from "./WeekdayChips";
 export { ProgramExerciseCard } from "./ProgramExerciseCard";
+export { WorkoutBuilder } from "./WorkoutBuilder";
 export { exerciseHeading, exerciseEnglishLine } from "./exerciseDisplay";

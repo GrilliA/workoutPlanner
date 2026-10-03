@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  buildRenewalWeeks,
   computeAssignmentStatus,
   dayBefore,
   daysUntilExpiry,
@@ -221,5 +222,159 @@ describe("assignmentStatus", () => {
 
     assert.deepEqual(plan.revokeIds, [1]);
     assert.deepEqual(plan.truncate, []);
+  });
+
+  // today = Wednesday 2026-09-09 → week 0 Mon 09-07 … Sun 09-13
+  describe("buildRenewalWeeks", () => {
+    const today = "2026-09-09";
+
+    it("returns four weeks with empty counts when nothing expires", () => {
+      const weeks = buildRenewalWeeks([], today);
+      assert.equal(weeks.length, 4);
+      assert.deepEqual(weeks, [
+        { weekStart: "2026-09-07", weekEnd: "2026-09-13", count: 0 },
+        { weekStart: "2026-09-14", weekEnd: "2026-09-20", count: 0 },
+        { weekStart: "2026-09-21", weekEnd: "2026-09-27", count: 0 },
+        { weekStart: "2026-09-28", weekEnd: "2026-10-04", count: 0 },
+      ]);
+    });
+
+    it("counts two active expiries in the same week as 2", () => {
+      const weeks = buildRenewalWeeks(
+        [
+          {
+            athleteId: 1,
+            startsAt: "2026-08-01",
+            expiresAt: "2026-09-10",
+            revoked: false,
+          },
+          {
+            athleteId: 2,
+            startsAt: "2026-08-01",
+            expiresAt: "2026-09-12",
+            revoked: false,
+          },
+        ],
+        today,
+      );
+      assert.equal(weeks[0].count, 2);
+      assert.equal(weeks[1].count, 0);
+    });
+
+    it("still counts an expiry when the next assignment leaves a gap", () => {
+      const weeks = buildRenewalWeeks(
+        [
+          {
+            athleteId: 1,
+            startsAt: "2026-08-01",
+            expiresAt: "2026-09-10",
+            revoked: false,
+          },
+          {
+            athleteId: 1,
+            startsAt: "2026-09-20",
+            expiresAt: "2026-10-20",
+            revoked: false,
+          },
+        ],
+        today,
+      );
+      assert.equal(weeks[0].count, 1);
+    });
+
+    it("skips an expiry covered the next day by another assignment", () => {
+      const weeks = buildRenewalWeeks(
+        [
+          {
+            athleteId: 1,
+            startsAt: "2026-08-01",
+            expiresAt: "2026-09-10",
+            revoked: false,
+          },
+          {
+            athleteId: 1,
+            startsAt: "2026-09-11",
+            expiresAt: "2026-10-20",
+            revoked: false,
+          },
+        ],
+        today,
+      );
+      assert.equal(weeks[0].count, 0);
+    });
+
+    it("does not let a revoked follow-up hide the expiry", () => {
+      const weeks = buildRenewalWeeks(
+        [
+          {
+            athleteId: 1,
+            startsAt: "2026-08-01",
+            expiresAt: "2026-09-10",
+            revoked: false,
+          },
+          {
+            athleteId: 1,
+            startsAt: "2026-09-11",
+            expiresAt: "2026-10-20",
+            revoked: true,
+          },
+        ],
+        today,
+      );
+      assert.equal(weeks[0].count, 1);
+    });
+
+    it("does not count expired or revoked rows", () => {
+      const weeks = buildRenewalWeeks(
+        [
+          {
+            athleteId: 1,
+            startsAt: "2026-07-01",
+            expiresAt: "2026-08-01",
+            revoked: false,
+          },
+          {
+            athleteId: 2,
+            startsAt: "2026-08-01",
+            expiresAt: "2026-09-10",
+            revoked: true,
+          },
+        ],
+        today,
+      );
+      assert.equal(weeks.every((week) => week.count === 0), true);
+    });
+
+    it("includes a Sunday expiry in the current week", () => {
+      const weeks = buildRenewalWeeks(
+        [
+          {
+            athleteId: 1,
+            startsAt: "2026-08-01",
+            expiresAt: "2026-09-13",
+            revoked: false,
+          },
+        ],
+        today,
+      );
+      assert.equal(weeks[0].count, 1);
+      assert.equal(weeks[1].count, 0);
+    });
+
+    it("puts the next Monday in the following week", () => {
+      const weeks = buildRenewalWeeks(
+        [
+          {
+            athleteId: 1,
+            startsAt: "2026-08-01",
+            expiresAt: "2026-09-14",
+            revoked: false,
+          },
+        ],
+        today,
+      );
+      assert.equal(weeks[0].count, 0);
+      assert.equal(weeks[1].count, 1);
+    });
   });
 });

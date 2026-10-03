@@ -8,9 +8,11 @@ import {
   workoutSessions,
 } from "../db/schema";
 import {
+  buildRenewalWeeks,
   computeAssignmentStatus,
   daysUntilExpiry,
   todayInRome,
+  type RenewalWeek,
 } from "./assignmentStatus";
 import { syncAssignmentStatusesForAthlete, syncAssignmentStatusesForCoach } from "./programAssignment";
 
@@ -47,6 +49,7 @@ export type CoachDashboardStats = {
   expiringIn30Days: number;
   expiredAssignments: number;
   expirationsByMonth: Array<{ month: string; count: number }>;
+  renewalsByWeek: RenewalWeek[];
   upcomingExpirations: CoachDashboardExpirationItem[];
   expiredAssignmentsList: CoachDashboardExpiredItem[];
 };
@@ -98,7 +101,6 @@ export const getCoachDashboardStats = async (
   let activeAssignments = 0;
   let scheduledAssignments = 0;
   let expiredAssignments = 0;
-  let expiringIn7Days = 0;
   let expiringIn14Days = 0;
   let expiringIn30Days = 0;
   const monthCounts = new Map<string, number>();
@@ -115,7 +117,6 @@ export const getCoachDashboardStats = async (
     if (status === "active") {
       activeAssignments += 1;
       const daysLeft = daysUntilExpiry(row.expiresAt, today);
-      if (daysLeft <= 7) expiringIn7Days += 1;
       if (daysLeft <= 14) expiringIn14Days += 1;
       if (daysLeft <= 30) {
         expiringIn30Days += 1;
@@ -162,16 +163,27 @@ export const getCoachDashboardStats = async (
     .sort((a, b) => b.expiresAt.localeCompare(a.expiresAt) || b.id - a.id)
     .slice(0, LIST_LIMIT);
 
+  const renewalsByWeek = buildRenewalWeeks(
+    assignments.map((row) => ({
+      athleteId: row.athleteId,
+      startsAt: row.startsAt,
+      expiresAt: row.expiresAt,
+      revoked: row.status === "revoked",
+    })),
+    today,
+  );
+
   return {
     clientCount: clientRow?.value ?? 0,
     templateCount: templateRow?.value ?? 0,
     activeAssignments,
     scheduledAssignments,
-    expiringIn7Days,
+    expiringIn7Days: renewalsByWeek[0]?.count ?? 0,
     expiringIn14Days,
     expiringIn30Days,
     expiredAssignments,
     expirationsByMonth,
+    renewalsByWeek,
     upcomingExpirations,
     expiredAssignmentsList,
   };

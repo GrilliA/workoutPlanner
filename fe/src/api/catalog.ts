@@ -25,9 +25,11 @@ function toQuery(params: CatalogSearchParams): string {
 
 export async function searchCatalogExercises(
   params: CatalogSearchParams = {},
+  { signal }: { signal?: AbortSignal } = {},
 ): Promise<CatalogSearchResult> {
   return apiRequest(`/catalog/exercises${toQuery(params)}`, {
     schema: catalogSearchResultSchema,
+    signal,
   });
 }
 

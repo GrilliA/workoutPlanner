@@ -96,6 +96,13 @@ export const coachDashboardSchema = z.object({
       count: z.number(),
     }),
   ),
+  renewalsByWeek: z.array(
+    z.object({
+      weekStart: z.string(),
+      weekEnd: z.string(),
+      count: z.number(),
+    }),
+  ),
   upcomingExpirations: z.array(coachDashboardExpirationItemSchema),
   expiredAssignmentsList: z.array(coachDashboardExpiredItemSchema),
   recentActivity: z.array(coachDashboardActivityItemSchema),

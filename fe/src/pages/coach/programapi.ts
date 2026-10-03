@@ -84,8 +84,11 @@ const mapDetailToDraft = (workout: {
   };
 };
 
-export const loadTemplateDraft = async (templateId: number) => {
-  const workout = await getCoachTemplate(templateId);
+export const loadTemplateDraft = async (
+  templateId: number,
+  { signal }: { signal?: AbortSignal } = {},
+) => {
+  const workout = await getCoachTemplate(templateId, { signal });
   return mapDetailToDraft(workout);
 };
 
@@ -105,8 +108,9 @@ export const saveUpdatedTemplate = (
 export const loadClientProgramDraft = async (
   athleteId: number,
   workoutId: number,
+  { signal }: { signal?: AbortSignal } = {},
 ) => {
-  const workout = await getCoachClientProgram(athleteId, workoutId);
+  const workout = await getCoachClientProgram(athleteId, workoutId, { signal });
   return mapDetailToDraft(workout);
 };
 

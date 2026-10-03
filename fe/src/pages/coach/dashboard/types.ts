@@ -21,7 +21,7 @@ export type DashboardExpirationRow = {
 export type DashboardAthleteRow = {
   id: number;
   label: string;
-  status: "active" | "expiring" | "paused";
+  status: "active" | "expiring" | "expired" | "paused";
   statusLabel: string;
   metaLabel: string;
 };
@@ -42,11 +42,23 @@ export type DashboardActivityItem = {
   completedAtLabel: string;
 };
 
+export type RenewalWeekBar = {
+  label: string;
+  count: number;
+  accessibilityLabel: string;
+};
+
+export type RenewalChartModel = {
+  bars: RenewalWeekBar[];
+  summary: string;
+};
+
 export type DashboardViewModel = {
   clientCount: number;
   templateCount: number;
   isEmpty: boolean;
   kpis: DashboardKpi[];
+  renewalChart: RenewalChartModel;
   athletes: DashboardAthleteRow[];
   tasks: DashboardTask[];
   recentActivity: DashboardActivityItem[];

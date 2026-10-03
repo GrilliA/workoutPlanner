@@ -1,23 +1,18 @@
-import { useEffect } from "react";
-import { useLocation } from "wouter";
+import { Redirect } from "wouter";
 import { useAuth } from "@auth";
 import { BrandLogo } from "@components/brandLogo";
 import "@auth/authpage.css";
 
 export default function RootPage() {
   const { status } = useAuth();
-  const [, setLocation] = useLocation();
 
-  useEffect(() => {
-    if (status === "authenticated") {
-      setLocation("/dashboard", { replace: true });
-      return;
-    }
+  if (status === "authenticated") {
+    return <Redirect to="/dashboard" replace />;
+  }
 
-    if (status === "anonymous" || status === "error") {
-      setLocation("/login", { replace: true });
-    }
-  }, [status, setLocation]);
+  if (status === "anonymous" || status === "error") {
+    return <Redirect to="/login" replace />;
+  }
 
   return (
     <main aria-busy="true" aria-live="polite" className="auth-page">

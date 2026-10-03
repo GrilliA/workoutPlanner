@@ -1,5 +1,5 @@
-import { useEffect, type ReactNode } from "react";
-import { useLocation } from "wouter";
+import { type ReactNode } from "react";
+import { Redirect, useLocation } from "wouter";
 import { BrandLogo } from "@components/brandLogo";
 import { Button } from "@components/button";
 import { useAuth } from "./useAuth";
@@ -12,12 +12,6 @@ type RequireAuthProps = {
 export function RequireAuth({ children }: RequireAuthProps) {
   const { status, user, retryBootstrap, logout } = useAuth();
   const [, setLocation] = useLocation();
-
-  useEffect(() => {
-    if (status === "anonymous") {
-      setLocation("/login", { replace: true });
-    }
-  }, [status, setLocation]);
 
   if (status === "loading") {
     return (
@@ -47,7 +41,7 @@ export function RequireAuth({ children }: RequireAuthProps) {
   }
 
   if (status === "anonymous") {
-    return null;
+    return <Redirect to="/login" replace />;
   }
 
   if (user?.role === "athlete") {

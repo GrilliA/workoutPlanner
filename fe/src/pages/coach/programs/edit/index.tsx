@@ -24,7 +24,7 @@ export default function EditClientProgramPage() {
       enableTxtImport
       workoutId={workoutId}
       adapters={{
-        loadDraft: () => loadClientProgramDraft(athleteId, workoutId),
+        loadDraft: (id, options) => loadClientProgramDraft(athleteId, id, options),
         saveUpdate: (id, name, settings, days) =>
           saveUpdatedClientProgram(athleteId, id, name, settings, days),
         successPath: `/clients/${athleteId}`,

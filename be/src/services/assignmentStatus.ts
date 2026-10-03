@@ -1,6 +1,8 @@
 import type { AssignmentStatus } from "../db/schema/programassignments";
+import { addRomeDays } from "./stats";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const RENEWAL_WEEK_COUNT = 4;
 
 export type AssignmentDatesInput = {
   startsAt: string;
@@ -155,6 +157,72 @@ export const daysUntilExpiry = (
   const start = Date.parse(`${today}T00:00:00Z`);
   const end = Date.parse(`${expiresAt}T00:00:00Z`);
   return Math.round((end - start) / (24 * 60 * 60 * 1000));
+};
+
+export type RenewalAssignment = {
+  athleteId: number;
+  startsAt: string;
+  expiresAt: string;
+  revoked: boolean;
+};
+
+export type RenewalWeek = {
+  weekStart: string;
+  weekEnd: string;
+  count: number;
+};
+
+const coversDay = (row: RenewalAssignment, day: string): boolean =>
+  !row.revoked && row.startsAt <= day && row.expiresAt >= day;
+
+/** Another live assignment includes the day after this expiry, so no renewal is due. */
+const hasCoveringAssignment = (
+  assignments: RenewalAssignment[],
+  index: number,
+): boolean => {
+  const row = assignments[index];
+  const nextDay = addRomeDays(row.expiresAt, 1);
+
+  return assignments.some(
+    (other, otherIndex) =>
+      otherIndex !== index &&
+      other.athleteId === row.athleteId &&
+      coversDay(other, nextDay),
+  );
+};
+
+/** Active expiries in the next 4 Rome Mon–Sun weeks that nothing else already covers. */
+export const buildRenewalWeeks = (
+  assignments: RenewalAssignment[],
+  today: string,
+): RenewalWeek[] => {
+  const utc = new Date(Date.parse(`${today}T00:00:00Z`));
+  const daysFromMonday = (utc.getUTCDay() + 6) % 7;
+  const firstWeekStart = addRomeDays(today, -daysFromMonday);
+
+  const weeks: RenewalWeek[] = [];
+  for (let i = 0; i < RENEWAL_WEEK_COUNT; i += 1) {
+    const weekStart = addRomeDays(firstWeekStart, 7 * i);
+    const weekEnd = addRomeDays(weekStart, 6);
+    let count = 0;
+
+    for (let index = 0; index < assignments.length; index += 1) {
+      const row = assignments[index];
+      if (row.revoked || hasCoveringAssignment(assignments, index)) {
+        continue;
+      }
+      if (computeAssignmentStatus(row.startsAt, row.expiresAt, today) !== "active") {
+        continue;
+      }
+      if (row.expiresAt >= weekStart && row.expiresAt <= weekEnd) {
+        count += 1;
+      }
+    }
+
+    weeks.push({ weekStart, weekEnd, count });
+  }
+
+  return weeks;
 };
 
 /** Previous calendar day for a YYYY-MM-DD date. */

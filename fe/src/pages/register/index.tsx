@@ -1,5 +1,5 @@
-import { useEffect, useState, type FormEvent } from "react";
-import { Link, useLocation } from "wouter";
+import { useState, type FormEvent } from "react";
+import { Link, Redirect } from "wouter";
 import { ApiError } from "@api";
 import { useAuth } from "@auth";
 import { BrandLogo } from "@components/brandLogo";
@@ -9,18 +9,11 @@ import "@auth/authpage.css";
 
 const Register = () => {
   const { register, status } = useAuth();
-  const [, setLocation] = useLocation();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    if (status === "authenticated") {
-      setLocation("/dashboard");
-    }
-  }, [status, setLocation]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -33,7 +26,6 @@ const Register = () => {
         password,
         name: name.trim() || undefined,
       });
-      setLocation("/dashboard");
     } catch (err) {
       setError(ApiError.messageFrom(err, "Impossibile registrarsi"));
     } finally {
@@ -41,8 +33,18 @@ const Register = () => {
     }
   };
 
-  if (status === "loading" || status === "authenticated") {
-    return null;
+  if (status === "authenticated") {
+    return <Redirect to="/dashboard" replace />;
+  }
+
+  if (status === "loading") {
+    return (
+      <main aria-busy="true" aria-live="polite" className="auth-page">
+        <div className="auth-brand">
+          <BrandLogo size="md" layout="stack" />
+        </div>
+      </main>
+    );
   }
 
   return (

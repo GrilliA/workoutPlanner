@@ -49,8 +49,11 @@ export const getCoachClient = (
 export const getCoachTemplates = ({ signal }: { signal?: AbortSignal } = {}) =>
   apiRequest("/coach/templates", { schema: coachTemplatesSchema, signal });
 
-export const getCoachTemplate = (id: number) =>
-  apiRequest(`/coach/templates/${id}`, { schema: workoutDetailSchema });
+export const getCoachTemplate = (
+  id: number,
+  { signal }: { signal?: AbortSignal } = {},
+) =>
+  apiRequest(`/coach/templates/${id}`, { schema: workoutDetailSchema, signal });
 
 export const saveCoachTemplateProgram = (input: WorkoutProgramInput) =>
   apiRequest("/coach/templates/program", {

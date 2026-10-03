@@ -222,7 +222,6 @@ export function ExerciseCard({
       {!focus ? (
         <Meta>
           Serie {Math.min(sets.length, targetSets)} / {targetSets}
-          {canLog ? ` · target ${targetReps} reps` : ""}
         </Meta>
       ) : null}
 
@@ -300,49 +299,110 @@ export function ExerciseCard({
           })}
         </View>
       ) : (
-        Array.from({ length: targetSets }, (_, index) => {
-          const setNumber = index + 1;
-          const logged = sets.find((set) => set.setNumber === setNumber);
-          const plannedReps = getTargetRepsForSet(exercise, setNumber);
+        <View style={styles.setTable}>
+          <View style={styles.setHeader}>
+            <AppText style={[styles.setCol, styles.setColSet]}>SET</AppText>
+            <AppText style={[styles.setCol, styles.setColVal]}>KG</AppText>
+            <AppText style={[styles.setCol, styles.setColVal]}>REPS</AppText>
+            <AppText style={[styles.setCol, styles.setColVal]}>PIANO</AppText>
+          </View>
+          {[
+            ...Array.from({ length: targetSets }, (_, index) => index + 1),
+            ...[
+              ...new Set(
+                sets
+                  .filter((set) => set.setNumber > targetSets)
+                  .map((set) => set.setNumber),
+              ),
+            ].sort((a, b) => a - b),
+          ].map((setNumber) => {
+            if (editDraft && editDraft.setNumber === setNumber) {
+              return null;
+            }
 
-          if (logged && !(editDraft && editDraft.setNumber === setNumber)) {
+            const logged = sets.find((set) => set.setNumber === setNumber);
+            const plannedReps = getTargetRepsForSet(exercise, setNumber);
+
+            if (!logged) {
+              return (
+                <View
+                  key={setNumber}
+                  accessible
+                  accessibilityRole="text"
+                  accessibilityLabel={`Serie ${setNumber} in attesa`}
+                  style={[styles.setRow, styles.summaryRow]}
+                >
+                  <AppText
+                    tone="heading"
+                    style={[styles.setCol, styles.setColSet]}
+                  >
+                    {setNumber}
+                  </AppText>
+                  <AppText style={[styles.setCol, styles.setColVal]}>—</AppText>
+                  <AppText style={[styles.setCol, styles.setColVal]}>—</AppText>
+                  <AppText
+                    style={[
+                      styles.setCol,
+                      styles.setColVal,
+                      styles.plannedReps,
+                    ]}
+                  >
+                    {String(plannedReps)}
+                  </AppText>
+                </View>
+              );
+            }
+
+            const missed = logged.reps < plannedReps;
+
             return (
               <Pressable
-                key={setNumber}
+                key={logged.setNumber}
                 onPress={() => openSetEditor(logged)}
                 disabled={locked || editDraft !== null}
                 accessibilityRole={locked ? "text" : "button"}
                 accessibilityLabel={
-                  locked
-                    ? `Serie ${setNumber}: ${logged.weightKg ?? "—"} kg per ${logged.reps} reps`
-                    : `Modifica serie ${setNumber}`
+                  missed
+                    ? `Serie ${logged.setNumber}: ${logged.weightKg ?? "—"} kg per ${logged.reps} reps, sotto il piano di ${plannedReps}`
+                    : locked
+                      ? `Serie ${logged.setNumber}: ${logged.weightKg ?? "—"} kg per ${logged.reps} reps`
+                      : `Modifica serie ${logged.setNumber}`
                 }
-                style={({ pressed }) => [
-                  styles.setLinePressable,
-                  pressed && !locked && styles.setLinePressed,
+                style={[
+                  styles.setRow,
+                  styles.summaryRow,
+                  missed && styles.setRowMissed,
                 ]}
               >
-                <AppText style={styles.setLine}>
-                  #{setNumber}: {logged.weightKg ?? "—"} kg × {logged.reps}{" "}
-                  <AppText tone="muted">(piano {plannedReps})</AppText>
+                <AppText
+                  tone="heading"
+                  style={[styles.setCol, styles.setColSet]}
+                >
+                  {logged.setNumber}
                 </AppText>
-                {!locked ? (
-                  <Meta style={styles.editHint}>tocca per modificare</Meta>
-                ) : null}
+                <AppText style={[styles.setCol, styles.setColVal]}>
+                  {logged.weightKg == null
+                    ? "—"
+                    : formatWeightKg(logged.weightKg)}
+                </AppText>
+                <AppText
+                  style={[
+                    styles.setCol,
+                    styles.setColVal,
+                    missed && styles.missedReps,
+                  ]}
+                >
+                  {String(logged.reps)}
+                </AppText>
+                <AppText
+                  style={[styles.setCol, styles.setColVal, styles.plannedReps]}
+                >
+                  {String(plannedReps)}
+                </AppText>
               </Pressable>
             );
-          }
-
-          if (!logged) {
-            return (
-              <AppText key={setNumber} tone="muted" style={styles.setLine}>
-                #{setNumber}: in attesa · {plannedReps} reps
-              </AppText>
-            );
-          }
-
-          return null;
-        })
+          })}
+        </View>
       )}
 
       {editDraft ? (
@@ -713,6 +773,12 @@ const styles = StyleSheet.create({
   setRowPending: {
     opacity: 0.55,
   },
+  summaryRow: {
+    backgroundColor: colors.bg,
+  },
+  setRowMissed: {
+    borderColor: colors.dangerBorder,
+  },
   setCol: {
     fontSize: 11,
     fontWeight: "700",
@@ -735,6 +801,13 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "500",
     color: colors.muted,
+  },
+  missedReps: {
+    color: colors.danger,
+  },
+  plannedReps: {
+    color: colors.muted,
+    fontWeight: "600",
   },
   chipRow: {
     flexDirection: "row",
@@ -770,20 +843,6 @@ const styles = StyleSheet.create({
   },
   chipLabelNext: {
     color: colors.accent,
-  },
-  setLine: {
-    color: colors.text,
-    marginTop: 4,
-  },
-  setLinePressable: {
-    marginTop: 4,
-  },
-  setLinePressed: {
-    opacity: 0.7,
-  },
-  editHint: {
-    fontSize: 11,
-    marginTop: 2,
   },
   doneLabel: {
     marginTop: spacing.sm,

@@ -129,6 +129,38 @@ export default function HomeScreen() {
   /** Bumps on every week-strip fetch so stale chip taps cannot overwrite a newer selection. */
   const weekStripRequestIdRef = useRef(0);
   const weekStripCacheRef = useRef<Map<number, WeekStripDay[]>>(new Map());
+  const exerciseCountRequestIdRef = useRef(0);
+
+  const applySelection = (
+    next: StartSelection | null,
+    isStale: () => boolean = () => false,
+  ) => {
+    setSelection(next);
+    const requestId = ++exerciseCountRequestIdRef.current;
+
+    if (!next) {
+      if (!isStale()) {
+        setExerciseCount(null);
+      }
+      return;
+    }
+
+    void getWorkoutDayExercises(next.workoutId, next.workoutDayId)
+      .then((exercises) => {
+        if (isStale() || requestId !== exerciseCountRequestIdRef.current) {
+          return;
+        }
+
+        setExerciseCount(exercises.length);
+      })
+      .catch(() => {
+        if (isStale() || requestId !== exerciseCountRequestIdRef.current) {
+          return;
+        }
+
+        setExerciseCount(null);
+      });
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -184,13 +216,12 @@ export default function HomeScreen() {
         );
 
         if (active.length === 0) {
-          setSelection(null);
+          applySelection(null, () => cancelled);
           setDaysByWorkout({});
           setScheduledLabel(null);
           setWeekDays(buildRestWeekStrip());
           setWeekStripWorkoutId(null);
           setSelectedDateKey(null);
-          setExerciseCount(null);
           return;
         }
 
@@ -259,7 +290,7 @@ export default function HomeScreen() {
         setWeekStripWorkoutId(stripWorkoutId);
 
         if (preferred) {
-          setSelection(preferred);
+          applySelection(preferred, () => cancelled);
           setScheduledLabel(preferredLabel);
           setSelectedDateKey(
             preferredDateKey ??
@@ -268,10 +299,11 @@ export default function HomeScreen() {
         } else {
           const firstWorkout = active[0]!;
           const firstDay = nextDays[firstWorkout.id]?.[0];
-          setSelection(
+          applySelection(
             firstDay
               ? { workoutId: firstWorkout.id, workoutDayId: firstDay.id }
               : null,
+            () => cancelled,
           );
           setScheduledLabel(null);
           setSelectedDateKey(
@@ -298,37 +330,6 @@ export default function HomeScreen() {
       cancelled = true;
     };
   }, [fetchId, user?.id]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const loadExercises = async () => {
-      if (!selection) {
-        setExerciseCount(null);
-        return;
-      }
-
-      try {
-        const exercises = await getWorkoutDayExercises(
-          selection.workoutId,
-          selection.workoutDayId,
-        );
-        if (!cancelled) {
-          setExerciseCount(exercises.length);
-        }
-      } catch {
-        if (!cancelled) {
-          setExerciseCount(null);
-        }
-      }
-    };
-
-    void loadExercises();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [selection?.workoutId, selection?.workoutDayId]);
 
   const applyStats = (stats: UserStats) => {
     setHomeStats(mapHomeStats(stats));
@@ -470,7 +471,7 @@ export default function HomeScreen() {
     const workout =
       activeWorkouts.find((item) => item.id === workoutId) ?? null;
 
-    setSelection({
+    applySelection({
       workoutId,
       workoutDayId: day.workoutDayId,
     });
@@ -485,7 +486,7 @@ export default function HomeScreen() {
   const onSelectWorkout = (workout: Workout) => {
     const days = daysByWorkout[workout.id] ?? [];
     const firstDay = days[0];
-    setSelection(
+    applySelection(
       firstDay
         ? { workoutId: workout.id, workoutDayId: firstDay.id }
         : null,
@@ -509,7 +510,7 @@ export default function HomeScreen() {
       return;
     }
 
-    setSelection({
+    applySelection({
       workoutId: selectedWorkout.id,
       workoutDayId,
     });
