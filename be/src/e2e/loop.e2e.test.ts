@@ -325,6 +325,45 @@ describe("paid loop smoke", { concurrency: false }, () => {
     assert.equal(completedSession.status, "completed");
   });
 
+  it("athlete home shows the coach program and the new-program badge until seen", async () => {
+    const home = await api(baseUrl, "GET", "/api/athlete/home", {
+      token: athlete.accessToken,
+      mobile: true,
+    });
+    assert.equal(home.status, 200, failMessage(home.status, home.body));
+    const homeBody = asObject(home.body);
+    assert.equal(homeBody.noProgramReason, null);
+    assert.ok(Array.isArray(homeBody.programs));
+    const programs = homeBody.programs as JsonObject[];
+    assert.equal(programs.length, 1);
+    assert.equal(programs[0].workoutId, firstWorkout.id);
+    assert.equal(programs[0].source, "coach");
+    assert.equal(programs[0].expiresAt, firstExpiresAt);
+    assert.equal(asObject(homeBody.lastSession).sessionId, completedSession.id);
+    assert.equal(homeBody.sessionsLast7Days, 1);
+    assert.equal(homeBody.hasUnseenAssignment, true);
+
+    const seen = await api(baseUrl, "POST", "/api/assignments/active/seen", {
+      token: athlete.accessToken,
+      mobile: true,
+    });
+    assert.equal(seen.status, 200, failMessage(seen.status, seen.body));
+    assert.deepEqual(seen.body, { ok: true });
+
+    const afterSeen = await api(baseUrl, "GET", "/api/athlete/home", {
+      token: athlete.accessToken,
+      mobile: true,
+    });
+    assert.equal(afterSeen.status, 200, failMessage(afterSeen.status, afterSeen.body));
+    assert.equal(asObject(afterSeen.body).hasUnseenAssignment, false);
+
+    const seenAgain = await api(baseUrl, "POST", "/api/assignments/active/seen", {
+      token: athlete.accessToken,
+      mobile: true,
+    });
+    assert.equal(seenAgain.status, 200, failMessage(seenAgain.status, seenAgain.body));
+  });
+
   it("coach sees the completed session on the client", async () => {
     const detail = await api(
       baseUrl,
