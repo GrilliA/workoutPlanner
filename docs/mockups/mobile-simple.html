@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mobile semplice — proposta</title>
+<style>
+  :root{
+    --bg:#1d1f25;
+    --surface:#252830;
+    --elev:#2c3038;
+    --border:rgba(224,224,224,.12);
+    --text:#aaaaaa;
+    --heading:#e0e0e0;
+    --accent:#bfdbf7;
+    --accentBg:rgba(191,219,247,.12);
+    --accentBorder:rgba(191,219,247,.4);
+    --onAccent:#111111;
+    --danger:#f87171;
+    --dangerBg:rgba(248,113,113,.12);
+    --muted:#666666;
+    --r-md:10px;
+    --r-lg:14px;
+    --r-pill:999px;
+    --page:#15171c;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    background:var(--page);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+    padding:56px 32px 96px;
+    line-height:1.45;
+  }
+  .wrap{max-width:1360px;margin:0 auto}
+  h1.page-title{color:var(--heading);font-size:30px;font-weight:700;letter-spacing:-.02em}
+  .page-sub{margin-top:8px;font-size:15px;max-width:640px}
+
+  /* ---------- principi ---------- */
+  .principi{
+    margin-top:28px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--r-lg);
+    padding:20px 24px;
+    max-width:720px;
+  }
+  .principi h2{color:var(--heading);font-size:14px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px}
+  .principi ul{list-style:none}
+  .principi li{display:flex;gap:10px;padding:5px 0;font-size:14.5px}
+  .principi li::before{content:"";flex:none;width:7px;height:7px;border-radius:50%;background:var(--accent);margin-top:7px}
+
+  /* ---------- sezioni ---------- */
+  section.block{margin-top:64px}
+  section.block > h2{color:var(--heading);font-size:21px;font-weight:700}
+  section.block > p.sub{margin-top:6px;font-size:14px;max-width:640px}
+  .grid{display:flex;flex-wrap:wrap;gap:52px 44px;margin-top:30px}
+
+  .shot{width:390px;flex:none}
+  .shot-label{margin-bottom:14px}
+  .shot-label h3{color:var(--heading);font-size:16px;font-weight:700}
+  .shot-label p{font-size:13px;margin-top:3px}
+  .shot-note{margin-top:12px;font-size:12px;color:var(--muted);font-style:italic}
+
+  /* ---------- cornice telefono ---------- */
+  .phone{
+    position:relative;
+    width:390px;height:844px;
+    background:var(--bg);
+    border:1px solid #3a3f4a;
+    border-radius:44px;
+    overflow:hidden;
+    display:flex;flex-direction:column;
+    box-shadow:0 24px 60px rgba(0,0,0,.5);
+  }
+  .island{
+    position:absolute;top:12px;left:50%;transform:translateX(-50%);
+    width:122px;height:35px;background:#000;border-radius:20px;z-index:10;
+  }
+  .statusbar{
+    flex:none;height:54px;
+    display:flex;align-items:flex-end;justify-content:space-between;
+    padding:0 30px 6px;color:var(--heading);
+  }
+  .statusbar .time{font-size:15px;font-weight:600}
+  .statusbar .icons{display:flex;align-items:center;gap:7px}
+  .screen{flex:1;overflow:hidden;padding:6px 20px 112px;display:flex;flex-direction:column}
+  .tabbar{
+    position:absolute;left:16px;right:16px;bottom:26px;z-index:15;
+    height:64px;border-radius:var(--r-pill);
+    display:flex;align-items:stretch;padding:6px;
+    background:rgba(44,48,56,.72);
+    -webkit-backdrop-filter:blur(20px) saturate(160%);
+    backdrop-filter:blur(20px) saturate(160%);
+    border:1px solid rgba(255,255,255,.08);
+    box-shadow:0 10px 28px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.08);
+  }
+  .tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:#9a9ea8;font-size:10.5px;font-weight:600;border-radius:var(--r-pill)}
+  .tab svg{width:23px;height:23px}
+  .tab.on{color:var(--accent);background:rgba(255,255,255,.10)}
+  .tab-ic{position:relative;display:flex}
+  .badge-num{
+    position:absolute;top:-5px;right:-11px;
+    min-width:17px;height:17px;padding:0 4px;border-radius:9px;
+    background:#ff3b30;color:#fff;font-size:11px;font-weight:700;line-height:1;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 0 0 2.5px rgba(40,44,52,.9);
+  }
+  .home-ind{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:var(--heading);opacity:.85}
+
+  /* ---------- elementi UI nelle schermate ---------- */
+  .sc-title{color:var(--heading);font-size:28px;font-weight:700;letter-spacing:-.01em}
+  .eyebrow{font-size:12px;font-weight:700;letter-spacing:1px;color:var(--muted);text-transform:uppercase}
+  .meta{font-size:13px;color:var(--text)}
+  .muted{color:var(--muted)}
+  .tlink{color:var(--accent);font-size:14px;font-weight:600}
+
+  .btn{
+    display:flex;align-items:center;justify-content:center;
+    min-height:48px;border-radius:var(--r-lg);
+    font-size:16px;font-weight:600;border:none;
+    width:100%;
+  }
+  .btn-primary{background:var(--accent);color:var(--onAccent)}
+  .btn-big{height:56px;font-size:17px}
+  .btn-outline{background:var(--accentBg);color:var(--accent);border:1px solid var(--accentBorder)}
+
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg)}
+
+  .h-head{display:flex;align-items:center;justify-content:space-between;padding:10px 0 18px}
+  .avatar{
+    flex:none;width:42px;height:42px;border-radius:50%;
+    background:var(--elev);border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--heading);font-size:14px;font-weight:700;
+  }
+
+  /* striscia settimanale */
+  .week{display:flex;gap:6px;margin-bottom:18px}
+  .day{
+    flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+    padding:9px 0 7px;border-radius:var(--r-md);
+    color:var(--muted);
+  }
+  .day .dow{font-size:11px;font-weight:700;letter-spacing:.5px}
+  .day .dnum{font-size:16px;font-weight:700;color:var(--text)}
+  .day .dot{width:5px;height:5px;border-radius:50%;background:transparent}
+  .day .dot.on{background:var(--accent)}
+  .day.today{background:var(--accentBg);border:1px solid var(--accentBorder)}
+  .day.today .dow,.day.today .dnum{color:var(--accent)}
+
+  /* hero card home */
+  .hero{padding:22px 20px 16px;text-align:left}
+  .hero .eyebrow{color:var(--accent)}
+  .hero h4{color:var(--heading);font-size:34px;font-weight:800;letter-spacing:-.02em;margin-top:6px}
+  .hero .meta{margin-top:4px}
+  .hero .btn{margin-top:20px}
+  .hero .tlink{display:block;text-align:center;margin:14px 0 4px}
+
+  .pill-row{
+    margin-top:16px;
+    display:flex;align-items:center;gap:10px;
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--r-pill);
+    padding:12px 18px;font-size:14px;font-weight:600;color:var(--text);
+  }
+  .pill-row svg{color:var(--accent);flex:none}
+
+  .sec-head{display:flex;align-items:baseline;justify-content:space-between;margin:22px 2px 10px}
+  .sec-head span{font-size:14px;font-weight:700;color:var(--heading)}
+
+  .row{
+    display:flex;align-items:center;gap:12px;
+    min-height:52px;padding:12px 16px;
+  }
+  .grow{flex:1;min-width:0}
+  .row .r-title{color:var(--heading);font-size:16px;font-weight:600}
+  .row .chev{color:var(--muted);flex:none}
+  .sep{height:1px;background:var(--border);margin-left:58px}
+
+  /* ---------- bottom sheet ---------- */
+  .dim{position:absolute;inset:0;background:rgba(10,11,14,.6);z-index:20}
+  .sheet{
+    position:absolute;left:0;right:0;bottom:0;z-index:21;
+    background:var(--elev);
+    border-radius:22px 22px 0 0;
+    padding:10px 20px 30px;
+    border-top:1px solid var(--border);
+  }
+  .grab{width:38px;height:5px;border-radius:3px;background:rgba(224,224,224,.25);margin:0 auto 16px}
+  .sheet h4{color:var(--heading);font-size:20px;font-weight:700;text-align:center}
+  .sheet .sheet-sec{margin:18px 2px 8px}
+  .srow{
+    display:flex;align-items:center;gap:12px;
+    min-height:58px;padding:10px 14px;border-radius:var(--r-md);
+  }
+  .srow + .srow{margin-top:4px}
+  .srow.sel{background:var(--accentBg);border:1px solid var(--accentBorder)}
+  .srow .r-title{color:var(--heading);font-size:16px;font-weight:600}
+  .sheet .btn{margin-top:18px}
+
+  /* ---------- stati vuoti ---------- */
+  .empty{
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;padding:0 20px 40px;
+  }
+  .empty h4{color:var(--heading);font-size:22px;font-weight:700;margin-top:26px}
+  .empty p{font-size:15px;margin-top:8px;max-width:280px}
+  .empty .btn{max-width:280px;margin-top:26px}
+  .empty .tlink{margin-top:16px}
+
+  .mascot{position:relative;width:200px;height:200px}
+  .mascot svg{display:block}
+  .mascot .prop{position:absolute}
+
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+  @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.035)}}
+  @keyframes wave{0%,100%{transform:rotate(0deg)}30%{transform:rotate(-16deg)}60%{transform:rotate(6deg)}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes zfloat{0%{opacity:0;transform:translateY(4px) scale(.75)}25%{opacity:1}100%{opacity:0;transform:translateY(-38px) scale(1.1)}}
+
+  .anim-bob svg{animation:bob 2.6s ease-in-out infinite}
+  .anim-breathe svg{animation:breathe 3.2s ease-in-out infinite}
+  .wave-arm{transform-box:view-box;transform-origin:106px 74px;animation:wave 2.2s ease-in-out infinite}
+  .prop-hourglass{top:14px;right:-8px;animation:spin 5s linear infinite}
+  .z{
+    position:absolute;font-weight:800;color:var(--accent);
+    animation:zfloat 3s ease-in infinite;opacity:0;
+  }
+  .z1{top:30px;right:16px;font-size:24px;animation-delay:0s}
+  .z2{top:18px;right:2px;font-size:18px;animation-delay:1s}
+  .z3{top:8px;right:-10px;font-size:13px;animation-delay:2s}
+
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation:none!important;transition:none!important}
+  }
+
+  /* ---------- Schede ---------- */
+  .badge{
+    display:inline-flex;align-items:center;
+    font-size:11px;font-weight:700;letter-spacing:.8px;
+    padding:4px 9px;border-radius:var(--r-pill);
+  }
+  .badge-accent{background:var(--accentBg);color:var(--accent);border:1px solid var(--accentBorder)}
+  .badge-grey{background:var(--elev);color:var(--muted);border:1px solid var(--border)}
+  .plan-card{padding:18px 16px 6px;position:relative}
+  .plan-card .dots{
+    position:absolute;top:14px;right:14px;
+    width:36px;height:36px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--muted);
+  }
+  .plan-days{margin:12px -16px 0;border-top:1px solid var(--border)}
+  .dashed-row{
+    display:flex;align-items:center;justify-content:center;
+    min-height:52px;border:1.5px dashed var(--border);border-radius:var(--r-lg);
+    color:var(--muted);font-size:15px;font-weight:600;margin-top:12px;
+  }
+
+  /* ---------- Progressi ---------- */
+  .seg{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-pill);padding:4px;margin-top:16px}
+  .seg span{flex:1;text-align:center;font-size:13px;font-weight:600;color:var(--muted);padding:8px 0;border-radius:var(--r-pill)}
+  .seg span.on{background:var(--elev);color:var(--heading);box-shadow:0 1px 4px rgba(0,0,0,.4)}
+  .stat-card{margin-top:16px;padding:22px 20px 16px}
+  .stat-card .big{color:var(--heading);font-size:52px;font-weight:800;letter-spacing:-.03em;line-height:1}
+  .bars{display:flex;align-items:flex-end;gap:14px;height:96px;margin-top:22px}
+  .bars .bcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:7px;height:100%;justify-content:flex-end}
+  .bars .bar{width:100%;max-width:46px;border-radius:7px 7px 3px 3px;background:var(--elev)}
+  .bars .bar.ac{background:var(--accent)}
+  .bars .blab{font-size:11px;color:var(--muted);font-weight:600}
+  .chips{display:flex;gap:10px;margin-top:16px}
+  .chip{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--r-pill);
+    padding:9px 15px;font-size:13px;font-weight:600;color:var(--text);
+    display:inline-flex;align-items:center;gap:7px;
+  }
+  .chip svg{color:var(--accent)}
+
+  /* ---------- Account ---------- */
+  .acc-head{display:flex;flex-direction:column;align-items:center;padding:14px 0 22px}
+  .acc-head .avatar{width:86px;height:86px;font-size:28px;background:var(--elev)}
+  .acc-head h4{color:var(--heading);font-size:21px;font-weight:700;margin-top:14px}
+  .acc-head .meta{margin-top:2px}
+  .group{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;margin-top:16px}
+  .glabel{font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:20px 4px 8px}
+  .icon-tile{
+    flex:none;width:32px;height:32px;border-radius:9px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .icon-tile svg{width:17px;height:17px}
+  .t-blue{background:var(--accentBg);color:var(--accent)}
+  .t-violet{background:rgba(201,184,240,.14);color:#c9b8f0}
+  .t-amber{background:rgba(240,207,154,.14);color:#f0cf9a}
+  .t-red{background:var(--dangerBg);color:var(--danger)}
+  .row .val{color:var(--muted);font-size:14px;margin-left:auto}
+  .row .val + .chev{margin-left:6px}
+  .row.danger .r-title{color:var(--danger)}
+
+  .prima-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1 class="page-title">Mobile semplice — proposta</h1>
+  <p class="page-sub">Un'azione principale per schermata, operazioni frequenti subito visibili (ispirazione: nuova app Banco Guayaquil) e stati vuoti con mascotte (ispirazione: Telegram).</p>
+
+  <div class="principi">
+    <h2>Principi</h2>
+    <ul>
+      <li>Una sola azione principale per schermata</li>
+      <li>Bottoni in minuscolo con iniziale maiuscola (niente MAIUSCOLO urlato)</li>
+      <li>Aree tappabili ≥ 48px</li>
+      <li>Liste a righe stile Telegram/iOS invece di form lunghi</li>
+      <li>Stati vuoti con mascotte animata (in app: Lottie)</li>
+      <li>Tab bar flottante in vetro stile iOS (come Telegram): tab attiva evidenziata e icona piena</li>
+    </ul>
+  </div>
+
+  <!-- ==================== 1 · HOME ==================== -->
+  <section class="block" id="home">
+    <h2>1 · Home — prima e dopo</h2>
+    <p class="sub">La home diventa una schermata con un solo gesto: vedere cosa c'è oggi e premere un bottone.</p>
+
+    <div class="grid">
+
+      <!-- PRIMA -->
+      <div class="shot">
+        <div class="shot-label">
+          <h3>Prima</h3>
+          <p>Home attuale — screenshot iOS reale.</p>
+        </div>
+        <div class="phone">
+          <img class="prima-img" src="../screenshots/ios-home.png" alt="Home attuale dell'app">
+        </div>
+      </div>
+
+      <!-- DOPO · allenamento oggi -->
+      <div class="shot">
+        <div class="shot-label">
+          <h3>Dopo — c'è un allenamento oggi</h3>
+          <p>Un'azione sola: «Inizia allenamento». Il resto è una riga.</p>
+        </div>
+        <div class="phone">
+          <div class="island"></div>
+          <div class="statusbar">
+            <span class="time">9:41</span>
+            <span class="icons">
+              <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="4.5" y="5" width="3" height="7" rx="1"/><rect x="9" y="3" width="3" height="9" rx="1"/><rect x="13.5" y="1" width="3" height="11" rx="1"/></svg>
+              <svg width="17" height="12" viewBox="0 0 17 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1.5 4a11 11 0 0114 0"/><path d="M4 6.8a7.5 7.5 0 019 0"/><circle cx="8.5" cy="10" r="1.3" fill="currentColor" stroke="none"/></svg>
+              <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x=".7" y=".7" width="21" height="10.6" rx="3.2" stroke="currentColor" opacity=".5" stroke-width="1.1"/><rect x="2.4" y="2.4" width="14" height="7.2" rx="1.8" fill="currentColor"/><path d="M23.8 4v4a2.2 2.2 0 000-4z" fill="currentColor" opacity=".5"/></svg>
+            </span>
+          </div>
+          <div class="screen">
+            <div class="h-head">
+              <div class="sc-title">Ciao, Marco</div>
+              <div class="avatar">MB</div>
+            </div>
+            <div class="week">
+              <div class="day today"><span class="dow">L</span><span class="dnum">24</span><span class="dot on"></span></div>
+              <div class="day"><span class="dow">M</span><span class="dnum">25</span><span class="dot"></span></div>
+              <div class="day"><span class="dow">M</span><span class="dnum">26</span><span class="dot on"></span></div>
+              <div class="day"><span class="dow">G</span><span class="dnum">27</span><span class="dot"></span></div>
+              <div class="day"><span class="dow">V</span><span class="dnum">28</span><span class="dot on"></span></div>
+              <div class="day"><span class="dow">S</span><span class="dnum">29</span><span class="dot"></span></div>
+              <div class="day"><span class="dow">D</span><span class="dnum">30</span><span class="dot"></span></div>
+            </div>
+            <div class="card hero">
+              <div class="eyebrow">Oggi · Lunedì 24 agosto</div>
+              <h4>Push</h4>
+              <div class="meta">Full Body 3× · 4 esercizi</div>
+              <button class="btn btn-primary btn-big">Inizia allenamento</button>
+              <a class="tlink">Cambia allenamento</a>
+            </div>
+            <div class="pill-row">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1.2 3.2-3.5 4.6-3.5 8.5a3.5 3.5 0 007 0c0-1.2-.4-2-.9-2.7 1.9.7 3.4 2.5 3.4 4.9a6.5 6.5 0 11-13 0C5 7.4 9.8 5.6 12 2z"/></svg>
+              3 allenamenti questa settimana
+            </div>
+            <div class="sec-head"><span>Ultimo allenamento</span><a class="tlink">Vedi tutti</a></div>
+            <div class="card row">
+              <div class="grow">
+                <div class="r-title">Legs</div>
+                <div class="meta">venerdì 21 ago · 12.4k kg</div>
+              </div>
+              <svg class="chev" width="9" height="15" viewBox="0 0 9 15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 1.5l6 6-6 6"/></svg>
+            </div>
+          </div>
+          <div class="tabbar">
+            <div class="tab on"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3.4l8.6 7.7H19v8.9a1.5 1.5 0 01-1.5 1.5H14v-6h-4v6H6.5A1.5 1.5 0 015 20v-8.9H3.4z"/></svg>Home</div>
+            <div class="tab"><span class="tab-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3.5" width="14" height="17" rx="3"/><path d="M9 8.5h6M9 12.5h6M9 16.5h4"/></svg><span class="badge-num">1</span></span>Schede</div>
+            <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20v-6M10 20V9M15 20v-9M20 20V5"/></svg>Progressi</div>
+            <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4.5 20c1.4-3.8 4-5.3 7.5-5.3s6.1 1.5 7.5 5.3"/></svg>Account</div>
+          </div>
+          <div class="home-ind"></div>
+        </div>
+      </div>
+
+      <!-- DOPO · cambia allenamento -->
+      <div class="shot">
+        <div class="shot-label">
+          <h3>Dopo — «Cambia allenamento» aperto</h3>
+          <p>Il cambio giorno è un bottom sheet, non un'altra schermata.</p>
+        </div>
+        <div class="phone">
+          <div class="island"></div>
+          <div class="statusbar">
+            <span class="time">9:41</span>
+            <span class="icons">
+              <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="4.5" y="5" width="3" height="7" rx="1"/><rect x="9" y="3" width="3" height="9" rx="1"/><rect x="13.5" y="1" width="3" height="11" rx="1"/></svg>
+              <svg width="17" height="12" viewBox="0 0 17 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1.5 4a11 11 0 0114 0"/><path d="M4 6.8a7.5 7.5 0 019 0"/><circle cx="8.5" cy="10" r="1.3" fill="currentColor" stroke="none"/></svg>
+              <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x=".7" y=".7" width="21" height="10.6" rx="3.2" stroke="currentColor" opacity=".5" stroke-width="1.1"/><rect x="2.4" y="2.4" width="14" height="7.2" rx="1.8" fill="currentColor"/><path d="M23.8 4v4a2.2 2.2 0 000-4z" fill="currentColor" opacity=".5"/></svg>
+            </span>
+          </div>
+          <div class="screen">
+            <div class="h-head">
+              <div class="sc-title">Ciao, Marco</div>
+              <div class="avatar">MB</div>
+            </div>
+            <div class="week">
+              <div class="day today"><span class="dow">L</span><span class="dnum">24</span><span class="dot on"></span></div>
+              <div class="day"><span class="dow">M</span><span class="dnum">25</span><span class="dot"></span></div>
+              <div class="day"><span class="dow">M</span><span class="dnum">26</span><span class="dot on"></span></div>
+              <div class="day"><span class="dow">G</span><span class="dnum">27</span><span class="dot"></span></div>
+              <div class="day"><span class="dow">V</span><span class="dnum">28</span><span class="dot on"></span></div>
+              <div class="day"><span class="dow">S</span><span class="dnum">29</span><span class="dot"></span></div>
+              <div class="day"><span class="dow">D</span><span class="dnum">30</span><span class="dot"></span></div>
+            </div>
+            <div class="card hero">
+              <div class="eyebrow">Oggi · Lunedì 24 agosto</div>
+              <h4>Push</h4>
+              <div class="meta">Full Body 3× · 4 esercizi</div>
+              <button class="btn btn-primary btn-big">Inizia allenamento</button>
+              <a class="tlink">Cambia allenamento</a>
+            </div>
+          </div>
+          <div class="tabbar">
+            <div class="tab on"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3.4l8.6 7.7H19v8.9a1.5 1.5 0 01-1.5 1.5H14v-6h-4v6H6.5A1.5 1.5 0 015 20v-8.9H3.4z"/></svg>Home</div>
+            <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3.5" width="14" height="17" rx="3"/><path d="M9 8.5h6M9 12.5h6M9 16.5h4"/></svg>Schede</div>
+            <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20v-6M10 20V9M15 20v-9M20 20V5"/></svg>Progressi</div>
+            <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4.5 20c1.4-3.8 4-5.3 7.5-5.3s6.1 1.5 7.5 5.3"/></svg>Account</div>
+          </div>
+          <div class="home-ind"></div>
+          <div class="dim"></div>
+          <div class="sheet">
+            <div class="grab"></div>
+            <h4>Cosa vuoi allenare?</h4>
+            <div class="eyebrow sheet-sec">Full Body 3×</div>
+            <div class="srow sel">
+              <div class="grow">
+                <div class="r-title">Push</div>
+                <div class="meta">Lunedì · 4 esercizi</div>
+              </div>
+              <svg width="22" height="22" viewBox="0 0 22 22"><circle cx="11" cy="11" r="10.4" fill="var(--accent)"/><path d="M6.5 11.4l3 3 6-6.3" fill="none" stroke="var(--onAccent)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div class="srow">
+              <div class="grow">
+                <div class="r-title">Pull</div>
+                <div class="meta">Mercoledì · 5 esercizi</div>
+              </div>
+              <svg class="chev" width="9" height="15" viewBox="0 0 9 15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 1.5l6 6-6 6"/></svg>
+            </div>
+            <div class="srow">
+              <div class="grow">
+                <div class="r-title">Legs</div>
+                <div class="meta">Venerdì · 4 esercizi</div>
+              </div>
+              <svg class="chev" width="9" height="15" viewBox="0 0 9 15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 1.5l6 6-6 6"/></svg>
+            </div>
+            <button class="btn btn-primary">Conferma</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ==================== 2 · STATI VUOTI ==================== -->
+  <section class="block" id="stati-vuoti">
+    <h2>2 · Stati vuoti stile Telegram</h2>
+    <p class="sub">Mascotte grande al centro, titolo breve, una riga di testo, un solo bottone. Niente card attorno.</p>
+
+    <div class="grid">
+
+      <!-- a) nessuna scheda / nessun coach -->
+      <div class="shot">
+        <div class="shot-label">
+          <h3>Nessuna scheda (nessun coach)</h3>
+          <p>La mascotte saluta e propone le due strade possibili.</p>
+        </div>
+        <div class="phone">
+          <div class="island"></div>
+          <div class="statusbar">
+            <span class="time">9:41</span>
+            <span class="icons">
+              <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="4.5" y="5" width="3" height="7" rx="1"/><rect x="9" y="3" width="3" height="9" rx="1"/><rect x="13.5" y="1" width="3" height="11" rx="1"/></svg>
+              <svg width="17" height="12" viewBox="0 0 17 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1.5 4a11 11 0 0114 0"/><path d="M4 6.8a7.5 7.5 0 019 0"/><circle cx="8.5" cy="10" r="1.3" fill="currentColor" stroke="none"/></svg>
+              <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x=".7" y=".7" width="21" height="10.6" rx="3.2" stroke="currentColor" opacity=".5" stroke-width="1.1"/><rect x="2.4" y="2.4" width="14" height="7.2" rx="1.8" fill="currentColor"/><path d="M23.8 4v4a2.2 2.2 0 000-4z" fill="currentColor" opacity=".5"/></svg>
+            </span>
+          </div>
+          <div class="screen">
+            <div class="empty">
+              <div class="mascot">
+                <svg viewBox="0 0 160 160" width="200" height="200">
+                  <rect x="14" y="52" width="16" height="56" rx="7" fill="var(--accent)"/>
+                  <rect x="32" y="61" width="11" height="38" rx="5" fill="var(--accent)" opacity=".55"/>
+                  <rect x="130" y="52" width="16" height="56" rx="7" fill="var(--accent)"/>
+                  <rect x="117" y="61" width="11" height="38" rx="5" fill="var(--accent)" opacity=".55"/>
+                  <rect x="40" y="73" width="80" height="14" rx="7" fill="#454b57"/>
+                  <path d="M54 76 Q46 90 49 100" stroke="#f4f4f6" stroke-width="9" fill="none" stroke-linecap="round"/>
+                  <g class="wave-arm">
+                    <path d="M106 74 Q116 58 120 46" stroke="#f4f4f6" stroke-width="9" fill="none" stroke-linecap="round"/>
+                    <circle cx="122" cy="41" r="7.5" fill="#f4f4f6"/>
+                  </g>
+                  <circle cx="80" cy="80" r="36" fill="#f4f4f6"/>
+                  <circle cx="68" cy="76" r="4.2" fill="#22242a"/>
+                  <circle cx="92" cy="76" r="4.2" fill="#22242a"/>
+                  <circle cx="61" cy="88" r="5.5" fill="#f2a3b3" opacity=".85"/>
+                  <circle cx="99" cy="88" r="5.5" fill="#f2a3b3" opacity=".85"/>
+                  <path d="M71 88 Q80 96 89 88" stroke="#22242a" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <h4>Ancora nessuna scheda</h4>
+              <p>Collega il tuo coach con il codice invito oppure creane una tu.</p>
+              <button class="btn btn-primary">Collega coach</button>
+              <a class="tlink">Crea una scheda da solo</a>
+            </div>
+          </div>
+          <div class="tabbar">
+            <div class="tab on"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3.4l8.6 7.7H19v8.9a1.5 1.5 0 01-1.5 1.5H14v-6h-4v6H6.5A1.5 1.5 0 015 20v-8.9H3.4z"/></svg>Home</div>
+            <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3.5" width="14" height="17" rx="3"/><path d="M9 8.5h6M9 12.5h6M9 16.5h4"/></svg>Schede</div>
+            <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20v-6M10 20V9M15 20v-9M20 20V5"/></svg>Progressi</div>
+            <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4.5 20c1.4-3.8 4-5.3 7.5-5.3s6.1 1.5 7.5 5.3"/></svg>Account</div>
+          </div>
+          <div class="home-ind"></div>
+        </div>
+        <div class="shot-note">In app: animazione Lottie — qui segnaposto CSS.</div>
+      </div>
+
+      <!-- b) coach non ha ancora assegnato -->
+      <div class="shot">
+        <div class="shot-label">
+          <h3>Il coach non ha ancora assegnato la scheda</h3>
+          <p>Clessidra che gira: c'è da aspettare, ma c'è una via d'uscita.</p>
+        </div>
+        <div class="phone">
+          <div class="island"></div>
+          <div class="statusbar">
+            <span class="time">9:41</span>
+            <span class="icons">
+              <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="4.5" y="5" width="3" height="7" rx="1"/><rect x="9" y="3" width="3" height="9" rx="1"/><rect x="13.5" y="1" width="3" height="11" rx="1"/></svg>
+              <svg width="17" height="12" viewBox="0 0 17 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1.5 4a11 11 0 0114 0"/><path d="M4 6.8a7.5 7.5 0 019 0"/><circle cx="8.5" cy="10" r="1.3" fill="currentColor" stroke="none"/></svg>
+              <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x=".7" y=".7" width="21" height="10.6" rx="3.2" stroke="currentColor" opacity=".5" stroke-width="1.1"/><rect x="2.4" y="2.4" width="14" height="7.2" rx="1.8" fill="currentColor"/><path d="M23.8 4v4a2.2 2.2 0 000-4z" fill="currentColor" opacity=".5"/></svg>
+            </span>
+          </div>
+          <div class="screen">
+            <div class="empty">
+              <div class="mascot anim-breathe">
+                <svg viewBox="0 0 160 160" width="200" height="200">
+                  <rect x="14" y="52" width="16" height="56" rx="7" fill="var(--accent)"/>
+                  <rect x="32" y="61" width="11" height="38" rx="5" fill="var(--accent)" opacity=".55"/>
+                  <rect x="130" y="52" width="16" height="56" rx="7" fill="var(--accent)"/>
+                  <rect x="117" y="61" width="11" height="38" rx="5" fill="var(--accent)" opacity=".55"/>
+                  <rect x="40" y="73" width="80" height="14" rx="7" fill="#454b57"/>
+                  <circle cx="80" cy="80" r="36" fill="#f4f4f6"/>
+                  <circle cx="68" cy="76" r="4.2" fill="#22242a"/>
+                  <circle cx="92" cy="76" r="4.2" fill="#22242a"/>
+                  <circle cx="61" cy="88" r="5.5" fill="#f2a3b3" opacity=".85"/>
+                  <circle cx="99" cy="88" r="5.5" fill="#f2a3b3" opacity=".85"/>
+                  <path d="M72 89 Q80 93 88 89" stroke="#22242a" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+                </svg>
+                <svg class="prop prop-hourglass" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.9" stroke-linecap="round">
+                  <path d="M7 3h10M7 21h10M8.6 3.6c0 4 2.4 5.1 3.4 7.4-1 2.3-3.4 3.4-3.4 7.4M15.4 3.6c0 4-2.4 5.1-3.4 7.4 1 2.3 3.4 3.4 3.4 7.4"/>
+                </svg>
+              </div>
+              <h4>Il tuo coach ci sta lavorando</h4>
+              <p>Appena ti assegna una scheda la trovi qui.</p>
+              <button class="btn btn-outline">Crea una scheda tua</button>
+            </div>
+          </div>
+          <div class="tabbar">
+            <div class="tab on"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3.4l8.6 7.7H19v8.9a1.5 1.5 0 01-1.5 1.5H14v-6h-4v6H6.5A1.5 1.5 0 015 20v-8.9H3.4z"/></svg>Home</div>
+            <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3.5" width="14" height="17" rx="3"/><path d="M9 8.5h6M9 12.5h6M9 16.5h4"/></svg>Schede</div>
+            <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20v-6M10 20V9M15 20v-9M20 20V5"/></svg>Progressi</div>
+            <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4.5 20c1.4-3.8 4-5.3 7.5-5.3s6.1 1.5 7.5 5.3"/></svg>Account</div>
+          </div>
+          <div class="home-ind"></div>
+        </div>
+        <div class="shot-note">In app: animazione Lottie — qui segnaposto CSS.</div>
+      </div>
+
+      <!-- c) giorno di riposo -->
+      <div class="shot">
+        <div class="shot-label">
+          <h3>Giorno di riposo</h3>
+          <p>Home quando oggi non c'è allenamento: header e settimana restano, sotto la mascotte dorme.</p>
+        </div>
+        <div class="phone">
+          <div class="island"></div>
+          <div class="statusbar">
+            <span class="time">9:41</span>
+            <span class="icons">
+              <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="4.5" y="5" width="3" height="7" rx="1"/><rect x="9" y="3" width="3" height="9" rx="1"/><rect x="13.5" y="1" width="3" height="11" rx="1"/></svg>
+              <svg width="17" height="12" viewBox="0 0 17 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1.5 4a11 11 0 0114 0"/><path d="M4 6.8a7.5 7.5 0 019 0"/><circle cx="8.5" cy="10" r="1.3" fill="currentColor" stroke="none"/></svg>
+              <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x=".7" y=".7" width="21" height="10.6" rx="3.2" stroke="currentColor" opacity=".5" stroke-width="1.1"/><rect x="2.4" y="2.4" width="14" height="7.2" rx="1.8" fill="currentColor"/><path d="M23.8 4v4a2.2 2.2 0 000-4z" fill="currentColor" opacity=".5"/></svg>
+            </span>
+          </div>
+          <div class="screen">
+            <div class="h-head">
+              <div class="sc-title">Ciao, Marco</div>
+              <div class="avatar">MB</div>
+            </div>
+            <div class="week">
+              <div class="day"><span class="dow">L</span><span class="dnum">24</span><span class="dot on"></span></div>
+              <div class="day today"><span class="dow">M</span><span class="dnum">25</span><span class="dot"></span></div>
+              <div class="day"><span class="dow">M</span><span class="dnum">26</span><span class="dot on"></span></div>
+              <div class="day"><span class="dow">G</span><span class="dnum">27</span><span class="dot"></span></div>
+              <div class="day"><span class="dow">V</span><span class="dnum">28</span><span class="dot on"></span></div>
+              <div class="day"><span class="dow">S</span><span class="dnum">29</span><span class="dot"></span></div>
+              <div class="day"><span class="dow">D</span><span class="dnum">30</span><span class="dot"></span></div>
+            </div>
+            <div class="empty">
+              <div class="mascot anim-breathe">
+                <span class="z z1">Z</span><span class="z z2">z</span><span class="z z3">z</span>
+                <svg viewBox="0 0 160 160" width="200" height="200">
+                  <rect x="14" y="52" width="16" height="56" rx="7" fill="var(--accent)"/>
+                  <rect x="32" y="61" width="11" height="38" rx="5" fill="var(--accent)" opacity=".55"/>
+                  <rect x="130" y="52" width="16" height="56" rx="7" fill="var(--accent)"/>
+                  <rect x="117" y="61" width="11" height="38" rx="5" fill="var(--accent)" opacity=".55"/>
+                  <rect x="40" y="73" width="80" height="14" rx="7" fill="#454b57"/>
+                  <circle cx="80" cy="80" r="36" fill="#f4f4f6"/>
+                  <path d="M62 77 q6 5 12 0" stroke="#22242a" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+                  <path d="M86 77 q6 5 12 0" stroke="#22242a" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+                  <circle cx="61" cy="88" r="5.5" fill="#f2a3b3" opacity=".85"/>
+                  <circle cx="99" cy="88" r="5.5" fill="#f2a3b3" opacity=".85"/>
+                  <circle cx="80" cy="91" r="3.4" stroke="#22242a" stroke-width="3" fill="none"/>
+                </svg>
+              </div>
+              <h4>Oggi si recupera</h4>
+              <p>Prossimo allenamento: mercoledì · Pull</p>
+              <a class="tlink">Allenati comunque</a>
+            </div>
+          </div>
+          <div class="tabbar">
+            <div class="tab on"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3.4l8.6 7.7H19v8.9a1.5 1.5 0 01-1.5 1.5H14v-6h-4v6H6.5A1.5 1.5 0 015 20v-8.9H3.4z"/></svg>Home</div>
+            <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3.5" width="14" height="17" rx="3"/><path d="M9 8.5h6M9 12.5h6M9 16.5h4"/></svg>Schede</div>
+            <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20v-6M10 20V9M15 20v-9M20 20V5"/></svg>Progressi</div>
+            <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4.5 20c1.4-3.8 4-5.3 7.5-5.3s6.1 1.5 7.5 5.3"/></svg>Account</div>
+          </div>
+          <div class="home-ind"></div>
+        </div>
+        <div class="shot-note">In app: animazione Lottie — qui segnaposto CSS.</div>
+      </div>
+
+      <!-- d) nessuna sessione (progressi vuota) -->
+      <div class="shot">
+        <div class="shot-label">
+          <h3>Nessuna sessione ancora</h3>
+          <p>Tab Progressi vuota: il taccuino aspetta il primo allenamento.</p>
+        </div>
+        <div class="phone">
+          <div class="island"></div>
+          <div class="statusbar">
+            <span class="time">9:41</span>
+            <span class="icons">
+              <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="4.5" y="5" width="3" height="7" rx="1"/><rect x="9" y="3" width="3" height="9" rx="1"/><rect x="13.5" y="1" width="3" height="11" rx="1"/></svg>
+              <svg width="17" height="12" viewBox="0 0 17 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1.5 4a11 11 0 0114 0"/><path d="M4 6.8a7.5 7.5 0 019 0"/><circle cx="8.5" cy="10" r="1.3" fill="currentColor" stroke="none"/></svg>
+              <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x=".7" y=".7" width="21" height="10.6" rx="3.2" stroke="currentColor" opacity=".5" stroke-width="1.1"/><rect x="2.4" y="2.4" width="14" height="7.2" rx="1.8" fill="currentColor"/><path d="M23.8 4v4a2.2 2.2 0 000-4z" fill="currentColor" opacity=".5"/></svg>
+            </span>
+          </div>
+          <div class="screen">
+            <div class="empty">
+              <div class="mascot anim-bob">
+                <svg viewBox="0 0 160 160" width="200" height="200">
+                  <rect x="14" y="52" width="16" height="56" rx="7" fill="var(--accent)"/>
+                  <rect x="32" y="61" width="11" height="38" rx="5" fill="var(--accent)" opacity=".55"/>
+                  <rect x="130" y="52" width="16" height="56" rx="7" fill="var(--accent)"/>
+                  <rect x="117" y="61" width="11" height="38" rx="5" fill="var(--accent)" opacity=".55"/>
+                  <rect x="40" y="73" width="80" height="14" rx="7" fill="#454b57"/>
+                  <circle cx="80" cy="80" r="36" fill="#f4f4f6"/>
+                  <circle cx="68" cy="76" r="4.2" fill="#22242a"/>
+                  <circle cx="92" cy="76" r="4.2" fill="#22242a"/>
+                  <circle cx="61" cy="88" r="5.5" fill="#f2a3b3" opacity=".85"/>
+                  <circle cx="99" cy="88" r="5.5" fill="#f2a3b3" opacity=".85"/>
+                  <path d="M71 88 Q80 96 89 88" stroke="#22242a" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+                  <g transform="rotate(-10 118 118)">
+                    <rect x="98" y="96" width="40" height="50" rx="6" fill="var(--accent)"/>
+                    <rect x="98" y="96" width="8" height="50" fill="#8fb8e0"/>
+                    <rect x="112" y="106" width="18" height="3.4" rx="1.7" fill="#1d1f25" opacity=".45"/>
+                    <rect x="112" y="115" width="18" height="3.4" rx="1.7" fill="#1d1f25" opacity=".45"/>
+                    <rect x="112" y="124" width="12" height="3.4" rx="1.7" fill="#1d1f25" opacity=".45"/>
+                  </g>
+                </svg>
+              </div>
+              <h4>Il primo allenamento ti aspetta</h4>
+              <p>Qui vedrai i tuoi progressi dopo la prima sessione.</p>
+              <button class="btn btn-primary">Vai alla Home</button>
+            </div>
+          </div>
+          <div class="tabbar">
+            <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7.5L20 11M6 9.5V20h12V9.5"/></svg>Home</div>
+            <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3.5" width="14" height="17" rx="3"/><path d="M9 8.5h6M9 12.5h6M9 16.5h4"/></svg>Schede</div>
+            <div class="tab on"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3.8" y="13.5" width="3.8" height="7" rx="1.9"/><rect x="9" y="8.5" width="3.8" height="12" rx="1.9"/><rect x="14.2" y="11" width="3.8" height="9.5" rx="1.9"/><rect x="19.4" y="4.5" width="3.8" height="16" rx="1.9"/></svg>Progressi</div>
+            <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4.5 20c1.4-3.8 4-5.3 7.5-5.3s6.1 1.5 7.5 5.3"/></svg>Account</div>
+          </div>
+          <div class="home-ind"></div>
+        </div>
+        <div class="shot-note">In app: animazione Lottie — qui segnaposto CSS.</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ==================== 3 · ALTRE TAB ==================== -->
+  <section class="block" id="tabs">
+    <h2>3 · Le altre tab semplificate</h2>
+    <p class="sub">Schede, Progressi e Account diventano liste a righe: un'informazione, un gesto.</p>
+
+    <div class="grid">
+
+      <!-- SCHEDE -->
+      <div class="shot">
+        <div class="shot-label">
+          <h3>Schede</h3>
+          <p>«⋯» in alto a destra: «Annulla programma coach» si sposta qui.</p>
+        </div>
+        <div class="phone">
+          <div class="island"></div>
+          <div class="statusbar">
+            <span class="time">9:41</span>
+            <span class="icons">
+              <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="4.5" y="5" width="3" height="7" rx="1"/><rect x="9" y="3" width="3" height="9" rx="1"/><rect x="13.5" y="1" width="3" height="11" rx="1"/></svg>
+              <svg width="17" height="12" viewBox="0 0 17 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1.5 4a11 11 0 0114 0"/><path d="M4 6.8a7.5 7.5 0 019 0"/><circle cx="8.5" cy="10" r="1.3" fill="currentColor" stroke="none"/></svg>
+              <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x=".7" y=".7" width="21" height="10.6" rx="3.2" stroke="currentColor" opacity=".5" stroke-width="1.1"/><rect x="2.4" y="2.4" width="14" height="7.2" rx="1.8" fill="currentColor"/><path d="M23.8 4v4a2.2 2.2 0 000-4z" fill="currentColor" opacity=".5"/></svg>
+            </span>
+          </div>
+          <div class="screen">
+            <div class="sc-title" style="padding:10px 0 16px">Schede</div>
+            <div class="card plan-card">
+              <div class="dots">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><circle cx="10" cy="4" r="1.8"/><circle cx="10" cy="10" r="1.8"/><circle cx="10" cy="16" r="1.8"/></svg>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px">
+                <span class="badge badge-accent">IN USO</span>
+                <span class="meta muted">dal coach</span>
+              </div>
+              <div style="color:var(--heading);font-size:22px;font-weight:700;margin-top:10px">Full Body 3×</div>
+              <div class="meta" style="margin-top:3px">Valida fino al 15 ottobre</div>
+              <div class="plan-days">
+                <div class="row"><div class="grow r-title">Push</div><span class="meta muted">Lun</span><svg class="chev" width="9" height="15" viewBox="0 0 9 15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 1.5l6 6-6 6"/></svg></div>
+                <div class="sep"></div>
+                <div class="row"><div class="grow r-title">Pull</div><span class="meta muted">Mer</span><svg class="chev" width="9" height="15" viewBox="0 0 9 15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 1.5l6 6-6 6"/></svg></div>
+                <div class="sep"></div>
+                <div class="row"><div class="grow r-title">Legs</div><span class="meta muted">Ven</span><svg class="chev" width="9" height="15" viewBox="0 0 9 15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 1.5l6 6-6 6"/></svg></div>
+              </div>
+            </div>
+            <div class="glabel">Le mie schede</div>
+            <div class="card row">
+              <div class="grow r-title">Upper/Lower</div>
+              <span class="badge badge-grey">In pausa</span>
+              <svg class="chev" width="9" height="15" viewBox="0 0 9 15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 1.5l6 6-6 6"/></svg>
+            </div>
+            <div class="dashed-row">+ Nuova scheda</div>
+          </div>
+          <div class="tabbar">
+            <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7.5L20 11M6 9.5V20h12V9.5"/></svg>Home</div>
+            <div class="tab on"><svg viewBox="0 0 24 24"><rect x="5" y="3.5" width="14" height="17" rx="3" fill="currentColor"/><path d="M9 8.5h6M9 12.5h6M9 16.5h4" fill="none" stroke="#2c3038" stroke-width="1.9" stroke-linecap="round"/></svg>Schede</div>
+            <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20v-6M10 20V9M15 20v-9M20 20V5"/></svg>Progressi</div>
+            <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4.5 20c1.4-3.8 4-5.3 7.5-5.3s6.1 1.5 7.5 5.3"/></svg>Account</div>
+          </div>
+          <div class="home-ind"></div>
+        </div>
+      </div>
+
+      <!-- PROGRESSI -->
+      <div class="shot">
+        <div class="shot-label">
+          <h3>Progressi</h3>
+          <p>Un numero grande e un grafico semplice. Niente paragrafi.</p>
+        </div>
+        <div class="phone">
+          <div class="island"></div>
+          <div class="statusbar">
+            <span class="time">9:41</span>
+            <span class="icons">
+              <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="4.5" y="5" width="3" height="7" rx="1"/><rect x="9" y="3" width="3" height="9" rx="1"/><rect x="13.5" y="1" width="3" height="11" rx="1"/></svg>
+              <svg width="17" height="12" viewBox="0 0 17 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1.5 4a11 11 0 0114 0"/><path d="M4 6.8a7.5 7.5 0 019 0"/><circle cx="8.5" cy="10" r="1.3" fill="currentColor" stroke="none"/></svg>
+              <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x=".7" y=".7" width="21" height="10.6" rx="3.2" stroke="currentColor" opacity=".5" stroke-width="1.1"/><rect x="2.4" y="2.4" width="14" height="7.2" rx="1.8" fill="currentColor"/><path d="M23.8 4v4a2.2 2.2 0 000-4z" fill="currentColor" opacity=".5"/></svg>
+            </span>
+          </div>
+          <div class="screen">
+            <div class="sc-title" style="padding:10px 0 2px">Progressi</div>
+            <div class="seg">
+              <span class="on">4 sett</span><span>12 sett</span><span>1 anno</span>
+            </div>
+            <div class="card stat-card">
+              <div class="big">11</div>
+              <div class="meta" style="margin-top:6px">allenamenti nelle ultime 4 settimane</div>
+              <div class="bars">
+                <div class="bcol"><div class="bar" style="height:32%"></div><span class="blab">28/7</span></div>
+                <div class="bcol"><div class="bar" style="height:48%"></div><span class="blab">4/8</span></div>
+                <div class="bcol"><div class="bar" style="height:80%"></div><span class="blab">11/8</span></div>
+                <div class="bcol"><div class="bar ac" style="height:16%"></div><span class="blab">18/8</span></div>
+              </div>
+            </div>
+            <div class="chips">
+              <span class="chip">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0zM7 5H4v2a3 3 0 003 3M17 5h3v2a3 3 0 01-3 3"/></svg>
+                10 record
+              </span>
+              <span class="chip">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1.2 3.2-3.5 4.6-3.5 8.5a3.5 3.5 0 007 0c0-1.2-.4-2-.9-2.7 1.9.7 3.4 2.5 3.4 4.9a6.5 6.5 0 11-13 0C5 7.4 9.8 5.6 12 2z"/></svg>
+                Serie: —
+              </span>
+            </div>
+          </div>
+          <div class="tabbar">
+            <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7.5L20 11M6 9.5V20h12V9.5"/></svg>Home</div>
+            <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3.5" width="14" height="17" rx="3"/><path d="M9 8.5h6M9 12.5h6M9 16.5h4"/></svg>Schede</div>
+            <div class="tab on"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3.8" y="13.5" width="3.8" height="7" rx="1.9"/><rect x="9" y="8.5" width="3.8" height="12" rx="1.9"/><rect x="14.2" y="11" width="3.8" height="9.5" rx="1.9"/><rect x="19.4" y="4.5" width="3.8" height="16" rx="1.9"/></svg>Progressi</div>
+            <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4.5 20c1.4-3.8 4-5.3 7.5-5.3s6.1 1.5 7.5 5.3"/></svg>Account</div>
+          </div>
+          <div class="home-ind"></div>
+        </div>
+      </div>
+
+      <!-- ACCOUNT -->
+      <div class="shot">
+        <div class="shot-label">
+          <h3>Account</h3>
+          <p>Ogni riga apre una schermata dedicata invece dei form tutti insieme.</p>
+        </div>
+        <div class="phone">
+          <div class="island"></div>
+          <div class="statusbar">
+            <span class="time">9:41</span>
+            <span class="icons">
+              <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="4.5" y="5" width="3" height="7" rx="1"/><rect x="9" y="3" width="3" height="9" rx="1"/><rect x="13.5" y="1" width="3" height="11" rx="1"/></svg>
+              <svg width="17" height="12" viewBox="0 0 17 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1.5 4a11 11 0 0114 0"/><path d="M4 6.8a7.5 7.5 0 019 0"/><circle cx="8.5" cy="10" r="1.3" fill="currentColor" stroke="none"/></svg>
+              <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x=".7" y=".7" width="21" height="10.6" rx="3.2" stroke="currentColor" opacity=".5" stroke-width="1.1"/><rect x="2.4" y="2.4" width="14" height="7.2" rx="1.8" fill="currentColor"/><path d="M23.8 4v4a2.2 2.2 0 000-4z" fill="currentColor" opacity=".5"/></svg>
+            </span>
+          </div>
+          <div class="screen">
+            <div class="acc-head">
+              <div class="avatar">MB</div>
+              <h4>Marco Bianchi</h4>
+              <div class="meta muted">marco@email.it</div>
+            </div>
+            <div class="group">
+              <div class="row">
+                <span class="icon-tile t-blue">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.4"/><path d="M3.5 19c1.2-3.2 3-4.5 5.5-4.5s4.3 1.3 5.5 4.5"/><circle cx="16.5" cy="9" r="2.8"/><path d="M17 14.6c2 .4 3.2 1.7 4 4.4"/></svg>
+                </span>
+                <span class="r-title grow">Coach</span>
+                <span class="val">Luca R.</span>
+                <svg class="chev" width="9" height="15" viewBox="0 0 9 15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 1.5l6 6-6 6"/></svg>
+              </div>
+            </div>
+            <div class="group">
+              <div class="row">
+                <span class="icon-tile t-violet">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4.5 20c1.4-3.8 4-5.3 7.5-5.3s6.1 1.5 7.5 5.3"/></svg>
+                </span>
+                <span class="r-title grow">Profilo</span>
+                <svg class="chev" width="9" height="15" viewBox="0 0 9 15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 1.5l6 6-6 6"/></svg>
+              </div>
+              <div class="sep"></div>
+              <div class="row">
+                <span class="icon-tile t-amber">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10.5" width="15" height="9.5" rx="2.5"/><path d="M8 10.5V8a4 4 0 018 0v2.5"/></svg>
+                </span>
+                <span class="r-title grow">Password</span>
+                <svg class="chev" width="9" height="15" viewBox="0 0 9 15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 1.5l6 6-6 6"/></svg>
+              </div>
+            </div>
+            <div class="group">
+              <div class="row danger">
+                <span class="icon-tile t-red">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h5.5v16H14M4 12h10M10.5 7.5L15 12l-4.5 4.5"/></svg>
+                </span>
+                <span class="r-title grow">Esci</span>
+              </div>
+            </div>
+          </div>
+          <div class="tabbar">
+            <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7.5L20 11M6 9.5V20h12V9.5"/></svg>Home</div>
+            <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3.5" width="14" height="17" rx="3"/><path d="M9 8.5h6M9 12.5h6M9 16.5h4"/></svg>Schede</div>
+            <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20v-6M10 20V9M15 20v-9M20 20V5"/></svg>Progressi</div>
+            <div class="tab on"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8.2" r="4.1"/><path d="M4.2 20.6C5.5 16.8 8.4 15 12 15s6.5 1.8 7.8 5.6a.9.9 0 01-.85 1.2H5.05a.9.9 0 01-.85-1.2z"/></svg>Account</div>
+          </div>
+          <div class="home-ind"></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</div>
+</body>
+</html>
