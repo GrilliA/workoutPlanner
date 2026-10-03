@@ -1,3 +1,4 @@
+import { Image } from "expo-image";
 import { router, useLocalSearchParams, type Href } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -54,19 +55,6 @@ function toLoggingKey(exerciseId: number, setNumber: number): string {
   return `${exerciseId}:${setNumber}`;
 }
 
-function formatElapsed(startedAt: Date, nowMs: number): string {
-  const totalSec = Math.max(0, Math.floor((nowMs - startedAt.getTime()) / 1000));
-  const hours = Math.floor(totalSec / 3600);
-  const minutes = Math.floor((totalSec % 3600) / 60);
-  const seconds = totalSec % 60;
-
-  if (hours > 0) {
-    return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
-  }
-
-  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
-}
-
 function firstIncompleteIndex(
   exercises: Exercise[],
   setsByExercise: Map<number, LoggedSet[]>,
@@ -120,7 +108,6 @@ export default function SessionScreen() {
   const [finishing, setFinishing] = useState(false);
   const [mutating, setMutating] = useState(false);
   const [focusIndex, setFocusIndex] = useState(0);
-  const [nowMs, setNowMs] = useState(() => Date.now());
   const loggedKeysRef = useRef(new Set<string>());
   const loggingLockRef = useRef(false);
   const timer = useRestTimer(sessionId);
@@ -139,17 +126,17 @@ export default function SessionScreen() {
 
       try {
         const nextSession = await getSession(sessionId);
-        const workout = await getWorkout(nextSession.workoutId);
-        const [rawExercises, previousMap] = await Promise.all([
-          nextSession.workoutDayId
+        const [workout, nextExercises, previousMap] = await Promise.all([
+          getWorkout(nextSession.workoutId),
+          (nextSession.workoutDayId
             ? getWorkoutDayExercises(
                 nextSession.workoutId,
                 nextSession.workoutDayId,
               )
-            : getExercisesByWorkout(nextSession.workoutId),
+            : getExercisesByWorkout(nextSession.workoutId)
+          ).then(hydrateExercisesFromCatalog),
           loadPreviousSetsByExercise(nextSession.workoutId, nextSession.id),
         ]);
-        const nextExercises = await hydrateExercisesFromCatalog(rawExercises);
 
         if (cancelled) {
           return;
@@ -177,6 +164,20 @@ export default function SessionScreen() {
         setSession(nextSession);
         setLocalSets(hydratedSets);
         setExercises(nextExercises);
+
+        const photoUrls = new Set<string>();
+        for (const exercise of nextExercises) {
+          if (exercise.imageUrl) {
+            photoUrls.add(exercise.imageUrl);
+          }
+          if (exercise.imageUrlEnd) {
+            photoUrls.add(exercise.imageUrlEnd);
+          }
+        }
+        void Image.prefetch([...photoUrls], "memory-disk").catch(
+          () => undefined,
+        );
+
         setPreviousByExercise(previousMap);
         setWorkoutName(workout.name);
         setDefaultRestSec(workout.defaultRestSec);
@@ -200,15 +201,6 @@ export default function SessionScreen() {
       cancelled = true;
     };
   }, [sessionId, fetchId]);
-
-  useEffect(() => {
-    if (!session || session.status !== "in_progress") {
-      return;
-    }
-
-    const id = setInterval(() => setNowMs(Date.now()), 1000);
-    return () => clearInterval(id);
-  }, [session]);
 
   if (loading) {
     return <LoadingBlock />;
@@ -236,10 +228,6 @@ export default function SessionScreen() {
     Math.max(0, exercises.length - 1),
   );
   const focusedExercise = exercises[safeFocusIndex] ?? null;
-  const elapsedEndMs = readOnly
-    ? (session.completedAt?.getTime() ?? session.startedAt.getTime())
-    : nowMs;
-  const elapsedLabel = formatElapsed(session.startedAt, elapsedEndMs);
   const statusLabel = readOnly
     ? session.status === "completed"
       ? "Sessione completata"
@@ -509,7 +497,8 @@ export default function SessionScreen() {
             workoutName={workoutName}
             exerciseIndex={safeFocusIndex}
             exerciseTotal={exercises.length}
-            elapsedLabel={elapsedLabel}
+            startedAt={session.startedAt}
+            endedAt={readOnly ? (session.completedAt ?? session.startedAt) : null}
             statusLabel={statusLabel}
             progress={progress}
             onBack={onBack}

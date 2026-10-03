@@ -51,3 +51,69 @@ export const parseScheduledDate = (value: unknown): string | null => {
 
   return value;
 };
+
+export const addDaysToDateKey = (dateKey: string, days: number): string =>
+  new Date(new Date(`${dateKey}T12:00:00Z`).getTime() + days * 86400000)
+    .toISOString()
+    .slice(0, 10);
+
+export type ResolvedWorkoutDay = {
+  workoutDayId: number;
+  workoutDayName: string;
+  source: "override" | "schedule" | "default";
+};
+
+export type PickWorkoutDayInput = {
+  dateKey: string;
+  weekday: Weekday;
+  overrides: {
+    scheduledDate: string;
+    workoutDayId: number;
+    workoutDayName: string;
+  }[];
+  weekdayDays: {
+    weekday: number;
+    workoutDayId: number;
+    workoutDayName: string;
+    sortOrder: number;
+  }[];
+  days: { id: number; name: string }[];
+};
+
+export const pickWorkoutDayForDate = (
+  input: PickWorkoutDayInput,
+): ResolvedWorkoutDay | null => {
+  const override = input.overrides.find(
+    (entry) => entry.scheduledDate === input.dateKey,
+  );
+
+  if (override) {
+    return {
+      workoutDayId: override.workoutDayId,
+      workoutDayName: override.workoutDayName,
+      source: "override",
+    };
+  }
+
+  const scheduled = input.weekdayDays
+    .filter((entry) => entry.weekday === input.weekday)
+    .sort((a, b) => a.sortOrder - b.sortOrder || a.workoutDayId - b.workoutDayId)[0];
+
+  if (!scheduled) {
+    if (input.days.length === 1) {
+      return {
+        workoutDayId: input.days[0].id,
+        workoutDayName: input.days[0].name,
+        source: "default",
+      };
+    }
+
+    return null;
+  }
+
+  return {
+    workoutDayId: scheduled.workoutDayId,
+    workoutDayName: scheduled.workoutDayName,
+    source: "schedule",
+  };
+};

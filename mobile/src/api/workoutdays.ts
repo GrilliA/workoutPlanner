@@ -114,6 +114,15 @@ export async function getWorkoutScheduleToday(
   });
 }
 
+export async function getWorkoutScheduleWeek(
+  workoutId: number,
+  from: string,
+): Promise<WorkoutSchedule[]> {
+  return apiRequest(`/workouts/${workoutId}/schedule/week?from=${from}`, {
+    schema: z.array(workoutScheduleSchema),
+  });
+}
+
 export async function setScheduleOverride(
   workoutId: number,
   input: ScheduleOverrideInput,
