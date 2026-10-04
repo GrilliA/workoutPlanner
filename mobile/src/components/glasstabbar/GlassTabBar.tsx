@@ -9,6 +9,12 @@ type GlassTabBarProps = BottomTabBarProps & {
 };
 
 /**
+ * Padding extra sotto il contenuto delle schermate tab: la pill è assoluta
+ * e non riporta la sua altezza a React Navigation (offset 26 + barra 64 + margine).
+ */
+export const TAB_BAR_CLEARANCE = 100;
+
+/**
  * Tab bar flottante in vetro stile Telegram, identica per Android/iOS/web.
  * Spec: `docs/mockups/mobile-simple.html` (`.tabbar`, `.tab`, `.badge-num`).
  */

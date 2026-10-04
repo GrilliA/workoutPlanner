@@ -27,6 +27,7 @@ import {
   Screen,
   SecondaryButton,
   SectionLabel,
+  TAB_BAR_CLEARANCE,
   Title,
 } from "../../src/components";
 import { spacing } from "../../src/theme";
@@ -237,7 +238,10 @@ export default function SettingsScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  content: { padding: spacing.lg, paddingBottom: spacing.xl },
+  content: {
+    padding: spacing.lg,
+    paddingBottom: spacing.xl + TAB_BAR_CLEARANCE,
+  },
   block: { marginTop: spacing.lg, gap: spacing.sm },
   ok: { marginVertical: spacing.sm },
 });

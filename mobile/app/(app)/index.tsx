@@ -42,6 +42,7 @@ import {
   SecondaryButton,
   SectionLabel,
   StatCard,
+  TAB_BAR_CLEARANCE,
   Title,
 } from "../../src/components";
 import {
@@ -782,7 +783,7 @@ function findWorkoutIdForDay(
 const styles = StyleSheet.create({
   content: {
     padding: spacing.md,
-    paddingBottom: spacing.xl,
+    paddingBottom: spacing.xl + TAB_BAR_CLEARANCE,
     gap: spacing.md,
   },
   header: {

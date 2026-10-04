@@ -5,6 +5,7 @@ import {
   LoadingBlock,
   Meta,
   Screen,
+  TAB_BAR_CLEARANCE,
   Title,
 } from "../../../components";
 import { colors, radii, spacing } from "../../../theme";
@@ -92,7 +93,7 @@ export function ProgressScreen() {
 const styles = StyleSheet.create({
   content: {
     padding: spacing.md,
-    paddingBottom: spacing.xl,
+    paddingBottom: spacing.xl + TAB_BAR_CLEARANCE,
     gap: spacing.md,
   },
   header: {

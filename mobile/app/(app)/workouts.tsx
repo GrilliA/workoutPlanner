@@ -24,6 +24,7 @@ import {
   Screen,
   SecondaryButton,
   SectionLabel,
+  TAB_BAR_CLEARANCE,
 } from "../../src/components";
 import { colors, spacing } from "../../src/theme";
 
@@ -214,7 +215,7 @@ export default function WorkoutsScreen() {
 const styles = StyleSheet.create({
   list: {
     padding: spacing.lg,
-    paddingBottom: spacing.xl,
+    paddingBottom: spacing.xl + TAB_BAR_CLEARANCE,
     gap: spacing.md,
   },
   card: {
