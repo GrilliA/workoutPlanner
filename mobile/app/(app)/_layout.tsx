@@ -11,13 +11,21 @@ type AppTabsProps = {
 function AppTabs({ hasUnseenAssignment }: AppTabsProps) {
   return (
     <NativeTabs
+      backgroundColor={colors.surface}
       iconColor={{ default: colors.muted, selected: colors.accent }}
       labelStyle={{
         default: { color: colors.muted, fontSize: 11, fontWeight: "600" },
         selected: { color: colors.accent, fontSize: 11, fontWeight: "600" },
       }}
+      labelVisibilityMode="labeled"
       tintColor={colors.accent}
+      indicatorColor="rgba(191, 219, 247, 0.16)"
+      rippleColor="rgba(191, 219, 247, 0.2)"
       badgeBackgroundColor="#ff3b30"
+      badgeTextColor="#ffffff"
+      blurEffect="systemChromeMaterialDark"
+      shadowColor="rgba(255, 255, 255, 0.08)"
+      disableTransparentOnScrollEdge
     >
       <NativeTabs.Trigger name="index">
         <NativeTabs.Trigger.Icon
