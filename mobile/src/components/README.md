@@ -18,5 +18,6 @@
  * - mascot/     Mascotte Lottie (wave, waiting, sleeping, notebook)
  * - emptystate/ Stato vuoto stile Telegram (mascotte + titolo + azione)
  * - bottomsheet/ Bottom sheet con dim e maniglia (es. cambio allenamento)
+ * - glasstabbar/ Tab bar flottante in vetro stile Telegram (custom tabBar expo-router)
  */
 export {};
