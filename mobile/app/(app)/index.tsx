@@ -43,6 +43,7 @@ import {
   SectionLabel,
   StatCard,
   Title,
+  useTabBarInset,
 } from "../../src/components";
 import {
   RecentRow,
@@ -103,6 +104,7 @@ const EMPTY_STATS: HomeStat[] = mapHomeStats({
 /** Home densità mock: header, week strip, today card, KPI, recenti. */
 export default function HomeScreen() {
   const { user } = useAuth();
+  const tabBarInset = useTabBarInset();
   const [activeWorkouts, setActiveWorkouts] = useState<Workout[]>([]);
   const [noProgramReason, setNoProgramReason] =
     useState<NoProgramReason | null>(null);
@@ -533,7 +535,7 @@ export default function HomeScreen() {
   return (
     <Screen padded={false}>
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarInset }]}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -782,7 +784,6 @@ function findWorkoutIdForDay(
 const styles = StyleSheet.create({
   content: {
     padding: spacing.md,
-    paddingBottom: spacing.xl,
     gap: spacing.md,
   },
   header: {

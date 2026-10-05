@@ -62,6 +62,7 @@ How to use:
 
 ## What we did
 
+- 2026-10-03/04 — M3b UI foundation mobile: `GlassTabBar` custom (Tabs JS + `tabBar` prop + `expo-blur`) — pill flottante stile Telegram identica al mockup su Android/iOS/web, con badge "scheda nuova" cablato alla prop `hasUnseenAssignment` (dati reali in M3d); `Mascot` (4 lottie: wave/waiting/sleeping/notebook, crediti in `mobile/assets/lottie/CREDITS.md`), `EmptyState` stile Telegram e `BottomSheet` animato in `src/components/`; `lottie-react-native` + `@lottiefiles/dotlottie-react` per il web. Prima scelta `NativeTabs` scartata: la barra di sistema non può fare la pill flottante del mockup (resta attaccata al bordo).
 - 2026-09-28 — M2 chunk 1 builder scheda mobile: `WorkoutDraft` + `WorkoutBuilder` (panoramica giorni → giorno → sheet esercizio con ricerca catalogo), unico "Salva scheda", recupero a 4 opzioni visibili, weekday unici per giorno validati in bozza, import TXT nella bozza, schede coach in sola lettura; lista schede ricarica al focus. Test: `cd mobile && ../be/node_modules/.bin/tsx --test src/features/workoutprogram/*.test.ts`.
 - 2026-09-12 — Activity feed sulla dashboard coach: `GET /coach/dashboard` include `recentActivity` (max 8 sessioni completate), UI “Attività recente” sotto la tabella atleti.
 - 2026-09-12 — P0 first-run coach: empty `/clients`, `/assignments`, `/assignments/new` (0 clienti) e `/analytics` puntano a invito/assegnazione; niente “Creane uno” su clienti (resta sui template).
@@ -149,6 +150,7 @@ Legend: ⬜ todo · 🟡 in progress · ✅ done
 - **C11 — Session history (lista paginata)** ✅
 - **M1 — Progressi atleta mobile** ✅
 - **M2 — Builder scheda mobile (bozza unica + catalogo)** 🟡 — chunk 1 fatto; chunk 2: riordino esercizi/giorni (frecce), avviso modifiche non salvate
+- **M3 — Mobile semplice (redesign app atleta)** 🟡 — piano in `docs/plans/M3-mobile-simple.md`; M3a home + badge backend (PR aperta), M3b fondamenta UI ✅, poi Home → Schede/Progressi/Account
 - **U4 — Analytics coach web** ✅
 - **D1 — Design system web** ✅
 - **D2 — PageError pagine coach** ✅

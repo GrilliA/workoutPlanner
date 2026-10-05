@@ -1,11 +1,59 @@
 import { Redirect, Tabs } from "expo-router";
-import { Icon, type IconName } from "../../src/components";
+import type { ColorValue } from "react-native";
+import { GlassTabBar, Icon, type IconName } from "../../src/components";
 import { CoachBlockScreen, useAuth } from "../../src/auth";
 import { colors } from "../../src/theme";
 
-function TabBarIcon({ name, focused }: { name: IconName; focused: boolean }) {
+function TabBarIcon({ name, color }: { name: IconName; color: ColorValue }) {
+  return <Icon name={name} color={color} size={23} />;
+}
+
+type AppTabsProps = {
+  /** Badge "scheda nuova" sulla tab Schede — dati reali collegati in M3d. */
+  hasUnseenAssignment: boolean;
+};
+
+function AppTabs({ hasUnseenAssignment }: AppTabsProps) {
   return (
-    <Icon name={name} color={focused ? colors.accent : colors.muted} size={22} />
+    <Tabs
+      tabBar={(props) => (
+        <GlassTabBar {...props} hasUnseenAssignment={hasUnseenAssignment} />
+      )}
+      screenOptions={{
+        headerShown: false,
+        animation: "fade",
+        sceneStyle: { backgroundColor: colors.bg },
+      }}
+    >
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: "Home",
+          tabBarIcon: ({ color }) => <TabBarIcon name="home" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="workouts"
+        options={{
+          title: "Schede",
+          tabBarIcon: ({ color }) => <TabBarIcon name="workout" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="stats"
+        options={{
+          title: "Progressi",
+          tabBarIcon: ({ color }) => <TabBarIcon name="stats" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: "Account",
+          tabBarIcon: ({ color }) => <TabBarIcon name="person" color={color} />,
+        }}
+      />
+    </Tabs>
   );
 }
 
@@ -24,62 +72,5 @@ export default function AppLayout() {
     return <CoachBlockScreen />;
   }
 
-  return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        animation: "fade",
-        sceneStyle: { backgroundColor: colors.bg },
-        tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopColor: colors.border,
-          height: 60,
-          paddingTop: 4,
-        },
-        tabBarActiveTintColor: colors.accent,
-        tabBarInactiveTintColor: colors.muted,
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: "600",
-        },
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: "Home",
-          tabBarIcon: ({ focused }) => (
-            <TabBarIcon name="home" focused={focused} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="workouts"
-        options={{
-          title: "Workout",
-          tabBarIcon: ({ focused }) => (
-            <TabBarIcon name="workout" focused={focused} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="stats"
-        options={{
-          title: "Progressi",
-          tabBarIcon: ({ focused }) => (
-            <TabBarIcon name="stats" focused={focused} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: "Account",
-          tabBarIcon: ({ focused }) => (
-            <TabBarIcon name="settings" focused={focused} />
-          ),
-        }}
-      />
-    </Tabs>
-  );
+  return <AppTabs hasUnseenAssignment={false} />;
 }

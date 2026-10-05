@@ -18,3 +18,7 @@ export { StatCard } from "./statcard";
 export { BackButton, BackHeader } from "./backbutton";
 export { Icon, type IconName } from "./icon";
 export { BrandLogo } from "./brandlogo";
+export { Mascot, type MascotName } from "./mascot";
+export { EmptyState } from "./emptystate";
+export { BottomSheet } from "./bottomsheet";
+export { GlassTabBar, useTabBarInset } from "./glasstabbar";
