@@ -27,13 +27,14 @@ import {
   Screen,
   SecondaryButton,
   SectionLabel,
-  TAB_BAR_CLEARANCE,
   Title,
+  useTabBarInset,
 } from "../../src/components";
 import { spacing } from "../../src/theme";
 
 export default function SettingsScreen() {
   const { user, logout, setUser } = useAuth();
+  const tabBarInset = useTabBarInset();
   const [name, setName] = useState(user?.name ?? "");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -146,7 +147,9 @@ export default function SettingsScreen() {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={styles.flex}
       >
-        <ScrollView contentContainerStyle={styles.content}>
+        <ScrollView
+          contentContainerStyle={[styles.content, { paddingBottom: tabBarInset }]}
+        >
           <Title>IMPOSTAZIONI</Title>
           <Body>{user?.email}</Body>
           {error ? <ErrorBanner message={error} /> : null}
@@ -240,7 +243,6 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   content: {
     padding: spacing.lg,
-    paddingBottom: spacing.xl + TAB_BAR_CLEARANCE,
   },
   block: { marginTop: spacing.lg, gap: spacing.sm },
   ok: { marginVertical: spacing.sm },

@@ -21,4 +21,4 @@ export { BrandLogo } from "./brandlogo";
 export { Mascot, type MascotName } from "./mascot";
 export { EmptyState } from "./emptystate";
 export { BottomSheet } from "./bottomsheet";
-export { GlassTabBar, TAB_BAR_CLEARANCE } from "./glasstabbar";
+export { GlassTabBar, useTabBarInset } from "./glasstabbar";

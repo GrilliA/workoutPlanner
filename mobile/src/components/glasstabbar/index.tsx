@@ -1,1 +1,1 @@
-export { GlassTabBar, TAB_BAR_CLEARANCE } from "./GlassTabBar";
+export { GlassTabBar, useTabBarInset } from "./GlassTabBar";

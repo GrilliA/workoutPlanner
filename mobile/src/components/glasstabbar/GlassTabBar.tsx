@@ -1,18 +1,28 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { BlurView } from "expo-blur";
 import type { BottomTabBarProps } from "expo-router/build/react-navigation/bottom-tabs";
-import { colors } from "../../theme";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { colors, spacing } from "../../theme";
+
+const BAR_HEIGHT = 64;
+const MIN_BOTTOM_OFFSET = 26;
+
+/**
+ * Padding bottom completo per le schermate tab: la pill è assoluta
+ * e non riporta la sua altezza a React Navigation
+ * (altezza barra + offset dal bordo o safe-area + margine).
+ */
+export function useTabBarInset(): number {
+  const insets = useSafeAreaInsets();
+  return (
+    BAR_HEIGHT + Math.max(insets.bottom, MIN_BOTTOM_OFFSET) + spacing.xl
+  );
+}
 
 type GlassTabBarProps = BottomTabBarProps & {
   /** Badge "scheda nuova" sull'icona Schede — dati reali collegati in M3d. */
   hasUnseenAssignment?: boolean;
 };
-
-/**
- * Padding extra sotto il contenuto delle schermate tab: la pill è assoluta
- * e non riporta la sua altezza a React Navigation (offset 26 + barra 64 + margine).
- */
-export const TAB_BAR_CLEARANCE = 100;
 
 /**
  * Tab bar flottante in vetro stile Telegram, identica per Android/iOS/web.
@@ -27,7 +37,7 @@ export function GlassTabBar({
 }: GlassTabBarProps) {
   return (
     <View
-      style={[styles.wrap, { bottom: Math.max(insets.bottom, 26) }]}
+      style={[styles.wrap, { bottom: Math.max(insets.bottom, MIN_BOTTOM_OFFSET) }]}
       pointerEvents="box-none"
     >
       <BlurView intensity={30} tint="dark" style={styles.bar}>
@@ -95,7 +105,7 @@ const styles = StyleSheet.create({
     zIndex: 15,
   },
   bar: {
-    height: 64,
+    height: BAR_HEIGHT,
     borderRadius: 32,
     overflow: "hidden",
     flexDirection: "row",
