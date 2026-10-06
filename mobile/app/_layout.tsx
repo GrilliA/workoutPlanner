@@ -3,12 +3,16 @@ import { Pressable, Text } from "react-native";
 import { API_BASE } from "../src/api/config";
 import { AuthProvider, CoachBlockScreen, useAuth } from "../src/auth";
 import { LoadingBlock, Screen } from "../src/components";
+import { useRestNotificationRouting } from "../src/features/session/useRestNotificationRouting";
 import { colors } from "../src/theme";
 
 export { ErrorBoundary } from "expo-router";
 
 function AuthGate({ children }: { children: React.ReactNode }) {
   const { status, user, retryBootstrap } = useAuth();
+  useRestNotificationRouting(
+    status === "authenticated" && user?.role !== "coach",
+  );
 
   if (status === "loading") {
     return <LoadingBlock label="Sessione…" />;
