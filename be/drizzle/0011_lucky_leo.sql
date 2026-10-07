@@ -1,0 +1,1 @@
+ALTER TABLE "program_assignments" ADD COLUMN "seen_at" timestamp;

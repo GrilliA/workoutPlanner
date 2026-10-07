@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { apiRequest } from "./client";
 import { CACHE_SHORT } from "./responseCache";
+import { athleteHomeSchema } from "./schemas/athletehome";
 
 export const athleteCoachSchema = z.object({
   coachId: z.number(),
@@ -18,6 +19,13 @@ export type AthleteCoach = z.infer<typeof athleteCoachSchema>;
 export function getAthleteCoach() {
   return apiRequest("/athlete/coach", {
     schema: athleteCoachResponseSchema,
+    cache: CACHE_SHORT,
+  });
+}
+
+export function getAthleteHome() {
+  return apiRequest("/athlete/home", {
+    schema: athleteHomeSchema,
     cache: CACHE_SHORT,
   });
 }

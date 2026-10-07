@@ -1,0 +1,73 @@
+initialize:
+  - run: |
+      set -e
+      # Node 22 — required by mobile (see AGENTS.md / CI uses Node 22; VM ships Node 24)
+      nvm install 22
+      nvm alias default 22
+      nvm use 22
+
+      # Postgres 16 via the repo's docker-compose.yml (postgres:postgres, db workout_planner, :5432)
+      # Docker Hub is rate-limited (429) on build IPs — pull via the public ECR mirror and tag locally
+      docker info >/dev/null 2>&1 || sudo service docker start
+      docker pull public.ecr.aws/docker/library/postgres:16 || docker pull postgres:16
+      docker tag public.ecr.aws/docker/library/postgres:16 postgres:16 2>/dev/null || true
+      cd "$HOME/repos/workoutPlanner/be"
+      npm run db:up
+      sleep 4
+      docker exec workout-postgres pg_isready -U postgres -d workout_planner
+
+      # be/.env from example — dev-only values, no real secrets
+      sed -e 's|postgresql://user:password@localhost:5432/workout_planner|postgresql://postgres:postgres@localhost:5432/workout_planner|' \
+          -e 's|JWT_ACCESS_SECRET=change-me-in-dev-only|JWT_ACCESS_SECRET=dev-only-secret|' \
+          .env.example > .env
+
+      # Scratch DB for e2e smoke (tests refuse to run against workout_planner)
+      docker exec workout-postgres psql -U postgres -c 'CREATE DATABASE smoke_test'
+
+      # Dependencies — all three packages use package-lock.json (mobile too: its
+      # packageManager says yarn@1.22.22 but only package-lock.json exists and CI runs npm ci)
+      cd "$HOME/repos/workoutPlanner/be" && npm ci
+      cd "$HOME/repos/workoutPlanner/fe" && npm ci
+      cd "$HOME/repos/workoutPlanner/mobile" && npm ci
+
+      # Migrate (NOT db:push — it drops indexes) + seed exercise catalog
+      cd "$HOME/repos/workoutPlanner/be"
+      npm run db:migrate
+      npm run db:seed-catalog
+      DATABASE_URL=postgresql://postgres:postgres@localhost:5432/smoke_test npm run db:migrate
+
+      # Playwright Chromium + system deps (for future e2e on the Expo web app)
+      npm i -g playwright
+      playwright install --with-deps chromium
+
+maintenance:
+  - run: |
+      nvm use 22 >/dev/null 2>&1 || true
+      docker info >/dev/null 2>&1 || sudo service docker start
+      cd "$HOME/repos/workoutPlanner/be"
+      npm run db:up
+      # recreate be/.env only if missing (never overwrite local tweaks)
+      test -f .env || sed -e 's|postgresql://user:password@localhost:5432/workout_planner|postgresql://postgres:postgres@localhost:5432/workout_planner|' \
+          -e 's|JWT_ACCESS_SECRET=change-me-in-dev-only|JWT_ACCESS_SECRET=dev-only-secret|' \
+          .env.example > .env
+
+knowledge:
+  - name: lint
+    contents: |
+      # mirror .github/workflows/ci.yml
+      cd "$HOME/repos/workoutPlanner/be" && npx tsc --noEmit
+      cd "$HOME/repos/workoutPlanner/fe" && npm run lint
+      cd "$HOME/repos/workoutPlanner/mobile" && npm run typecheck && npm run typecheck:test
+  - name: test
+    contents: |
+      cd "$HOME/repos/workoutPlanner/be" && npm test
+      # e2e smoke: MUST use the scratch DB — the suite aborts on workout_planner
+      cd "$HOME/repos/workoutPlanner/be" && DATABASE_URL=postgresql://postgres:postgres@localhost:5432/smoke_test npm run test:e2e
+      cd "$HOME/repos/workoutPlanner/fe" && npm test && npm run build && npm run build-storybook
+  - name: startup
+    contents: |
+      cd "$HOME/repos/workoutPlanner/be" && npm run dev        # API on :3005 (nodemon + ts-node)
+      cd "$HOME/repos/workoutPlanner/fe" && npm run dev        # Vite on :5173, proxies /api -> localhost:3005
+      # Expo web on :8081. mobile/src/api/config.ts defaults to Railway production;
+      # EXPO_PUBLIC_API_URL points the app at the local BE — no code change needed.
+      cd "$HOME/repos/workoutPlanner/mobile" && EXPO_PUBLIC_API_URL=http://localhost:3005/api npx expo start --web
