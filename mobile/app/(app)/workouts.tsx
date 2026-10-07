@@ -24,6 +24,7 @@ import {
   Screen,
   SecondaryButton,
   SectionLabel,
+  useTabBarInset,
 } from "../../src/components";
 import { colors, spacing } from "../../src/theme";
 
@@ -32,6 +33,7 @@ const isSelfProgram = (workout: Workout, userId: number) =>
 
 export default function WorkoutsScreen() {
   const { user } = useAuth();
+  const tabBarInset = useTabBarInset();
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [assignment, setAssignment] = useState<ActiveAssignment | null>(null);
   const [hasLinkedCoach, setHasLinkedCoach] = useState(false);
@@ -122,7 +124,9 @@ export default function WorkoutsScreen() {
 
   return (
     <Screen padded={false}>
-      <ScrollView contentContainerStyle={styles.list}>
+      <ScrollView
+        contentContainerStyle={[styles.list, { paddingBottom: tabBarInset }]}
+      >
         <Heading>Le tue schede</Heading>
         <Body>
           {assignment
@@ -214,7 +218,6 @@ export default function WorkoutsScreen() {
 const styles = StyleSheet.create({
   list: {
     padding: spacing.lg,
-    paddingBottom: spacing.xl,
     gap: spacing.md,
   },
   card: {

@@ -1,12 +1,19 @@
-import Svg, { Path } from "react-native-svg";
+import type { ColorValue } from "react-native";
+import Svg, { Circle, Path } from "react-native-svg";
 import { colors } from "../../theme";
 
-export type IconName = "home" | "workout" | "stats" | "history" | "settings";
+export type IconName =
+  | "home"
+  | "workout"
+  | "stats"
+  | "history"
+  | "settings"
+  | "person";
 
 type IconProps = {
   name: IconName;
   size?: number;
-  color?: string;
+  color?: ColorValue;
 };
 
 /** Icone SVG allineate alla bottom nav del web AppShell. */
@@ -46,6 +53,26 @@ export function Icon({ name, size = 22, color = colors.text }: IconProps) {
           strokeLinecap="round"
           strokeLinejoin="round"
         />
+      ) : null}
+      {name === "person" ? (
+        <>
+          <Circle
+            cx={12}
+            cy={8}
+            r={4}
+            fill="none"
+            stroke={color}
+            strokeWidth={1.9}
+          />
+          <Path
+            d="M4.5 20c1.4-3.8 4-5.3 7.5-5.3s6.1 1.5 7.5 5.3"
+            fill="none"
+            stroke={color}
+            strokeWidth={1.9}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </>
       ) : null}
       {name === "settings" ? (
         <Path

@@ -2,6 +2,8 @@ import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 
 export const REST_TIMER_CHANNEL_ID = "rest-timer";
+export const REST_TIMER_CATEGORY_ID = "rest-timer";
+export const REST_SKIP_ACTION_ID = "rest-skip";
 
 export type RestNotificationKind = "rest-ongoing" | "rest-done";
 
@@ -27,17 +29,38 @@ export const ensureRestTimerChannel = (): Promise<void> => {
   }
 
   if (!channelReady) {
-    channelReady = Notifications.setNotificationChannelAsync(REST_TIMER_CHANNEL_ID, {
-      name: "Recupero",
-      importance: Notifications.AndroidImportance.HIGH,
-      sound: "default",
-      vibrationPattern: [0, 250, 120, 250],
-      lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
-      lightColor: "#bfdbf7",
-    }).then(() => undefined);
+    channelReady = Promise.all([
+      Notifications.setNotificationChannelAsync(REST_TIMER_CHANNEL_ID, {
+        name: "Recupero",
+        importance: Notifications.AndroidImportance.HIGH,
+        sound: "default",
+        vibrationPattern: [0, 250, 120, 250],
+        lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+        lightColor: "#bfdbf7",
+      }),
+      Notifications.setNotificationCategoryAsync(REST_TIMER_CATEGORY_ID, [
+        {
+          identifier: REST_SKIP_ACTION_ID,
+          buttonTitle: "Salta",
+          options: { opensAppToForeground: false },
+        },
+      ]),
+    ]).then(() => undefined);
   }
 
   return channelReady;
+};
+
+let permissionReady: Promise<boolean> | null = null;
+
+export const ensureRestTimerPermission = (): Promise<boolean> => {
+  if (!permissionReady) {
+    permissionReady = Notifications.requestPermissionsAsync().then(
+      (permission) => permission.granted,
+    );
+  }
+
+  return permissionReady;
 };
 
 export const scheduleRestOngoingNotification = async (input: {
@@ -45,9 +68,13 @@ export const scheduleRestOngoingNotification = async (input: {
   endsAtMs: number;
   restSec: number;
 }): Promise<string | null> => {
+  if (Platform.OS === "ios") {
+    return null;
+  }
+
   await ensureRestTimerChannel();
 
-  const permission = await Notifications.requestPermissionsAsync();
+  const permission = await Notifications.getPermissionsAsync();
   if (!permission.granted) {
     return null;
   }
@@ -64,7 +91,12 @@ export const scheduleRestOngoingNotification = async (input: {
       autoDismiss: false,
       sound: false,
       priority: Notifications.AndroidNotificationPriority.DEFAULT,
-      ...(Platform.OS === "android" ? { channelId: REST_TIMER_CHANNEL_ID } : {}),
+      ...(Platform.OS === "android"
+        ? {
+            channelId: REST_TIMER_CHANNEL_ID,
+            categoryIdentifier: REST_TIMER_CATEGORY_ID,
+          }
+        : {}),
     },
     trigger: null,
   });
@@ -76,7 +108,7 @@ export const scheduleRestDoneNotification = async (input: {
 }): Promise<string | null> => {
   await ensureRestTimerChannel();
 
-  const permission = await Notifications.requestPermissionsAsync();
+  const permission = await Notifications.getPermissionsAsync();
   if (!permission.granted) {
     return null;
   }
@@ -85,6 +117,7 @@ export const scheduleRestDoneNotification = async (input: {
     content: {
       title: "Recupero finito",
       body: "Vai con la prossima serie",
+      interruptionLevel: "timeSensitive",
       data: {
         sessionId: input.sessionId,
         type: "rest-done" satisfies RestNotificationKind,
