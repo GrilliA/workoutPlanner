@@ -136,3 +136,25 @@ jobs:
 
       - name: Typecheck tests
         run: npm run typecheck:test
+
+  android:
+    name: Android
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/android
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Lint, unit tests, assemble
+        run: ./gradlew lintDebug testDebugUnitTest assembleDebug
