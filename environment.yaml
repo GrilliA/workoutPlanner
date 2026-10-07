@@ -40,6 +40,25 @@ initialize:
       npm i -g playwright
       playwright install --with-deps chromium
 
+      # Android toolchain for apps/android (JDK 17 + cmdline-tools + SDK packages)
+      if ! java -version 2>&1 | grep -q '17\.'; then
+        sudo apt-get update && sudo apt-get install -y openjdk-17-jdk-headless
+      fi
+      export ANDROID_HOME="$HOME/Android/Sdk"
+      if [ ! -x "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" ]; then
+        mkdir -p "$ANDROID_HOME/cmdline-tools/latest"
+        curl -fsSL -o /tmp/cmdtools.zip https://dl.google.com/android/repository/commandlinetools-linux-16111833_latest.zip
+        unzip -qo /tmp/cmdtools.zip -d /tmp/cmdtools
+        mv /tmp/cmdtools/cmdline-tools/* "$ANDROID_HOME/cmdline-tools/latest/"
+      fi
+      yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses || true
+      "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+        "platform-tools" "platforms;android-37.0" "build-tools;36.0.0"
+      grep -q 'ANDROID_HOME' ~/.bashrc || cat >> ~/.bashrc <<'EOF'
+      export ANDROID_HOME=$HOME/Android/Sdk
+      export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
+EOF
+
 maintenance:
   - run: |
       nvm use 22 >/dev/null 2>&1 || true
@@ -58,12 +77,14 @@ knowledge:
       cd "$HOME/repos/workoutPlanner/be" && npx tsc --noEmit
       cd "$HOME/repos/workoutPlanner/fe" && npm run lint
       cd "$HOME/repos/workoutPlanner/mobile" && npm run typecheck && npm run typecheck:test
+      cd "$HOME/repos/workoutPlanner/apps/android" && ./gradlew lintDebug
   - name: test
     contents: |
       cd "$HOME/repos/workoutPlanner/be" && npm test
       # e2e smoke: MUST use the scratch DB — the suite aborts on workout_planner
       cd "$HOME/repos/workoutPlanner/be" && DATABASE_URL=postgresql://postgres:postgres@localhost:5432/smoke_test npm run test:e2e
       cd "$HOME/repos/workoutPlanner/fe" && npm test && npm run build && npm run build-storybook
+      cd "$HOME/repos/workoutPlanner/apps/android" && ./gradlew testDebugUnitTest assembleDebug
   - name: startup
     contents: |
       cd "$HOME/repos/workoutPlanner/be" && npm run dev        # API on :3005 (nodemon + ts-node)

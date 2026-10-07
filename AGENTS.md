@@ -21,9 +21,12 @@ cd fe && npm run dev
 # Mobile native (Expo React Native — requires Node ≥22)
 cd mobile && npm start            # Expo Dev Tools (i / a for simulators)
 cd mobile && npm run typecheck
+
+# Android native (Kotlin + Compose — requires JDK 17 + Android SDK)
+cd apps/android && ./gradlew lintDebug testDebugUnitTest assembleDebug
 ```
 
-**CI:** push or PR to `main` → GitHub Actions (`.github/workflows/ci.yml`): `be` typecheck + test, `fe` lint + build, `mobile` typecheck (Node 22).
+**CI:** push or PR to `main` → GitHub Actions (`.github/workflows/ci.yml`): `be` typecheck + test, `fe` lint + build, `mobile` typecheck (Node 22), `android` lint + unit tests + assembleDebug (JDK 17).
 
 - `be/.env` credentials: `postgres:postgres` (must match `docker-compose.yml`)
 - Frontend web: relative `/api/...` URLs; Vite proxies them in dev
@@ -40,6 +43,7 @@ workoutPlanner/
 ├── be/                 # Express + Drizzle + Postgres
 ├── fe/                 # React + Vite (coach panel)
 ├── mobile/             # Expo React Native (athlete)
+├── apps/android/       # Kotlin + Compose (athlete, native)
 ├── docs/guidelines/    # conventions split by area
 ├── WORKBOOK.md
 └── AGENTS.md
@@ -51,6 +55,7 @@ workoutPlanner/
 | `fe/src/components/` | Shared UI primitives (`appShell/`, `errorBoundary/`) |
 | `mobile/app/` | Expo Router routes |
 | `mobile/src/api/` | HTTP + Zod (same contract as web, mobile auth) |
+| `apps/android/app/src/main/java/com/traccia/android/` | Native app sources (core/ + feature/) |
 
 FE component folders are **camelCase** (`errorBoundary/ErrorBoundary.tsx`). Details: [`docs/guidelines/fe.md`](docs/guidelines/fe.md).
 
@@ -63,4 +68,5 @@ FE component folders are **camelCase** (`errorBoundary/ErrorBoundary.tsx`). Deta
 | Frontend web (folders, React, CSS, API) | [`docs/guidelines/fe.md`](docs/guidelines/fe.md) |
 | Backend | [`docs/guidelines/be.md`](docs/guidelines/be.md) |
 | Mobile | [`mobile/README.md`](mobile/README.md) |
+| Android | [`docs/guidelines/android.md`](docs/guidelines/android.md) — onboarding: [`apps/android/README.md`](apps/android/README.md) |
 | Decisions and roadmap | [`WORKBOOK.md`](WORKBOOK.md) |
