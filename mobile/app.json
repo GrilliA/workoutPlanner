@@ -10,7 +10,10 @@
     "userInterfaceStyle": "dark",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.traccia.app"
+      "bundleIdentifier": "com.traccia.app",
+      "entitlements": {
+        "com.apple.developer.usernotifications.time-sensitive": true
+      }
     },
     "android": {
       "package": "com.traccia.app",
@@ -47,7 +50,8 @@
         }
       ],
       "expo-web-browser",
-      "expo-image"
+      "expo-image",
+      "expo-widgets"
     ],
     "experiments": {
       "typedRoutes": true

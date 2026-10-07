@@ -1,21 +1,53 @@
 import * as Haptics from "expo-haptics";
 import * as Notifications from "expo-notifications";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AppState } from "react-native";
+import { AppState, Platform } from "react-native";
+import {
+  endRestTimerActivities,
+  startRestTimerActivity,
+} from "./RestTimerActivity";
 import {
   clearRestNotification,
+  ensureRestTimerPermission,
+  REST_SKIP_ACTION_ID,
   scheduleRestDoneNotification,
   scheduleRestOngoingNotification,
 } from "./restTimerNotifications";
 
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
+  handleNotification: async (notification) => {
+    const data = notification.request.content.data;
+    if (data?.type === "rest-ongoing") {
+      return {
+        shouldShowBanner: false,
+        shouldShowList: true,
+        shouldPlaySound: false,
+        shouldSetBadge: false,
+      };
+    }
+
+    if (
+      data?.type === "rest-done" &&
+      Number(data?.sessionId) === mountedRestSessionId
+    ) {
+      return {
+        shouldShowBanner: false,
+        shouldShowList: false,
+        shouldPlaySound: false,
+        shouldSetBadge: false,
+      };
+    }
+
+    return {
+      shouldShowBanner: true,
+      shouldShowList: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+    };
+  },
 });
+
+let mountedRestSessionId: number | null = null;
 
 const DONE_FLASH_MS = 700;
 const TICK_MS = 250;
@@ -63,6 +95,7 @@ export function useRestTimer(sessionId: number) {
     setTotalSec(0);
     setRestingExerciseId(null);
     void clearNotifications();
+    endRestTimerActivities();
   }, [clearNotifications]);
 
   const fireDone = useCallback(async () => {
@@ -74,6 +107,7 @@ export function useRestTimer(sessionId: number) {
     setRemainingSec(0);
     setStatus("done");
     await clearNotifications();
+    endRestTimerActivities();
 
     if (appInForegroundRef.current) {
       try {
@@ -119,6 +153,7 @@ export function useRestTimer(sessionId: number) {
       setRemainingSec(restSec);
       setRestingExerciseId(exerciseId);
       setStatus("running");
+      startRestTimerActivity({ sessionId, startedAtMs: Date.now(), endsAtMs: endsAt });
 
       try {
         const [ongoingId, doneId] = await Promise.all([
@@ -140,6 +175,20 @@ export function useRestTimer(sessionId: number) {
     },
     [cancel, sessionId],
   );
+
+  useEffect(() => {
+    endRestTimerActivities();
+    if (Platform.OS !== "web") {
+      void ensureRestTimerPermission().catch(() => undefined);
+    }
+
+    mountedRestSessionId = sessionId;
+    return () => {
+      if (mountedRestSessionId === sessionId) {
+        mountedRestSessionId = null;
+      }
+    };
+  }, [sessionId]);
 
   useEffect(() => {
     if (status !== "running") {
@@ -180,6 +229,25 @@ export function useRestTimer(sessionId: number) {
 
     return () => sub.remove();
   }, [checkExpiry, dismissOngoingOnly, sessionId]);
+
+  useEffect(() => {
+    const sub = Notifications.addNotificationResponseReceivedListener(
+      (response) => {
+        if (response.actionIdentifier !== REST_SKIP_ACTION_ID) {
+          return;
+        }
+
+        const notifSessionId = response.notification.request.content.data?.sessionId;
+        if (notifSessionId !== undefined && Number(notifSessionId) !== sessionId) {
+          return;
+        }
+
+        cancel();
+      },
+    );
+
+    return () => sub.remove();
+  }, [cancel, sessionId]);
 
   return {
     status,

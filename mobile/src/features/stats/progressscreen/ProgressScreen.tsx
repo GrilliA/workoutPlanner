@@ -6,6 +6,7 @@ import {
   Meta,
   Screen,
   Title,
+  useTabBarInset,
 } from "../../../components";
 import { colors, radii, spacing } from "../../../theme";
 import { KpiGrid } from "../kpigrid";
@@ -17,6 +18,7 @@ import { VolumeCard } from "../volumecard";
 import { WeeklyChart } from "../weeklychart";
 
 export function ProgressScreen() {
+  const tabBarInset = useTabBarInset();
   const {
     range,
     setRange,
@@ -39,7 +41,7 @@ export function ProgressScreen() {
   return (
     <Screen padded={false}>
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarInset }]}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -92,7 +94,6 @@ export function ProgressScreen() {
 const styles = StyleSheet.create({
   content: {
     padding: spacing.md,
-    paddingBottom: spacing.xl,
     gap: spacing.md,
   },
   header: {
