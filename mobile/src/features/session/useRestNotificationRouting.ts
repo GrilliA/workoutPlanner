@@ -3,7 +3,7 @@ import { router } from "expo-router";
 import { useEffect } from "react";
 import { Platform } from "react-native";
 
-const REST_NOTIFICATION_TYPES = new Set(["rest-ongoing", "rest-done"]);
+const REST_NOTIFICATION_TYPES = new Set(["rest-done"]);
 
 const routeFromResponse = (
   response: Notifications.NotificationResponse | null,
