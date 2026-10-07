@@ -2,23 +2,14 @@ import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 
 export const REST_TIMER_CHANNEL_ID = "rest-timer";
-export const REST_TIMER_CATEGORY_ID = "rest-timer";
-export const REST_SKIP_ACTION_ID = "rest-skip";
 
-export type RestNotificationKind = "rest-ongoing" | "rest-done";
+export type RestNotificationKind = "rest-done";
 
 export const formatRestClock = (endsAtMs: number): string => {
   const date = new Date(endsAtMs);
   const hours = String(date.getHours()).padStart(2, "0");
   const minutes = String(date.getMinutes()).padStart(2, "0");
   return `${hours}:${minutes}`;
-};
-
-export const formatRestDuration = (totalSec: number): string => {
-  const safe = Math.max(0, Math.floor(totalSec));
-  const minutes = Math.floor(safe / 60);
-  const seconds = safe % 60;
-  return `${minutes}:${String(seconds).padStart(2, "0")}`;
 };
 
 let channelReady: Promise<void> | null = null;
@@ -29,23 +20,14 @@ export const ensureRestTimerChannel = (): Promise<void> => {
   }
 
   if (!channelReady) {
-    channelReady = Promise.all([
-      Notifications.setNotificationChannelAsync(REST_TIMER_CHANNEL_ID, {
-        name: "Recupero",
-        importance: Notifications.AndroidImportance.HIGH,
-        sound: "default",
-        vibrationPattern: [0, 250, 120, 250],
-        lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
-        lightColor: "#bfdbf7",
-      }),
-      Notifications.setNotificationCategoryAsync(REST_TIMER_CATEGORY_ID, [
-        {
-          identifier: REST_SKIP_ACTION_ID,
-          buttonTitle: "Salta",
-          options: { opensAppToForeground: false },
-        },
-      ]),
-    ]).then(() => undefined);
+    channelReady = Notifications.setNotificationChannelAsync(REST_TIMER_CHANNEL_ID, {
+      name: "Recupero",
+      importance: Notifications.AndroidImportance.HIGH,
+      sound: "default",
+      vibrationPattern: [0, 250, 120, 250],
+      lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+      lightColor: "#bfdbf7",
+    }).then(() => undefined);
   }
 
   return channelReady;
@@ -61,45 +43,6 @@ export const ensureRestTimerPermission = (): Promise<boolean> => {
   }
 
   return permissionReady;
-};
-
-export const scheduleRestOngoingNotification = async (input: {
-  sessionId: number;
-  endsAtMs: number;
-  restSec: number;
-}): Promise<string | null> => {
-  if (Platform.OS === "ios") {
-    return null;
-  }
-
-  await ensureRestTimerChannel();
-
-  const permission = await Notifications.getPermissionsAsync();
-  if (!permission.granted) {
-    return null;
-  }
-
-  return Notifications.scheduleNotificationAsync({
-    content: {
-      title: "Recupero in corso",
-      body: `Termina alle ${formatRestClock(input.endsAtMs)} · ${formatRestDuration(input.restSec)}`,
-      data: {
-        sessionId: input.sessionId,
-        type: "rest-ongoing" satisfies RestNotificationKind,
-      },
-      sticky: true,
-      autoDismiss: false,
-      sound: false,
-      priority: Notifications.AndroidNotificationPriority.DEFAULT,
-      ...(Platform.OS === "android"
-        ? {
-            channelId: REST_TIMER_CHANNEL_ID,
-            categoryIdentifier: REST_TIMER_CATEGORY_ID,
-          }
-        : {}),
-    },
-    trigger: null,
-  });
 };
 
 export const scheduleRestDoneNotification = async (input: {
@@ -131,6 +74,26 @@ export const scheduleRestDoneNotification = async (input: {
       date: new Date(input.endsAtMs),
     },
   });
+};
+
+export const cancelScheduledRestDone = async (
+  sessionId: number,
+): Promise<void> => {
+  const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+
+  await Promise.all(
+    scheduled
+      .filter(
+        (notification) =>
+          notification.content.data?.type === "rest-done" &&
+          Number(notification.content.data?.sessionId) === sessionId,
+      )
+      .map((notification) =>
+        Notifications.cancelScheduledNotificationAsync(notification.identifier).catch(
+          () => undefined,
+        ),
+      ),
+  );
 };
 
 export const clearRestNotification = async (id: string | null): Promise<void> => {

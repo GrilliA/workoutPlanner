@@ -86,7 +86,10 @@ function sessionProgress(
 }
 
 export default function SessionScreen() {
-  const { sessionId: rawId } = useLocalSearchParams<{ sessionId: string }>();
+  const { sessionId: rawId, rest } = useLocalSearchParams<{
+    sessionId: string;
+    rest?: string;
+  }>();
   const sessionId = Number(rawId);
   const [session, setSession] = useState<WorkoutSessionWithSets | null>(null);
   const [localSets, setLocalSets] = useState<LoggedSet[]>([]);
@@ -111,6 +114,15 @@ export default function SessionScreen() {
   const loggedKeysRef = useRef(new Set<string>());
   const loggingLockRef = useRef(false);
   const timer = useRestTimer(sessionId);
+
+  useEffect(() => {
+    if (rest !== "skip") {
+      return;
+    }
+
+    timer.cancel();
+    router.setParams({ rest: undefined });
+  }, [rest, timer.cancel]);
 
   useEffect(() => {
     let cancelled = false;

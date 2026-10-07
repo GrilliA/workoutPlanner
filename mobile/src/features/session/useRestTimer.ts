@@ -3,29 +3,24 @@ import * as Notifications from "expo-notifications";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AppState, Platform } from "react-native";
 import {
+  dismissRestTimerNotification,
+  showRestTimerNotification,
+} from "../../../modules/rest-timer-notification";
+import {
   endRestTimerActivities,
   startRestTimerActivity,
 } from "./RestTimerActivity";
 import {
+  cancelScheduledRestDone,
   clearRestNotification,
   ensureRestTimerPermission,
-  REST_SKIP_ACTION_ID,
+  formatRestClock,
   scheduleRestDoneNotification,
-  scheduleRestOngoingNotification,
 } from "./restTimerNotifications";
 
 Notifications.setNotificationHandler({
   handleNotification: async (notification) => {
     const data = notification.request.content.data;
-    if (data?.type === "rest-ongoing") {
-      return {
-        shouldShowBanner: false,
-        shouldShowList: true,
-        shouldPlaySound: false,
-        shouldSetBadge: false,
-      };
-    }
-
     if (
       data?.type === "rest-done" &&
       Number(data?.sessionId) === mountedRestSessionId
@@ -69,22 +64,14 @@ export function useRestTimer(sessionId: number) {
 
   const endsAtRef = useRef<number | null>(null);
   const firedRef = useRef(false);
-  const ongoingNotificationIdRef = useRef<string | null>(null);
   const doneNotificationIdRef = useRef<string | null>(null);
   const appInForegroundRef = useRef(true);
 
   const clearNotifications = useCallback(async () => {
-    const ongoingId = ongoingNotificationIdRef.current;
     const doneId = doneNotificationIdRef.current;
-    ongoingNotificationIdRef.current = null;
     doneNotificationIdRef.current = null;
-    await Promise.all([clearRestNotification(ongoingId), clearRestNotification(doneId)]);
-  }, []);
-
-  const dismissOngoingOnly = useCallback(async () => {
-    const ongoingId = ongoingNotificationIdRef.current;
-    ongoingNotificationIdRef.current = null;
-    await clearRestNotification(ongoingId);
+    await clearRestNotification(doneId);
+    dismissRestTimerNotification();
   }, []);
 
   const cancel = useCallback(() => {
@@ -95,8 +82,9 @@ export function useRestTimer(sessionId: number) {
     setTotalSec(0);
     setRestingExerciseId(null);
     void clearNotifications();
+    void cancelScheduledRestDone(sessionId).catch(() => undefined);
     endRestTimerActivities();
-  }, [clearNotifications]);
+  }, [clearNotifications, sessionId]);
 
   const fireDone = useCallback(async () => {
     if (firedRef.current || endsAtRef.current === null) {
@@ -154,21 +142,18 @@ export function useRestTimer(sessionId: number) {
       setRestingExerciseId(exerciseId);
       setStatus("running");
       startRestTimerActivity({ sessionId, startedAtMs: Date.now(), endsAtMs: endsAt });
+      showRestTimerNotification({
+        sessionId,
+        endsAtMs: endsAt,
+        title: "Recupero in corso",
+        body: `Termina alle ${formatRestClock(endsAt)}`,
+      });
 
       try {
-        const [ongoingId, doneId] = await Promise.all([
-          scheduleRestOngoingNotification({
-            sessionId,
-            endsAtMs: endsAt,
-            restSec,
-          }),
-          scheduleRestDoneNotification({
-            sessionId,
-            endsAtMs: endsAt,
-          }),
-        ]);
-        ongoingNotificationIdRef.current = ongoingId;
-        doneNotificationIdRef.current = doneId;
+        doneNotificationIdRef.current = await scheduleRestDoneNotification({
+          sessionId,
+          endsAtMs: endsAt,
+        });
       } catch {
         // Expo web / simulatore: timer UI resta attivo senza notifica.
       }
@@ -223,31 +208,12 @@ export function useRestTimer(sessionId: number) {
         return;
       }
 
-      void dismissOngoingOnly();
+      dismissRestTimerNotification();
       checkExpiry();
     });
 
     return () => sub.remove();
-  }, [checkExpiry, dismissOngoingOnly, sessionId]);
-
-  useEffect(() => {
-    const sub = Notifications.addNotificationResponseReceivedListener(
-      (response) => {
-        if (response.actionIdentifier !== REST_SKIP_ACTION_ID) {
-          return;
-        }
-
-        const notifSessionId = response.notification.request.content.data?.sessionId;
-        if (notifSessionId !== undefined && Number(notifSessionId) !== sessionId) {
-          return;
-        }
-
-        cancel();
-      },
-    );
-
-    return () => sub.remove();
-  }, [cancel, sessionId]);
+  }, [checkExpiry, sessionId]);
 
   return {
     status,
