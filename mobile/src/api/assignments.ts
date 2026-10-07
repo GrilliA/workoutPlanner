@@ -25,3 +25,10 @@ export async function revokeActiveAssignment() {
     schema: revokedAssignmentSchema,
   });
 }
+
+export async function markAssignmentSeen() {
+  return apiRequest("/assignments/active/seen", {
+    method: "POST",
+    schema: z.object({ ok: z.literal(true) }),
+  });
+}

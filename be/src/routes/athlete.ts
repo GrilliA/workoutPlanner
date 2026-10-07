@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/requireAuth";
 import { requireRole } from "../middleware/requireRole";
+import { loadAthleteHome } from "../services/athleteHome";
 import {
   getAthleteCoach,
   linkAthleteToCoachByCode,
@@ -11,6 +12,11 @@ import { getAuthUser } from "../types/auth";
 export const athleteRouter = Router();
 
 athleteRouter.use(requireAuth, requireRole("athlete"));
+
+athleteRouter.get("/home", async (req, res) => {
+  const athlete = getAuthUser(req);
+  res.json(await loadAthleteHome(athlete.id));
+});
 
 athleteRouter.get("/coach", async (req, res) => {
   const athlete = getAuthUser(req);

@@ -26,4 +26,5 @@ export const programAssignments = pgTable("program_assignments", {
   status: text("status").notNull().default("scheduled").$type<AssignmentStatus>(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  seenAt: timestamp("seen_at"),
 });

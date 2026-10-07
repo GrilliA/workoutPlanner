@@ -115,3 +115,4 @@ export {
   type CatalogFacets,
   type CatalogSearchParams,
 } from "./catalog";
+export { athleteHomeSchema, type AthleteHome } from "./athletehome";
