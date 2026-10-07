@@ -113,7 +113,7 @@ In italiano, con queste sezioni:
 
 | PR | Titolo | Dipende da | Ondata | Stato |
 | --- | --- | --- | --- | --- |
-| N1 | Scaffold progetto + CI | — | 1 | [ ] |
+| N1 | Scaffold progetto + CI | — | 1 | [x] |
 | N2 | Rete + auth + login | N1 | 2 | [ ] |
 | N3 | Design system + shell a tab | N1 | 2 | [ ] |
 | N4 | Registrazione + Account | N2, N3 | 3 | [ ] |
