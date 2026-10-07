@@ -54,10 +54,33 @@ initialize:
       yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses || true
       "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
         "platform-tools" "platforms;android-37.0" "build-tools;36.0.0"
-      grep -q 'ANDROID_HOME' ~/.bashrc || cat >> ~/.bashrc <<'EOF'
-      export ANDROID_HOME=$HOME/Android/Sdk
-      export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
-EOF
+      grep -q 'ANDROID_HOME' ~/.bashrc || {
+        echo 'export ANDROID_HOME=$HOME/Android/Sdk' >> ~/.bashrc
+        echo 'export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH' >> ~/.bashrc
+      }
+
+      # Maven Central rate-limits cloud build IPs (HTTP 429): point Gradle at
+      # Google's read-only GCS mirror via an init script — VM-only, the repo
+      # build files stay on the standard repositories.
+      mkdir -p ~/.gradle/init.d
+      cat > ~/.gradle/init.d/maven-central-mirror.init.gradle.kts <<'INITEOF'
+      beforeSettings {
+          pluginManagement.repositories {
+              maven("https://maven-central.storage-download.googleapis.com/maven2/")
+          }
+          @Suppress("UnstableApiUsage")
+          dependencyResolutionManagement.repositories {
+              maven("https://maven-central.storage-download.googleapis.com/maven2/")
+          }
+      }
+
+      allprojects {
+          tasks.withType<Test>().configureEach {
+              systemProperty("robolectric.dependency.repo.id", "gcs-central-mirror")
+              systemProperty("robolectric.dependency.repo.url", "https://maven-central.storage-download.googleapis.com/maven2/")
+          }
+      }
+      INITEOF
 
 maintenance:
   - run: |

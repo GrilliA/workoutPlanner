@@ -29,7 +29,6 @@ android {
         versionCode = 1
         versionName = "0.1.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
     }
 
@@ -46,13 +45,6 @@ android {
     testOptions {
         unitTests.isIncludeAndroidResources = true
     }
-}
-
-tasks.withType<Test>().configureEach {
-    // Robolectric downloads its android-all jars from Maven Central at test
-    // time; Central rate-limits this IP, so use the read-only GCS mirror.
-    systemProperty("robolectric.dependency.repo.id", "gcs-central-mirror")
-    systemProperty("robolectric.dependency.repo.url", "https://maven-central.storage-download.googleapis.com/maven2")
 }
 
 kotlin {
