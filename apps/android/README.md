@@ -22,7 +22,7 @@ L'app Expo resta il riferimento di comportamento e copy finché la nativa non ar
 
 ## Setup
 
-Prerequisiti: **JDK 17** e **Android SDK** (cmdline-tools, `platforms;android-37.0`, `build-tools;36.0.0`, `platform-tools`). Su questa macchina CI/Devin sono già installati da `environment.yaml`; in locale:
+Prerequisiti: **JDK 17** e **Android SDK** (cmdline-tools, `platforms;android-37.0`, `build-tools;36.0.0`, `platform-tools`). Sulle VM Devin vengono installati da `environment.yaml`, in CI dal job `android` di `.github/workflows/ci.yml` (setup-java + l'SDK del runner); in locale:
 
 1. Installa **Android Studio** (porta JDK 17 embedded e l'SDK) oppure installa i command-line tools a mano.
 2. Crea `apps/android/local.properties`:
