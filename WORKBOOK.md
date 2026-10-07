@@ -13,6 +13,7 @@ How to use:
 
 | Date | Decision | Why |
 | --- | --- | --- |
+| 2026-10-07 | Track **N**: app atleta Android nativa in `apps/android/` (`com.traccia.android`, Kotlin + Compose + Hilt + Retrofit), 12 PR in 5 ondate eseguibili in parallelo da Devin Cloud. Piano: [`docs/plans/android-native.md`](docs/plans/android-native.md). L'app Expo resta fino a parità (N12) | Imparare Kotlin/Android su un prodotto vero; contratto comune (route, DTO, stringhe per feature) per evitare conflitti fra sessioni parallele |
 | 2026-09-28 | M2 builder scheda mobile = **una bozza locale** (`WorkoutDraft`: giorni → esercizi → serie) in un solo `WorkoutBuilder` per create/edit, salvata con **un** `saveWorkoutProgram` (POST / PUT upsert per id). Esercizi dal catalogo (o custom), import TXT riempie la bozza. Delete di esercizi già loggati resta com'è (cascade) → P2 | Le vecchie schermate avevano 1 giorno fisso, niente catalogo, 3 "Salva" separati e API per singola operazione; il PUT programma esiste già e fa diff per id |
 | 2026-09-08 | Lo smoke E2E vive in un job CI **separato** (`Smoke`) con Postgres di servizio e schema da `db:migrate`, non dentro il job Backend. `npm test` resta senza database | Un loop rotto deve dare un check rosso distinto, e i 79 unit test devono restare veloci ed eseguibili senza Docker |
 | 2026-09-08 | **Drift noto**: le migrazioni in `be/drizzle/` creano gli unique come indici e tre indici su `exercise_catalog` che lo schema Drizzle non dichiara. Per l'unicità è equivalente, ma un `db:push` in locale **cancella** quegli indici di ricerca | Emerso preparando P0e; da sanare con una migrazione dedicata, non dentro un chunk di test |
@@ -232,6 +233,10 @@ Order: P0 → P0.5 → P1 → P2 → P3. Igiene non blocca P0. Invite / assign /
 ### P3 — Nota sessione (M)
 
 - [ ] Wire `workout_sessions.notes` (colonna + Zod GET già lì) su PATCH e UI contestuale coach↔atleta. Testo breve, niente thread/allegati.
+
+### N — App Android nativa
+
+- [ ] N1–N12: vedi [`docs/plans/android-native.md`](docs/plans/android-native.md) (tabella "PR e dipendenze" = stato).
 
 ### Igiene / later (non fase prodotto)
 
