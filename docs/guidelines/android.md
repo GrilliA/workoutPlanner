@@ -23,7 +23,7 @@ apps/android/app/src/main/java/com/traccia/android/
 ## Ownership rules (parallel sessions)
 
 1. A PR touches **only** its `feature/<name>/` plus the files listed under "Tocca anche" in its card.
-2. **Routes** are all declared in `core/navigation/Routes.kt`. A feature PR never adds routes; it only replaces its route's `PlaceholderScreen` line in `RootNavHost.kt` / `MainShell.kt`.
+2. **Routes** are all declared in `core/navigation/Routes.kt`. A feature PR never adds routes; it only replaces its route's `PlaceholderScreen` line in `RootNavHost.kt` / `MainShell.kt`. Root nodes (`Login`, `Register`, `Main`, `WorkoutDetail`, `WorkoutEditor`, `Session`, `SessionComplete`) live in `RootNavHost.kt`; the 4 tabs live in `MainShell.kt`.
 3. **DTOs** live in `core/network/model/`, one Kotlin file per file in `mobile/src/api/schemas/`. If a feature needs a missing field, add it there (small change, described in the PR).
 4. **Strings**: one resource file per feature, `res/values/strings_<feature>.xml`. Never touch other features' files.
 5. **Shared UI** lives only in `core/designsystem`. A feature keeps new components private in `feature/<name>/ui/`; promotion to shared is a separate PR.

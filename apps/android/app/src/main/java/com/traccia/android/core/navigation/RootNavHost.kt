@@ -12,5 +12,9 @@ fun RootNavHost() {
         composable<Login> { PlaceholderScreen("Login") }
         composable<Register> { PlaceholderScreen("Register") }
         composable<Main> { PlaceholderScreen("Main") }
+        composable<WorkoutDetail> { PlaceholderScreen("WorkoutDetail") }
+        composable<WorkoutEditor> { PlaceholderScreen("WorkoutEditor") }
+        composable<Session> { PlaceholderScreen("Session") }
+        composable<SessionComplete> { PlaceholderScreen("SessionComplete") }
     }
 }
