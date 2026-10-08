@@ -1,7 +1,14 @@
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
+import {
+  promptExactRestAlarmOnce,
+  scheduleRestDoneAlarm,
+} from "../../../modules/rest-timer-notification";
 
 export const REST_TIMER_CHANNEL_ID = "rest-timer";
+
+const REST_DONE_TITLE = "Recupero finito";
+const REST_DONE_BODY = "Vai con la prossima serie";
 
 export type RestNotificationKind = "rest-done";
 
@@ -45,7 +52,7 @@ export const ensureRestTimerPermission = (): Promise<boolean> => {
   return permissionReady;
 };
 
-export const scheduleRestDoneNotification = async (input: {
+const scheduleRestDoneNotification = async (input: {
   sessionId: number;
   endsAtMs: number;
 }): Promise<string | null> => {
@@ -58,8 +65,8 @@ export const scheduleRestDoneNotification = async (input: {
 
   return Notifications.scheduleNotificationAsync({
     content: {
-      title: "Recupero finito",
-      body: "Vai con la prossima serie",
+      title: REST_DONE_TITLE,
+      body: REST_DONE_BODY,
       interruptionLevel: "timeSensitive",
       data: {
         sessionId: input.sessionId,
@@ -75,6 +82,38 @@ export const scheduleRestDoneNotification = async (input: {
     },
   });
 };
+
+export function scheduleExactRestDoneAlarm(input: {
+  sessionId: number;
+  endsAtMs: number;
+}): boolean {
+  return scheduleRestDoneAlarm({
+    sessionId: input.sessionId,
+    endsAtMs: input.endsAtMs,
+    title: REST_DONE_TITLE,
+    body: REST_DONE_BODY,
+  });
+}
+
+export async function scheduleRestDoneAlert(input: {
+  sessionId: number;
+  endsAtMs: number;
+}): Promise<string | null> {
+  await ensureRestTimerChannel();
+  if (scheduleExactRestDoneAlarm(input)) {
+    return null;
+  }
+
+  promptExactRestAlarmOnce();
+  const expoNotificationId = await scheduleRestDoneNotification(input);
+  if (!scheduleExactRestDoneAlarm(input)) {
+    return expoNotificationId;
+  }
+
+  await clearRestNotification(expoNotificationId);
+  await cancelScheduledRestDone(input.sessionId);
+  return null;
+}
 
 export const cancelScheduledRestDone = async (
   sessionId: number,

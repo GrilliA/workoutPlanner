@@ -15,12 +15,23 @@ import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 
 private const val CHANNEL_ID = "rest-timer-ongoing"
-private const val NOTIFICATION_ID = 4201
 private const val NOTIFICATION_COLOR = 0xFFBFDBF7.toInt()
 
 class RestTimerNotificationModule : Module() {
   override fun definition() = ModuleDefinition {
     Name("RestTimerNotification")
+
+    OnCreate {
+      RestTimerDoneAlarm.activityInForeground = appContext.currentActivity != null
+    }
+
+    OnActivityEntersForeground {
+      RestTimerDoneAlarm.activityInForeground = true
+    }
+
+    OnActivityEntersBackground {
+      RestTimerDoneAlarm.activityInForeground = false
+    }
 
     Function("showRestTimerNotification") { sessionId: Int, endsAtMs: Long, title: String, body: String ->
       show(sessionId, endsAtMs, title, body)
@@ -28,6 +39,26 @@ class RestTimerNotificationModule : Module() {
 
     Function("dismissRestTimerNotification") {
       dismiss()
+    }
+
+    Function("scheduleRestDoneAlarm") { sessionId: Int, endsAtMs: Long, title: String, body: String ->
+      val currentContext = context()
+      if (currentContext == null) {
+        false
+      } else {
+        RestTimerDoneAlarm.schedule(currentContext, sessionId, endsAtMs, title, body)
+      }
+    }
+
+    Function("setRestTimerSessionMounted") { mounted: Boolean ->
+      RestTimerDoneAlarm.sessionMounted = mounted
+    }
+
+    Function("promptExactRestAlarmOnce") {
+      val host = appContext.currentActivity ?: context()
+      if (host != null) {
+        RestTimerDoneAlarm.promptOnce(host)
+      }
     }
   }
 
@@ -54,15 +85,6 @@ class RestTimerNotificationModule : Module() {
     )
   }
 
-  private fun smallIcon(context: Context): Int {
-    val notificationIcon = context.resources.getIdentifier("notification_icon", "drawable", context.packageName)
-    if (notificationIcon != 0) {
-      return notificationIcon
-    }
-    val launcherIcon = context.resources.getIdentifier("ic_launcher", "mipmap", context.packageName)
-    return if (launcherIcon != 0) launcherIcon else android.R.drawable.ic_dialog_info
-  }
-
   private fun show(sessionId: Int, endsAtMs: Long, title: String, body: String) {
     val context = context() ?: return
 
@@ -76,7 +98,7 @@ class RestTimerNotificationModule : Module() {
 
     val now = System.currentTimeMillis()
     val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-      .setSmallIcon(smallIcon(context))
+      .setSmallIcon(notificationSmallIcon(context))
       .setColor(NOTIFICATION_COLOR)
       .setContentTitle(title)
       .setContentText(body)
@@ -98,11 +120,12 @@ class RestTimerNotificationModule : Module() {
       )
       .setRequestPromotedOngoing(true)
 
-    NotificationManagerCompat.from(context).notify(NOTIFICATION_ID, builder.build())
+    NotificationManagerCompat.from(context).notify(REST_TIMER_ONGOING_NOTIFICATION_ID, builder.build())
   }
 
   private fun dismiss() {
     val context = context() ?: return
-    NotificationManagerCompat.from(context).cancel(NOTIFICATION_ID)
+    NotificationManagerCompat.from(context).cancel(REST_TIMER_ONGOING_NOTIFICATION_ID)
+    RestTimerDoneAlarm.cancel(context)
   }
 }
