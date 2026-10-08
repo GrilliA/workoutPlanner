@@ -110,25 +110,23 @@ export function RestTimerCard({
         <View style={[styles.stage, isDone && styles.stageDone]}>
           <View style={styles.stageTop}>
             <Mascot name="sleeping" size={72} />
-            <View style={styles.stageCopy}>
-              <AppText variant="eyebrow" tone="muted" style={styles.eyebrow}>
-                {isDone ? "RECUPERO FINITO" : "RECUPERO"}
-              </AppText>
-              <AppText variant="title" tone="heading" style={styles.clock}>
-                {formatCountdown(isDone ? 0 : remainingSec)}
-              </AppText>
-              <View
-                style={styles.track}
-                accessibilityRole="progressbar"
-                accessibilityValue={{
-                  min: 0,
-                  max: totalSec,
-                  now: isDone ? 0 : remainingSec,
-                }}
-              >
-                <View style={[styles.fill, { width: `${ratio * 100}%` }]} />
-              </View>
-            </View>
+            <AppText variant="eyebrow" tone="muted" style={styles.eyebrow}>
+              {isDone ? "RECUPERO FINITO" : "RECUPERO"}
+            </AppText>
+          </View>
+          <AppText variant="title" tone="accent" style={styles.clock}>
+            {formatCountdown(isDone ? 0 : remainingSec)}
+          </AppText>
+          <View
+            style={styles.track}
+            accessibilityRole="progressbar"
+            accessibilityValue={{
+              min: 0,
+              max: totalSec,
+              now: isDone ? 0 : remainingSec,
+            }}
+          >
+            <View style={[styles.fill, { width: `${ratio * 100}%` }]} />
           </View>
           {showSkip ? (
             <Pressable
@@ -179,11 +177,13 @@ const styles = StyleSheet.create({
   },
   stage: {
     gap: spacing.sm,
+    alignItems: "center",
     backgroundColor: colors.accentBg,
     borderWidth: 1,
     borderColor: colors.accentBorder,
     borderRadius: radii.lg,
-    padding: spacing.md,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.md,
   },
   stageDone: {
     borderColor: colors.accent,
@@ -191,23 +191,23 @@ const styles = StyleSheet.create({
   stageTop: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     gap: spacing.sm,
   },
-  stageCopy: {
-    flex: 1,
-    gap: spacing.xs,
-    minWidth: 0,
-  },
   eyebrow: {
-    letterSpacing: 1,
-    fontSize: 11,
+    letterSpacing: 1.2,
+    fontSize: 13,
   },
   clock: {
     fontVariant: ["tabular-nums"],
-    lineHeight: 32,
+    fontSize: 64,
+    lineHeight: 72,
+    fontWeight: "700",
+    textAlign: "center",
   },
   track: {
-    height: 6,
+    alignSelf: "stretch",
+    height: spacing.sm,
     borderRadius: radii.pill,
     backgroundColor: colors.surface,
     overflow: "hidden",
@@ -218,9 +218,10 @@ const styles = StyleSheet.create({
     borderRadius: radii.pill,
   },
   skip: {
+    alignSelf: "stretch",
     backgroundColor: colors.accent,
     borderRadius: radii.md,
-    paddingVertical: 12,
+    paddingVertical: spacing.md,
     alignItems: "center",
   },
   pressed: {
@@ -228,7 +229,7 @@ const styles = StyleSheet.create({
   },
   skipLabel: {
     color: colors.onAccent,
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: "800",
     letterSpacing: 0.6,
   },
