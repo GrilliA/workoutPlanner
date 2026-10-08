@@ -1,38 +1,18 @@
-import { useState } from "react";
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Meta } from "../../components";
 import { colors, radii, spacing } from "../../theme";
 
 type SessionActionBarProps = {
   busy?: boolean;
   onComplete: () => void;
-  onAbandon: () => void;
 };
 
-/** Barra fissa: TERMINA rosso dominante (mock); ABBANDONA dietro conferma. */
+/** Barra fissa: solo Termina, outline. */
 export function SessionActionBar({
   busy = false,
   onComplete,
-  onAbandon,
 }: SessionActionBarProps) {
   const insets = useSafeAreaInsets();
-  const [showAbandon, setShowAbandon] = useState(false);
-
-  const requestAbandon = () => {
-    Alert.alert(
-      "Abbandonare la sessione?",
-      "La sessione verrà segnata come abbandonata. Le serie già registrate restano salvate.",
-      [
-        { text: "Annulla", style: "cancel" },
-        {
-          text: "Abbandona",
-          style: "destructive",
-          onPress: onAbandon,
-        },
-      ],
-    );
-  };
 
   return (
     <View
@@ -51,30 +31,8 @@ export function SessionActionBar({
           (busy || pressed) && styles.dimmed,
         ]}
       >
-        <Text style={styles.completeLabel}>TERMINA ALLENAMENTO</Text>
+        <Text style={styles.completeLabel}>Termina</Text>
       </Pressable>
-
-      {showAbandon ? (
-        <Pressable
-          onPress={requestAbandon}
-          disabled={busy}
-          style={styles.abandonBtn}
-          accessibilityRole="button"
-          accessibilityLabel="Abbandona sessione"
-        >
-          <Meta style={styles.abandonLabel}>Abbandona sessione</Meta>
-        </Pressable>
-      ) : (
-        <Pressable
-          onPress={() => setShowAbandon(true)}
-          disabled={busy}
-          style={styles.moreBtn}
-          accessibilityRole="button"
-          accessibilityLabel="Altre azioni"
-        >
-          <Meta>Altre azioni</Meta>
-        </Pressable>
-      )}
     </View>
   );
 }
@@ -84,33 +42,20 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg,
     paddingHorizontal: spacing.md,
     paddingTop: spacing.sm,
-    gap: spacing.xs,
   },
   completeBtn: {
-    backgroundColor: colors.danger,
-    borderRadius: radii.sm,
-    paddingVertical: 16,
+    borderWidth: 1,
+    borderColor: colors.muted,
+    borderRadius: radii.lg,
+    paddingVertical: 14,
     alignItems: "center",
   },
   completeLabel: {
-    color: "#ffffff",
-    fontWeight: "800",
+    color: colors.textHeading,
+    fontWeight: "700",
     fontSize: 15,
-    letterSpacing: 0.4,
   },
   dimmed: {
     opacity: 0.55,
-  },
-  moreBtn: {
-    alignSelf: "center",
-    paddingVertical: spacing.sm,
-  },
-  abandonBtn: {
-    alignSelf: "center",
-    paddingVertical: spacing.sm,
-  },
-  abandonLabel: {
-    color: colors.danger,
-    fontWeight: "700",
   },
 });

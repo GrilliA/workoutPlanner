@@ -9,7 +9,6 @@ import {
   View,
 } from "react-native";
 import {
-  abandonSession,
   completeSession,
   deleteLoggedSet,
   getExercisesByWorkout,
@@ -456,7 +455,7 @@ export default function SessionScreen() {
     }
   };
 
-  const finish = async (mode: "complete" | "abandon") => {
+  const finish = async () => {
     if (finishing || mutating) {
       return;
     }
@@ -466,25 +465,19 @@ export default function SessionScreen() {
 
     try {
       timer.cancel();
-      if (mode === "complete") {
-        const completedAt = new Date();
-        const volumeKg = computeVolumeKg(localSets);
-        await completeSession(session.id);
-        router.replace({
-          pathname: "/session/complete",
-          params: {
-            workoutName,
-            volumeKg: String(volumeKg),
-            durationMin: String(
-              computeDurationMin(session.startedAt, completedAt),
-            ),
-          },
-        } as unknown as Href);
-        return;
-      }
-
-      await abandonSession(session.id);
-      router.replace("/(app)");
+      const completedAt = new Date();
+      const volumeKg = computeVolumeKg(localSets);
+      await completeSession(session.id);
+      router.replace({
+        pathname: "/session/complete",
+        params: {
+          workoutName,
+          volumeKg: String(volumeKg),
+          durationMin: String(
+            computeDurationMin(session.startedAt, completedAt),
+          ),
+        },
+      } as unknown as Href);
     } catch (err) {
       setFinishing(false);
       setError(mutationErrorMessage(err, "Operazione fallita"));
@@ -521,6 +514,7 @@ export default function SessionScreen() {
           <RestTimerCard
             status={timer.status}
             remainingSec={timer.remainingSec}
+            totalSec={timer.totalSec}
             suggestedSec={suggestedRestSec}
             onSkip={timer.skip}
             onStartSuggested={() => {
@@ -626,10 +620,7 @@ export default function SessionScreen() {
           <SessionActionBar
             busy={chromeBusy}
             onComplete={() => {
-              void finish("complete");
-            }}
-            onAbandon={() => {
-              void finish("abandon");
+              void finish();
             }}
           />
         ) : null}
