@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AppState, Platform } from "react-native";
 import {
   dismissRestTimerNotification,
+  setRestTimerSessionMounted,
   showRestTimerNotification,
 } from "../../../modules/rest-timer-notification";
 import {
@@ -15,7 +16,8 @@ import {
   clearRestNotification,
   ensureRestTimerPermission,
   formatRestClock,
-  scheduleRestDoneNotification,
+  scheduleExactRestDoneAlarm,
+  scheduleRestDoneAlert,
 } from "./restTimerNotifications";
 
 Notifications.setNotificationHandler({
@@ -194,7 +196,7 @@ export function useRestTimer(sessionId: number) {
         });
 
         try {
-          const doneId = await scheduleRestDoneNotification({
+          const doneId = await scheduleRestDoneAlert({
             sessionId,
             endsAtMs: endsAt,
           });
@@ -219,7 +221,9 @@ export function useRestTimer(sessionId: number) {
     }
 
     mountedRestSessionId = sessionId;
+    setRestTimerSessionMounted(true);
     return () => {
+      setRestTimerSessionMounted(false);
       if (mountedRestSessionId === sessionId) {
         mountedRestSessionId = null;
       }
@@ -237,15 +241,34 @@ export function useRestTimer(sessionId: number) {
 
   useEffect(() => {
     const sub = AppState.addEventListener("change", (next) => {
-      appInForegroundRef.current = next === "active";
+      const inForeground = next === "active";
+      appInForegroundRef.current = inForeground;
 
-      if (next === "active") {
-        checkExpiry();
+      if (!inForeground) {
+        return;
       }
+
+      const endsAt = endsAtRef.current;
+      const expoNotificationId = doneNotificationIdRef.current;
+      if (
+        endsAt &&
+        expoNotificationId &&
+        !firedRef.current &&
+        endsAt > Date.now() &&
+        scheduleExactRestDoneAlarm({ sessionId, endsAtMs: endsAt })
+      ) {
+        doneNotificationIdRef.current = null;
+        void enqueueAlerts(async () => {
+          await clearRestNotification(expoNotificationId);
+          await cancelScheduledRestDone(sessionId);
+        });
+      }
+
+      checkExpiry();
     });
 
     return () => sub.remove();
-  }, [checkExpiry]);
+  }, [checkExpiry, enqueueAlerts, sessionId]);
 
   useEffect(() => {
     const sub = Notifications.addNotificationReceivedListener((notification) => {
