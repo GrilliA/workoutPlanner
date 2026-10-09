@@ -63,9 +63,13 @@ function AppRoutes() {
   );
 }
 
+// Vite BASE_URL is "/" in dev and "/workoutPlanner/" for `vite build --mode pages`.
+// Wouter concatenates base + path, so the trailing slash has to come off.
+const routerBase = import.meta.env.BASE_URL.replace(/\/$/, "");
+
 function App() {
   return (
-    <Router>
+    <Router base={routerBase}>
       <AppRoutes />
     </Router>
   );
