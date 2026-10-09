@@ -28,6 +28,12 @@ function copyIndexTo404(): Plugin {
 export default defineConfig(({ mode }) => {
   const pages = mode === "pages";
 
+  if (pages && !process.env.VITE_API_BASE?.trim()) {
+    throw new Error(
+      "VITE_API_BASE is required for vite build --mode pages. Set it to the Railway API URL, including /api.",
+    );
+  }
+
   return {
     base: pages ? pagesBase : "/",
     plugins: [react(), ...(pages ? [copyIndexTo404()] : [])],

@@ -38,6 +38,9 @@ jobs:
 
       - name: Build
         run: npm run build:pages
+        env:
+          # Same host the mobile app uses. Public URL, not a secret.
+          VITE_API_BASE: https://workoutplanner-production-974a.up.railway.app/api
 
       - name: Setup Pages
         uses: actions/configure-pages@v6
