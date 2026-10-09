@@ -4,10 +4,10 @@ import { db } from "../db";
 import { refreshTokens } from "../db/schema";
 import { authConfig } from "../config/auth";
 import { generateOpaqueToken, hashOpaqueToken, signAccessToken } from "./accessToken";
+import { refreshCookieSettings } from "./refreshCookie";
 import type { AuthUser } from "../types/auth";
 
 export const REFRESH_COOKIE_NAME = "refresh_token";
-const REFRESH_COOKIE_PATH = "/api/auth";
 
 const refreshCookieMaxAgeMs = (): number =>
   authConfig.refreshExpiresDays() * 24 * 60 * 60 * 1000;
@@ -17,21 +17,13 @@ const refreshExpiresAt = (): Date =>
 
 export const setRefreshCookie = (res: Response, token: string): void => {
   res.cookie(REFRESH_COOKIE_NAME, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: REFRESH_COOKIE_PATH,
+    ...refreshCookieSettings(),
     maxAge: refreshCookieMaxAgeMs(),
   });
 };
 
 export const clearRefreshCookie = (res: Response): void => {
-  res.clearCookie(REFRESH_COOKIE_NAME, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: REFRESH_COOKIE_PATH,
-  });
+  res.clearCookie(REFRESH_COOKIE_NAME, refreshCookieSettings());
 };
 
 export const createRefreshSession = async (userId: number): Promise<string> => {
