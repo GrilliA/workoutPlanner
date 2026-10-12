@@ -160,12 +160,13 @@ export function workoutDraftFromSchedaTxt(parsed: ParsedScheda): WorkoutDraft {
           const media = exercise.catalogId
             ? catalogImageUrlsFromId(exercise.catalogId)
             : null;
+          const nameIt = exercise.nameIt?.trim() || null;
           return {
             key: newDraftKey("ex"),
             catalogId: exercise.catalogId ?? null,
-            name: exercise.name,
-            nameIt: null,
-            nameEn: null,
+            name: nameIt || exercise.name,
+            nameIt,
+            nameEn: exercise.nameEn?.trim() || null,
             imageUrl: media?.imageUrl ?? null,
             imageUrlEnd: media?.imageUrlEnd ?? null,
             prescriptions: prescriptionsFromServer(

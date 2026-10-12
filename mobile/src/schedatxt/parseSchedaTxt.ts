@@ -4,6 +4,7 @@ import {
   WORKOUT_TYPE_OPTIONS,
   type WorkoutSettings,
 } from "../api/schemas/workout";
+import catalogPromptExercises from "./catalogPromptExercises.json" with { type: "json" };
 
 export type DraftSetPrescription = {
   setNumber: number;
@@ -16,6 +17,10 @@ export type DraftExercise = {
   serverId?: number;
   name: string;
   catalogId?: string | null;
+  nameIt?: string | null;
+  nameEn?: string | null;
+  imageUrl?: string | null;
+  imageUrlEnd?: string | null;
   setPrescriptions: DraftSetPrescription[];
 };
 
@@ -58,6 +63,48 @@ const createClientId = (): string =>
   typeof crypto !== "undefined" && "randomUUID" in crypto
     ? crypto.randomUUID()
     : `id-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+type CatalogPromptExercise = {
+  id: string;
+  name: string;
+  nameIt: string;
+  label: string;
+};
+
+const CATALOG_MEDIA_BASE =
+  "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises";
+
+const normalizeCatalogTitle = (value: string) =>
+  value.trim().toLowerCase().replace(/\s+/g, " ");
+
+const catalogByTitle = new Map<string, CatalogPromptExercise>();
+for (const exercise of catalogPromptExercises as CatalogPromptExercise[]) {
+  catalogByTitle.set(normalizeCatalogTitle(exercise.label), exercise);
+  const english = normalizeCatalogTitle(exercise.name);
+  if (!catalogByTitle.has(english)) {
+    catalogByTitle.set(english, exercise);
+  }
+}
+
+const CATALOG_PROMPT_NAMES = (catalogPromptExercises as CatalogPromptExercise[])
+  .map((exercise) => exercise.label)
+  .join("\n");
+
+const draftExercise = (title: string): DraftExercise => {
+  const catalog = catalogByTitle.get(normalizeCatalogTitle(title));
+  const folder = catalog ? encodeURIComponent(catalog.id) : null;
+
+  return {
+    clientId: createClientId(),
+    name: title,
+    catalogId: catalog?.id ?? null,
+    nameIt: catalog?.nameIt ?? null,
+    nameEn: catalog?.name ?? null,
+    imageUrl: folder ? `${CATALOG_MEDIA_BASE}/${folder}/0.jpg` : null,
+    imageUrlEnd: folder ? `${CATALOG_MEDIA_BASE}/${folder}/1.jpg` : null,
+    setPrescriptions: [],
+  };
+};
 
 const snapRestOption = (value: number): WorkoutSettings["defaultRestSec"] => {
   let best: (typeof REST_SEC_OPTIONS)[number] = REST_SEC_OPTIONS[1];
@@ -323,12 +370,7 @@ export const parseSchedaTxt = (input: string): ParseSchedaResult => {
         return exerciseError;
       }
 
-      currentExercise = {
-        clientId: createClientId(),
-        name: exerciseMarkdown[1]!.trim(),
-        catalogId: null,
-        setPrescriptions: [],
-      };
+      currentExercise = draftExercise(exerciseMarkdown[1]!.trim());
       continue;
     }
 
@@ -392,12 +434,7 @@ export const parseSchedaTxt = (input: string): ParseSchedaResult => {
       return exerciseError;
     }
 
-    currentExercise = {
-      clientId: createClientId(),
-      name: line.replace(/^[-*]\s+/, "").trim(),
-      catalogId: null,
-      setPrescriptions: [],
-    };
+    currentExercise = draftExercise(line.replace(/^[-*]\s+/, "").trim());
   }
 
   const finalError = pushDay();
@@ -460,7 +497,11 @@ Regole:
   recupero: 90
   oppure omettere @recupero e usare il default della scheda: 12 10 8 6
 - Non inventare esercizi pericolosi o attrezzatura impossibile in palestra standard.
+- Il titolo dopo ### deve essere copiato identico da «Nomi esercizio ammessi». Non tradurre, non abbreviare, non inventare varianti. Se due esercizi hanno lo stesso nome italiano, usa la riga che include anche il nome inglese.
 - Output: SOLO il testo della scheda.
+
+Nomi esercizio ammessi:
+${CATALOG_PROMPT_NAMES}
 
 Parametri richiesti dall'utente (compila tu se mancano con scelte ragionevoli):
 - Obiettivo:

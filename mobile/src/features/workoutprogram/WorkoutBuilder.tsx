@@ -115,8 +115,8 @@ function ImportSchedaModal({ onClose, onApply }: ImportSchedaModalProps) {
             <Heading>Importa da testo</Heading>
             {error ? <ErrorBanner message={error} /> : null}
             <Body>
-              Condividi/copia il prompt, usalo in ChatGPT/Claude, poi incolla
-              qui la scheda generata.
+              Condividi/copia il prompt (include i nomi del catalogo), usalo in
+              ChatGPT/Claude, poi incolla qui la scheda generata.
             </Body>
             <PrimaryButton
               label="Condividi / copia prompt AI"
