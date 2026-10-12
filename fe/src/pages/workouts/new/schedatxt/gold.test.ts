@@ -12,19 +12,15 @@ import {
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const GOLD_DIR = join(HERE, "gold");
-const MOBILE_PARSER = join(
-  HERE,
-  "..",
-  "..",
-  "..",
-  "..",
-  "..",
-  "..",
-  "mobile",
-  "src",
-  "schedatxt",
-  "parseSchedaTxt.ts",
-);
+const MOBILE_PARSER = join(HERE, "..", "..", "..", "..", "..", "..", "mobile", "src", "schedatxt");
+
+const promptTemplate = (source: string): string => {
+  const match = source.match(/export const SCHEDA_TXT_AI_PROMPT = `([\s\S]*?)`;/);
+  if (!match?.[1]) {
+    throw new Error("SCHEDA_TXT_AI_PROMPT template missing");
+  }
+  return match[1];
+};
 
 const GOLD_CASES = [
   "ppl-3x",
@@ -121,10 +117,57 @@ describe("SCHEDA_TXT_AI_PROMPT contract", () => {
   });
 
   it("keeps the mobile copy of the prompt in sync", () => {
-    const mobileSrc = readFileSync(MOBILE_PARSER, "utf8");
-    assert.ok(
-      mobileSrc.includes(SCHEDA_TXT_AI_PROMPT),
+    const feSrc = readFileSync(join(HERE, "parseSchedaTxt.ts"), "utf8");
+    const mobileSrc = readFileSync(join(MOBILE_PARSER, "parseSchedaTxt.ts"), "utf8");
+    assert.equal(
+      promptTemplate(mobileSrc),
+      promptTemplate(feSrc),
       "mobile/src/schedatxt/parseSchedaTxt.ts SCHEDA_TXT_AI_PROMPT diverged from fe/",
     );
+    assert.equal(
+      readFileSync(join(MOBILE_PARSER, "catalogPromptExercises.json"), "utf8"),
+      readFileSync(join(HERE, "catalogPromptExercises.json"), "utf8"),
+    );
+  });
+
+  it("lists catalog names and links an exact title to its photo", () => {
+    assert.match(SCHEDA_TXT_AI_PROMPT, /Nomi esercizio ammessi:\n/);
+    assert.match(SCHEDA_TXT_AI_PROMPT, /^Panca piana$/m);
+    assert.match(SCHEDA_TXT_AI_PROMPT, /^Squat — Barbell Squat$/m);
+
+    const result = parseSchedaTxt(`# Test
+Frequenza: 3× a settimana
+Tipo: Ipertrofia
+Recupero default: 90
+
+## Giorno 1: Upper
+### Panca piana
+8@90
+
+### Squat — Barbell Squat
+5@150
+
+### Esercizio inventato
+10@90
+`);
+
+    assert.equal(result.ok, true, result.ok ? "" : result.error);
+    if (!result.ok) {
+      return;
+    }
+
+    const [bench, squat, custom] = result.value.days[0]!.exercises;
+    assert.equal(bench!.name, "Panca piana");
+    assert.equal(bench!.catalogId, "Barbell_Bench_Press_-_Medium_Grip");
+    assert.equal(bench!.nameIt, "Panca piana");
+    assert.equal(
+      bench!.imageUrl,
+      "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Bench_Press_-_Medium_Grip/0.jpg",
+    );
+    assert.equal(bench!.imageUrlEnd?.endsWith("/1.jpg"), true);
+    assert.equal(squat!.catalogId, "Barbell_Squat");
+    assert.equal(squat!.nameIt, "Squat");
+    assert.equal(custom!.catalogId, null);
+    assert.equal(custom!.imageUrl, null);
   });
 });

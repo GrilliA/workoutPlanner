@@ -61,7 +61,8 @@ export function SchedaTxtPaste({ onApply, compact = false }: SchedaTxtPasteProps
 
       <p className="scheda-txt__hint">
         Giorni numerati (Giorno 1, 2…), poi esercizi e serie tipo{" "}
-        <code>12@90 10@90 8@120</code>. Il prompt AI genera questo formato.
+        <code>12@90 10@90 8@120</code>. Il prompt AI elenca i nomi del catalogo e
+        genera questo formato.
       </p>
 
       <textarea
