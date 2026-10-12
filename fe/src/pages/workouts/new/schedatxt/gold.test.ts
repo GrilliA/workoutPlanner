@@ -9,10 +9,18 @@ import {
   SCHEDA_TXT_EXAMPLE,
   type ParsedScheda,
 } from "./parseSchedaTxt.ts";
-import { SCHEDA_TXT_AI_PROMPT as mobilePrompt } from "../../../../../../mobile/src/schedatxt/parseSchedaTxt.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const GOLD_DIR = join(HERE, "gold");
+const MOBILE_PARSER = join(HERE, "..", "..", "..", "..", "..", "..", "mobile", "src", "schedatxt");
+
+const promptTemplate = (source: string): string => {
+  const match = source.match(/export const SCHEDA_TXT_AI_PROMPT = `([\s\S]*?)`;/);
+  if (!match?.[1]) {
+    throw new Error("SCHEDA_TXT_AI_PROMPT template missing");
+  }
+  return match[1];
+};
 
 const GOLD_CASES = [
   "ppl-3x",
@@ -109,10 +117,16 @@ describe("SCHEDA_TXT_AI_PROMPT contract", () => {
   });
 
   it("keeps the mobile copy of the prompt in sync", () => {
+    const feSrc = readFileSync(join(HERE, "parseSchedaTxt.ts"), "utf8");
+    const mobileSrc = readFileSync(join(MOBILE_PARSER, "parseSchedaTxt.ts"), "utf8");
     assert.equal(
-      mobilePrompt,
-      SCHEDA_TXT_AI_PROMPT,
+      promptTemplate(mobileSrc),
+      promptTemplate(feSrc),
       "mobile/src/schedatxt/parseSchedaTxt.ts SCHEDA_TXT_AI_PROMPT diverged from fe/",
+    );
+    assert.equal(
+      readFileSync(join(MOBILE_PARSER, "catalogPromptExercises.json"), "utf8"),
+      readFileSync(join(HERE, "catalogPromptExercises.json"), "utf8"),
     );
   });
 
