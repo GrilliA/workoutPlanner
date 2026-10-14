@@ -66,7 +66,7 @@ function firstIncompleteIndex(
 }
 
 function mutationErrorMessage(err: unknown, fallback: string): string {
-  return err instanceof ApiError ? err.message : fallback;
+  return ApiError.messageFrom(err, fallback);
 }
 
 function sessionProgress(
@@ -197,7 +197,7 @@ export default function SessionScreen() {
         setFocusIndex(firstIncompleteIndex(nextExercises, grouped));
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof ApiError ? err.message : "Errore caricamento");
+          setError(ApiError.messageFrom(err, "Errore caricamento"));
         }
       } finally {
         if (!cancelled) {
