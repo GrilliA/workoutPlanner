@@ -160,6 +160,7 @@ describe("paid loop smoke", { concurrency: false }, () => {
   let firstAssignment!: Assignment;
   let firstWorkout!: Workout;
   let completedSession!: Session;
+  let openSession!: Session;
 
   before(async () => {
     requireScratchDatabase();
@@ -270,7 +271,10 @@ describe("paid loop smoke", { concurrency: false }, () => {
         athleteId: athlete.user.id,
         startsAt: today,
         expiresAt: firstExpiresAt,
-        name: "Smoke A",
+        program: {
+          name: "Smoke A",
+          days: [{ name: "Giorno 1", exercises: [{ name: "Panca piana" }] }],
+        },
       },
     });
     assert.equal(
@@ -432,5 +436,135 @@ describe("paid loop smoke", { concurrency: false }, () => {
       201,
       failMessage(started.status, started.body),
     );
+    openSession = asObject(started.body) as Session;
   });
+
+  it("a set resent by key after a lost response is stored once", async () => {
+    const exerciseId = await firstExerciseId();
+    const path = `/api/sessions/${openSession.id}/sets/${exerciseId}/1`;
+
+    const first = await api(baseUrl, "PUT", path, {
+      token: athlete.accessToken,
+      mobile: true,
+      body: { reps: 8, weightKg: 60 },
+    });
+    assert.equal(first.status, 200, failMessage(first.status, first.body));
+
+    const retried = await api(baseUrl, "PUT", path, {
+      token: athlete.accessToken,
+      mobile: true,
+      body: { reps: 10, weightKg: 60 },
+    });
+    assert.equal(retried.status, 200, failMessage(retried.status, retried.body));
+
+    const sets = await loggedSetsOf(openSession.id);
+    assert.equal(sets.length, 1);
+    assert.equal(sets[0].reps, 10);
+    assert.equal(sets[0].setNumber, 1);
+  });
+
+  it("a set synced late keeps a time inside the session", async () => {
+    const exerciseId = await firstExerciseId();
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+    const saved = await api(
+      baseUrl,
+      "PUT",
+      `/api/sessions/${openSession.id}/sets/${exerciseId}/2`,
+      {
+        token: athlete.accessToken,
+        mobile: true,
+        body: { reps: 6, loggedAt: yesterday },
+      },
+    );
+    assert.equal(saved.status, 200, failMessage(saved.status, saved.body));
+
+    const session = asObject(
+      (await api(baseUrl, "GET", `/api/sessions/${openSession.id}`, {
+        token: athlete.accessToken,
+        mobile: true,
+      })).body,
+    );
+    assert.equal(
+      asObject(saved.body).loggedAt,
+      session.startedAt,
+      "a time before the start is moved to the start",
+    );
+  });
+
+  it("a set deleted by key stays deleted when the delete is resent", async () => {
+    const exerciseId = await firstExerciseId();
+    const path = `/api/sessions/${openSession.id}/sets/${exerciseId}/2`;
+
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const deleted = await api(baseUrl, "DELETE", path, {
+        token: athlete.accessToken,
+        mobile: true,
+      });
+      assert.equal(deleted.status, 204, failMessage(deleted.status, deleted.body));
+    }
+
+    const sets = await loggedSetsOf(openSession.id);
+    assert.deepEqual(
+      sets.map((set) => set.setNumber),
+      [1],
+    );
+  });
+
+  it("a set for an exercise outside the workout is rejected", async () => {
+    const rejected = await api(
+      baseUrl,
+      "PUT",
+      `/api/sessions/${openSession.id}/sets/999999/1`,
+      {
+        token: athlete.accessToken,
+        mobile: true,
+        body: { reps: 5 },
+      },
+    );
+    assert.equal(rejected.status, 400, failMessage(rejected.status, rejected.body));
+  });
+
+  it("a set sent after the session is closed is refused", async () => {
+    const exerciseId = await firstExerciseId();
+    const completed = await api(baseUrl, "PATCH", `/api/sessions/${openSession.id}`, {
+      token: athlete.accessToken,
+      mobile: true,
+      body: { status: "completed" },
+    });
+    assert.equal(completed.status, 200, failMessage(completed.status, completed.body));
+
+    const late = await api(
+      baseUrl,
+      "PUT",
+      `/api/sessions/${openSession.id}/sets/${exerciseId}/3`,
+      {
+        token: athlete.accessToken,
+        mobile: true,
+        body: { reps: 5 },
+      },
+    );
+    assert.equal(late.status, 409, failMessage(late.status, late.body));
+  });
+
+  async function firstExerciseId(): Promise<number> {
+    const listed = await api(
+      baseUrl,
+      "GET",
+      `/api/workouts/${firstWorkout.id}/exercises`,
+      { token: athlete.accessToken, mobile: true },
+    );
+    assert.equal(listed.status, 200, failMessage(listed.status, listed.body));
+    assert.ok(Array.isArray(listed.body) && listed.body.length > 0);
+    return Number(asObject(listed.body[0]).id);
+  }
+
+  async function loggedSetsOf(sessionId: number): Promise<JsonObject[]> {
+    const session = await api(baseUrl, "GET", `/api/sessions/${sessionId}`, {
+      token: athlete.accessToken,
+      mobile: true,
+    });
+    assert.equal(session.status, 200, failMessage(session.status, session.body));
+    return asObject(session.body).sets as JsonObject[];
+  }
 });

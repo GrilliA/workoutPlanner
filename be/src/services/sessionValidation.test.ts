@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { validatePatchSessionInput } from "./sessionValidation";
+import { clampLoggedAt, validatePatchSessionInput } from "./sessionValidation";
 
 describe("validatePatchSessionInput", () => {
   it("accepts completed without sets", () => {
@@ -79,5 +79,42 @@ describe("validatePatchSessionInput", () => {
     });
 
     assert.equal(parsed.ok, false);
+  });
+});
+
+describe("clampLoggedAt", () => {
+  const startedAt = new Date("2026-10-14T08:00:00.000Z");
+  const now = new Date("2026-10-14T09:00:00.000Z");
+
+  it("uses now when the phone sends no time", () => {
+    const parsed = clampLoggedAt(undefined, startedAt, now);
+
+    assert.deepEqual(parsed, { ok: true, value: now });
+  });
+
+  it("keeps a time inside the session", () => {
+    const parsed = clampLoggedAt("2026-10-14T08:30:00.000Z", startedAt, now);
+
+    assert.deepEqual(parsed, {
+      ok: true,
+      value: new Date("2026-10-14T08:30:00.000Z"),
+    });
+  });
+
+  it("moves a time before the start up to the start", () => {
+    const parsed = clampLoggedAt("2026-10-13T08:30:00.000Z", startedAt, now);
+
+    assert.deepEqual(parsed, { ok: true, value: startedAt });
+  });
+
+  it("moves a future time back to now", () => {
+    const parsed = clampLoggedAt("2026-10-15T08:30:00.000Z", startedAt, now);
+
+    assert.deepEqual(parsed, { ok: true, value: now });
+  });
+
+  it("rejects values that are not a date-time string", () => {
+    assert.equal(clampLoggedAt("ieri", startedAt, now).ok, false);
+    assert.equal(clampLoggedAt(1760432400000, startedAt, now).ok, false);
   });
 });
