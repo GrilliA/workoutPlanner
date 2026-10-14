@@ -257,11 +257,12 @@ export const validatePatchLoggedSetInput = (
 export const isValidSessionStatus = isSessionStatus;
 
 /**
- * A set synced late from the phone keeps the time it was logged, held inside
- * the session window so a wrong phone clock cannot place it before the start
- * or in the future. Missing → now.
+ * A time sent late from the phone (a set's loggedAt, a session's completedAt)
+ * is kept, but held inside the session window so a wrong phone clock cannot
+ * place it before the start or in the future. Missing → now.
  */
-export const clampLoggedAt = (
+export const clampToSessionWindow = (
+  field: string,
   value: unknown,
   startedAt: Date,
   now: Date,
@@ -272,19 +273,19 @@ export const clampLoggedAt = (
     return { ok: true, value: now };
   }
 
-  const loggedAt = typeof value === "string" ? new Date(value) : null;
+  const time = typeof value === "string" ? new Date(value) : null;
 
-  if (!loggedAt || Number.isNaN(loggedAt.getTime())) {
-    return { ok: false, error: "loggedAt must be an ISO date-time string" };
+  if (!time || Number.isNaN(time.getTime())) {
+    return { ok: false, error: `${field} must be an ISO date-time string` };
   }
 
-  if (loggedAt < startedAt) {
+  if (time < startedAt) {
     return { ok: true, value: startedAt };
   }
 
-  if (loggedAt > now) {
+  if (time > now) {
     return { ok: true, value: now };
   }
 
-  return { ok: true, value: loggedAt };
+  return { ok: true, value: time };
 };

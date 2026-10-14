@@ -20,7 +20,7 @@ import {
   parseSessionHistoryPage,
 } from "../services/sessionHistoryAccess";
 import {
-  clampLoggedAt,
+  clampToSessionWindow,
   validateLogSetInput,
   validatePatchLoggedSetInput,
   validatePatchSessionInput,
@@ -281,6 +281,18 @@ sessionsRouter.patch("/:id", async (req, res) => {
     return;
   }
 
+  const completedAt = clampToSessionWindow(
+    "completedAt",
+    req.body.completedAt,
+    session.startedAt,
+    new Date(),
+  );
+
+  if (!completedAt.ok) {
+    res.status(400).json({ error: completedAt.error });
+    return;
+  }
+
   const flushSets = parsed.value.sets;
 
   if (flushSets !== undefined) {
@@ -319,7 +331,7 @@ sessionsRouter.patch("/:id", async (req, res) => {
           .update(workoutSessions)
           .set({
             status: parsed.value.status,
-            completedAt: new Date(),
+            completedAt: completedAt.value,
           })
           .where(eq(workoutSessions.id, id))
           .returning();
@@ -350,7 +362,7 @@ sessionsRouter.patch("/:id", async (req, res) => {
       .update(workoutSessions)
       .set({
         status: parsed.value.status,
-        completedAt: new Date(),
+        completedAt: completedAt.value,
       })
       .where(eq(workoutSessions.id, id))
       .returning();
@@ -567,7 +579,7 @@ sessionSetsRouter.put("/:exerciseId/:setNumber", async (req, res) => {
     return;
   }
 
-  const loggedAt = clampLoggedAt(req.body.loggedAt, session.startedAt, new Date());
+  const loggedAt = clampToSessionWindow("loggedAt", req.body.loggedAt, session.startedAt, new Date());
 
   if (!loggedAt.ok) {
     res.status(400).json({ error: loggedAt.error });

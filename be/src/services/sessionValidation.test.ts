@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { clampLoggedAt, validatePatchSessionInput } from "./sessionValidation";
+import { clampToSessionWindow, validatePatchSessionInput } from "./sessionValidation";
 
 describe("validatePatchSessionInput", () => {
   it("accepts completed without sets", () => {
@@ -82,18 +82,18 @@ describe("validatePatchSessionInput", () => {
   });
 });
 
-describe("clampLoggedAt", () => {
+describe("clampToSessionWindow", () => {
   const startedAt = new Date("2026-10-14T08:00:00.000Z");
   const now = new Date("2026-10-14T09:00:00.000Z");
 
   it("uses now when the phone sends no time", () => {
-    const parsed = clampLoggedAt(undefined, startedAt, now);
+    const parsed = clampToSessionWindow("loggedAt", undefined, startedAt, now);
 
     assert.deepEqual(parsed, { ok: true, value: now });
   });
 
   it("keeps a time inside the session", () => {
-    const parsed = clampLoggedAt("2026-10-14T08:30:00.000Z", startedAt, now);
+    const parsed = clampToSessionWindow("loggedAt", "2026-10-14T08:30:00.000Z", startedAt, now);
 
     assert.deepEqual(parsed, {
       ok: true,
@@ -102,19 +102,26 @@ describe("clampLoggedAt", () => {
   });
 
   it("moves a time before the start up to the start", () => {
-    const parsed = clampLoggedAt("2026-10-13T08:30:00.000Z", startedAt, now);
+    const parsed = clampToSessionWindow("loggedAt", "2026-10-13T08:30:00.000Z", startedAt, now);
 
     assert.deepEqual(parsed, { ok: true, value: startedAt });
   });
 
   it("moves a future time back to now", () => {
-    const parsed = clampLoggedAt("2026-10-15T08:30:00.000Z", startedAt, now);
+    const parsed = clampToSessionWindow("loggedAt", "2026-10-15T08:30:00.000Z", startedAt, now);
 
     assert.deepEqual(parsed, { ok: true, value: now });
   });
 
   it("rejects values that are not a date-time string", () => {
-    assert.equal(clampLoggedAt("ieri", startedAt, now).ok, false);
-    assert.equal(clampLoggedAt(1760432400000, startedAt, now).ok, false);
+    assert.equal(clampToSessionWindow("loggedAt", "ieri", startedAt, now).ok, false);
+    assert.equal(clampToSessionWindow("loggedAt", 1760432400000, startedAt, now).ok, false);
+  });
+
+  it("names the field in the error", () => {
+    assert.deepEqual(clampToSessionWindow("completedAt", "ieri", startedAt, now), {
+      ok: false,
+      error: "completedAt must be an ISO date-time string",
+    });
   });
 });
