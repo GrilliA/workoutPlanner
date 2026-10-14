@@ -108,6 +108,9 @@ const refreshAccessTokenDirect = async (): Promise<string | null> => {
       "X-Client": MOBILE_CLIENT_HEADER,
     },
     body: JSON.stringify({ refreshToken }),
+  }).catch((error: unknown) => {
+    const detail = error instanceof Error ? error.message : "network error";
+    throw new ApiError(0, `Rete: ${detail}`);
   });
 
   if (response.status === 401) {
