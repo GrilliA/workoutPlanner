@@ -547,6 +547,37 @@ describe("paid loop smoke", { concurrency: false }, () => {
     assert.equal(late.status, 409, failMessage(late.status, late.body));
   });
 
+  it("a close resent after a lost response returns the saved session", async () => {
+    const path = `/api/sessions/${openSession.id}`;
+    const before = await api(baseUrl, "GET", path, {
+      token: athlete.accessToken,
+      mobile: true,
+    });
+    assert.equal(before.status, 200, failMessage(before.status, before.body));
+
+    const resent = await api(baseUrl, "PATCH", path, {
+      token: athlete.accessToken,
+      mobile: true,
+      body: { status: "completed", sets: [] },
+    });
+    assert.equal(resent.status, 200, failMessage(resent.status, resent.body));
+
+    const body = asObject(resent.body);
+    const saved = asObject(before.body);
+    assert.equal(body.status, "completed");
+    assert.equal(body.completedAt, saved.completedAt, "the close time does not move");
+    assert.deepEqual(body.sets, saved.sets, "a resent close does not touch the sets");
+  });
+
+  it("a closed session cannot be closed the other way", async () => {
+    const abandoned = await api(baseUrl, "PATCH", `/api/sessions/${openSession.id}`, {
+      token: athlete.accessToken,
+      mobile: true,
+      body: { status: "abandoned" },
+    });
+    assert.equal(abandoned.status, 409, failMessage(abandoned.status, abandoned.body));
+  });
+
   async function firstExerciseId(): Promise<number> {
     const listed = await api(
       baseUrl,

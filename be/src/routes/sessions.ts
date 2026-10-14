@@ -262,10 +262,17 @@ sessionsRouter.patch("/:id", async (req, res) => {
     return;
   }
 
-  const session = await findSessionForUser(id, user.id);
+  const session = await loadSessionWithSets(id, user.id);
 
   if (!session) {
     res.status(404).json({ error: "Session not found" });
+    return;
+  }
+
+  // A close resent after a lost response finds the session already closed
+  // the same way: answer with what was saved instead of failing.
+  if (session.status === parsed.value.status) {
+    res.json(session);
     return;
   }
 
