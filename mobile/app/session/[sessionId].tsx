@@ -23,6 +23,7 @@ import {
   type WorkoutSessionWithSets,
 } from "../../src/api";
 import { ApiError } from "../../src/api/client";
+import { useAuth } from "../../src/auth";
 import {
   ErrorBanner,
   LoadingBlock,
@@ -45,6 +46,11 @@ import {
   computeVolumeKg,
 } from "../../src/features/session/celebrationStats";
 import { RestTimerCard } from "../../src/features/session/RestTimerCard";
+import {
+  readSessionBundle,
+  saveSessionBundle,
+  type SessionBundle,
+} from "../../src/features/session/sessionBundle";
 import { SessionActionBar } from "../../src/features/session/SessionActionBar";
 import { SessionFocusHeader } from "../../src/features/session/SessionFocusHeader";
 import { useRestTimer } from "../../src/features/session/useRestTimer";
@@ -113,6 +119,7 @@ export default function SessionScreen() {
   const loggedKeysRef = useRef(new Set<string>());
   const loggingLockRef = useRef(false);
   const timer = useRestTimer(sessionId);
+  const userId = useAuth().user?.id ?? null;
 
   useEffect(() => {
     if (rest !== "skip") {
@@ -126,6 +133,45 @@ export default function SessionScreen() {
   useEffect(() => {
     let cancelled = false;
 
+    const apply = (bundle: SessionBundle, firstApply: boolean) => {
+      const { session: nextSession, exercises: nextExercises } = bundle;
+      const hydratedSets = nextSession.sets;
+      loggedKeysRef.current = new Set(
+        hydratedSets.map((set) => toLoggingKey(set.exerciseId, set.setNumber)),
+      );
+
+      setSession(nextSession);
+      setLocalSets(hydratedSets);
+      setExercises(nextExercises);
+      setPreviousByExercise(bundle.previousByExercise);
+      setWorkoutName(bundle.workoutName);
+      setDefaultRestSec(bundle.defaultRestSec);
+
+      // A refresh from the server after the local open must not reset what
+      // the athlete is typing or move the pager.
+      if (!firstApply) {
+        return;
+      }
+
+      const grouped = groupSetsByExercise(hydratedSets);
+      const nextWeights: Record<number, string> = {};
+      const nextReps: Record<number, string> = {};
+
+      for (const exercise of nextExercises) {
+        const defaults = resolveLogDefaults(
+          exercise,
+          grouped.get(exercise.id) ?? [],
+          bundle.previousByExercise.get(exercise.id) ?? [],
+        );
+        nextWeights[exercise.id] = defaults.weight;
+        nextReps[exercise.id] = defaults.reps;
+      }
+
+      setWeightByExercise(nextWeights);
+      setRepsByExercise(nextReps);
+      setFocusIndex(firstIncompleteIndex(nextExercises, grouped));
+    };
+
     const load = async () => {
       if (!Number.isFinite(sessionId)) {
         setError("Sessione non valida");
@@ -134,6 +180,17 @@ export default function SessionScreen() {
       }
 
       setError(null);
+
+      const saved = userId === null ? null : await readSessionBundle(userId, sessionId);
+
+      if (cancelled) {
+        return;
+      }
+
+      if (saved) {
+        apply(saved, true);
+        setLoading(false);
+      }
 
       try {
         const nextSession = await getSession(sessionId);
@@ -153,28 +210,16 @@ export default function SessionScreen() {
           return;
         }
 
-        const hydratedSets = nextSession.sets;
-        loggedKeysRef.current = new Set(
-          hydratedSets.map((set) => toLoggingKey(set.exerciseId, set.setNumber)),
+        apply(
+          {
+            session: nextSession,
+            workoutName: workout.name,
+            defaultRestSec: workout.defaultRestSec,
+            exercises: nextExercises,
+            previousByExercise: previousMap,
+          },
+          saved === null,
         );
-
-        const grouped = groupSetsByExercise(hydratedSets);
-        const nextWeights: Record<number, string> = {};
-        const nextReps: Record<number, string> = {};
-
-        for (const exercise of nextExercises) {
-          const defaults = resolveLogDefaults(
-            exercise,
-            grouped.get(exercise.id) ?? [],
-            previousMap.get(exercise.id) ?? [],
-          );
-          nextWeights[exercise.id] = defaults.weight;
-          nextReps[exercise.id] = defaults.reps;
-        }
-
-        setSession(nextSession);
-        setLocalSets(hydratedSets);
-        setExercises(nextExercises);
 
         const photoUrls = new Set<string>();
         for (const exercise of nextExercises) {
@@ -188,15 +233,11 @@ export default function SessionScreen() {
         void Image.prefetch([...photoUrls], "memory-disk").catch(
           () => undefined,
         );
-
-        setPreviousByExercise(previousMap);
-        setWorkoutName(workout.name);
-        setDefaultRestSec(workout.defaultRestSec);
-        setWeightByExercise(nextWeights);
-        setRepsByExercise(nextReps);
-        setFocusIndex(firstIncompleteIndex(nextExercises, grouped));
       } catch (err) {
-        if (!cancelled) {
+        // Offline with a saved bundle: stay on the local data, quietly.
+        const offline = err instanceof ApiError && err.status === 0;
+
+        if (!cancelled && !(saved && offline)) {
           setError(ApiError.messageFrom(err, "Errore caricamento"));
         }
       } finally {
@@ -211,7 +252,23 @@ export default function SessionScreen() {
     return () => {
       cancelled = true;
     };
-  }, [sessionId, fetchId]);
+  }, [sessionId, fetchId, userId]);
+
+  // Keep the bundle on disk in step with what the screen shows, so a reopen
+  // without network starts from the latest sets.
+  useEffect(() => {
+    if (!session || userId === null) {
+      return;
+    }
+
+    saveSessionBundle(userId, {
+      session: { ...session, sets: localSets },
+      workoutName,
+      defaultRestSec,
+      exercises,
+      previousByExercise,
+    });
+  }, [session, localSets]);
 
   if (loading) {
     return <LoadingBlock />;
