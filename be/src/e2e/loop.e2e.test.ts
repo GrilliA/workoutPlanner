@@ -530,9 +530,16 @@ describe("paid loop smoke", { concurrency: false }, () => {
     const completed = await api(baseUrl, "PATCH", `/api/sessions/${openSession.id}`, {
       token: athlete.accessToken,
       mobile: true,
-      body: { status: "completed" },
+      body: {
+        status: "completed",
+        completedAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      },
     });
     assert.equal(completed.status, 200, failMessage(completed.status, completed.body));
+    assert.ok(
+      new Date(String(asObject(completed.body).completedAt)).getTime() <= Date.now(),
+      "a close time from a phone clock ahead is moved back to now",
+    );
 
     const late = await api(
       baseUrl,
