@@ -20,6 +20,7 @@ import {
   parseSessionHistoryPage,
 } from "../services/sessionHistoryAccess";
 import {
+  clampLoggedAt,
   validateLogSetInput,
   validatePatchLoggedSetInput,
   validatePatchSessionInput,
@@ -503,6 +504,120 @@ sessionSetsRouter.delete("/:setId", async (req, res) => {
   }
 
   await db.delete(loggedSets).where(eq(loggedSets.id, setId));
+
+  res.status(204).send();
+});
+
+/**
+ * Offline sync: a set is addressed by exercise + set number, so the phone can
+ * resend the same write after a lost response without creating a duplicate.
+ */
+sessionSetsRouter.put("/:exerciseId/:setNumber", async (req, res) => {
+  const user = getAuthUser(req);
+  const sessionId = parseSessionId(req.params);
+
+  if (Number.isNaN(sessionId)) {
+    res.status(400).json({ error: "Invalid session id" });
+    return;
+  }
+
+  if (!req.body || typeof req.body !== "object" || Array.isArray(req.body)) {
+    res.status(400).json({ error: "Invalid request body" });
+    return;
+  }
+
+  const parsed = validateLogSetInput({
+    ...req.body,
+    exerciseId: req.params.exerciseId,
+    setNumber: req.params.setNumber,
+  });
+
+  if (!parsed.ok) {
+    res.status(400).json({ error: parsed.error });
+    return;
+  }
+
+  const session = await findSessionForUser(sessionId, user.id);
+
+  if (!session) {
+    res.status(404).json({ error: "Session not found" });
+    return;
+  }
+
+  if (session.status !== "in_progress") {
+    res.status(409).json({ error: "Session is not in progress" });
+    return;
+  }
+
+  const exercise = await findExerciseInWorkout(
+    parsed.value.exerciseId,
+    session.workoutId,
+    session.workoutDayId,
+  );
+
+  if (!exercise) {
+    res.status(400).json({ error: "Exercise does not belong to this workout" });
+    return;
+  }
+
+  const loggedAt = clampLoggedAt(req.body.loggedAt, session.startedAt, new Date());
+
+  if (!loggedAt.ok) {
+    res.status(400).json({ error: loggedAt.error });
+    return;
+  }
+
+  const { exerciseId, setNumber, ...values } = parsed.value;
+
+  const [saved] = await db
+    .insert(loggedSets)
+    .values({ sessionId, exerciseId, setNumber, ...values, loggedAt: loggedAt.value })
+    .onConflictDoUpdate({
+      target: [loggedSets.sessionId, loggedSets.exerciseId, loggedSets.setNumber],
+      set: { ...values, loggedAt: loggedAt.value },
+    })
+    .returning();
+
+  res.json(saved);
+});
+
+sessionSetsRouter.delete("/:exerciseId/:setNumber", async (req, res) => {
+  const user = getAuthUser(req);
+  const sessionId = parseSessionId(req.params);
+  const exerciseId = Number(req.params.exerciseId);
+  const setNumber = Number(req.params.setNumber);
+
+  if (
+    Number.isNaN(sessionId) ||
+    !Number.isInteger(exerciseId) ||
+    !Number.isInteger(setNumber)
+  ) {
+    res.status(400).json({ error: "Invalid session, exercise or set number" });
+    return;
+  }
+
+  const session = await findSessionForUser(sessionId, user.id);
+
+  if (!session) {
+    res.status(404).json({ error: "Session not found" });
+    return;
+  }
+
+  if (session.status !== "in_progress") {
+    res.status(409).json({ error: "Session is not in progress" });
+    return;
+  }
+
+  // Already gone is fine: a retried delete must not fail.
+  await db
+    .delete(loggedSets)
+    .where(
+      and(
+        eq(loggedSets.sessionId, sessionId),
+        eq(loggedSets.exerciseId, exerciseId),
+        eq(loggedSets.setNumber, setNumber),
+      ),
+    );
 
   res.status(204).send();
 });
