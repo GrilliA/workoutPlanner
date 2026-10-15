@@ -37,6 +37,12 @@ export const workoutSessionSummarySchema = workoutSessionSchema.extend({
 export const workoutSessionsSchema = z.array(workoutSessionSchema);
 export const workoutSessionSummariesSchema = z.array(workoutSessionSummarySchema);
 
+/** Which set of a session: the same exercise and set number is the same set. */
+export const setPositionSchema = z.object({
+  exerciseId: z.number(),
+  setNumber: z.number(),
+});
+
 export const logSetRequestSchema = z.object({
   exerciseId: z.number().int().positive(),
   setNumber: z.number().int().positive(),
@@ -44,12 +50,17 @@ export const logSetRequestSchema = z.object({
   reps: z.number().int().positive(),
   rir: z.number().int().min(0).max(10).nullable().optional(),
   tutSec: z.number().int().nonnegative().nullable().optional(),
+  /** ISO time on the phone; the server keeps it inside the session. */
+  loggedAt: z.string().datetime().optional(),
 });
 
 export const patchSessionRequestSchema = z
   .object({
     status: z.enum(["completed", "abandoned"]),
+    /** Replaces every set of the session, all at once with the close. */
     sets: z.array(logSetRequestSchema).optional(),
+    /** ISO time on the phone when the athlete closed the session. */
+    completedAt: z.string().datetime().optional(),
   })
   .superRefine((value, ctx) => {
     if (value.status === "abandoned" && value.sets !== undefined) {
@@ -79,6 +90,7 @@ export type WorkoutSessionWithSets = z.infer<typeof workoutSessionWithSetsSchema
 export type WorkoutSessionSummary = z.infer<typeof workoutSessionSummarySchema>;
 export type LogSetInput = z.input<typeof logSetRequestSchema>;
 export type PatchSessionInput = z.input<typeof patchSessionRequestSchema>;
+export type SetPosition = z.infer<typeof setPositionSchema>;
 export type PatchLoggedSetInput = z.input<typeof patchLoggedSetRequestSchema>;
 
 export const sessionHistoryResponseSchema = z.object({

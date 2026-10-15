@@ -9,6 +9,7 @@ import {
 /**
  * One log per user, next to the session bundle. It holds sets not yet on the
  * server, so it lives in documents and logout (authStore.clear) leaves it.
+ * Deleted once the server stored the close.
  */
 const userDir = (userId: number): Directory =>
   new Directory(Paths.document, "session", String(userId));
@@ -18,9 +19,9 @@ const logFile = (userId: number): File =>
 
 const useDisk = (): boolean => Platform.OS !== "web";
 
+/** The log saved for this user, whatever session it is for. */
 export async function readOfflineSessionLog(
   userId: number,
-  sessionId: number,
 ): Promise<OfflineSessionLog | null> {
   if (!useDisk()) {
     return null;
@@ -33,7 +34,7 @@ export async function readOfflineSessionLog(
       return null;
     }
 
-    return decodeOfflineSessionLog(await file.text(), sessionId);
+    return decodeOfflineSessionLog(await file.text());
   } catch {
     return null;
   }
@@ -70,6 +71,6 @@ export function deleteOfflineSessionLog(userId: number): void {
       file.delete();
     }
   } catch {
-    // A leftover log is ignored for any other session and replaced by its log.
+    // A leftover log is replaced when the next session saves its own.
   }
 }
