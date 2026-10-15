@@ -21,6 +21,7 @@ import {
 } from "../services/sessionHistoryAccess";
 import {
   clampToSessionWindow,
+  keepInsideSession,
   validateLogSetInput,
   validatePatchLoggedSetInput,
   validatePatchSessionInput,
@@ -309,22 +310,28 @@ sessionsRouter.patch("/:id", async (req, res) => {
       }
     }
 
+    // Sets logged offline keep the time on the phone, held inside the session.
+    const setsToStore = flushSets.map((set) => ({
+      sessionId: id,
+      exerciseId: set.exerciseId,
+      setNumber: set.setNumber,
+      weightKg: set.weightKg,
+      reps: set.reps,
+      rir: set.rir,
+      tutSec: set.tutSec,
+      loggedAt: keepInsideSession(
+        set.loggedAt ?? completedAt.value,
+        session.startedAt,
+        completedAt.value,
+      ),
+    }));
+
     try {
       const result = await db.transaction(async (tx) => {
         await tx.delete(loggedSets).where(eq(loggedSets.sessionId, id));
 
-        if (flushSets.length > 0) {
-          await tx.insert(loggedSets).values(
-            flushSets.map((set) => ({
-              sessionId: id,
-              exerciseId: set.exerciseId,
-              setNumber: set.setNumber,
-              weightKg: set.weightKg,
-              reps: set.reps,
-              rir: set.rir,
-              tutSec: set.tutSec,
-            })),
-          );
+        if (setsToStore.length > 0) {
+          await tx.insert(loggedSets).values(setsToStore);
         }
 
         const [updated] = await tx
