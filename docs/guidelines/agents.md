@@ -19,7 +19,7 @@ Before calling the work done, verify:
 | Check | Look for |
 | --- | --- |
 | Names | The identifier says what it does without knowing the file |
-| Style | The code follows [`code-style.md`](code-style.md): no abbreviations, no nested ternaries, no clever syntax |
+| Style | The code follows [`code-style.md`](code-style.md): no abbreviations, no nested ternaries, no clever syntax, `const` by default, no `while`, no array filled with `push` |
 | Call sites | Helper with 1–2 call sites and a vague name → inline or rename, not “utility for later” |
 | Snapshot | Fields that always travel together (e.g. catalog) are one object, not N `useState` / props |
 | Memo | `useCallback`/`useMemo` with no `memo()` consumer and no dep-array need → remove |
