@@ -29,8 +29,7 @@ if (serverHasSet) { … }
 
 - Logic lives in **pure functions**: same input → same output, no I/O, never mutate an argument. Return a new value.
 - Side effects (disk, network, React state, timers) stay at the edges, in thin functions that call the pure ones.
-- Inside a pure function, local mutation of a value you just created is fine when it reads better (a `for` loop filling a new object).
-- `map` / `filter` for one clear step. A plain `for` loop over a `reduce` that needs thinking. `reduce` only for sums and counts.
+- `map` / `filter` / `find` for each clear step. A plain `for…of` over a `reduce` that needs thinking. `reduce` only for sums and counts.
 
 ## 4. No clever syntax
 
@@ -48,3 +47,35 @@ Readable beats short. Avoid:
 
 - One function, one job. Many branches or a long body → split into named steps.
 - A comment explains **why** (a rule, a race, a platform limit), not what the next line does. If you need a comment to explain *what*, rename or split instead.
+
+## 6. `const` by default, build values instead of filling them
+
+- `const` by default. `let` only for state that really changes over time at the edges (a store, a timer), kept in one place.
+- No `while` / `do…while`: use array methods, `for…of` on a fixed list, or recursion.
+- An array or object comes from a transformation, not from an empty one filled in a loop.
+
+| Instead of | Write |
+| --- | --- |
+| `const out = []; for (…) out.push(…)` | `items.map(…)` / `filter(…)` |
+| `const out = {}; for (…) out[key] = …` | `Object.fromEntries(items.map(…))` |
+| a loop that fills a list and can stop on an error | `map` to results → `find` the first error → `map` the values |
+| a `Set` of seen keys to find duplicates | `some` + `findIndex` with a named comparison |
+| `let x = a; x = step(x); x = other(x)` in a test | one named `const` per step: `afterLog`, `afterUndo` |
+
+```ts
+// No
+const sets: CloseSetInput[] = [];
+for (const entry of value) {
+  const parsed = validateCloseSet(entry);
+  if (!parsed.ok) return parsed;
+  sets.push(parsed.value);
+}
+
+// Yes
+const results = value.map((entry) => validateCloseSet(entry));
+const firstInvalid = results.find((result): result is Invalid => !result.ok);
+if (firstInvalid) return firstInvalid;
+const sets = results
+  .filter((result): result is Valid<CloseSetInput> => result.ok)
+  .map((result) => result.value);
+```
