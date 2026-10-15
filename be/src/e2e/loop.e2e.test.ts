@@ -585,6 +585,45 @@ describe("paid loop smoke", { concurrency: false }, () => {
     assert.equal(abandoned.status, 409, failMessage(abandoned.status, abandoned.body));
   });
 
+  it("a session closed with its sets keeps the time each set was logged", async () => {
+    const started = await api(
+      baseUrl,
+      "POST",
+      `/api/workouts/${firstWorkout.id}/sessions`,
+      { token: athlete.accessToken, mobile: true, body: {} },
+    );
+    assert.equal(started.status, 201, failMessage(started.status, started.body));
+    const offlineSession = asObject(started.body) as Session;
+    const exerciseId = await firstExerciseId();
+    const startedAt = new Date(String(asObject(started.body).startedAt));
+    // Let a little time pass, so a time inside the session is already in the past.
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    const loggedInside = new Date(startedAt.getTime() + 20).toISOString();
+    const loggedBefore = new Date(startedAt.getTime() - 60 * 60 * 1000).toISOString();
+
+    const closed = await api(baseUrl, "PATCH", `/api/sessions/${offlineSession.id}`, {
+      token: athlete.accessToken,
+      mobile: true,
+      body: {
+        status: "completed",
+        sets: [
+          { exerciseId, setNumber: 1, reps: 8, weightKg: 60, loggedAt: loggedInside },
+          { exerciseId, setNumber: 2, reps: 8, weightKg: 60, loggedAt: loggedBefore },
+        ],
+      },
+    });
+    assert.equal(closed.status, 200, failMessage(closed.status, closed.body));
+
+    const storedTimes = (asObject(closed.body).sets as JsonObject[]).map(
+      (set) => set.loggedAt,
+    );
+    assert.deepEqual(
+      storedTimes,
+      [loggedInside, startedAt.toISOString()],
+      "a time before the start is moved to the start",
+    );
+  });
+
   async function firstExerciseId(): Promise<number> {
     const listed = await api(
       baseUrl,

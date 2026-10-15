@@ -25,7 +25,13 @@ describe("validatePatchSessionInput", () => {
     const parsed = validatePatchSessionInput({
       status: "completed",
       sets: [
-        { exerciseId: 1, setNumber: 1, reps: 8, weightKg: 100 },
+        {
+          exerciseId: 1,
+          setNumber: 1,
+          reps: 8,
+          weightKg: 100,
+          loggedAt: "2026-10-14T08:10:00.000Z",
+        },
         { exerciseId: 1, setNumber: 2, reps: 6, weightKg: null },
       ],
     });
@@ -41,8 +47,22 @@ describe("validatePatchSessionInput", () => {
         weightKg: 100,
         rir: null,
         tutSec: null,
+        loggedAt: new Date("2026-10-14T08:10:00.000Z"),
       });
+      assert.equal(parsed.value.sets?.[1]?.loggedAt, null);
     }
+  });
+
+  it("rejects a set whose loggedAt is not a date-time", () => {
+    const parsed = validatePatchSessionInput({
+      status: "completed",
+      sets: [{ exerciseId: 1, setNumber: 1, reps: 8, loggedAt: "ieri" }],
+    });
+
+    assert.deepEqual(parsed, {
+      ok: false,
+      error: "loggedAt must be an ISO date-time string",
+    });
   });
 
   it("rejects sets when abandoning", () => {
