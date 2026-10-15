@@ -59,6 +59,7 @@ FE component folders are **camelCase** (`errorBoundary/ErrorBoundary.tsx`). Deta
 | Area | File |
 | --- | --- |
 | Agent process (names, finish check, ask with options) | [`docs/guidelines/agents.md`](docs/guidelines/agents.md) |
+| Code style, all packages (names, simple code, pragmatic functional) | [`docs/guidelines/code-style.md`](docs/guidelines/code-style.md) |
 | Git / branch / commit | [`docs/guidelines/git.md`](docs/guidelines/git.md) |
 | Frontend web (folders, React, CSS, API) | [`docs/guidelines/fe.md`](docs/guidelines/fe.md) |
 | Backend | [`docs/guidelines/be.md`](docs/guidelines/be.md) |
