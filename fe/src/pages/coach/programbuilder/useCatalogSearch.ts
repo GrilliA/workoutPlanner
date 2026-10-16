@@ -70,12 +70,17 @@ export function useCatalogSearch(minChars = 2): CatalogSearchState {
     throwOnError: false,
   });
 
+  // Still debouncing, request in flight, or showing results of an older query: all count as searching,
+  // so "Nessun risultato" only appears once this query has really come back empty.
+  const isDebouncing = trimmed !== searchKey;
+  const hasStaleResults = data?.query !== searchKey;
+  const isSearching = canSearch && (isDebouncing || isPending || hasStaleResults);
+
   return {
     query,
     setQuery,
     results: canSearch ? (data?.items ?? []) : [],
-    isSearching:
-      canSearch && trimmed === searchKey && (isPending || data?.query !== searchKey),
+    isSearching,
     error:
       canSearch && data?.query === searchKey ? (data.error ?? null) : null,
   };

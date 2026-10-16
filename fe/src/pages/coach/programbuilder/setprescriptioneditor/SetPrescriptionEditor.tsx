@@ -14,6 +14,13 @@ const reindexPrescriptions = (
     setNumber: index + 1,
   }));
 
+// An empty field is kept as NaN instead of 0, so the coach can clear it and type again.
+// Saving rejects NaN: findExerciseInputError only accepts integers.
+const parseFieldNumber = (raw: string): number => (raw === "" ? Number.NaN : Number(raw));
+
+const toFieldValue = (value: number): number | string =>
+  Number.isNaN(value) ? "" : value;
+
 export function SetPrescriptionEditor({
   prescriptions,
   onChange,
@@ -76,9 +83,9 @@ export function SetPrescriptionEditor({
               type="number"
               min={1}
               step={1}
-              value={entry.reps}
+              value={toFieldValue(entry.reps)}
               onChange={(event) =>
-                updateRow(entry.setNumber, "reps", Number(event.target.value))
+                updateRow(entry.setNumber, "reps", parseFieldNumber(event.target.value))
               }
               required
             />
@@ -90,9 +97,9 @@ export function SetPrescriptionEditor({
               type="number"
               min={0}
               step={15}
-              value={entry.restSec}
+              value={toFieldValue(entry.restSec)}
               onChange={(event) =>
-                updateRow(entry.setNumber, "restSec", Number(event.target.value))
+                updateRow(entry.setNumber, "restSec", parseFieldNumber(event.target.value))
               }
               required
             />
