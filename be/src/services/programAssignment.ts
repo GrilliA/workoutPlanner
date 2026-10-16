@@ -221,6 +221,7 @@ const copyWorkoutTree = async (
           sets: exercise.sets,
           reps: exercise.reps,
           catalogId: exercise.catalogId,
+          notes: exercise.notes,
         })
         .returning();
 
@@ -235,6 +236,10 @@ const copyWorkoutTree = async (
             exerciseId: newExercise.id,
             setNumber: set.setNumber,
             reps: set.reps,
+            repsMax: set.repsMax,
+            loadValue: set.loadValue,
+            loadUnit: set.loadUnit,
+            rir: set.rir,
             restSec: set.restSec,
           })),
         );

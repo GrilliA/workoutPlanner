@@ -6,6 +6,7 @@ import {
 } from "./exerciseSetAccess";
 import {
   summarizeSetPrescriptions,
+  validateExerciseNotes,
   validateSetPrescriptions,
   type SetPrescription,
 } from "./exerciseSetValidation";
@@ -26,6 +27,7 @@ export type ExerciseInput = {
   workoutDayId: number;
   setPrescriptions: SetPrescription[];
   catalogId?: string | null;
+  notes: string | null;
 };
 
 export async function enrichExercises<T extends { id: number; catalogId?: string | null }>(
@@ -85,6 +87,7 @@ export async function createExerciseWithSets(
         workoutId: input.workoutId,
         workoutDayId: input.workoutDayId,
         catalogId: input.catalogId ?? null,
+        notes: input.notes,
       })
       .returning();
 
@@ -108,6 +111,7 @@ export async function updateExerciseWithSets(
     name: string;
     setPrescriptions: SetPrescription[];
     catalogId?: string | null;
+    notes: string | null;
   },
 ): Promise<ExerciseRow & { setPrescriptions: SetPrescription[] }> {
   const summary = summarizeSetPrescriptions(input.setPrescriptions);
@@ -119,6 +123,7 @@ export async function updateExerciseWithSets(
         name: input.name,
         sets: summary.sets,
         reps: summary.reps,
+        notes: input.notes,
         ...(input.catalogId !== undefined ? { catalogId: input.catalogId } : {}),
       })
       .where(eq(exercises.id, exerciseId))
@@ -149,6 +154,7 @@ export const parseExerciseBody = (
         name: string;
         setPrescriptions: SetPrescription[];
         catalogId: string | null;
+        notes: string | null;
       };
     }
   | { ok: false; error: string } => {
@@ -171,6 +177,12 @@ export const parseExerciseBody = (
     catalogId = input.catalogId.trim();
   }
 
+  const notes = validateExerciseNotes(input.notes);
+
+  if (!notes.ok) {
+    return notes;
+  }
+
   if (input.setPrescriptions !== undefined) {
     const parsed = validateSetPrescriptions(input.setPrescriptions, defaultRestSec);
 
@@ -178,7 +190,10 @@ export const parseExerciseBody = (
       return parsed;
     }
 
-    return { ok: true, value: { name, setPrescriptions: parsed.value, catalogId } };
+    return {
+      ok: true,
+      value: { name, setPrescriptions: parsed.value, catalogId, notes: notes.value },
+    };
   }
 
   const sets = input.sets === undefined ? 3 : Number(input.sets);
@@ -195,8 +210,12 @@ export const parseExerciseBody = (
   const setPrescriptions = Array.from({ length: sets }, (_, index) => ({
     setNumber: index + 1,
     reps,
+    repsMax: null,
+    loadValue: null,
+    loadUnit: null,
+    rir: null,
     restSec: defaultRestSec,
   }));
 
-  return { ok: true, value: { name, setPrescriptions, catalogId } };
+  return { ok: true, value: { name, setPrescriptions, catalogId, notes: notes.value } };
 };
