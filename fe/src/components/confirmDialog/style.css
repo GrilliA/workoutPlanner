@@ -1,0 +1,32 @@
+.confirm-dialog {
+  width: min(28rem, calc(100vw - 2rem));
+  padding: 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--surface-elevated);
+  color: var(--text);
+  box-shadow: var(--shadow);
+
+  &::backdrop {
+    background: var(--overlay);
+    backdrop-filter: blur(var(--blur));
+  }
+
+  & .title {
+    margin: 0 0 0.5rem;
+    font-size: var(--text-lg);
+    color: var(--text-h);
+  }
+
+  & .message {
+    margin: 0 0 1.25rem;
+    font-size: var(--text-sm);
+  }
+
+  & .actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
+}

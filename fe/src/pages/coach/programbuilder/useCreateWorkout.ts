@@ -91,7 +91,8 @@ export function useWorkoutForm(
   useEffect(() => {
     adaptersRef.current = adapters;
   });
-  const [form, setForm] = useState(() => workoutForm.createWorkoutForm(initialDraft));
+  const [initialForm] = useState(() => workoutForm.createWorkoutForm(initialDraft));
+  const [form, setForm] = useState(initialForm);
   const isEditMode = workoutId !== undefined;
 
   const saveDraft = async (name: string, days: DraftWorkoutDay[]) => {
@@ -201,6 +202,7 @@ export function useWorkoutForm(
     save,
     applyDraft: (draft: WorkoutDraftSeed) => setForm(workoutForm.createWorkoutForm(draft)),
     isSaving: form.isSaving,
+    hasUnsavedChanges: workoutForm.hasUnsavedChanges(form, initialForm),
     isEditMode,
   };
 }

@@ -108,6 +108,14 @@ export function createWorkoutForm(draft?: WorkoutDraftSeed | null): WorkoutForm 
   };
 }
 
+// Only what gets saved counts: selecting a day or seeing an error is not a change.
+const savedContent = (form: WorkoutForm): string =>
+  JSON.stringify({ name: form.name, settings: form.settings, days: form.days });
+
+export function hasUnsavedChanges(form: WorkoutForm, initialForm: WorkoutForm): boolean {
+  return savedContent(form) !== savedContent(initialForm);
+}
+
 export function findActiveDay(form: WorkoutForm): DraftWorkoutDay {
   const activeDay = form.days.find((day) => day.clientId === form.activeDayId);
   return activeDay ?? form.days[0];

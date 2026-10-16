@@ -9,6 +9,7 @@ import {
   duplicateActiveDay,
   findActiveDay,
   findExerciseInputError,
+  hasUnsavedChanges,
   moveActiveDay,
   moveExercise,
   removeDay,
@@ -229,6 +230,31 @@ describe("editing and moving exercises", () => {
     assert.equal(updated?.serverId, 42);
     assert.equal(updated?.name, "Stacco");
     assert.equal(updated?.setPrescriptions.length, 1);
+  });
+});
+
+describe("hasUnsavedChanges", () => {
+  it("is false until something that gets saved changes", () => {
+    const initialForm = formWithTwoDays();
+    const onlySelectionAndError = {
+      ...initialForm,
+      activeDayId: initialForm.days[0]?.clientId ?? "",
+      formError: "errore",
+    };
+
+    assert.equal(hasUnsavedChanges(onlySelectionAndError, initialForm), false);
+    assert.equal(hasUnsavedChanges(renameActiveDay(initialForm, "Gambe"), initialForm), true);
+  });
+
+  it("is false again when a change is undone", () => {
+    const initialForm = formWithTwoExercises();
+    const movedAndBack = moveExercise(
+      moveExercise(initialForm, "squat", "earlier"),
+      "squat",
+      "later",
+    );
+
+    assert.equal(hasUnsavedChanges(movedAndBack, initialForm), false);
   });
 });
 

@@ -1,3 +1,6 @@
+import { useState } from "react";
+import { ConfirmDialog } from "@components/confirmDialog";
+import { useUnsavedChangesGuard } from "@utils/useUnsavedChangesGuard";
 import { PageHeader } from "../pageheader";
 import { WorkoutNameField } from "../workoutnamefield";
 import { DaySelector } from "../dayselector";
@@ -35,7 +38,7 @@ export function CreateWorkout({
         <PageHeader
           mode={workoutId ? "edit" : "create"}
           onSave={() => undefined}
-          isSaving={false}
+          isSaveDisabled
           backHref={adapters.backHref}
         />
         {isLoading ? <p>Caricamento scheda…</p> : null}
@@ -86,7 +89,29 @@ function CreateWorkoutForm({
     applyDraft,
     isSaving,
     isEditMode,
+    hasUnsavedChanges,
   } = useWorkoutForm(workoutId, adapters, initialDraft);
+  const { isLeaveDialogOpen, leavePage, stayOnPage } =
+    useUnsavedChangesGuard(hasUnsavedChanges && !isSaving);
+  const [pendingTxtDraft, setPendingTxtDraft] = useState<WorkoutDraftSeed | null>(null);
+
+  // Editing a saved program or a filled form: the TXT would overwrite work, so ask first.
+  const txtReplacesWork = isEditMode || hasUnsavedChanges;
+
+  const handleTxtApply = (draft: WorkoutDraftSeed) => {
+    if (txtReplacesWork) {
+      setPendingTxtDraft(draft);
+      return;
+    }
+    applyDraft(draft);
+  };
+
+  const confirmTxtApply = () => {
+    if (pendingTxtDraft) {
+      applyDraft(pendingTxtDraft);
+    }
+    setPendingTxtDraft(null);
+  };
 
   const takenWeekdays = days
     .filter((day) => day.clientId !== activeDayId)
@@ -104,7 +129,7 @@ function CreateWorkoutForm({
       />
 
       {enableTxtImport ? (
-        <SchedaTxtPaste onApply={applyDraft} />
+        <SchedaTxtPaste onApply={handleTxtApply} />
       ) : null}
 
       <WorkoutNameField
@@ -161,6 +186,25 @@ function CreateWorkoutForm({
       ) : null}
 
       <WorkoutSettingsPanel settings={settings} onChange={setSettings} />
+
+      <ConfirmDialog
+        isOpen={isLeaveDialogOpen}
+        title="Uscire senza salvare?"
+        message="Le modifiche alla scheda andranno perse."
+        confirmLabel="Esci senza salvare"
+        cancelLabel="Resta"
+        onConfirm={leavePage}
+        onCancel={stayOnPage}
+      />
+
+      <ConfirmDialog
+        isOpen={pendingTxtDraft !== null}
+        title="Sostituire la scheda?"
+        message="Il TXT sostituisce nome, giorni ed esercizi della scheda attuale."
+        confirmLabel="Sostituisci"
+        onConfirm={confirmTxtApply}
+        onCancel={() => setPendingTxtDraft(null)}
+      />
     </div>
   );
 }

@@ -7,6 +7,7 @@ import "./style.css";
 export type PageHeaderProps = {
   onSave: () => void;
   isSaving?: boolean;
+  isSaveDisabled?: boolean;
   mode?: "create" | "edit";
   backHref?: string;
 };
@@ -14,6 +15,7 @@ export type PageHeaderProps = {
 export function PageHeader({
   onSave,
   isSaving = false,
+  isSaveDisabled = false,
   mode = "create",
   backHref = "/dashboard",
 }: PageHeaderProps) {
@@ -27,6 +29,7 @@ export function PageHeader({
         className="page-header__save"
         onClick={onSave}
         loading={isSaving}
+        disabled={isSaveDisabled}
       >
         Salva
       </Button>
