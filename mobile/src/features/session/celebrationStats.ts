@@ -1,4 +1,4 @@
-import type { LoggedSet } from "../../api";
+import type { SetSummary } from "../../api/schemas";
 
 const MS_PER_MINUTE = 60_000;
 
@@ -15,7 +15,7 @@ export function computeDurationMin(
 }
 
 /** Total volume: sum(weightKg * reps) for sets with positive weight. */
-export function computeVolumeKg(sets: LoggedSet[]): number {
+export function computeVolumeKg(sets: SetSummary[]): number {
   return sets.reduce((total, set) => {
     if (set.weightKg === null || set.weightKg <= 0) {
       return total;

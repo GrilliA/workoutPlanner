@@ -14,6 +14,8 @@ export type CelebrationViewProps = {
   workoutName: string;
   volumeKg: number;
   durationMin: number;
+  /** Shown under the title when the session is not on the server yet. */
+  syncNote?: string;
   onDone: () => void;
 };
 
@@ -103,6 +105,7 @@ export function CelebrationView({
   workoutName,
   volumeKg,
   durationMin,
+  syncNote,
   onDone,
 }: CelebrationViewProps) {
   const insets = useSafeAreaInsets();
@@ -161,6 +164,12 @@ export function CelebrationView({
         <Animated.View style={{ opacity: title }}>
           <Animated.Text style={styles.subtitle}>{workoutName}</Animated.Text>
         </Animated.View>
+
+        {syncNote ? (
+          <Animated.View style={{ opacity: title }}>
+            <Animated.Text style={styles.syncNote}>{syncNote}</Animated.Text>
+          </Animated.View>
+        ) : null}
       </View>
 
       <Animated.View
@@ -243,6 +252,11 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 16,
     fontWeight: "500",
+    textAlign: "center",
+  },
+  syncNote: {
+    color: colors.muted,
+    fontSize: 13,
     textAlign: "center",
   },
   stats: {

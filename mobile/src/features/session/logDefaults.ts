@@ -1,4 +1,5 @@
-import type { Exercise, LoggedSet } from "../../api";
+import type { Exercise } from "../../api";
+import type { SetSummary } from "../../api/schemas";
 
 export const WEIGHT_STEP_KG = 1.25;
 const DEFAULT_TARGET_SETS = 3;
@@ -86,7 +87,7 @@ export function isExerciseComplete(exercise: Exercise, loggedCount: number): boo
 }
 
 function weightFromPreviousSets(
-  previousSets: LoggedSet[],
+  previousSets: SetSummary[],
   setNumber: number,
 ): string {
   const ordered = [...previousSets].sort((a, b) => a.setNumber - b.setNumber);
@@ -110,8 +111,8 @@ function weightFromPreviousSets(
  */
 export function resolveLogDefaults(
   exercise: Exercise,
-  loggedSets: LoggedSet[],
-  previousSets: LoggedSet[] = [],
+  loggedSets: SetSummary[],
+  previousSets: SetSummary[] = [],
 ): { weight: string; reps: string } {
   const ordered = [...loggedSets].sort((a, b) => a.setNumber - b.setNumber);
   const last = ordered.at(-1);
