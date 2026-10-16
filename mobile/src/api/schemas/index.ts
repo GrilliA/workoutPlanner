@@ -63,6 +63,7 @@ export {
   type PatchSessionInput,
   type PatchLoggedSetInput,
   type SetPosition,
+  type SetSummary,
   sessionHistoryResponseSchema,
   type SessionHistoryResponse,
 } from "./session";

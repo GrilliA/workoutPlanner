@@ -33,6 +33,9 @@ export type OfflineSessionState = {
 
 type Listener = () => void;
 
+/** A problem of the log on the phone; the message is Italian, for the athlete. */
+export class OfflineSessionError extends Error {}
+
 /** The only changing value of this module; `publish` is the only place that sets it. */
 let currentState: OfflineSessionState | null = null;
 const listeners = new Set<Listener>();
@@ -85,13 +88,14 @@ export async function resumeOfflineSession(userId: number): Promise<void> {
 
 /**
  * The session screen opened. For the same session the phone wins: the server
- * gets the sets only with the close. Throws when an earlier session still has
- * a close the server has not stored.
+ * gets the sets only with the close. A past session has no log (null) and
+ * leaves the log of the session in use alone. Throws when an earlier session
+ * still has a close the server has not stored.
  */
 export async function openOfflineSession(
   userId: number,
   session: WorkoutSessionWithSets,
-): Promise<OfflineSessionLog> {
+): Promise<OfflineSessionLog | null> {
   await resumeOfflineSession(userId);
 
   const savedLog = currentState?.log ?? null;
@@ -100,10 +104,16 @@ export async function openOfflineSession(
     return savedLog;
   }
 
+  const isPastSession = session.status !== "in_progress";
+
+  if (isPastSession) {
+    return null;
+  }
+
   const earlierCloseNotSent = savedLog?.pendingClose != null;
 
   if (earlierCloseNotSent) {
-    throw new Error(
+    throw new OfflineSessionError(
       "Un allenamento precedente non è ancora sincronizzato. Riprova con la rete.",
     );
   }
@@ -123,7 +133,7 @@ export function changeOfflineSession(
   change: (log: OfflineSessionLog) => OfflineSessionLog,
 ): OfflineSessionLog {
   if (!currentState) {
-    throw new Error("Nessuna sessione aperta");
+    throw new OfflineSessionError("Nessuna sessione aperta");
   }
 
   const changedLog = change(currentState.log);

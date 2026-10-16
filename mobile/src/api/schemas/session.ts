@@ -91,6 +91,14 @@ export type WorkoutSessionSummary = z.infer<typeof workoutSessionSummarySchema>;
 export type LogSetInput = z.input<typeof logSetRequestSchema>;
 export type PatchSessionInput = z.input<typeof patchSessionRequestSchema>;
 export type SetPosition = z.infer<typeof setPositionSchema>;
+/**
+ * The figures of a set that screens show and count. Both a set from the
+ * server and one logged on the phone have them.
+ */
+export type SetSummary = Pick<
+  LoggedSet,
+  "exerciseId" | "setNumber" | "reps" | "weightKg" | "rir" | "tutSec"
+>;
 export type PatchLoggedSetInput = z.input<typeof patchLoggedSetRequestSchema>;
 
 export const sessionHistoryResponseSchema = z.object({

@@ -58,6 +58,7 @@ import {
   type NoProgramReason,
   type WeekStripDay,
 } from "../../src/features/home";
+import { OfflineSessionBanner } from "../../src/features/session/OfflineSessionBanner";
 import { colors, radii, spacing } from "../../src/theme";
 import {
   buildRomeWeekDateKeys,
@@ -574,6 +575,8 @@ export default function HomeScreen() {
             }}
           />
         ) : null}
+
+        <OfflineSessionBanner />
 
         <WeekStrip
           days={weekDays}

@@ -1,6 +1,11 @@
 import { router, useLocalSearchParams } from "expo-router";
+import { useSyncExternalStore } from "react";
 import { CelebrationView } from "../../src/features/session/CelebrationView";
 import { Screen } from "../../src/components";
+import {
+  getOfflineSession,
+  subscribeOfflineSession,
+} from "../../src/features/session/offlineSessionStore";
 
 function parseNonNegativeNumber(raw: string | undefined, fallback = 0): number {
   if (raw === undefined || raw === "") {
@@ -21,6 +26,13 @@ export default function SessionCompleteScreen() {
     durationMin?: string;
   }>();
 
+  const offlineSession = useSyncExternalStore(
+    subscribeOfflineSession,
+    getOfflineSession,
+  );
+  // Only after a failed try: a close sent at once would flash the line.
+  const closeIsWaiting = offlineSession?.syncStatus === "waiting";
+
   const workoutName =
     typeof params.workoutName === "string" && params.workoutName.trim() !== ""
       ? params.workoutName
@@ -32,6 +44,7 @@ export default function SessionCompleteScreen() {
         workoutName={workoutName}
         volumeKg={parseNonNegativeNumber(params.volumeKg)}
         durationMin={Math.round(parseNonNegativeNumber(params.durationMin))}
+        syncNote={closeIsWaiting ? "Lo salviamo appena torna la rete" : undefined}
         onDone={() => {
           router.replace("/(app)");
         }}

@@ -1,6 +1,6 @@
 import { Image } from "expo-image";
 import { router, useLocalSearchParams, type Href } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -9,19 +9,16 @@ import {
   View,
 } from "react-native";
 import {
-  completeSession,
-  deleteLoggedSet,
   getExercisesByWorkout,
   getSession,
   getWorkout,
   getWorkoutDayExercises,
   hydrateExercisesFromCatalog,
-  logSet,
-  patchLoggedSet,
   type Exercise,
   type LoggedSet,
   type WorkoutSessionWithSets,
 } from "../../src/api";
+import type { SetPosition, SetSummary } from "../../src/api/schemas";
 import { ApiError } from "../../src/api/client";
 import { useAuth } from "../../src/auth";
 import {
@@ -47,6 +44,20 @@ import {
 } from "../../src/features/session/celebrationStats";
 import { RestTimerCard } from "../../src/features/session/RestTimerCard";
 import {
+  isSameSet,
+  recordClose,
+  recordSet,
+  removeSet,
+  type OfflineSessionLog,
+} from "../../src/features/session/offlineSessionLog";
+import {
+  changeOfflineSession,
+  getOfflineSession,
+  OfflineSessionError,
+  openOfflineSession,
+  subscribeOfflineSession,
+} from "../../src/features/session/offlineSessionStore";
+import {
   readSessionBundle,
   saveSessionBundle,
   type SessionBundle,
@@ -56,13 +67,9 @@ import { SessionFocusHeader } from "../../src/features/session/SessionFocusHeade
 import { useRestTimer } from "../../src/features/session/useRestTimer";
 import { colors, spacing } from "../../src/theme";
 
-function toLoggingKey(exerciseId: number, setNumber: number): string {
-  return `${exerciseId}:${setNumber}`;
-}
-
 function firstIncompleteIndex(
   exercises: Exercise[],
-  setsByExercise: Map<number, LoggedSet[]>,
+  setsByExercise: Map<number, SetSummary[]>,
 ): number {
   const index = exercises.findIndex(
     (exercise) =>
@@ -71,13 +78,18 @@ function firstIncompleteIndex(
   return index >= 0 ? index : 0;
 }
 
-function mutationErrorMessage(err: unknown, fallback: string): string {
+/** API errors in Italian; errors of the log on the phone already are. */
+function errorMessage(err: unknown, fallback: string): string {
+  if (err instanceof OfflineSessionError) {
+    return err.message;
+  }
+
   return ApiError.messageFrom(err, fallback);
 }
 
 function sessionProgress(
   exercises: Exercise[],
-  setsByExercise: Map<number, LoggedSet[]>,
+  setsByExercise: Map<number, SetSummary[]>,
 ): number {
   if (exercises.length === 0) {
     return 0;
@@ -97,7 +109,6 @@ export default function SessionScreen() {
   }>();
   const sessionId = Number(rawId);
   const [session, setSession] = useState<WorkoutSessionWithSets | null>(null);
-  const [localSets, setLocalSets] = useState<LoggedSet[]>([]);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [previousByExercise, setPreviousByExercise] = useState<
     Map<number, LoggedSet[]>
@@ -113,13 +124,16 @@ export default function SessionScreen() {
     Record<number, string>
   >({});
   const [fetchId, setFetchId] = useState(0);
-  const [finishing, setFinishing] = useState(false);
-  const [mutating, setMutating] = useState(false);
   const [focusIndex, setFocusIndex] = useState(0);
-  const loggedKeysRef = useRef(new Set<string>());
-  const loggingLockRef = useRef(false);
   const timer = useRestTimer(sessionId);
   const userId = useAuth().user?.id ?? null;
+  const offlineSession = useSyncExternalStore(
+    subscribeOfflineSession,
+    getOfflineSession,
+  );
+  // The phone holds the sets of this session until TERMINA sends them.
+  const offlineLog =
+    offlineSession?.log.sessionId === sessionId ? offlineSession.log : null;
 
   useEffect(() => {
     if (rest !== "skip") {
@@ -133,43 +147,58 @@ export default function SessionScreen() {
   useEffect(() => {
     let cancelled = false;
 
-    const apply = (bundle: SessionBundle, firstApply: boolean) => {
-      const { session: nextSession, exercises: nextExercises } = bundle;
-      const hydratedSets = nextSession.sets;
-      loggedKeysRef.current = new Set(
-        hydratedSets.map((set) => toLoggingKey(set.exerciseId, set.setNumber)),
-      );
+    /**
+     * Show a session: its sets come from the log on the phone, which is
+     * created from the server data the first time the session is opened.
+     */
+    const show = async (bundle: SessionBundle, firstShow: boolean) => {
+      const log =
+        userId === null ? null : await openOfflineSession(userId, bundle.session);
 
-      setSession(nextSession);
-      setLocalSets(hydratedSets);
-      setExercises(nextExercises);
+      if (cancelled) {
+        return;
+      }
+
+      setSession(bundle.session);
+      setExercises(bundle.exercises);
       setPreviousByExercise(bundle.previousByExercise);
       setWorkoutName(bundle.workoutName);
       setDefaultRestSec(bundle.defaultRestSec);
 
       // A refresh from the server after the local open must not reset what
       // the athlete is typing or move the pager.
-      if (!firstApply) {
+      if (!firstShow) {
         return;
       }
 
-      const grouped = groupSetsByExercise(hydratedSets);
-      const nextWeights: Record<number, string> = {};
-      const nextReps: Record<number, string> = {};
-
-      for (const exercise of nextExercises) {
-        const defaults = resolveLogDefaults(
+      const shownSets: SetSummary[] = log?.sets ?? bundle.session.sets;
+      const grouped = groupSetsByExercise(shownSets);
+      const defaultsByExercise = bundle.exercises.map((exercise) => ({
+        exerciseId: exercise.id,
+        defaults: resolveLogDefaults(
           exercise,
           grouped.get(exercise.id) ?? [],
           bundle.previousByExercise.get(exercise.id) ?? [],
-        );
-        nextWeights[exercise.id] = defaults.weight;
-        nextReps[exercise.id] = defaults.reps;
-      }
+        ),
+      }));
 
-      setWeightByExercise(nextWeights);
-      setRepsByExercise(nextReps);
-      setFocusIndex(firstIncompleteIndex(nextExercises, grouped));
+      setWeightByExercise(
+        Object.fromEntries(
+          defaultsByExercise.map(({ exerciseId, defaults }) => [
+            exerciseId,
+            defaults.weight,
+          ]),
+        ),
+      );
+      setRepsByExercise(
+        Object.fromEntries(
+          defaultsByExercise.map(({ exerciseId, defaults }) => [
+            exerciseId,
+            defaults.reps,
+          ]),
+        ),
+      );
+      setFocusIndex(firstIncompleteIndex(bundle.exercises, grouped));
     };
 
     const load = async () => {
@@ -187,12 +216,12 @@ export default function SessionScreen() {
         return;
       }
 
-      if (saved) {
-        apply(saved, true);
-        setLoading(false);
-      }
-
       try {
+        if (saved) {
+          await show(saved, true);
+          setLoading(false);
+        }
+
         const nextSession = await getSession(sessionId);
         const [workout, nextExercises, previousMap] = await Promise.all([
           getWorkout(nextSession.workoutId),
@@ -210,16 +239,19 @@ export default function SessionScreen() {
           return;
         }
 
-        apply(
-          {
-            session: nextSession,
-            workoutName: workout.name,
-            defaultRestSec: workout.defaultRestSec,
-            exercises: nextExercises,
-            previousByExercise: previousMap,
-          },
-          saved === null,
-        );
+        const serverBundle: SessionBundle = {
+          session: nextSession,
+          workoutName: workout.name,
+          defaultRestSec: workout.defaultRestSec,
+          exercises: nextExercises,
+          previousByExercise: previousMap,
+        };
+
+        await show(serverBundle, saved === null);
+
+        if (userId !== null) {
+          saveSessionBundle(userId, serverBundle);
+        }
 
         const photoUrls = new Set<string>();
         for (const exercise of nextExercises) {
@@ -238,7 +270,7 @@ export default function SessionScreen() {
         const offline = err instanceof ApiError && err.status === 0;
 
         if (!cancelled && !(saved && offline)) {
-          setError(ApiError.messageFrom(err, "Errore caricamento"));
+          setError(errorMessage(err, "Errore caricamento"));
         }
       } finally {
         if (!cancelled) {
@@ -253,22 +285,6 @@ export default function SessionScreen() {
       cancelled = true;
     };
   }, [sessionId, fetchId, userId]);
-
-  // Keep the bundle on disk in step with what the screen shows, so a reopen
-  // without network starts from the latest sets.
-  useEffect(() => {
-    if (!session || userId === null) {
-      return;
-    }
-
-    saveSessionBundle(userId, {
-      session: { ...session, sets: localSets },
-      workoutName,
-      defaultRestSec,
-      exercises,
-      previousByExercise,
-    });
-  }, [session, localSets]);
 
   if (loading) {
     return <LoadingBlock />;
@@ -288,16 +304,17 @@ export default function SessionScreen() {
     );
   }
 
-  const readOnly = session.status !== "in_progress";
-  const chromeBusy = finishing || mutating;
-  const setsByExercise = groupSetsByExercise(localSets);
+  const shownSets: SetSummary[] = offlineLog?.sets ?? session.sets;
+  const shownStatus = offlineLog?.status ?? session.status;
+  const readOnly = shownStatus !== "in_progress";
+  const setsByExercise = groupSetsByExercise(shownSets);
   const safeFocusIndex = Math.min(
     focusIndex,
     Math.max(0, exercises.length - 1),
   );
   const focusedExercise = exercises[safeFocusIndex] ?? null;
   const statusLabel = readOnly
-    ? session.status === "completed"
+    ? shownStatus === "completed"
       ? "Sessione completata"
       : "Sessione abbandonata"
     : "Sessione in corso";
@@ -312,25 +329,29 @@ export default function SessionScreen() {
         )
       : 0;
 
-  const onLogSet = async (exercise: Exercise) => {
-    if (
-      session.status !== "in_progress" ||
-      loggingLockRef.current ||
-      mutating ||
-      finishing
-    ) {
+  /** Save an athlete action on the phone; false (and a message) if the disk write failed. */
+  const saveOnPhone = (
+    change: (log: OfflineSessionLog) => OfflineSessionLog,
+    failureMessage: string,
+  ): boolean => {
+    try {
+      changeOfflineSession(change);
+      return true;
+    } catch {
+      setError(failureMessage);
+      return false;
+    }
+  };
+
+  const onLogSet = (exercise: Exercise) => {
+    if (readOnly) {
       return;
     }
 
     const loggedForExercise = setsByExercise.get(exercise.id) ?? [];
-    if (isExerciseComplete(exercise, loggedForExercise.length)) {
-      setError("Serie del piano già completate per questo esercizio");
-      return;
-    }
-
-    const targetSets = getTargetSetCount(exercise);
     const setNumber = loggedForExercise.length + 1;
-    if (setNumber > targetSets) {
+
+    if (isExerciseComplete(exercise, loggedForExercise.length)) {
       setError("Serie del piano già completate per questo esercizio");
       return;
     }
@@ -353,198 +374,156 @@ export default function SessionScreen() {
       return;
     }
 
-    const key = toLoggingKey(exercise.id, setNumber);
-    if (loggedKeysRef.current.has(key)) {
+    const position: SetPosition = { exerciseId: exercise.id, setNumber };
+    const values = {
+      reps,
+      weightKg,
+      rir: null,
+      tutSec: null,
+      loggedAt: new Date().toISOString(),
+    };
+    const saved = saveOnPhone(
+      (log) => recordSet(log, position, values),
+      "Serie non salvata sul telefono. Riprova.",
+    );
+
+    if (!saved) {
       return;
     }
 
     setError(null);
-    loggingLockRef.current = true;
-    loggedKeysRef.current.add(key);
-    setMutating(true);
+    setWeightByExercise((current) => ({
+      ...current,
+      [exercise.id]: weightKg === null ? "" : formatWeightKg(weightKg),
+    }));
+    setRepsByExercise((current) => ({
+      ...current,
+      [exercise.id]: String(getTargetRepsForSet(exercise, setNumber + 1)),
+    }));
 
-    try {
-      const logged = await logSet(session.id, {
-        exerciseId: exercise.id,
-        setNumber,
-        reps,
-        weightKg,
+    const restSec = getRestSecForSet(exercise, setNumber, defaultRestSec);
+    const exerciseDone = isExerciseComplete(exercise, setNumber);
+
+    if (restSec > 0 && !exerciseDone) {
+      void timer.start(restSec, exercise.id).catch(() => {
+        // Notifiche possono fallire (permessi): il timer in-app resta comunque.
       });
-
-      const nextLoggedCount = loggedForExercise.length + 1;
-
-      setLocalSets((current) => [...current, logged]);
-
-      setWeightByExercise((current) => ({
-        ...current,
-        [exercise.id]: weightKg === null ? "" : formatWeightKg(weightKg),
-      }));
-      setRepsByExercise((current) => ({
-        ...current,
-        [exercise.id]: String(getTargetRepsForSet(exercise, setNumber + 1)),
-      }));
-
-      const restSec = getRestSecForSet(exercise, setNumber, defaultRestSec);
-      const exerciseDone = isExerciseComplete(exercise, nextLoggedCount);
-
-      if (restSec > 0 && !exerciseDone) {
-        void timer.start(restSec, exercise.id).catch(() => {
-          // Notifiche possono fallire (permessi): il timer in-app resta comunque.
-        });
-      }
-
-      if (exerciseDone) {
-        const nextIndex = exercises.findIndex(
-          (item, index) =>
-            index > safeFocusIndex &&
-            !isExerciseComplete(
-              item,
-              (setsByExercise.get(item.id) ?? []).length +
-                (item.id === exercise.id ? 1 : 0),
-            ),
-        );
-        if (nextIndex >= 0) {
-          setFocusIndex(nextIndex);
-        }
-      }
-    } catch (err) {
-      loggedKeysRef.current.delete(key);
-      setError(mutationErrorMessage(err, "Salvataggio serie non riuscito"));
-    } finally {
-      loggingLockRef.current = false;
-      setMutating(false);
     }
-  };
 
-  const onUndoLastSet = async (exercise: Exercise) => {
-    if (session.status !== "in_progress" || mutating || finishing) {
+    if (!exerciseDone) {
       return;
     }
 
+    const nextIndex = exercises.findIndex((item, index) => {
+      const loggedCount = (setsByExercise.get(item.id) ?? []).length;
+      const countWithNewSet = item.id === exercise.id ? setNumber : loggedCount;
+      return index > safeFocusIndex && !isExerciseComplete(item, countWithNewSet);
+    });
+
+    if (nextIndex >= 0) {
+      setFocusIndex(nextIndex);
+    }
+  };
+
+  const onUndoLastSet = (exercise: Exercise) => {
     const loggedForExercise = setsByExercise.get(exercise.id) ?? [];
-    const last = loggedForExercise.at(-1);
-    if (!last) {
+    const lastSet = loggedForExercise.at(-1);
+
+    if (readOnly || !lastSet) {
+      return;
+    }
+
+    const removed = saveOnPhone(
+      (log) => removeSet(log, lastSet),
+      "Annullamento non salvato sul telefono. Riprova.",
+    );
+
+    if (!removed) {
       return;
     }
 
     setError(null);
-    setMutating(true);
-
-    try {
-      await deleteLoggedSet(session.id, last.id);
-      timer.cancel();
-      loggedKeysRef.current.delete(toLoggingKey(exercise.id, last.setNumber));
-
-      setLocalSets((current) =>
-        current.filter(
-          (set) =>
-            !(
-              set.exerciseId === exercise.id && set.setNumber === last.setNumber
-            ),
-        ),
-      );
-
-      setWeightByExercise((current) => ({
-        ...current,
-        [exercise.id]:
-          last.weightKg === null ? "" : formatWeightKg(last.weightKg),
-      }));
-      setRepsByExercise((current) => ({
-        ...current,
-        [exercise.id]: String(last.reps),
-      }));
-    } catch (err) {
-      setError(mutationErrorMessage(err, "Annullamento serie non riuscito"));
-    } finally {
-      setMutating(false);
-    }
+    timer.cancel();
+    setWeightByExercise((current) => ({
+      ...current,
+      [exercise.id]:
+        lastSet.weightKg === null ? "" : formatWeightKg(lastSet.weightKg),
+    }));
+    setRepsByExercise((current) => ({
+      ...current,
+      [exercise.id]: String(lastSet.reps),
+    }));
   };
 
-  const onEditSet = async (
+  const onEditSet = (
     exercise: Exercise,
     setNumber: number,
     next: { reps: number; weightKg: number | null },
   ) => {
-    if (session.status !== "in_progress" || mutating || finishing) {
+    const position: SetPosition = { exerciseId: exercise.id, setNumber };
+    const editedSet = offlineLog?.sets.find((set) => isSameSet(set, position));
+
+    if (readOnly || !editedSet) {
       return;
     }
 
-    const existing = localSets.find(
-      (set) => set.exerciseId === exercise.id && set.setNumber === setNumber,
+    const changedValues = { ...editedSet, reps: next.reps, weightKg: next.weightKg };
+    const saved = saveOnPhone(
+      (log) => recordSet(log, position, changedValues),
+      "Modifica non salvata sul telefono. Riprova.",
     );
-    if (!existing) {
+
+    if (!saved) {
       return;
     }
 
     setError(null);
-    setMutating(true);
 
-    try {
-      const updated = await patchLoggedSet(session.id, existing.id, {
-        reps: next.reps,
-        weightKg: next.weightKg,
-      });
+    const loggedForExercise = setsByExercise.get(exercise.id) ?? [];
+    const isLastSet = loggedForExercise.at(-1)?.setNumber === setNumber;
 
-      setLocalSets((current) =>
-        current.map((set) => (set.id === updated.id ? updated : set)),
-      );
-
-      const loggedForExercise = setsByExercise.get(exercise.id) ?? [];
-      const isLast =
-        loggedForExercise.length > 0 &&
-        loggedForExercise[loggedForExercise.length - 1]?.setNumber === setNumber;
-
-      if (isLast) {
-        setWeightByExercise((current) => ({
-          ...current,
-          [exercise.id]:
-            next.weightKg === null ? "" : formatWeightKg(next.weightKg),
-        }));
-        setRepsByExercise((current) => ({
-          ...current,
-          [exercise.id]: String(getTargetRepsForSet(exercise, setNumber + 1)),
-        }));
-      }
-    } catch (err) {
-      setError(mutationErrorMessage(err, "Modifica serie non riuscita"));
-    } finally {
-      setMutating(false);
+    if (!isLastSet) {
+      return;
     }
+
+    setWeightByExercise((current) => ({
+      ...current,
+      [exercise.id]: next.weightKg === null ? "" : formatWeightKg(next.weightKg),
+    }));
+    setRepsByExercise((current) => ({
+      ...current,
+      [exercise.id]: String(getTargetRepsForSet(exercise, setNumber + 1)),
+    }));
   };
 
-  const finish = async () => {
-    if (finishing || mutating) {
+  /** TERMINA works without network: the close waits on the phone and is sent later. */
+  const finish = () => {
+    if (readOnly) {
       return;
     }
 
-    setFinishing(true);
-    setError(null);
+    const completedAt = new Date();
+    const closed = saveOnPhone(
+      (log) => recordClose(log, "completed", completedAt.toISOString()),
+      "Fine sessione non salvata sul telefono. Riprova.",
+    );
 
-    try {
-      timer.cancel();
-      const completedAt = new Date();
-      const volumeKg = computeVolumeKg(localSets);
-      await completeSession(session.id);
-      router.replace({
-        pathname: "/session/complete",
-        params: {
-          workoutName,
-          volumeKg: String(volumeKg),
-          durationMin: String(
-            computeDurationMin(session.startedAt, completedAt),
-          ),
-        },
-      } as unknown as Href);
-    } catch (err) {
-      setFinishing(false);
-      setError(mutationErrorMessage(err, "Operazione fallita"));
+    if (!closed) {
+      return;
     }
+
+    timer.cancel();
+    router.replace({
+      pathname: "/session/complete",
+      params: {
+        workoutName,
+        volumeKg: String(computeVolumeKg(shownSets)),
+        durationMin: String(computeDurationMin(session.startedAt, completedAt)),
+      },
+    } as unknown as Href);
   };
 
   const onBack = () => {
-    if (chromeBusy) {
-      return;
-    }
     router.back();
   };
 
@@ -624,7 +603,6 @@ export default function SessionScreen() {
                 previousSets={previousByExercise.get(focusedExercise.id) ?? []}
                 resting={timer.restingExerciseId === focusedExercise.id}
                 readOnly={false}
-                busy={mutating}
                 focus
                 exerciseOrdinal={safeFocusIndex + 1}
                 exerciseTotal={exercises.length}
@@ -642,15 +620,11 @@ export default function SessionScreen() {
                     [focusedExercise.id]: value,
                   }))
                 }
-                onLog={() => {
-                  void onLogSet(focusedExercise);
-                }}
-                onUndoLast={() => {
-                  void onUndoLastSet(focusedExercise);
-                }}
-                onEditSet={(setNumber, next) => {
-                  void onEditSet(focusedExercise, setNumber, next);
-                }}
+                onLog={() => onLogSet(focusedExercise)}
+                onUndoLast={() => onUndoLastSet(focusedExercise)}
+                onEditSet={(setNumber, next) =>
+                  onEditSet(focusedExercise, setNumber, next)
+                }
               />
 
               {exercises.length > 1 ? (
@@ -674,12 +648,7 @@ export default function SessionScreen() {
         </ScrollView>
 
         {!readOnly ? (
-          <SessionActionBar
-            busy={chromeBusy}
-            onComplete={() => {
-              void finish();
-            }}
-          />
+          <SessionActionBar busy={false} onComplete={finish} />
         ) : null}
       </KeyboardAvoidingView>
     </Screen>

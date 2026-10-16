@@ -7,7 +7,8 @@ import {
   View,
   type TextInput as TextInputType,
 } from "react-native";
-import type { Exercise, LoggedSet } from "../../api";
+import type { Exercise } from "../../api";
+import type { SetSummary } from "../../api/schemas";
 import { AppText, Meta } from "../../components";
 import { colors, radii, spacing } from "../../theme";
 import { exerciseEnglishLine, exerciseHeading } from "../workoutprogram/exerciseDisplay";
@@ -23,9 +24,9 @@ import {
 
 type ExerciseCardProps = {
   exercise: Exercise;
-  sets: LoggedSet[];
+  sets: SetSummary[];
   /** Serie dalla sessione precedente (stesso esercizio), per colonna PRECEDENTE. */
-  previousSets?: LoggedSet[];
+  previousSets?: SetSummary[];
   resting: boolean;
   readOnly: boolean;
   /** Disables log/undo/edit while a set mutation is in flight. */
@@ -69,7 +70,7 @@ function formatLogLabel(weight: string, reps: string, setNumber: number): string
   return `LOG ${kg} × ${repValue}  ·  #${setNumber}`;
 }
 
-function formatPreviousLabel(previous: LoggedSet | undefined): string {
+function formatPreviousLabel(previous: SetSummary | undefined): string {
   if (!previous) {
     return "—";
   }
@@ -143,7 +144,7 @@ export function ExerciseCard({
     onChangeReps(stepReps(reps, direction));
   };
 
-  const openSetEditor = (logged: LoggedSet) => {
+  const openSetEditor = (logged: SetSummary) => {
     if (locked) {
       return;
     }
