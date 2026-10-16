@@ -163,10 +163,12 @@ export function duplicateActiveDay(
   createClientId: () => string,
 ): WorkoutForm {
   const activeDay = findActiveDay(form);
+  // Same fallback label the day chip shows for an unnamed day.
+  const sourceName = activeDay.name.trim() || `Giorno ${activeDay.sortOrder + 1}`;
   const copy: DraftWorkoutDay = {
     clientId: createClientId(),
     serverId: undefined,
-    name: `${activeDay.name.trim()} (copia)`,
+    name: `${sourceName} (copia)`,
     sortOrder: activeDay.sortOrder + 1,
     weekdays: [],
     exercises: activeDay.exercises.map((exercise) =>
