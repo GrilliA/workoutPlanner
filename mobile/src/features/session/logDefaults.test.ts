@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  formatSetTargetExtras,
+  formatTargetRepsForSet,
   formatWeightKg,
   getTargetSetCount,
   isExerciseComplete,
@@ -210,5 +212,43 @@ describe("resolveLogDefaults", () => {
 describe("formatWeightKg", () => {
   it("avoids float noise", () => {
     assert.equal(formatWeightKg(1.25 * 3), "3.75");
+  });
+});
+
+describe("prescription targets", () => {
+  const squat = exercise({
+    id: 1,
+    name: "Squat",
+    setPrescriptions: [
+      { setNumber: 1, reps: 8, repsMax: 12, loadValue: 82.5, loadUnit: "kg", rir: 2, restSec: 90 },
+      { setNumber: 2, reps: 5, loadValue: 75, loadUnit: "percent_1rm", restSec: 120 },
+      { setNumber: 3, reps: 10, restSec: 90 },
+    ],
+  });
+
+  it("formats the rep range and the extras of each set", () => {
+    assert.equal(formatTargetRepsForSet(squat, 1), "8–12");
+    assert.equal(formatTargetRepsForSet(squat, 2), "5");
+    assert.equal(formatSetTargetExtras(squat, 1), "82,5 kg · RIR 2");
+    assert.equal(formatSetTargetExtras(squat, 2), "75% 1RM");
+    assert.equal(formatSetTargetExtras(squat, 3), null);
+  });
+
+  it("prefills the prescribed kg load when there is no history", () => {
+    assert.deepEqual(resolveLogDefaults(squat, []), { weight: "82.5", reps: "8" });
+  });
+
+  it("does not turn a %1RM load into a weight, nor override a set logged without weight", () => {
+    const loggedBodyweight = [
+      { exerciseId: 1, setNumber: 1, weightKg: null, reps: 8, rir: null, tutSec: null },
+    ];
+    const percentOnly = exercise({
+      id: 2,
+      name: "Panca",
+      setPrescriptions: [{ setNumber: 1, reps: 5, loadValue: 75, loadUnit: "percent_1rm", restSec: 90 }],
+    });
+
+    assert.deepEqual(resolveLogDefaults(percentOnly, []), { weight: "", reps: "5" });
+    assert.equal(resolveLogDefaults(squat, loggedBodyweight).weight, "");
   });
 });

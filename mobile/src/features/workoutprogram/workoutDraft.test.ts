@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import type { DraftPrescription } from "./prescriptionDraft";
 import type { Exercise, WorkoutDay, WorkoutDetail } from "../../api/schemas";
 import type { CatalogExercise } from "../../api/schemas/catalog";
 import type { ParsedScheda } from "../../schedatxt/parseSchedaTxt";
@@ -14,6 +15,16 @@ import {
   type WorkoutDraft,
   type WorkoutDraftExercise,
 } from "./workoutDraft";
+
+const draftSet = (key: string, reps: string, restSec: number): DraftPrescription => ({
+  key,
+  reps,
+  restSec,
+  repsMax: null,
+  loadValue: null,
+  loadUnit: null,
+  rir: null,
+});
 
 const makeExercise = (overrides: Partial<Exercise> = {}): Exercise => ({
   id: 1,
@@ -63,9 +74,10 @@ const makeDraftExercise = (
   nameEn: null,
   imageUrl: null,
   imageUrlEnd: null,
+  notes: null,
   prescriptions: [
-    { key: "s1", reps: "10", restSec: 90 },
-    { key: "s2", reps: "8", restSec: 120 },
+    draftSet("s1", "10", 90),
+    draftSet("s2", "8", 120),
   ],
   ...overrides,
 });
@@ -118,9 +130,10 @@ describe("toWorkoutProgramInput", () => {
     );
     assert.equal(input.days[1]!.exercises[1]!.id, undefined);
     assert.equal(input.days[1]!.exercises[1]!.catalogId, null);
+    assert.equal(input.days[1]!.exercises[0]!.notes, null);
     assert.deepEqual(input.days[1]!.exercises[0]!.setPrescriptions, [
-      { setNumber: 1, reps: 10, restSec: 90 },
-      { setNumber: 2, reps: 8, restSec: 120 },
+      { setNumber: 1, reps: 10, repsMax: null, loadValue: null, loadUnit: null, rir: null, restSec: 90 },
+      { setNumber: 2, reps: 8, repsMax: null, loadValue: null, loadUnit: null, rir: null, restSec: 120 },
     ]);
   });
 
@@ -174,7 +187,7 @@ describe("workoutDraftFromServer", () => {
             imageUrl: "https://x/0.jpg",
             imageUrlEnd: "https://x/1.jpg",
             setPrescriptions: [
-              { setNumber: 2, reps: 8, restSec: 120 },
+              { setNumber: 2, reps: 8, repsMax: null, loadValue: null, loadUnit: null, rir: null, restSec: 120 },
               { setNumber: 1, reps: 10, restSec: null },
             ],
           }),
@@ -284,13 +297,19 @@ describe("workoutDraftFromSchedaTxt", () => {
               clientId: "e1",
               name: "Panca piana",
               catalogId: "Barbell_Bench_Press",
-              setPrescriptions: [{ setNumber: 1, reps: 10, restSec: 90 }],
+              notes: "",
+              setPrescriptions: [
+                { setNumber: 1, reps: 10, repsMax: null, loadValue: null, loadUnit: "kg", rir: null, restSec: 90 },
+              ],
             },
             {
               clientId: "e2",
               name: "Custom",
               catalogId: null,
-              setPrescriptions: [{ setNumber: 1, reps: 12, restSec: 60 }],
+              notes: "",
+              setPrescriptions: [
+                { setNumber: 1, reps: 12, repsMax: null, loadValue: null, loadUnit: "kg", rir: null, restSec: 60 },
+              ],
             },
           ],
         },
@@ -390,7 +409,7 @@ describe("validateWorkoutDraft", () => {
         exercises: [
           makeDraftExercise({
             nameIt: "Panca piana",
-            prescriptions: [{ key: "s1", reps: "0", restSec: 90 }],
+            prescriptions: [draftSet("s1", "0", 90)],
           }),
         ],
       },

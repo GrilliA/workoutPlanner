@@ -59,6 +59,7 @@ function customExercise(name: string, restSec: number): WorkoutDraftExercise {
     nameEn: null,
     imageUrl: null,
     imageUrlEnd: null,
+    notes: null,
     prescriptions: prescriptionsFromUniform(3, 10, restSec),
   };
 }

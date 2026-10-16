@@ -14,6 +14,8 @@ import { colors, radii, spacing } from "../../theme";
 import { exerciseEnglishLine, exerciseHeading } from "../workoutprogram/exerciseDisplay";
 import { ExerciseMediaFlip } from "./ExerciseMediaFlip";
 import {
+  formatSetTargetExtras,
+  formatTargetRepsForSet,
   formatWeightKg,
   getTargetRepsForSet,
   getTargetSetCount,
@@ -113,6 +115,10 @@ export function ExerciseCard({
   const actionsDisabled = busy;
   const heading = exerciseHeading(exercise);
   const english = exerciseEnglishLine(exercise);
+  const nextTargetExtras = formatSetTargetExtras(exercise, nextSetNumber);
+  const nextTargetLabel = nextTargetExtras
+    ? `${formatTargetRepsForSet(exercise, nextSetNumber)} reps · ${nextTargetExtras}`
+    : `${formatTargetRepsForSet(exercise, nextSetNumber)} reps`;
 
   const startEdit = (field: EditingField) => {
     if (actionsDisabled) {
@@ -220,6 +226,12 @@ export function ExerciseCard({
         </AppText>
         {english ? <Meta style={styles.nameEn}>{english}</Meta> : null}
       </View>
+      {exercise.notes ? <Meta style={styles.notes}>{exercise.notes}</Meta> : null}
+      {canLog ? (
+        <AppText tone="accent" style={styles.target}>
+          Obiettivo serie {nextSetNumber}: {nextTargetLabel}
+        </AppText>
+      ) : null}
       {!focus ? (
         <Meta>
           Serie {Math.min(sets.length, targetSets)} / {targetSets}
@@ -348,7 +360,7 @@ export function ExerciseCard({
                       styles.plannedReps,
                     ]}
                   >
-                    {String(plannedReps)}
+                    {formatTargetRepsForSet(exercise, setNumber)}
                   </AppText>
                 </View>
               );
@@ -398,7 +410,7 @@ export function ExerciseCard({
                 <AppText
                   style={[styles.setCol, styles.setColVal, styles.plannedReps]}
                 >
-                  {String(plannedReps)}
+                  {formatTargetRepsForSet(exercise, setNumber)}
                 </AppText>
               </Pressable>
             );
@@ -732,6 +744,14 @@ const styles = StyleSheet.create({
   },
   nameEn: {
     marginTop: 2,
+  },
+  notes: {
+    marginTop: spacing.xs,
+    fontStyle: "italic",
+  },
+  target: {
+    marginTop: spacing.xs,
+    fontWeight: "600",
   },
   body: {
     padding: spacing.md,

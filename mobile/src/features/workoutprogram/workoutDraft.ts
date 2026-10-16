@@ -36,6 +36,8 @@ export type WorkoutDraftExercise = {
   nameEn: string | null;
   imageUrl: string | null;
   imageUrlEnd: string | null;
+  /** Coach notes; edited on the web builder, kept as-is here. */
+  notes: string | null;
   prescriptions: DraftPrescription[];
 };
 
@@ -136,6 +138,7 @@ export function workoutDraftFromServer(
           nameEn: exercise.nameEn ?? null,
           imageUrl: exercise.imageUrl ?? null,
           imageUrlEnd: exercise.imageUrlEnd ?? null,
+          notes: exercise.notes ?? null,
           prescriptions: prescriptionsFromServer(
             exercise.setPrescriptions,
             defaultRestSec,
@@ -169,6 +172,7 @@ export function workoutDraftFromSchedaTxt(parsed: ParsedScheda): WorkoutDraft {
             nameEn: exercise.nameEn?.trim() || null,
             imageUrl: media?.imageUrl ?? null,
             imageUrlEnd: media?.imageUrlEnd ?? null,
+            notes: exercise.notes.trim() || null,
             prescriptions: prescriptionsFromServer(
               exercise.setPrescriptions,
               parsed.settings.defaultRestSec,
@@ -191,6 +195,7 @@ export function workoutDraftExerciseFromCatalog(
     nameEn: item.name,
     imageUrl: item.imageUrl,
     imageUrlEnd: item.imageUrlEnd ?? deriveImageUrlEnd(item.imageUrl),
+    notes: null,
     prescriptions: prescriptionsFromUniform(3, 10, restSec),
   };
 }
@@ -264,6 +269,7 @@ export function toWorkoutProgramInput(
         ...(exercise.id !== undefined ? { id: exercise.id } : {}),
         name: exercise.name.trim(),
         catalogId: exercise.catalogId,
+        notes: exercise.notes,
         setPrescriptions: toSetPrescriptions(exercise.prescriptions),
       })),
     })),

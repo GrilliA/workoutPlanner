@@ -17,6 +17,16 @@ type ProgramExerciseCardProps = {
   children?: ReactNode;
 };
 
+const formatDraftReps = (item: DraftPrescription): string => {
+  const reps = item.reps.trim();
+
+  if (reps === "") {
+    return "—";
+  }
+
+  return item.repsMax ? `${reps}–${item.repsMax}` : reps;
+};
+
 export function ProgramExerciseCard({
   exercise,
   index,
@@ -80,7 +90,7 @@ export function ProgramExerciseCard({
                     style={[styles.cell, cellIndex > 0 && styles.cellDivider]}
                   >
                     <AppText tone="heading" style={styles.cellReps}>
-                      {item.reps.trim() || "—"}
+                      {formatDraftReps(item)}
                     </AppText>
                     <Meta style={styles.cellRest}>{item.restSec}s</Meta>
                   </View>

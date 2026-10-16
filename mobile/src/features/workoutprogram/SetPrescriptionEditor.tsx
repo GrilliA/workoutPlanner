@@ -2,6 +2,7 @@ import { Pressable, StyleSheet, View } from "react-native";
 import { AppText, Field, Meta, SecondaryButton } from "../../components";
 import { colors, radii, spacing } from "../../theme";
 import {
+  copyPrescription,
   newPrescription,
   REST_SEC_OPTIONS,
   type DraftPrescription,
@@ -36,10 +37,8 @@ export function SetPrescriptionEditor({
 
   const addSet = () => {
     const last = prescriptions.at(-1);
-    onChange([
-      ...prescriptions,
-      newPrescription(last?.reps ?? "10", last?.restSec ?? 90),
-    ]);
+    const nextSet = last ? copyPrescription(last) : newPrescription("10", 90);
+    onChange([...prescriptions, nextSet]);
   };
 
   const steppedRestSec = (restSec: number, step: 1 | -1) =>

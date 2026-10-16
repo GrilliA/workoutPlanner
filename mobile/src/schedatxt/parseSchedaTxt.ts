@@ -6,9 +6,15 @@ import {
 } from "../api/schemas/workout";
 import catalogPromptExercises from "./catalogPromptExercises.json" with { type: "json" };
 
+export type LoadUnit = "kg" | "percent_1rm";
+
 export type DraftSetPrescription = {
   setNumber: number;
   reps: number;
+  repsMax: number | null;
+  loadValue: number | null;
+  loadUnit: LoadUnit;
+  rir: number | null;
   restSec: number;
 };
 
@@ -21,6 +27,7 @@ export type DraftExercise = {
   nameEn?: string | null;
   imageUrl?: string | null;
   imageUrlEnd?: string | null;
+  notes: string;
   setPrescriptions: DraftSetPrescription[];
 };
 
@@ -56,8 +63,17 @@ const META_LINE =
   /^(frequenza|tipo|recupero\s*default|nome|titolo)\s*[:：]\s*(.+)$/i;
 const REPS_LABELED = /^reps?\s*[:：]\s*(.+)$/i;
 const REST_LABELED = /^recupero\s*[:：]\s*(.+)$/i;
+const LOAD_LABELED = /^carico\s*[:：]\s*(.+)$/i;
+const EFFORT_LABELED = /^(rir|rpe)\s*[:：]\s*(.+)$/i;
+const NOTES_LABELED = /^note\s*[:：]\s*(.*)$/i;
 const TITLE_LINE = /^#\s+(.+)$/;
-const SET_TOKEN = /^(\d+)(?:\s*@\s*(\d+))?$/;
+// "10", "10@90", "8-12@90" (a rep range needs the @rest, otherwise 8-12 means two sets).
+const SET_TOKEN = /^(\d+)(?:[-–](\d+))?(?:\s*@\s*(\d+))?$/;
+const LOAD_TOKEN = /^(\d+(?:[.,]\d+)?)(kg|%)$/i;
+
+const MAX_LOAD_KG = 1000;
+const MAX_LOAD_PERCENT_1RM = 100;
+const MAX_RIR = 10;
 
 const createClientId = (): string =>
   typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -102,6 +118,7 @@ const draftExercise = (title: string): DraftExercise => {
     nameEn: catalog?.name ?? null,
     imageUrl: folder ? `${CATALOG_MEDIA_BASE}/${folder}/0.jpg` : null,
     imageUrlEnd: folder ? `${CATALOG_MEDIA_BASE}/${folder}/1.jpg` : null,
+    notes: "",
     setPrescriptions: [],
   };
 };
@@ -116,19 +133,25 @@ const snapRestOption = (value: number): WorkoutSettings["defaultRestSec"] => {
   return best;
 };
 
-const toPrescriptions = (
-  sets: Array<{ reps: number; restSec: number }>,
-): DraftSetPrescription[] =>
+type ParsedReps = { reps: number; repsMax: number | null };
+type ParsedSet = ParsedReps & { restSec: number };
+type ParsedLoad = { loadValue: number; loadUnit: LoadUnit };
+
+const toPrescriptions = (sets: ParsedSet[]): DraftSetPrescription[] =>
   sets.map((set, index) => ({
     setNumber: index + 1,
     reps: set.reps,
+    repsMax: set.repsMax,
+    loadValue: null,
+    loadUnit: "kg",
+    rir: null,
     restSec: set.restSec,
   }));
 
 const parseSetLine = (
   raw: string,
   defaultRestSec: number,
-): Array<{ reps: number; restSec: number }> | null => {
+): ParsedSet[] | null => {
   const cleaned = raw.trim();
   if (!cleaned) {
     return null;
@@ -143,7 +166,7 @@ const parseSetLine = (
     return null;
   }
 
-  const sets: Array<{ reps: number; restSec: number }> = [];
+  const sets: ParsedSet[] = [];
 
   for (const part of parts) {
     const match = part.match(SET_TOKEN);
@@ -152,16 +175,85 @@ const parseSetLine = (
     }
 
     const reps = Number(match[1]);
-    const restSec = match[2] === undefined ? defaultRestSec : Number(match[2]);
+    const repsMax = match[2] === undefined ? null : Number(match[2]);
+    const restSec = match[3] === undefined ? defaultRestSec : Number(match[3]);
 
     if (!Number.isInteger(reps) || reps < 1 || !Number.isFinite(restSec) || restSec < 0) {
       return null;
     }
 
-    sets.push({ reps, restSec: Math.round(restSec) });
+    if (repsMax !== null && repsMax < reps) {
+      return null;
+    }
+
+    const isSingleCount = repsMax === reps;
+    sets.push({ reps, repsMax: isSingleCount ? null : repsMax, restSec: Math.round(restSec) });
   }
 
   return sets;
+};
+
+// One value applies to every set; otherwise there must be one value per set.
+function spreadOverSets<T>(values: T[], count: number): T[] | null {
+  if (values.length === 1) {
+    return Array.from({ length: count }, () => values[0]!);
+  }
+
+  return values.length === count ? values : null;
+}
+
+const parseLoadToken = (token: string): ParsedLoad | null => {
+  const match = token.match(LOAD_TOKEN);
+  if (!match) {
+    return null;
+  }
+
+  const loadValue = Number(match[1]!.replace(",", "."));
+  const loadUnit: LoadUnit = match[2] === "%" ? "percent_1rm" : "kg";
+  const maxLoad = loadUnit === "kg" ? MAX_LOAD_KG : MAX_LOAD_PERCENT_1RM;
+
+  if (!Number.isFinite(loadValue) || loadValue <= 0 || loadValue > maxLoad) {
+    return null;
+  }
+
+  return { loadValue, loadUnit };
+};
+
+// "80kg", "80 kg 80 kg 70 kg", "75%", "75% 1RM".
+const parseLoadValues = (raw: string): ParsedLoad[] | null => {
+  const tokens = raw
+    .replace(/\s*1rm/gi, "")
+    .replace(/\s+(?=kg|%)/gi, "")
+    .split(/[\s;]+/)
+    .map((token) => token.replace(/,$/, ""))
+    .filter(Boolean);
+  const loads = tokens.map(parseLoadToken);
+
+  if (tokens.length === 0 || loads.some((load) => load === null)) {
+    return null;
+  }
+
+  return loads.filter((load): load is ParsedLoad => load !== null);
+};
+
+// The builder stores RIR only: RPE 8 means 2 reps in reserve.
+const parseRirValues = (scale: string, raw: string): number[] | null => {
+  const values = raw
+    .split(/[\s;]+/)
+    .map((part) => part.replace(/,$/, ""))
+    .filter(Boolean)
+    .map((part) => Number(part.replace(",", ".")));
+  const isRpe = scale.toLowerCase() === "rpe";
+  const rirs = values.map((value) => (isRpe ? Math.round(MAX_RIR - value) : value));
+  const hasInvalid = rirs.some(
+    (rir) => !Number.isInteger(rir) || rir < 0 || rir > MAX_RIR,
+  );
+
+  if (values.length === 0 || hasInvalid) {
+    return null;
+  }
+
+  return rirs;
 };
 
 const parseRestValues = (
@@ -217,7 +309,7 @@ export const parseSchedaTxt = (input: string): ParseSchedaResult => {
 
   let currentDay: DraftWorkoutDay | null = null;
   let currentExercise: DraftExercise | null = null;
-  let pendingReps: number[] | null = null;
+  let pendingReps: ParsedReps[] | null = null;
 
   const pushExercise = (): ParseSchedaResult | null => {
     if (!currentExercise) {
@@ -225,11 +317,9 @@ export const parseSchedaTxt = (input: string): ParseSchedaResult => {
     }
 
     if (pendingReps && pendingReps.length > 0) {
-      currentExercise.setPrescriptions = pendingReps.map((reps, index) => ({
-        setNumber: index + 1,
-        reps,
-        restSec: settings.defaultRestSec,
-      }));
+      currentExercise.setPrescriptions = toPrescriptions(
+        pendingReps.map((reps) => ({ ...reps, restSec: settings.defaultRestSec })),
+      );
       pendingReps = null;
     }
 
@@ -354,12 +444,69 @@ export const parseSchedaTxt = (input: string): ParseSchedaResult => {
         };
       }
 
-      currentExercise.setPrescriptions = pendingReps.map((reps, setIndex) => ({
-        setNumber: setIndex + 1,
-        reps,
-        restSec: rests[setIndex]!,
-      }));
+      currentExercise.setPrescriptions = toPrescriptions(
+        pendingReps.map((reps, setIndex) => ({ ...reps, restSec: rests[setIndex]! })),
+      );
       pendingReps = null;
+      continue;
+    }
+
+    const notesLabeled = line.match(NOTES_LABELED);
+    if (notesLabeled) {
+      if (!currentExercise) {
+        return { ok: false, error: `Note senza esercizio (riga ${index + 1})` };
+      }
+
+      const notes = notesLabeled[1]!.trim();
+      currentExercise.notes = currentExercise.notes ? `${currentExercise.notes}\n${notes}` : notes;
+      continue;
+    }
+
+    const loadLabeled = line.match(LOAD_LABELED);
+    if (loadLabeled) {
+      if (!currentExercise || currentExercise.setPrescriptions.length === 0) {
+        return { ok: false, error: `Carico senza serie precedenti (riga ${index + 1})` };
+      }
+
+      const parsedLoads = parseLoadValues(loadLabeled[1]!);
+      const loads = parsedLoads
+        ? spreadOverSets(parsedLoads, currentExercise.setPrescriptions.length)
+        : null;
+
+      if (!loads) {
+        return {
+          ok: false,
+          error: `Carico non valido per "${currentExercise.name}" (riga ${index + 1})`,
+        };
+      }
+
+      currentExercise.setPrescriptions = currentExercise.setPrescriptions.map(
+        (entry, setIndex) => ({ ...entry, ...loads[setIndex]! }),
+      );
+      continue;
+    }
+
+    const effortLabeled = line.match(EFFORT_LABELED);
+    if (effortLabeled) {
+      if (!currentExercise || currentExercise.setPrescriptions.length === 0) {
+        return { ok: false, error: `RIR/RPE senza serie precedenti (riga ${index + 1})` };
+      }
+
+      const parsedRirs = parseRirValues(effortLabeled[1]!, effortLabeled[2]!);
+      const rirs = parsedRirs
+        ? spreadOverSets(parsedRirs, currentExercise.setPrescriptions.length)
+        : null;
+
+      if (!rirs) {
+        return {
+          ok: false,
+          error: `RIR/RPE non valido per "${currentExercise.name}" (riga ${index + 1})`,
+        };
+      }
+
+      currentExercise.setPrescriptions = currentExercise.setPrescriptions.map(
+        (entry, setIndex) => ({ ...entry, rir: rirs[setIndex]! }),
+      );
       continue;
     }
 
@@ -399,7 +546,7 @@ export const parseSchedaTxt = (input: string): ParseSchedaResult => {
       const nextLine = lines[nextIndex] ?? "";
 
       if (REST_LABELED.test(nextLine)) {
-        pendingReps = sets.map((set) => set.reps);
+        pendingReps = sets.map((set) => ({ reps: set.reps, repsMax: set.repsMax }));
       } else {
         currentExercise.setPrescriptions = toPrescriptions(sets);
         pendingReps = null;
@@ -480,9 +627,12 @@ Recupero default: <60|90|120|150>
 ## Giorno 1: <titolo giorno>
 ### <Nome esercizio>
 <reps>@<recupero_sec> <reps>@<recupero_sec> ...
+Carico: <facoltativo, es. 80kg oppure 75%>
+RIR: <facoltativo, 0–10>
+Note: <facoltativo, una riga per l'atleta>
 
 ### <Nome esercizio>
-<reps>@<recupero_sec> ...
+<reps_min>-<reps_max>@<recupero_sec> ...
 
 ## Giorno 2: <titolo giorno>
 ### <Nome esercizio>
@@ -492,6 +642,8 @@ Regole:
 - Usa giorni logici numerati (Giorno 1, Giorno 2, …), NON giorni della settimana.
 - Ogni esercizio ha almeno 1 serie.
 - reps è un intero ≥ 1; recupero è in secondi.
+- Per un range di ripetizioni scrivi min-max seguito da @recupero, es. 8-12@90.
+- Carico, RIR e Note vanno dopo la riga delle serie e sono facoltativi. Un solo valore vale per tutte le serie, altrimenti scrivi un valore per serie separato da spazi (es. Carico: 80kg 80kg 70kg). Il carico è in kg oppure in % del massimale (es. 75%). Puoi usare RPE al posto di RIR (RPE: 8 equivale a RIR 2).
 - Se vuoi un solo recupero per tutte le serie puoi scrivere:
   reps: 12-10-8-6
   recupero: 90
@@ -519,9 +671,12 @@ Recupero default: 90
 ## Giorno 1: Upper
 ### Panca piana
 12@90 10@90 8@120 6@120
+Carico: 75%
+RIR: 2
 
 ### Rematore bilanciere
-10@90 10@90 8@90
+8-12@90 8-12@90 8-12@90
+Note: schiena neutra, tira verso l'ombelico
 
 ## Giorno 2: Lower
 ### Squat

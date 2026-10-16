@@ -1,5 +1,5 @@
 import type { Exercise } from "../../api";
-import type { SetSummary } from "../../api/schemas";
+import type { SetPrescription, SetSummary } from "../../api/schemas";
 
 export const WEIGHT_STEP_KG = 1.25;
 const DEFAULT_TARGET_SETS = 3;
@@ -70,6 +70,64 @@ export function getTargetRepsForSet(exercise: Exercise, setNumber: number): numb
   return DEFAULT_TARGET_REPS;
 }
 
+function findPrescriptionForSet(
+  exercise: Exercise,
+  setNumber: number,
+): SetPrescription | undefined {
+  return (
+    exercise.setPrescriptions.find((entry) => entry.setNumber === setNumber) ??
+    exercise.setPrescriptions[0]
+  );
+}
+
+/** "8–12" for a range, "10" otherwise. */
+export function formatTargetRepsForSet(exercise: Exercise, setNumber: number): string {
+  const reps = getTargetRepsForSet(exercise, setNumber);
+  const repsMax = findPrescriptionForSet(exercise, setNumber)?.repsMax;
+
+  return repsMax ? `${reps}–${repsMax}` : String(reps);
+}
+
+function formatLoad(prescription: SetPrescription): string | null {
+  if (prescription.loadValue == null || prescription.loadUnit == null) {
+    return null;
+  }
+
+  const value = formatWeightKg(prescription.loadValue).replace(".", ",");
+
+  return prescription.loadUnit === "kg" ? `${value} kg` : `${value}% 1RM`;
+}
+
+/**
+ * What the coach asked for on this set beyond the reps: "80 kg · RIR 2".
+ * Null when the plan has only reps and rest.
+ */
+export function formatSetTargetExtras(exercise: Exercise, setNumber: number): string | null {
+  const prescription = findPrescriptionForSet(exercise, setNumber);
+
+  if (!prescription) {
+    return null;
+  }
+
+  const rir = prescription.rir == null ? null : `RIR ${prescription.rir}`;
+  const parts = [formatLoad(prescription), rir].filter(
+    (part): part is string => part !== null,
+  );
+
+  return parts.length > 0 ? parts.join(" · ") : null;
+}
+
+/** Prescribed load in kg for the set; a %1RM load is not a weight the app can prefill. */
+function prescribedWeightKg(exercise: Exercise, setNumber: number): string {
+  const prescription = findPrescriptionForSet(exercise, setNumber);
+
+  if (prescription?.loadUnit !== "kg" || prescription.loadValue == null) {
+    return "";
+  }
+
+  return formatWeightKg(prescription.loadValue);
+}
+
 export function getRestSecForSet(
   exercise: Exercise,
   setNumber: number,
@@ -106,7 +164,8 @@ function weightFromPreviousSets(
 
 /**
  * Prefill priority:
- * - weight: last logged set this session, else previous session (same set, else last)
+ * - weight: last logged set this session, else previous session (same set, else last),
+ *   else the load the coach prescribed in kg
  * - reps: next set prescription (so 10 → 8 plans advance correctly)
  */
 export function resolveLogDefaults(
@@ -117,6 +176,9 @@ export function resolveLogDefaults(
   const ordered = [...loggedSets].sort((a, b) => a.setNumber - b.setNumber);
   const last = ordered.at(-1);
   const nextSetNumber = (last?.setNumber ?? 0) + 1;
+  const firstWeightOfSession =
+    weightFromPreviousSets(previousSets, nextSetNumber) ||
+    prescribedWeightKg(exercise, nextSetNumber);
 
   return {
     weight:
@@ -124,7 +186,7 @@ export function resolveLogDefaults(
         ? last.weightKg === null
           ? ""
           : formatWeightKg(last.weightKg)
-        : weightFromPreviousSets(previousSets, nextSetNumber),
+        : firstWeightOfSession,
     reps: String(getTargetRepsForSet(exercise, nextSetNumber)),
   };
 }
