@@ -100,7 +100,29 @@ Senza questo pezzo, chiudendo l’app perderesti la sessione.
 
 ---
 
+## Prova offline
+
+Con l'APK `preview` (EAS, punta a Railway) e un **atleta di prova** con una scheda assegnata dal coach (almeno 2 esercizi, recupero > 0). "Offline" = modalità aereo. Dopo ogni scenario controlla nel pannello coach la sessione dell'atleta.
+
+| # | Passi | Atteso |
+| --- | --- | --- |
+| 1 | Avvia la sessione online. Modalità aereo. Logga 3 serie (una sul secondo esercizio). Chiudi l'app dalle recenti. Riaprila offline | La sessione si apre con le 3 serie |
+| 2 | Sempre offline: modifica una serie, annullane un'altra, premi TERMINA | Schermata "Workout concluso"; dopo pochi secondi "Lo salviamo appena torna la rete". Home: "1 allenamento in attesa di sincronizzazione" |
+| 3 | Togli la modalità aereo, riporta l'app in primo piano | Entro un minuto la riga sparisce; il coach vede la sessione completata con le 2 serie rimaste e gli orari giusti |
+| 4 | Chiudi l'app. Modalità aereo. Riaprila | Si apre su Home con il tuo utente, **non** su "Errore di rete verso l'API / Riprova". Togli la modalità aereo: le schermate caricano |
+| 5 | Offline, logga una serie con recupero. Dalla notifica premi "Salta" | Si apre la sessione, recupero annullato |
+| 6 | Avvia una sessione, vai offline, aspetta **più di 15 minuti** (scade il token), logga e TERMINA, poi rete | La sessione arriva al coach, nessun logout |
+| 7 | Offline con serie e TERMINA; prima di tornare online abbandona la stessa sessione da un altro dispositivo/web. Poi rete | Foglio "Allenamento non salvato" con il numero di serie; "Ho capito" lo chiude |
+| 8 | Avvia una sessione, logga una serie, torna in Home | "Hai un allenamento in corso" + "Riprendi" riapre la sessione con la serie |
+
+Se qualcosa non torna: screenshot + ora + passo, e da USB `adb logcat -d | grep -iE "ReactNativeJS|FATAL"`.
+
 ## Cosa abbiamo fatto / Perché
+
+### 2026-10-16 — Allenamento offline
+
+- **Cosa:** durante la sessione le serie stanno nel diario sul telefono (`src/features/session/offlineSessionLog.ts`, file `Documents/session/<userId>/offline-log.json`), scritto a ogni azione. TERMINA mette in coda la chiusura e manda tutto in un `PATCH` quando c'è rete (`offlineSessionStore.ts`, `offlineSessionSync.ts`). La schermata si apre da `bundle.json` anche senza rete; l'app parte offline con l'utente salvato; Home mostra "Riprendi", l'attesa di sincronizzazione o il conflitto.
+- **Perché:** in palestra la rete manca spesso; prima una serie offline dava errore e si perdeva chiudendo l'app. Una sola richiesta a fine allenamento è più semplice di una coda per serie e il server la accetta anche ripetuta. Dettaglio e alternative scartate in `WORKBOOK.md` (decisione 2026-10-16).
 
 ### 2026-08-25 — Card esercizio con movimento
 

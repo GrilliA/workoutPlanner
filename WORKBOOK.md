@@ -13,6 +13,7 @@ How to use:
 
 | Date | Decision | Why |
 | --- | --- | --- |
+| 2026-10-16 | Logging offline della sessione atleta (track **O**, O1–O9) = **fotografia della sessione** sul telefono: diario in `Documents/session/<userId>/offline-log.json` salvato a ogni azione, inviato **una volta** con TERMINA (`PATCH /sessions/:id` con `status`, `completedAt` e tutte le serie con il loro `loggedAt`), poi all'avvio, al login e al ritorno in primo piano con attesa crescente 2 s → 60 s. Resta online solo l'avvio della sessione | Prima scelta (coda di scritture per serie, O6–O7 originali) scartata: revisioni, conferme e concorrenza fra invio e azioni dell'atleta raddoppiavano il codice. Il coach vede le serie solo a fine allenamento, accettabile per il primo rilascio. Chiusura ripetibile (#62) e orari clamped dentro la sessione (#63, #69) rendono sicuro il reinvio |
 | 2026-10-07 | Track **N**: app atleta Android nativa in `apps/android/` (`com.traccia.android`, Kotlin + Compose + Hilt + Retrofit), 12 PR in 5 ondate eseguibili in parallelo da Devin Cloud. Piano: [`docs/plans/android-native.md`](docs/plans/android-native.md). L'app Expo resta fino a parità (N12) | Imparare Kotlin/Android su un prodotto vero; contratto comune (route, DTO, stringhe per feature) per evitare conflitti fra sessioni parallele |
 | 2026-09-28 | M2 builder scheda mobile = **una bozza locale** (`WorkoutDraft`: giorni → esercizi → serie) in un solo `WorkoutBuilder` per create/edit, salvata con **un** `saveWorkoutProgram` (POST / PUT upsert per id). Esercizi dal catalogo (o custom), import TXT riempie la bozza. Delete di esercizi già loggati resta com'è (cascade) → P2 | Le vecchie schermate avevano 1 giorno fisso, niente catalogo, 3 "Salva" separati e API per singola operazione; il PUT programma esiste già e fa diff per id |
 | 2026-09-08 | Lo smoke E2E vive in un job CI **separato** (`Smoke`) con Postgres di servizio e schema da `db:migrate`, non dentro il job Backend. `npm test` resta senza database | Un loop rotto deve dare un check rosso distinto, e i 79 unit test devono restare veloci ed eseguibili senza Docker |
@@ -63,6 +64,7 @@ How to use:
 
 ## What we did
 
+- 2026-10-16 — Track O (logging offline): O1 `PUT`/`DELETE` serie per esercizio + numero (#61); O2 chiusura ripetibile e `completedAt` dal telefono (#62, #63); O3 avvio app senza rete con l'utente salvato in SecureStore (#64); O4 timeout 8 s sulle scritture + errori in italiano (#65); O5 schermata sessione apribile da `bundle.json` (#66); O6/O7 diario della sessione ridotto a fotografia (#68, #71); O7a `loggedAt` per serie nella chiusura (#69); O7b invio della chiusura con attese crescenti (#72); O8 schermata, fine sessione e Home offline (#73). Regole di stile in [`docs/guidelines/code-style.md`](docs/guidelines/code-style.md) (#67, #70). Prova su telefono: checklist in [`mobile/README.md`](mobile/README.md#prova-offline).
 - 2026-10-07 — Countdown recupero nativo su Android: modulo Expo locale `mobile/modules/rest-timer-notification` (Kotlin, `NotificationCompat`) con cronometro di sistema (`setChronometerCountDown`), auto-chiusura a fine recupero (`setTimeoutAfter`), Live Update su Android 16 (`setRequestPromotedOngoing` + `POST_PROMOTED_NOTIFICATIONS`). Sostituisce la notifica `expo-notifications` "Recupero in corso". "Salta" apre `traccia://session/<id>?rest=skip`; cancel annulla anche le notifiche di fine programmate per la sessione (sopravvive al kill dell'app).
 - 2026-10-05 — Timer recupero più nativo: su iOS Live Activity (`expo-widgets` + `@expo/ui`, `RestTimerActivity.ios.tsx`) con countdown di sistema su lock screen e Dynamic Island al posto della notifica "Recupero in corso"; notifica di fine `timeSensitive`; permesso chiesto una volta all'apertura sessione; niente banner in primo piano se la sessione è aperta; tap sulla notifica → `/session/<id>`; pulsante "Salta" sulla notifica Android. Limite noto: se il recupero finisce ad app sospesa la Live Activity resta su 0:00 fino alla riapertura. Serve un nuovo dev build iOS.
 - 2026-10-03/04 — M3b UI foundation mobile: `GlassTabBar` custom (Tabs JS + `tabBar` prop + `expo-blur`) — pill flottante stile Telegram identica al mockup su Android/iOS/web, con badge "scheda nuova" cablato alla prop `hasUnseenAssignment` (dati reali in M3d); `Mascot` (4 lottie: wave/waiting/sleeping/notebook, crediti in `mobile/assets/lottie/CREDITS.md`), `EmptyState` stile Telegram e `BottomSheet` animato in `src/components/`; `lottie-react-native` + `@lottiefiles/dotlottie-react` per il web. Prima scelta `NativeTabs` scartata: la barra di sistema non può fare la pill flottante del mockup (resta attaccata al bordo).
@@ -228,11 +230,18 @@ Order: P0 → P0.5 → P1 → P2 → P3. Igiene non blocca P0. Invite / assign /
 
 ### P2 — Revisioni scheda mid-ciclo (L)
 
+- [ ] Caso offline (track O): se il coach toglie un esercizio mentre l'atleta si allena offline, la chiusura riceve 400 "Exercise does not belong to this workout" → conflitto e **nessuna** serie salvata. Oggi inoltre salvare la scheda togliendo un esercizio cancella a cascata le serie già loggate (`be/src/services/workoutProgram.ts`). Il modello v1/v2 qui sotto risolve entrambi.
 - [ ] Pubblica modifica: congela v1, clona v2 (`copyWorkoutTree` + lineage esercizio), stesso assignment retarget `workoutId` (no revoke), v1 `isActive: false` non cancellata. Cutover immediato; sessione aperta finisce su v1. Progressioni/PR raggruppano per lineage. PUT in-place vietato se ci sono sessioni. Badge “scheda aggiornata il …”. Solo programma assegnato, non il template coach.
 
 ### P3 — Nota sessione (M)
 
 - [ ] Wire `workout_sessions.notes` (colonna + Zod GET già lì) su PATCH e UI contestuale coach↔atleta. Testo breve, niente thread/allegati.
+
+### O — Logging offline: seguiti
+
+- [ ] Sessioni `in_progress` lasciate aperte per sempre (telefono perso): abbandono automatico dopo N ore? (domanda aperta 2)
+- [ ] Track N7 (Android nativo) da allineare alla chiusura con le serie e `loggedAt` (domanda aperta 4).
+- [ ] Prova offline su emulatore: le build release bloccano HTTP verso il backend locale; serve un manifest release con cleartext (cartella `android/` generata) o un tunnel HTTPS.
 
 ### N — App Android nativa
 
