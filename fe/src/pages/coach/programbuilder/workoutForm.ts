@@ -1,3 +1,4 @@
+import { EXERCISE_NOTES_MAX_LENGTH } from "@api/schemas/exercise";
 import type { Weekday } from "@api/schemas/workoutday";
 import {
   findWeekdayConflict,
@@ -8,8 +9,10 @@ import {
   createDefaultSetPrescriptions,
   createDefaultWorkoutDay,
   DEFAULT_WORKOUT_SETTINGS,
+  LOAD_UNIT_LABELS,
   pickerExerciseFrom,
   type DraftExercise,
+  type DraftSetPrescription,
   type DraftWorkoutDay,
   type NewExerciseInput,
   type WorkoutSettings,
@@ -24,6 +27,10 @@ const WEEKDAY_NAMES = [
   "sabato",
   "domenica",
 ] as const;
+
+const MAX_LOAD_KG = 1000;
+const MAX_LOAD_PERCENT_1RM = 100;
+const MAX_RIR = 10;
 
 export type WorkoutDraftSeed = {
   name: string;
@@ -82,6 +89,7 @@ const toDraftExercise = (
   clientId: exerciseClientId,
   serverId,
   ...pickerExerciseFrom({ ...input, name: input.name.trim() }),
+  notes: input.notes,
   setPrescriptions: input.setPrescriptions.map((entry) => ({ ...entry })),
 });
 
@@ -203,6 +211,34 @@ export function toggleWeekday(form: WorkoutForm, weekday: Weekday): WorkoutForm 
   return { ...withWeekdays, formError: null };
 }
 
+// Same limits as the server, so the coach sees the problem before saving.
+const findOptionalFieldError = (entry: DraftSetPrescription): string | null => {
+  const hasValidRepsMax =
+    entry.repsMax === null || (Number.isInteger(entry.repsMax) && entry.repsMax >= entry.reps);
+
+  if (!hasValidRepsMax) {
+    return `Serie ${entry.setNumber}: il massimo delle reps non può essere sotto il minimo`;
+  }
+
+  const maxLoad = entry.loadUnit === "kg" ? MAX_LOAD_KG : MAX_LOAD_PERCENT_1RM;
+  const hasValidLoad =
+    entry.loadValue === null ||
+    (Number.isFinite(entry.loadValue) && entry.loadValue > 0 && entry.loadValue <= maxLoad);
+
+  if (!hasValidLoad) {
+    return `Serie ${entry.setNumber}: il carico deve essere tra 0 e ${maxLoad} ${LOAD_UNIT_LABELS[entry.loadUnit]}`;
+  }
+
+  const hasValidRir =
+    entry.rir === null || (Number.isInteger(entry.rir) && entry.rir >= 0 && entry.rir <= MAX_RIR);
+
+  if (!hasValidRir) {
+    return `Serie ${entry.setNumber}: il RIR va da 0 a ${MAX_RIR}`;
+  }
+
+  return null;
+};
+
 export function findExerciseInputError(input: NewExerciseInput): string | null {
   if (!input.name.trim()) {
     return "Il nome dell'esercizio è obbligatorio";
@@ -222,6 +258,18 @@ export function findExerciseInputError(input: NewExerciseInput): string | null {
 
   if (hasInvalidSet) {
     return "Ogni serie deve avere reps e recupero validi";
+  }
+
+  const setError = input.setPrescriptions
+    .map(findOptionalFieldError)
+    .find((error) => error !== null);
+
+  if (setError) {
+    return setError;
+  }
+
+  if (input.notes.trim().length > EXERCISE_NOTES_MAX_LENGTH) {
+    return `Le note possono avere al massimo ${EXERCISE_NOTES_MAX_LENGTH} caratteri`;
   }
 
   return null;

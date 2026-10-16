@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import type { NewExerciseInput } from "./types.ts";
+import type { DraftSetPrescription, NewExerciseInput } from "./types.ts";
 import {
   addDay,
   addExercise,
@@ -19,19 +19,37 @@ import {
   updateExercise,
 } from "./workoutForm.ts";
 
+const prescription = (
+  setNumber: number,
+  reps: number,
+  restSec: number,
+  extra: Partial<DraftSetPrescription> = {},
+): DraftSetPrescription => ({
+  setNumber,
+  reps,
+  repsMax: null,
+  loadValue: null,
+  loadUnit: "kg",
+  rir: null,
+  restSec,
+  ...extra,
+});
+
 const benchPress: NewExerciseInput = {
   name: "  Panca piana  ",
   catalogId: null,
+  notes: "Fermo al petto",
   setPrescriptions: [
-    { setNumber: 1, reps: 10, restSec: 90 },
-    { setNumber: 2, reps: 8, restSec: 120 },
+    prescription(1, 10, 90),
+    prescription(2, 8, 120),
   ],
 };
 
 const squat: NewExerciseInput = {
   name: "Squat",
   catalogId: "squat",
-  setPrescriptions: [{ setNumber: 1, reps: 5, restSec: 180 }],
+  notes: "",
+  setPrescriptions: [prescription(1, 5, 180)],
 };
 
 const formWithTwoDays = () => addDay(createWorkoutForm(), "day-2");
@@ -179,11 +197,39 @@ describe("exercises", () => {
     assert.equal(
       findExerciseInputError({
         ...benchPress,
-        setPrescriptions: [{ setNumber: 1, reps: 0, restSec: 90 }],
+        setPrescriptions: [prescription(1, 0, 90)],
       }),
       "Ogni serie deve avere reps e recupero validi",
     );
     assert.equal(findExerciseInputError(benchPress), null);
+  });
+
+  it("rejects optional fields outside the server limits", () => {
+    const withSet = (extra: Partial<DraftSetPrescription>) =>
+      findExerciseInputError({ ...benchPress, setPrescriptions: [prescription(1, 10, 90, extra)] });
+
+    assert.match(withSet({ repsMax: 8 }) ?? "", /massimo delle reps/);
+    assert.match(withSet({ loadValue: 0 }) ?? "", /carico/);
+    assert.match(withSet({ loadValue: 120, loadUnit: "percent_1rm" }) ?? "", /100 % 1RM/);
+    assert.match(withSet({ rir: 11 }) ?? "", /RIR/);
+    assert.equal(withSet({ repsMax: 12, loadValue: 120, loadUnit: "kg", rir: 2 }), null);
+    assert.match(
+      findExerciseInputError({ ...benchPress, notes: "x".repeat(501) }) ?? "",
+      /note/i,
+    );
+  });
+
+  it("keeps notes and prescription fields on the saved exercise", () => {
+    const loadedSet = prescription(1, 8, 120, { repsMax: 12, loadValue: 80, rir: 2 });
+    const afterAdd = addExercise(
+      createWorkoutForm(),
+      { ...benchPress, setPrescriptions: [loadedSet] },
+      "bench",
+    );
+    const saved = findActiveDay(afterAdd).exercises[0];
+
+    assert.equal(saved?.notes, "Fermo al petto");
+    assert.deepEqual(saved?.setPrescriptions, [loadedSet]);
   });
 
   it("adds a trimmed exercise to the active day and removes it", () => {

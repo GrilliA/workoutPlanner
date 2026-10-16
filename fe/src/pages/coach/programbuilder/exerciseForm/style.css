@@ -13,6 +13,30 @@
     gap: 0.75rem;
   }
 
+  & .notes {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1-5);
+
+    & label {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--text-h);
+    }
+
+    & textarea {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--surface-elevated);
+      color: var(--text-h);
+      padding: var(--space-2) var(--space-2-5);
+      font: inherit;
+      resize: vertical;
+    }
+  }
+
   & .actions {
     display: flex;
     justify-content: flex-end;

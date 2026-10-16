@@ -1,4 +1,5 @@
-import { useState, type FormEvent } from "react";
+import { useId, useState, type FormEvent } from "react";
+import { EXERCISE_NOTES_MAX_LENGTH } from "@api/schemas/exercise";
 import { Button } from "@components/button";
 import {
   createDefaultSetPrescriptions,
@@ -35,13 +36,15 @@ export function ExerciseForm({
       ? initialExercise.setPrescriptions.map((entry) => ({ ...entry }))
       : createDefaultSetPrescriptions(3, 10, defaultRestSec),
   );
+  const [notes, setNotes] = useState(initialExercise?.notes ?? "");
+  const notesId = useId();
 
   // Editing usually means changing sets, so only a new exercise focuses the name field.
   const isNewExercise = initialExercise === undefined;
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    onSubmit({ ...pickerExercise, setPrescriptions });
+    onSubmit({ ...pickerExercise, notes, setPrescriptions });
   };
 
   return (
@@ -57,6 +60,18 @@ export function ExerciseForm({
         prescriptions={setPrescriptions}
         onChange={setSetPrescriptions}
       />
+
+      <div className="notes">
+        <label htmlFor={notesId}>Note per l'atleta</label>
+        <textarea
+          id={notesId}
+          value={notes}
+          onChange={(event) => setNotes(event.target.value)}
+          placeholder="Es. fermo 1s in basso, presa stretta…"
+          maxLength={EXERCISE_NOTES_MAX_LENGTH}
+          rows={2}
+        />
+      </div>
 
       <div className="actions">
         <Button type="button" variant="ghost" onClick={onCancel}>

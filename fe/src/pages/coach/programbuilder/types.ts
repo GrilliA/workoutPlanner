@@ -4,9 +4,10 @@ import {
   WORKOUT_TYPE_OPTIONS,
   type WorkoutSettings,
 } from "@api/schemas/workout";
+import type { LoadUnit } from "@api/schemas/exercise";
 import type { Weekday } from "@api/schemas/workoutday";
 
-export type { WorkoutSettings, Weekday };
+export type { WorkoutSettings, Weekday, LoadUnit };
 
 export const DEFAULT_WORKOUT_SETTINGS: WorkoutSettings = {
   defaultRestSec: 90,
@@ -26,9 +27,20 @@ export const WEEKDAY_LABELS_SHORT = [
   "Dom",
 ] as const;
 
+export const LOAD_UNIT_LABELS: Record<LoadUnit, string> = {
+  kg: "kg",
+  percent_1rm: "% 1RM",
+};
+
+// Optional fields are null when the coach leaves them empty. loadUnit always holds the
+// unit picked in the editor, and only counts when loadValue is set.
 export type DraftSetPrescription = {
   setNumber: number;
   reps: number;
+  repsMax: number | null;
+  loadValue: number | null;
+  loadUnit: LoadUnit;
+  rir: number | null;
   restSec: number;
 };
 
@@ -71,10 +83,12 @@ export function pickerExerciseFrom(source: {
 export type DraftExercise = PickerExercise & {
   clientId: string;
   serverId?: number;
+  notes: string;
   setPrescriptions: DraftSetPrescription[];
 };
 
 export type NewExerciseInput = PickerExercise & {
+  notes: string;
   setPrescriptions: DraftSetPrescription[];
 };
 
@@ -82,7 +96,15 @@ export type ExerciseDisplay = Pick<
   PickerExercise,
   "name" | "nameIt" | "nameEn" | "imageUrl" | "imageUrlEnd"
 > & {
-  setPrescriptions: Array<{ reps: number; restSec?: number | null }>;
+  notes?: string | null;
+  setPrescriptions: Array<{
+    reps: number;
+    repsMax?: number | null;
+    loadValue?: number | null;
+    loadUnit?: LoadUnit | null;
+    rir?: number | null;
+    restSec?: number | null;
+  }>;
 };
 
 export type DraftWorkoutDay = {
@@ -102,6 +124,10 @@ export const createDefaultSetPrescriptions = (
   Array.from({ length: count }, (_, index) => ({
     setNumber: index + 1,
     reps,
+    repsMax: null,
+    loadValue: null,
+    loadUnit: "kg",
+    rir: null,
     restSec,
   }));
 

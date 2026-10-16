@@ -78,6 +78,14 @@
     color: var(--text);
   }
 
+  & .notes {
+    margin: var(--space-1) 0 0;
+    font-size: var(--text-sm);
+    font-style: italic;
+    color: var(--text);
+    white-space: pre-line;
+  }
+
   & .actions {
     display: flex;
     flex-wrap: wrap;

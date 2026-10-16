@@ -61,6 +61,7 @@ export function ExerciseRow({
         <p className="meta">
           {formatExerciseMeta(exercise.setPrescriptions, defaultRestSec)}
         </p>
+        {exercise.notes ? <p className="notes">{exercise.notes}</p> : null}
         {actions ? <div className="actions">{actions}</div> : null}
       </div>
     </article>

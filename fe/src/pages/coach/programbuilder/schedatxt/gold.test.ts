@@ -109,6 +109,10 @@ describe("SCHEDA_TXT_AI_PROMPT contract", () => {
     assert.match(SCHEDA_TXT_AI_PROMPT, /recupero: 90/);
     assert.match(SCHEDA_TXT_AI_PROMPT, /12 10 8 6/);
     assert.match(SCHEDA_TXT_AI_PROMPT, /NON giorni della settimana/);
+    assert.match(SCHEDA_TXT_AI_PROMPT, /<reps_min>-<reps_max>@<recupero_sec>/);
+    assert.match(SCHEDA_TXT_AI_PROMPT, /Carico: /);
+    assert.match(SCHEDA_TXT_AI_PROMPT, /RIR: /);
+    assert.match(SCHEDA_TXT_AI_PROMPT, /Note: /);
   });
 
   it("keeps the builder example aligned with the parser", () => {
