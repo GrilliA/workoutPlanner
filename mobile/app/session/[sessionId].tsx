@@ -34,8 +34,10 @@ import {
   formatWeightKg,
   getRestSecForSet,
   getTargetRepsForSet,
+  getTargetRirForSet,
   getTargetSetCount,
   isExerciseComplete,
+  isValidRir,
   resolveLogDefaults,
 } from "../../src/features/session/logDefaults";
 import {
@@ -123,6 +125,9 @@ export default function SessionScreen() {
   const [weightByExercise, setWeightByExercise] = useState<
     Record<number, string>
   >({});
+  const [rirByExercise, setRirByExercise] = useState<Record<number, string>>(
+    {},
+  );
   const [fetchId, setFetchId] = useState(0);
   const [focusIndex, setFocusIndex] = useState(0);
   const timer = useRestTimer(sessionId);
@@ -195,6 +200,14 @@ export default function SessionScreen() {
           defaultsByExercise.map(({ exerciseId, defaults }) => [
             exerciseId,
             defaults.reps,
+          ]),
+        ),
+      );
+      setRirByExercise(
+        Object.fromEntries(
+          defaultsByExercise.map(({ exerciseId, defaults }) => [
+            exerciseId,
+            defaults.rir,
           ]),
         ),
       );
@@ -363,6 +376,8 @@ export default function SessionScreen() {
         : Number(repsRaw);
     const weightRaw = weightByExercise[exercise.id]?.trim() ?? "";
     const weightKg = weightRaw === "" ? null : Number(weightRaw);
+    const rirRaw = rirByExercise[exercise.id]?.trim() ?? "";
+    const rir = rirRaw === "" ? null : Number(rirRaw);
 
     if (!Number.isFinite(reps) || reps <= 0) {
       setError("Inserisci le reps");
@@ -374,11 +389,16 @@ export default function SessionScreen() {
       return;
     }
 
+    if (rir !== null && !isValidRir(rir)) {
+      setError("RIR non valido (da 0 a 10)");
+      return;
+    }
+
     const position: SetPosition = { exerciseId: exercise.id, setNumber };
     const values = {
       reps,
       weightKg,
-      rir: null,
+      rir,
       tutSec: null,
       loggedAt: new Date().toISOString(),
     };
@@ -399,6 +419,11 @@ export default function SessionScreen() {
     setRepsByExercise((current) => ({
       ...current,
       [exercise.id]: String(getTargetRepsForSet(exercise, setNumber + 1)),
+    }));
+    const nextTargetRir = getTargetRirForSet(exercise, setNumber + 1);
+    setRirByExercise((current) => ({
+      ...current,
+      [exercise.id]: nextTargetRir === null ? "" : String(nextTargetRir),
     }));
 
     const restSec = getRestSecForSet(exercise, setNumber, defaultRestSec);
@@ -453,12 +478,16 @@ export default function SessionScreen() {
       ...current,
       [exercise.id]: String(lastSet.reps),
     }));
+    setRirByExercise((current) => ({
+      ...current,
+      [exercise.id]: lastSet.rir === null ? "" : String(lastSet.rir),
+    }));
   };
 
   const onEditSet = (
     exercise: Exercise,
     setNumber: number,
-    next: { reps: number; weightKg: number | null },
+    next: { reps: number; weightKg: number | null; rir: number | null },
   ) => {
     const position: SetPosition = { exerciseId: exercise.id, setNumber };
     const editedSet = offlineLog?.sets.find((set) => isSameSet(set, position));
@@ -467,7 +496,7 @@ export default function SessionScreen() {
       return;
     }
 
-    const changedValues = { ...editedSet, reps: next.reps, weightKg: next.weightKg };
+    const changedValues = { ...editedSet, ...next };
     const saved = saveOnPhone(
       (log) => recordSet(log, position, changedValues),
       "Modifica non salvata sul telefono. Riprova.",
@@ -493,6 +522,11 @@ export default function SessionScreen() {
     setRepsByExercise((current) => ({
       ...current,
       [exercise.id]: String(getTargetRepsForSet(exercise, setNumber + 1)),
+    }));
+    const nextTargetRir = getTargetRirForSet(exercise, setNumber + 1);
+    setRirByExercise((current) => ({
+      ...current,
+      [exercise.id]: nextTargetRir === null ? "" : String(nextTargetRir),
     }));
   };
 
@@ -585,10 +619,12 @@ export default function SessionScreen() {
                 readOnly
                 weight={weightByExercise[exercise.id] ?? ""}
                 reps={repsByExercise[exercise.id] ?? ""}
+                rir={rirByExercise[exercise.id] ?? ""}
                 exerciseOrdinal={index + 1}
                 exerciseTotal={exercises.length}
                 onChangeWeight={() => undefined}
                 onChangeReps={() => undefined}
+                onChangeRir={() => undefined}
                 onLog={() => undefined}
                 onUndoLast={() => undefined}
                 onEditSet={() => undefined}
@@ -608,6 +644,7 @@ export default function SessionScreen() {
                 exerciseTotal={exercises.length}
                 weight={weightByExercise[focusedExercise.id] ?? ""}
                 reps={repsByExercise[focusedExercise.id] ?? ""}
+                rir={rirByExercise[focusedExercise.id] ?? ""}
                 onChangeWeight={(value) =>
                   setWeightByExercise((current) => ({
                     ...current,
@@ -616,6 +653,12 @@ export default function SessionScreen() {
                 }
                 onChangeReps={(value) =>
                   setRepsByExercise((current) => ({
+                    ...current,
+                    [focusedExercise.id]: value,
+                  }))
+                }
+                onChangeRir={(value) =>
+                  setRirByExercise((current) => ({
                     ...current,
                     [focusedExercise.id]: value,
                   }))

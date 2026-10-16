@@ -20,7 +20,9 @@ import {
   getTargetRepsForSet,
   getTargetSetCount,
   isExerciseComplete,
+  isValidRir,
   stepReps,
+  stepRir,
   stepWeightKg,
 } from "./logDefaults";
 
@@ -35,13 +37,16 @@ type ExerciseCardProps = {
   busy?: boolean;
   weight: string;
   reps: string;
+  /** Reps in reserve for the next set, empty when not logged. */
+  rir: string;
   onChangeWeight: (value: string) => void;
   onChangeReps: (value: string) => void;
+  onChangeRir: (value: string) => void;
   onLog: () => void;
   onUndoLast: () => void;
   onEditSet: (
     setNumber: number,
-    next: { reps: number; weightKg: number | null },
+    next: { reps: number; weightKg: number | null; rir: number | null },
   ) => void;
   /** Focus mode: larger type, tabella set densità mock. */
   focus?: boolean;
@@ -50,12 +55,13 @@ type ExerciseCardProps = {
   exerciseTotal?: number;
 };
 
-type EditingField = "weight" | "reps" | null;
+type EditingField = "weight" | "reps" | "rir" | null;
 
 type EditDraft = {
   setNumber: number;
   weight: string;
   reps: string;
+  rir: string;
 };
 
 async function tickHaptic() {
@@ -70,6 +76,10 @@ function formatLogLabel(weight: string, reps: string, setNumber: number): string
   const kg = weight.trim() === "" ? "—" : weight.trim();
   const repValue = reps.trim() === "" ? "—" : reps.trim();
   return `LOG ${kg} × ${repValue}  ·  #${setNumber}`;
+}
+
+function formatRirLabel(rir: number | null): string {
+  return rir === null ? "—" : String(rir);
 }
 
 function formatPreviousLabel(previous: SetSummary | undefined): string {
@@ -90,8 +100,10 @@ export function ExerciseCard({
   busy = false,
   weight,
   reps,
+  rir,
   onChangeWeight,
   onChangeReps,
+  onChangeRir,
   onLog,
   onUndoLast,
   onEditSet,
@@ -104,6 +116,7 @@ export function ExerciseCard({
   const [editError, setEditError] = useState<string | null>(null);
   const weightRef = useRef<TextInputType>(null);
   const repsRef = useRef<TextInputType>(null);
+  const rirRef = useRef<TextInputType>(null);
 
   const targetSets = getTargetSetCount(exercise);
   const complete = isExerciseComplete(exercise, sets.length);
@@ -115,6 +128,8 @@ export function ExerciseCard({
   const actionsDisabled = busy;
   const heading = exerciseHeading(exercise);
   const english = exerciseEnglishLine(exercise);
+  const nextRirLabel = rir.trim() === "" ? "—" : rir.trim();
+  const nextRirSuffix = rir.trim() === "" ? "" : ` · RIR ${rir.trim()}`;
   const nextTargetExtras = formatSetTargetExtras(exercise, nextSetNumber);
   const nextTargetLabel = nextTargetExtras
     ? `${formatTargetRepsForSet(exercise, nextSetNumber)} reps · ${nextTargetExtras}`
@@ -130,6 +145,8 @@ export function ExerciseCard({
         weightRef.current?.focus();
       } else if (field === "reps") {
         repsRef.current?.focus();
+      } else if (field === "rir") {
+        rirRef.current?.focus();
       }
     });
   };
@@ -150,6 +167,14 @@ export function ExerciseCard({
     onChangeReps(stepReps(reps, direction));
   };
 
+  const onStepRir = (direction: 1 | -1) => {
+    if (actionsDisabled) {
+      return;
+    }
+    void tickHaptic();
+    onChangeRir(stepRir(rir, direction));
+  };
+
   const openSetEditor = (logged: SetSummary) => {
     if (locked) {
       return;
@@ -160,6 +185,7 @@ export function ExerciseCard({
       weight:
         logged.weightKg === null ? "" : formatWeightKg(logged.weightKg),
       reps: String(logged.reps),
+      rir: logged.rir === null ? "" : String(logged.rir),
     });
   };
 
@@ -180,6 +206,8 @@ export function ExerciseCard({
     const nextReps = Number(editDraft.reps);
     const weightRaw = editDraft.weight.trim();
     const weightKg = weightRaw === "" ? null : Number(weightRaw);
+    const rirRaw = editDraft.rir.trim();
+    const nextRir = rirRaw === "" ? null : Number(rirRaw);
 
     if (!Number.isFinite(nextReps) || nextReps <= 0) {
       rejectEditSave("Inserisci un numero di reps valido (maggiore di 0).");
@@ -191,8 +219,13 @@ export function ExerciseCard({
       return;
     }
 
+    if (nextRir !== null && !isValidRir(nextRir)) {
+      rejectEditSave("Inserisci un RIR valido (da 0 a 10).");
+      return;
+    }
+
     setEditError(null);
-    onEditSet(editDraft.setNumber, { reps: nextReps, weightKg });
+    onEditSet(editDraft.setNumber, { reps: nextReps, weightKg, rir: nextRir });
     setEditDraft(null);
   };
 
@@ -245,6 +278,7 @@ export function ExerciseCard({
             <AppText style={[styles.setCol, styles.setColPrev]}>PRECEDENTE</AppText>
             <AppText style={[styles.setCol, styles.setColVal]}>KG</AppText>
             <AppText style={[styles.setCol, styles.setColVal]}>REPS</AppText>
+            <AppText style={[styles.setCol, styles.setColVal]}>RIR</AppText>
           </View>
           {Array.from({ length: targetSets }, (_, index) => {
             const setNumber = index + 1;
@@ -252,6 +286,8 @@ export function ExerciseCard({
             const previous = previousSets.find((set) => set.setNumber === setNumber);
             const isNext = !logged && setNumber === nextSetNumber && canLog;
             const isPending = !logged && !isNext;
+            const pendingRirLabel = isNext ? nextRirLabel : "—";
+            const rirLabel = logged ? formatRirLabel(logged.rir) : pendingRirLabel;
 
             return (
               <Pressable
@@ -271,7 +307,7 @@ export function ExerciseCard({
                 accessibilityRole={logged && !locked ? "button" : "text"}
                 accessibilityLabel={
                   logged
-                    ? `Serie ${setNumber}: ${logged.weightKg ?? "—"} kg × ${logged.reps}`
+                    ? `Serie ${setNumber}: ${logged.weightKg ?? "—"} kg × ${logged.reps}, RIR ${rirLabel}`
                     : `Serie ${setNumber} in attesa`
                 }
               >
@@ -307,6 +343,12 @@ export function ExerciseCard({
                         : reps.trim()
                       : "—"}
                 </AppText>
+                <AppText
+                  tone="heading"
+                  style={[styles.setCol, styles.setColVal]}
+                >
+                  {rirLabel}
+                </AppText>
               </Pressable>
             );
           })}
@@ -317,6 +359,7 @@ export function ExerciseCard({
             <AppText style={[styles.setCol, styles.setColSet]}>SET</AppText>
             <AppText style={[styles.setCol, styles.setColVal]}>KG</AppText>
             <AppText style={[styles.setCol, styles.setColVal]}>REPS</AppText>
+            <AppText style={[styles.setCol, styles.setColVal]}>RIR</AppText>
             <AppText style={[styles.setCol, styles.setColVal]}>PIANO</AppText>
           </View>
           {[
@@ -351,6 +394,7 @@ export function ExerciseCard({
                   >
                     {setNumber}
                   </AppText>
+                  <AppText style={[styles.setCol, styles.setColVal]}>—</AppText>
                   <AppText style={[styles.setCol, styles.setColVal]}>—</AppText>
                   <AppText style={[styles.setCol, styles.setColVal]}>—</AppText>
                   <AppText
@@ -406,6 +450,9 @@ export function ExerciseCard({
                   ]}
                 >
                   {String(logged.reps)}
+                </AppText>
+                <AppText style={[styles.setCol, styles.setColVal]}>
+                  {formatRirLabel(logged.rir)}
                 </AppText>
                 <AppText
                   style={[styles.setCol, styles.setColVal, styles.plannedReps]}
@@ -495,6 +542,39 @@ export function ExerciseCard({
             }}
             onEndEditing={() => setEditing(null)}
           />
+          <StepperRow
+            label="rir"
+            value={editDraft.rir}
+            placeholder=""
+            editing={editing === "rir"}
+            inputRef={rirRef}
+            keyboardType="number-pad"
+            large={focus}
+            onMinus={() => {
+              setEditError(null);
+              setEditDraft((current) =>
+                current
+                  ? { ...current, rir: stepRir(current.rir, -1) }
+                  : current,
+              );
+            }}
+            onPlus={() => {
+              setEditError(null);
+              setEditDraft((current) =>
+                current
+                  ? { ...current, rir: stepRir(current.rir, 1) }
+                  : current,
+              );
+            }}
+            onPressValue={() => startEdit("rir")}
+            onChangeText={(value) => {
+              setEditError(null);
+              setEditDraft((current) =>
+                current ? { ...current, rir: value } : current,
+              );
+            }}
+            onEndEditing={() => setEditing(null)}
+          />
           {editError ? (
             <AppText
               tone="danger"
@@ -567,6 +647,20 @@ export function ExerciseCard({
               onChangeText={onChangeReps}
               onEndEditing={() => setEditing(null)}
             />
+            <StepperRow
+              label="rir"
+              value={rir}
+              placeholder=""
+              editing={editing === "rir"}
+              inputRef={rirRef}
+              keyboardType="number-pad"
+              large={focus}
+              onMinus={() => onStepRir(-1)}
+              onPlus={() => onStepRir(1)}
+              onPressValue={() => startEdit("rir")}
+              onChangeText={onChangeRir}
+              onEndEditing={() => setEditing(null)}
+            />
           </View>
 
           <Pressable
@@ -578,7 +672,7 @@ export function ExerciseCard({
             disabled={actionsDisabled}
             accessibilityRole="button"
             accessibilityState={{ disabled: actionsDisabled }}
-            accessibilityLabel={`Logga serie ${nextSetNumber}: ${weight || "senza peso"} kg per ${reps || targetReps} reps`}
+            accessibilityLabel={`Logga serie ${nextSetNumber}: ${weight || "senza peso"} kg per ${reps || targetReps} reps${nextRirSuffix}`}
           >
             <AppText style={styles.logBtnLabel}>
               {focus
@@ -589,6 +683,7 @@ export function ExerciseCard({
               <Meta style={styles.logBtnMeta}>
                 {weight.trim() === "" ? "—" : weight.trim()} kg ×{" "}
                 {reps.trim() === "" ? targetReps : reps.trim()}
+                {nextRirSuffix}
               </Meta>
             ) : null}
           </Pressable>

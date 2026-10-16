@@ -41,7 +41,7 @@ const bundle = (): SessionBundle => ({
     startedAt: new Date("2026-10-14T08:00:00.000Z"),
     completedAt: null,
     notes: null,
-    sets: [loggedSet({})],
+    sets: [loggedSet({}), loggedSet({ id: 4, setNumber: 2, rir: 2 })],
   },
   workoutName: "Scheda A",
   defaultRestSec: 90,
