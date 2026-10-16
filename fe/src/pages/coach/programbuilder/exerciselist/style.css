@@ -25,4 +25,27 @@
     padding: 0;
     list-style: none;
   }
+
+  & .row-action {
+    min-width: 2.25rem;
+    padding: 0.35rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-full);
+    background: transparent;
+    color: var(--text-h);
+    font: inherit;
+    font-size: var(--text-sm);
+    cursor: pointer;
+
+    &:hover:not(:disabled),
+    &:focus-visible {
+      border-color: var(--accent-border);
+      background: var(--accent-bg);
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+  }
 }

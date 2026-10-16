@@ -71,8 +71,12 @@ function CreateWorkoutForm({
     setActiveDayName,
     addDay,
     removeDay,
+    moveActiveDay,
+    duplicateActiveDay,
     toggleWeekday,
     addExercise,
+    updateExercise,
+    moveExercise,
     removeExercise,
     settings,
     setSettings,
@@ -121,6 +125,8 @@ function CreateWorkoutForm({
         onSelect={setActiveDayId}
         onAdd={addDay}
         onRemove={removeDay}
+        onMoveActive={moveActiveDay}
+        onDuplicateActive={duplicateActiveDay}
       />
 
       {activeDay ? (
@@ -137,9 +143,12 @@ function CreateWorkoutForm({
           />
 
           <ExerciseList
+            key={activeDay.clientId}
             exercises={activeDay.exercises}
             defaultRestSec={settings.defaultRestSec}
             onRemove={removeExercise}
+            onMove={moveExercise}
+            onUpdate={updateExercise}
           />
 
           <div className="add-exercise">

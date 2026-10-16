@@ -6,12 +6,16 @@ import {
   addExercise,
   checkBeforeSave,
   createWorkoutForm,
+  duplicateActiveDay,
   findActiveDay,
   findExerciseInputError,
+  moveActiveDay,
+  moveExercise,
   removeDay,
   removeExercise,
   renameActiveDay,
   toggleWeekday,
+  updateExercise,
 } from "./workoutForm.ts";
 
 const benchPress: NewExerciseInput = {
@@ -23,7 +27,24 @@ const benchPress: NewExerciseInput = {
   ],
 };
 
+const squat: NewExerciseInput = {
+  name: "Squat",
+  catalogId: "squat",
+  setPrescriptions: [{ setNumber: 1, reps: 5, restSec: 180 }],
+};
+
 const formWithTwoDays = () => addDay(createWorkoutForm(), "day-2");
+
+const formWithTwoExercises = () =>
+  addExercise(addExercise(createWorkoutForm(), benchPress, "bench"), squat, "squat");
+
+const exerciseIds = (form: ReturnType<typeof createWorkoutForm>) =>
+  findActiveDay(form).exercises.map((exercise) => exercise.clientId);
+
+const createCountingIds = () => {
+  const ids = ["copy-1", "copy-2", "copy-3"];
+  return () => ids.shift() ?? "copy-extra";
+};
 
 describe("createWorkoutForm", () => {
   it("starts a new workout with one empty day selected", () => {
@@ -82,6 +103,49 @@ describe("days", () => {
   });
 });
 
+describe("moving and duplicating days", () => {
+  it("moves the active day earlier and keeps sortOrder in sync", () => {
+    const form = moveActiveDay(formWithTwoDays(), "earlier");
+
+    assert.equal(form.days[0]?.clientId, "day-2");
+    assert.deepEqual(
+      form.days.map((day) => day.sortOrder),
+      [0, 1],
+    );
+  });
+
+  it("does nothing when the active day is already last", () => {
+    const form = formWithTwoDays();
+
+    assert.deepEqual(moveActiveDay(form, "later").days, form.days);
+  });
+
+  it("copies the active day after it, without weekdays or server ids", () => {
+    const onMonday = toggleWeekday(formWithTwoExercises(), 0);
+    const original = findActiveDay(onMonday);
+    const withServerIds = {
+      ...onMonday,
+      days: [{ ...original, serverId: 7, name: "Upper" }],
+    };
+    const form = duplicateActiveDay(withServerIds, createCountingIds());
+    const copy = form.days[1];
+
+    assert.equal(form.days.length, 2);
+    assert.equal(form.activeDayId, "copy-1");
+    assert.equal(copy?.name, "Upper (copia)");
+    assert.equal(copy?.serverId, undefined);
+    assert.deepEqual(copy?.weekdays, []);
+    assert.deepEqual(
+      copy?.exercises.map((exercise) => exercise.clientId),
+      ["copy-2", "copy-3"],
+    );
+    assert.deepEqual(
+      copy?.exercises.map((exercise) => exercise.name),
+      ["Panca piana", "Squat"],
+    );
+  });
+});
+
 describe("toggleWeekday", () => {
   it("adds and removes a weekday on the active day", () => {
     const afterAdd = toggleWeekday(toggleWeekday(createWorkoutForm(), 4), 0);
@@ -128,6 +192,43 @@ describe("exercises", () => {
     assert.equal(afterAdd.days[0]?.exercises.length, 0);
     assert.equal(findActiveDay(afterAdd).exercises[0]?.name, "Panca piana");
     assert.equal(findActiveDay(afterRemove).exercises.length, 0);
+  });
+});
+
+describe("editing and moving exercises", () => {
+  it("moves an exercise up and down within the day", () => {
+    const movedUp = moveExercise(formWithTwoExercises(), "squat", "earlier");
+    const movedBack = moveExercise(movedUp, "squat", "later");
+
+    assert.deepEqual(exerciseIds(movedUp), ["squat", "bench"]);
+    assert.deepEqual(exerciseIds(movedBack), ["bench", "squat"]);
+  });
+
+  it("does nothing when the first exercise moves earlier", () => {
+    const form = formWithTwoExercises();
+
+    assert.deepEqual(exerciseIds(moveExercise(form, "bench", "earlier")), ["bench", "squat"]);
+  });
+
+  it("updates an exercise in place and keeps its ids", () => {
+    const loaded = formWithTwoExercises();
+    const activeDay = findActiveDay(loaded);
+    const withServerId = {
+      ...loaded,
+      days: [
+        {
+          ...activeDay,
+          exercises: activeDay.exercises.map((exercise) => ({ ...exercise, serverId: 42 })),
+        },
+      ],
+    };
+    const form = updateExercise(withServerId, "bench", { ...squat, name: " Stacco " });
+    const updated = findActiveDay(form).exercises[0];
+
+    assert.equal(updated?.clientId, "bench");
+    assert.equal(updated?.serverId, 42);
+    assert.equal(updated?.name, "Stacco");
+    assert.equal(updated?.setPrescriptions.length, 1);
   });
 });
 

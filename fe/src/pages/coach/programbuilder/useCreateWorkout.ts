@@ -149,6 +149,18 @@ export function useWorkoutForm(
     return true;
   };
 
+  const updateExercise = (exerciseClientId: string, input: NewExerciseInput): boolean => {
+    const inputError = workoutForm.findExerciseInputError(input);
+
+    if (inputError) {
+      setForm((current) => ({ ...current, formError: inputError }));
+      return false;
+    }
+
+    setForm((current) => workoutForm.updateExercise(current, exerciseClientId, input));
+    return true;
+  };
+
   const addDay = () => {
     const dayClientId = crypto.randomUUID();
     setForm((current) => workoutForm.addDay(current, dayClientId));
@@ -165,11 +177,20 @@ export function useWorkoutForm(
     setActiveDayName: (name: string) =>
       setForm((current) => workoutForm.renameActiveDay(current, name)),
     addDay,
+    moveActiveDay: (direction: workoutForm.MoveDirection) =>
+      setForm((current) => workoutForm.moveActiveDay(current, direction)),
+    duplicateActiveDay: () =>
+      setForm((current) =>
+        workoutForm.duplicateActiveDay(current, () => crypto.randomUUID()),
+      ),
     removeDay: (dayClientId: string) =>
       setForm((current) => workoutForm.removeDay(current, dayClientId)),
     toggleWeekday: (weekday: Weekday) =>
       setForm((current) => workoutForm.toggleWeekday(current, weekday)),
     addExercise,
+    updateExercise,
+    moveExercise: (exerciseClientId: string, direction: workoutForm.MoveDirection) =>
+      setForm((current) => workoutForm.moveExercise(current, exerciseClientId, direction)),
     removeExercise: (exerciseClientId: string) =>
       setForm((current) => workoutForm.removeExercise(current, exerciseClientId)),
     settings: form.settings,

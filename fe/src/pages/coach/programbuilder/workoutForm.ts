@@ -41,6 +41,8 @@ export type WorkoutForm = {
   isSaving: boolean;
 };
 
+export type MoveDirection = "earlier" | "later";
+
 export type SaveCheck =
   | { isValid: false; form: WorkoutForm }
   | { isValid: true; name: string; days: DraftWorkoutDay[] };
@@ -51,6 +53,37 @@ const updateDay = (
   updater: (day: DraftWorkoutDay) => DraftWorkoutDay,
 ): DraftWorkoutDay[] =>
   days.map((day) => (day.clientId === dayClientId ? updater(day) : day));
+
+// Returns the list unchanged when the item is already first (earlier) or last (later).
+const moveItem = <T>(items: T[], index: number, direction: MoveDirection): T[] => {
+  const targetIndex = direction === "earlier" ? index - 1 : index + 1;
+  const isOutOfRange = index < 0 || targetIndex < 0 || targetIndex >= items.length;
+
+  if (isOutOfRange) {
+    return items;
+  }
+
+  return items.map((item, position) => {
+    if (position === index) {
+      return items[targetIndex];
+    }
+    if (position === targetIndex) {
+      return items[index];
+    }
+    return item;
+  });
+};
+
+const toDraftExercise = (
+  input: NewExerciseInput,
+  exerciseClientId: string,
+  serverId?: number,
+): DraftExercise => ({
+  clientId: exerciseClientId,
+  serverId,
+  ...pickerExerciseFrom({ ...input, name: input.name.trim() }),
+  setPrescriptions: input.setPrescriptions.map((entry) => ({ ...entry })),
+});
 
 const updateActiveDay = (
   form: WorkoutForm,
@@ -109,6 +142,39 @@ export function removeDay(form: WorkoutForm, dayClientId: string): WorkoutForm {
   return { ...form, days, activeDayId, formError: null };
 }
 
+export function moveActiveDay(form: WorkoutForm, direction: MoveDirection): WorkoutForm {
+  const index = form.days.findIndex((day) => day.clientId === form.activeDayId);
+  const days = reindexWorkoutDays(moveItem(form.days, index, direction));
+
+  return { ...form, days };
+}
+
+// The copy is a new day for the server, and it gets no weekdays so it cannot clash with the original.
+export function duplicateActiveDay(
+  form: WorkoutForm,
+  createClientId: () => string,
+): WorkoutForm {
+  const activeDay = findActiveDay(form);
+  const copy: DraftWorkoutDay = {
+    clientId: createClientId(),
+    serverId: undefined,
+    name: `${activeDay.name.trim()} (copia)`,
+    sortOrder: activeDay.sortOrder + 1,
+    weekdays: [],
+    exercises: activeDay.exercises.map((exercise) =>
+      toDraftExercise(exercise, createClientId()),
+    ),
+  };
+  const activeIndex = form.days.indexOf(activeDay);
+  const days = reindexWorkoutDays([
+    ...form.days.slice(0, activeIndex + 1),
+    copy,
+    ...form.days.slice(activeIndex + 1),
+  ]);
+
+  return { ...form, days, activeDayId: copy.clientId, formError: null };
+}
+
 export function toggleWeekday(form: WorkoutForm, weekday: Weekday): WorkoutForm {
   const activeDay = findActiveDay(form);
   const isSelected = activeDay.weekdays.includes(weekday);
@@ -158,17 +224,45 @@ export function addExercise(
   input: NewExerciseInput,
   exerciseClientId: string,
 ): WorkoutForm {
-  const exercise: DraftExercise = {
-    clientId: exerciseClientId,
-    ...pickerExerciseFrom({ ...input, name: input.name.trim() }),
-    setPrescriptions: input.setPrescriptions.map((entry) => ({ ...entry })),
-  };
+  const exercise = toDraftExercise(input, exerciseClientId);
   const withExercise = updateActiveDay(form, (day) => ({
     ...day,
     exercises: [...day.exercises, exercise],
   }));
 
   return { ...withExercise, formError: null };
+}
+
+// Keeps clientId and serverId, so the server updates the same exercise instead of creating a new one.
+export function updateExercise(
+  form: WorkoutForm,
+  exerciseClientId: string,
+  input: NewExerciseInput,
+): WorkoutForm {
+  const withExercise = updateActiveDay(form, (day) => ({
+    ...day,
+    exercises: day.exercises.map((exercise) => {
+      if (exercise.clientId !== exerciseClientId) {
+        return exercise;
+      }
+      return toDraftExercise(input, exercise.clientId, exercise.serverId);
+    }),
+  }));
+
+  return { ...withExercise, formError: null };
+}
+
+export function moveExercise(
+  form: WorkoutForm,
+  exerciseClientId: string,
+  direction: MoveDirection,
+): WorkoutForm {
+  return updateActiveDay(form, (day) => {
+    const index = day.exercises.findIndex(
+      (exercise) => exercise.clientId === exerciseClientId,
+    );
+    return { ...day, exercises: moveItem(day.exercises, index, direction) };
+  });
 }
 
 export function removeExercise(form: WorkoutForm, exerciseClientId: string): WorkoutForm {

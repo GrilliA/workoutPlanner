@@ -18,6 +18,35 @@
     color: var(--text-h);
   }
 
+  & .day-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
+
+  & .move-day {
+    width: 2rem;
+    height: 2rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-full);
+    background: transparent;
+    color: var(--text-h);
+    cursor: pointer;
+
+    &:hover:not(:disabled),
+    &:focus-visible {
+      border-color: var(--accent-border);
+      background: var(--accent-bg);
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+  }
+
   & .add-day {
     border: 0;
     background: transparent;

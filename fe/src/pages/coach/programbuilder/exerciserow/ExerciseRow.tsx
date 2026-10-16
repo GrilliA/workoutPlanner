@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { formatExerciseMeta } from "../mappers/mapExerciseMeta";
 import { exerciseEnglishLine, exerciseHeading } from "../mappers/mapExerciseDisplay";
 import type { ExerciseDisplay } from "../types";
@@ -9,6 +10,8 @@ export type ExerciseRowProps = {
   exercise: ExerciseDisplay;
   defaultRestSec: number;
   onRemove?: () => void;
+  /** Builder controls (move, edit) shown under the exercise details. */
+  actions?: ReactNode;
 };
 
 export function ExerciseRow({
@@ -16,6 +19,7 @@ export function ExerciseRow({
   exercise,
   defaultRestSec,
   onRemove,
+  actions,
 }: ExerciseRowProps) {
   const heading = exerciseHeading(exercise);
   const english = exerciseEnglishLine(exercise);
@@ -57,6 +61,7 @@ export function ExerciseRow({
         <p className="meta">
           {formatExerciseMeta(exercise.setPrescriptions, defaultRestSec)}
         </p>
+        {actions ? <div className="actions">{actions}</div> : null}
       </div>
     </article>
   );
