@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import { Button } from "@components/button";
 import { PageHeader as SharedPageHeader } from "@components/pageHeader";
-import "../../../coach/style.css";
+import "../../style.css";
 import "./style.css";
 
 export type PageHeaderProps = {

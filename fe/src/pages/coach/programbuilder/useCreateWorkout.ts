@@ -4,11 +4,6 @@ import { ApiError, useQuery } from "@api";
 import type { Weekday } from "@api/schemas/workoutday";
 import { toast } from "@components/toast";
 import {
-  loadWorkoutDraft,
-  saveWorkoutWithDays,
-  updateWorkoutWithDays,
-} from "./api";
-import {
   findWeekdayConflict,
   reindexWorkoutDays,
   sortWeekdays,
@@ -70,8 +65,8 @@ export type WorkoutFormAdapters = {
     settings: WorkoutSettings,
     days: DraftWorkoutDay[],
   ) => Promise<unknown>;
-  successPath?: string;
-  backHref?: string;
+  successPath: string;
+  backHref: string;
 };
 
 export type WorkoutDraftSeed = {
@@ -93,11 +88,7 @@ const seedWorkoutForm = (draft?: WorkoutDraftSeed | null) => {
 
   const days =
     draft.days.length > 0
-      ? draft.days.map((day, index) => ({
-          ...day,
-          sortOrder: index,
-          weekdays: day.weekdays as Weekday[],
-        }))
+      ? reindexWorkoutDays(draft.days)
       : [createDefaultWorkoutDay()];
 
   return {
@@ -109,8 +100,8 @@ const seedWorkoutForm = (draft?: WorkoutDraftSeed | null) => {
 };
 
 export function useWorkoutDraft(
-  workoutId?: number,
-  adapters: WorkoutFormAdapters = {},
+  workoutId: number | undefined,
+  adapters: WorkoutFormAdapters,
 ) {
   const adaptersRef = useRef(adapters);
   useEffect(() => {
@@ -122,7 +113,7 @@ export function useWorkoutDraft(
     queryKey: [
       "workout-draft",
       workoutId ?? "new",
-      adapters.successPath ?? "default",
+      adapters.successPath,
     ],
     queryFn: async ({ signal }) => {
       if (workoutId == null) {
@@ -131,11 +122,11 @@ export function useWorkoutDraft(
 
       try {
         const loadDraft = adaptersRef.current.loadDraft;
-        if (loadDraft) {
-          return await loadDraft(workoutId, { signal });
+        if (!loadDraft) {
+          throw new Error("WorkoutFormAdapters.loadDraft is required to edit a workout");
         }
 
-        return await loadWorkoutDraft(workoutId, { signal });
+        return await loadDraft(workoutId, { signal });
       } catch (err) {
         if (err instanceof ApiError && err.status === 404) {
           return null;
@@ -155,8 +146,8 @@ export function useWorkoutDraft(
 }
 
 export function useWorkoutForm(
-  workoutId?: number,
-  adapters: WorkoutFormAdapters = {},
+  workoutId: number | undefined,
+  adapters: WorkoutFormAdapters,
   initialDraft?: WorkoutDraftSeed | null,
 ) {
   const [, setLocation] = useLocation();
@@ -305,6 +296,23 @@ export function useWorkoutForm(
     );
   };
 
+  const saveDraft = async (trimmedName: string, normalizedDays: DraftWorkoutDay[]) => {
+    const { saveNew, saveUpdate } = adaptersRef.current;
+
+    if (workoutId !== undefined) {
+      if (!saveUpdate) {
+        throw new Error("WorkoutFormAdapters.saveUpdate is required to edit a workout");
+      }
+      await saveUpdate(workoutId, trimmedName, settings, normalizedDays);
+      return;
+    }
+
+    if (!saveNew) {
+      throw new Error("WorkoutFormAdapters.saveNew is required to create a workout");
+    }
+    await saveNew(trimmedName, settings, normalizedDays);
+  };
+
   const save = async () => {
     const trimmedName = name.trim();
 
@@ -340,16 +348,9 @@ export function useWorkoutForm(
     }));
 
     try {
-      if (workoutId) {
-        const update = adaptersRef.current.saveUpdate ?? updateWorkoutWithDays;
-        await update(workoutId, trimmedName, settings, normalizedDays);
-      } else {
-        const create = adaptersRef.current.saveNew ?? saveWorkoutWithDays;
-        await create(trimmedName, settings, normalizedDays);
-      }
-
+      await saveDraft(trimmedName, normalizedDays);
       toast.success("Scheda salvata");
-      setLocation(adaptersRef.current.successPath ?? "/dashboard");
+      setLocation(adaptersRef.current.successPath);
     } catch (err) {
       setStatus("idle");
       toast.error(

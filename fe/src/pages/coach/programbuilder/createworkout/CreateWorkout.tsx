@@ -13,12 +13,11 @@ import {
   type WorkoutFormAdapters,
 } from "../useCreateWorkout";
 import { SchedaTxtPaste } from "../schedatxt";
-import type { Weekday } from "../types";
 import "./style.css";
 
 export type CreateWorkoutProps = {
   workoutId?: number;
-  adapters?: WorkoutFormAdapters;
+  adapters: WorkoutFormAdapters;
   /** Show TXT paste import (new template / blank program flows). */
   enableTxtImport?: boolean;
 };
@@ -28,10 +27,7 @@ export function CreateWorkout({
   adapters,
   enableTxtImport = false,
 }: CreateWorkoutProps) {
-  const { draft, isLoading, notFound } = useWorkoutDraft(
-    workoutId,
-    adapters ?? {},
-  );
+  const { draft, isLoading, notFound } = useWorkoutDraft(workoutId, adapters);
 
   if (isLoading || notFound) {
     return (
@@ -40,7 +36,7 @@ export function CreateWorkout({
           mode={workoutId ? "edit" : "create"}
           onSave={() => undefined}
           isSaving={false}
-          backHref={adapters?.backHref ?? adapters?.successPath ?? "/dashboard"}
+          backHref={adapters.backHref}
         />
         {isLoading ? <p>Caricamento scheda…</p> : null}
         {notFound ? <p className="coach-empty">Scheda non trovata</p> : null}
@@ -100,22 +96,11 @@ function CreateWorkoutForm({
           void save();
         }}
         isSaving={isSaving}
-        backHref={adapters?.backHref ?? adapters?.successPath ?? "/dashboard"}
+        backHref={adapters.backHref}
       />
 
       {enableTxtImport ? (
-        <SchedaTxtPaste
-          onApply={(parsed) =>
-            applyDraft({
-              name: parsed.name,
-              settings: parsed.settings,
-              days: parsed.days.map((day) => ({
-                ...day,
-                weekdays: day.weekdays as Weekday[],
-              })),
-            })
-          }
-        />
+        <SchedaTxtPaste onApply={applyDraft} />
       ) : null}
 
       <WorkoutNameField

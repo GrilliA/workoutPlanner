@@ -12,10 +12,9 @@ import { Button } from "@components/button";
 import { Input } from "@components/input";
 import { toast } from "@components/toast";
 import { PageHeader } from "@components/pageHeader";
-import { SchedaTxtPaste } from "@pages/workouts/new/schedatxt";
-import type { ParsedScheda } from "@pages/workouts/new/schedatxt/parseSchedaTxt";
-import { toProgramInput } from "../../programapi";
-import type { Weekday } from "@pages/workouts/new/types";
+import { SchedaTxtPaste } from "@pages/coach/programbuilder/schedatxt";
+import type { ParsedScheda } from "@pages/coach/programbuilder/schedatxt/parseSchedaTxt";
+import { mapDraftToProgramInput } from "@pages/coach/programbuilder/mappers/mapProgramInput";
 import "../../style.css";
 
 export default function NewAssignmentPage() {
@@ -58,13 +57,6 @@ export default function NewAssignmentPage() {
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
-    const days = parsedTxt
-      ? parsedTxt.days.map((day) => ({
-          ...day,
-          weekdays: day.weekdays as Weekday[],
-        }))
-      : null;
-
     createAssignment.mutate({
       athleteId: Number(athleteId),
       startsAt,
@@ -72,8 +64,8 @@ export default function NewAssignmentPage() {
       templateId: templateId ? Number(templateId) : undefined,
       name: templateId ? undefined : parsedTxt?.name.trim() || name,
       program:
-        !templateId && parsedTxt && days
-          ? toProgramInput(parsedTxt.name, parsedTxt.settings, days)
+        !templateId && parsedTxt
+          ? mapDraftToProgramInput(parsedTxt.name, parsedTxt.settings, parsedTxt.days)
           : undefined,
     });
   };

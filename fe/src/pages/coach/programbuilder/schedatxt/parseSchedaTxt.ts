@@ -4,40 +4,14 @@ import {
   WORKOUT_TYPE_OPTIONS,
   type WorkoutSettings,
 } from "@api/schemas/workout";
+import { weekdaySchema, type Weekday } from "@api/schemas/workoutday";
+import {
+  DEFAULT_WORKOUT_SETTINGS,
+  type DraftExercise,
+  type DraftSetPrescription,
+  type DraftWorkoutDay,
+} from "../types";
 import catalogPromptExercises from "./catalogPromptExercises.json" with { type: "json" };
-
-export type DraftSetPrescription = {
-  setNumber: number;
-  reps: number;
-  restSec: number;
-};
-
-export type DraftExercise = {
-  clientId: string;
-  serverId?: number;
-  name: string;
-  catalogId: string | null;
-  nameIt?: string | null;
-  nameEn?: string | null;
-  imageUrl?: string | null;
-  imageUrlEnd?: string | null;
-  setPrescriptions: DraftSetPrescription[];
-};
-
-export type DraftWorkoutDay = {
-  clientId: string;
-  serverId?: number;
-  name: string;
-  sortOrder: number;
-  weekdays: number[];
-  exercises: DraftExercise[];
-};
-
-const DEFAULT_WORKOUT_SETTINGS: WorkoutSettings = {
-  defaultRestSec: 90,
-  workoutType: "Forza + Ipertrofia",
-  frequency: "3× a settimana",
-};
 
 export type ParsedScheda = {
   name: string;
@@ -202,6 +176,16 @@ const isSetsLine = (line: string): boolean =>
 /**
  * Parse a coach scheda TXT into a builder draft.
  */
+// The TXT format has logical days only: day N trains on weekday N (Mon = 0) until the coach edits it.
+const weekdaysForParsedDay = (day: DraftWorkoutDay, index: number): Weekday[] => {
+  if (day.weekdays.length > 0) {
+    return day.weekdays;
+  }
+
+  const weekday = weekdaySchema.safeParse(index);
+  return weekday.success ? [weekday.data] : [];
+};
+
 export const parseSchedaTxt = (input: string): ParseSchedaResult => {
   const text = input.replace(/^\uFEFF/, "").trim();
 
@@ -457,12 +441,7 @@ export const parseSchedaTxt = (input: string): ParseSchedaResult => {
       days: days.map((day, index) => ({
         ...day,
         sortOrder: index,
-        weekdays:
-          day.weekdays.length > 0
-            ? day.weekdays
-            : index < 7
-              ? [index]
-              : [],
+        weekdays: weekdaysForParsedDay(day, index),
       })),
     },
   };

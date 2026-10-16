@@ -1,7 +1,7 @@
 import { Link, useRoute } from "wouter";
 import { ApiError, getCoachClientProgram, useQuery, type WorkoutDetail } from "@api";
-import { WEEKDAY_LABELS_SHORT } from "@pages/workouts/new/types";
-import { ExerciseRow } from "@pages/workouts/new/exerciserow";
+import { WEEKDAY_LABELS_SHORT } from "@pages/coach/programbuilder/types";
+import { ExerciseRow } from "@pages/coach/programbuilder/exerciserow";
 import { PageHeader } from "@components/pageHeader";
 import { CoachCard, CoachCardList } from "../../coachCard";
 import "../../style.css";
