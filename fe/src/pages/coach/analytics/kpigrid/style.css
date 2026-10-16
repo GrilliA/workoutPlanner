@@ -17,7 +17,7 @@
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--muted, #666);
+    color: var(--text);
     margin-bottom: 0.5rem;
   }
 
@@ -50,7 +50,7 @@
 
 .analytics-kpi--danger .value,
 .analytics-kpi--danger .hint {
-  color: var(--error, #f87171);
+  color: var(--error);
 }
 
 .analytics-kpi--accent .hint {

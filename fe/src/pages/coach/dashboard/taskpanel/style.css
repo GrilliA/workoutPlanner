@@ -45,7 +45,7 @@
   border-radius: 0.4rem;
   border: 1px solid var(--border);
   background: var(--bg);
-  color: var(--muted, #666);
+  color: var(--text);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -73,7 +73,7 @@
 }
 
 .task-panel__detail {
-  color: var(--muted, #666);
+  color: var(--text);
   font-size: 0.72rem;
   line-height: 1.4;
   font-style: italic;

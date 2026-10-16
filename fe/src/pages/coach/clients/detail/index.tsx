@@ -14,7 +14,7 @@ import { ConfirmDialog } from "@components/confirmDialog";
 import { Input } from "@components/input";
 import { toast } from "@components/toast";
 import { PageHeader } from "@components/pageHeader";
-import { CoachCard, CoachCardList } from "../../coachCard";
+import { CoachCard, CoachCardList, CoachCardListSkeleton } from "../../coachCard";
 import { ClientAnalyticsSection } from "./analytics/clientanalytics";
 import { useClientDetail } from "./api/useClientDetail";
 import "../../style.css";
@@ -197,7 +197,7 @@ function ClientDetailLoaded({ athleteId }: { athleteId: number }) {
       />
 
       {loading ? (
-        <p className="coach-empty">Caricamento…</p>
+        <CoachCardListSkeleton />
       ) : null}
 
       {!loading && !client ? (
@@ -272,7 +272,7 @@ function ClientDetailLoaded({ athleteId }: { athleteId: number }) {
                           {assignment.workoutName ?? `Scheda #${assignment.workoutId}`}
                         </Link>
                       </h2>
-                      <p style={{ marginBottom: "0.75rem" }}>
+                      <p className="coach-card__status">
                         <span className={`coach-status ${assignment.status}`}>
                           {statusLabel[assignment.status]}
                         </span>
@@ -354,7 +354,7 @@ function ClientDetailLoaded({ athleteId }: { athleteId: number }) {
 
           <section className="coach-section coach-section--spaced">
             <h2>Scollega cliente</h2>
-            <p className="coach-empty" style={{ marginBottom: "0.75rem" }}>
+            <p className="coach-empty coach-section__intro">
               Rimuove il collegamento coach-atleta e revoca le schede assegnate. L&apos;account
               atleta non viene eliminato.
             </p>

@@ -26,10 +26,13 @@ const COLORS: ColorToken[] = [
   { name: "--accent-border", value: "rgba(191, 219, 247, 0.4)" },
   { name: "--on-accent", value: "#111111" },
   { name: "--error", value: "#f87171" },
+  { name: "--info", value: "#8bc7ff" },
   { name: "--social-bg", value: "rgba(47, 48, 58, 0.5)" },
   { name: "--hover-bg", value: "rgba(255, 255, 255, 0.06)" },
   { name: "--bottom-nav-bg", value: "rgba(15, 16, 22, 0.96)" },
   { name: "--overlay", value: "rgba(29, 31, 37, 0.4)" },
+  { name: "--scrim", value: "rgb(0 0 0 / 0.45)" },
+  { name: "--scrim-strong", value: "rgb(0 0 0 / 0.7)" },
 ];
 
 const SPACING: ScaleToken[] = [

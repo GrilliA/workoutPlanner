@@ -80,7 +80,7 @@
   & .form-error {
     margin: 0;
     font-size: 0.9rem;
-    color: var(--error, #f87171);
+    color: var(--error);
   }
 
   & .form-success {

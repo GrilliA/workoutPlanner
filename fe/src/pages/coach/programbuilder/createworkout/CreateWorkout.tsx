@@ -16,6 +16,7 @@ import {
 } from "../useCreateWorkout";
 import type { WorkoutDraftSeed } from "../workoutForm";
 import { SchedaTxtPaste } from "../schedatxt";
+import { CoachCardListSkeleton } from "../../coachCard";
 import "./style.css";
 
 export type CreateWorkoutProps = {
@@ -41,7 +42,7 @@ export function CreateWorkout({
           isSaveDisabled
           backHref={adapters.backHref}
         />
-        {isLoading ? <p>Caricamento scheda…</p> : null}
+        {isLoading ? <CoachCardListSkeleton /> : null}
         {notFound ? <p className="coach-empty">Scheda non trovata</p> : null}
       </div>
     );

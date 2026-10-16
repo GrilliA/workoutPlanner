@@ -90,3 +90,14 @@
   gap: var(--space-3);
   margin-bottom: var(--space-3);
 }
+
+/* Skeleton lines sit on the card surface, so they need the lighter surface to show. */
+.coach-card-skeleton {
+  & .skeleton {
+    background: var(--surface-elevated);
+  }
+
+  & .coach-card-skeleton__line {
+    margin-top: var(--space-2);
+  }
+}

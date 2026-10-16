@@ -1,0 +1,23 @@
+.invite-code__intro {
+  margin-bottom: 1rem;
+}
+
+/* Nested so these win over the generic `.coach-card p` rule. */
+.invite-code {
+  text-align: center;
+
+  & .invite-code__label {
+    margin-bottom: 0.5rem;
+  }
+
+  & .invite-code__value {
+    margin: 0.5rem 0 1rem;
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+  }
+
+  & .invite-code__actions {
+    justify-content: center;
+  }
+}

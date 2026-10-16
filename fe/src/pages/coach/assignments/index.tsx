@@ -7,7 +7,7 @@ import {
 } from "@api";
 import { toast } from "@components/toast";
 import { PageHeader } from "@components/pageHeader";
-import { CoachCard, CoachCardList } from "../coachCard";
+import { CoachCard, CoachCardList, CoachCardListSkeleton } from "../coachCard";
 import { useAssignments } from "./api/useAssignments";
 import "../style.css";
 
@@ -47,7 +47,7 @@ export default function AssignmentsPage() {
       />
 
       {loading ? (
-        <p className="coach-empty">Caricamento…</p>
+        <CoachCardListSkeleton />
       ) : null}
 
       {!loading && assignments.length === 0 ? (

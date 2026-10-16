@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { Link, useLocation, useSearch } from "wouter";
 import {
   ApiError,
@@ -15,16 +15,18 @@ import { PageHeader } from "@components/pageHeader";
 import { SchedaTxtPaste } from "@pages/coach/programbuilder/schedatxt";
 import type { ParsedScheda } from "@pages/coach/programbuilder/schedatxt/parseSchedaTxt";
 import { mapDraftToProgramInput } from "@pages/coach/programbuilder/mappers/mapProgramInput";
+import { CoachCardListSkeleton } from "../../coachCard";
 import "../../style.css";
+
+const parsePresetAthleteId = (search: string): number | null => {
+  const id = Number(new URLSearchParams(search).get("athleteId"));
+  return Number.isInteger(id) && id > 0 ? id : null;
+};
 
 export default function NewAssignmentPage() {
   const [, setLocation] = useLocation();
   const search = useSearch();
-  const presetAthleteId = useMemo(() => {
-    const value = new URLSearchParams(search).get("athleteId");
-    const id = Number(value);
-    return Number.isInteger(id) && id > 0 ? id : null;
-  }, [search]);
+  const presetAthleteId = parsePresetAthleteId(search);
 
   const { data, isPending } = useQuery({
     queryFn: ({ signal }) =>
@@ -78,7 +80,7 @@ export default function NewAssignmentPage() {
       />
 
       {isPending ? (
-        <p className="coach-empty">Caricamento…</p>
+        <CoachCardListSkeleton />
       ) : clients.length === 0 ? (
         <section className="coach-dashboard__empty">
           <h2>Invita il primo cliente</h2>
@@ -102,7 +104,6 @@ export default function NewAssignmentPage() {
             required
             value={athleteId}
             onChange={(event) => setAthleteId(event.target.value)}
-            style={{ display: "block", width: "100%", marginTop: "0.35rem" }}
           >
             <option value="">Seleziona…</option>
             {clients.map((client) => (
@@ -121,7 +122,6 @@ export default function NewAssignmentPage() {
               setTemplateId(event.target.value);
               setParsedTxt(null);
             }}
-            style={{ display: "block", width: "100%", marginTop: "0.35rem" }}
           >
             <option value="">Da zero</option>
             {templates.map((template) => (

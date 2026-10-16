@@ -7,6 +7,7 @@ import { LibraryCta } from "../librarycta";
 import { RenewalChart } from "../renewalchart";
 import { TaskPanel } from "../taskpanel";
 import { useDashboard } from "../api/useDashboard";
+import { CoachCardListSkeleton } from "../../coachCard";
 import "../../style.css";
 import "./style.css";
 
@@ -36,7 +37,7 @@ export function Dashboard() {
       />
 
       {loading ? (
-        <p className="coach-empty">Caricamento…</p>
+        <CoachCardListSkeleton />
       ) : null}
 
       {!loading && (!data || data.isEmpty) ? (

@@ -3,7 +3,7 @@ import { ApiError, getCoachClientProgram, useQuery, type WorkoutDetail } from "@
 import { WEEKDAY_LABELS_SHORT } from "@pages/coach/programbuilder/types";
 import { ExerciseRow } from "@pages/coach/programbuilder/exerciserow";
 import { PageHeader } from "@components/pageHeader";
-import { CoachCard, CoachCardList } from "../../coachCard";
+import { CoachCard, CoachCardList, CoachCardListSkeleton } from "../../coachCard";
 import "../../style.css";
 
 function formatWeekdays(weekdays: number[]): string {
@@ -130,7 +130,7 @@ function ViewClientProgramLoaded({
         </Link>
       </nav>
 
-      {isPending ? <p className="coach-empty">Caricamento…</p> : null}
+      {isPending ? <CoachCardListSkeleton /> : null}
 
       {!isPending && !program ? (
         <p className="coach-empty">Scheda non trovata</p>

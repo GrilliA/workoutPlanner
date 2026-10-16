@@ -11,7 +11,7 @@
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--muted, #666);
+    color: var(--text);
   }
 }
 
@@ -45,7 +45,7 @@
   align-items: center;
   gap: 0.15rem;
   font-size: 0.65rem;
-  color: var(--muted, #666);
+  color: var(--text);
   min-height: 0.9rem;
 }
 
