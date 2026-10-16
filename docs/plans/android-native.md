@@ -57,7 +57,7 @@ apps/android/app/src/main/java/com/traccia/android/
 ### Regole di ownership (anti-conflitto)
 
 1. Una PR modifica **solo** il proprio `feature/<nome>/` + i file elencati nella sua scheda sotto "Tocca anche".
-2. **Route**: tutte dichiarate in N1 dentro `core/navigation/Routes.kt`. Una feature PR non aggiunge route; sostituisce solo il `PlaceholderScreen` della sua route in `RootNavHost.kt` / `MainShell.kt` (una riga).
+2. **Route**: tutte dichiarate in N1 dentro `core/navigation/Routes.kt`. Una feature PR non aggiunge route; sostituisce solo il `PlaceholderScreen` della sua route in `RootNavHost.kt` / `MainShell.kt` (una riga). I nodi root (`Login`, `Register`, `Main`, `WorkoutDetail`, `WorkoutEditor`, `Session`, `SessionComplete`) sono in `RootNavHost.kt`, le 4 tab in `MainShell.kt`.
 3. **DTO**: tutti creati in N2 in `core/network/model/`, un file per ogni file in `mobile/src/api/schemas/`. Se a una feature serve un campo mancante, lo aggiunge lì (modifica piccola, descritta nella PR).
 4. **Stringhe**: un file risorse per feature, `res/values/strings_<feature>.xml`. Mai toccare quelli di altre feature.
 5. **Componenti UI** condivisi solo in `core/designsystem` (N3). Una feature che ne vuole uno nuovo lo tiene privato in `feature/<nome>/ui/`; la promozione a condiviso è una PR a parte.
@@ -113,7 +113,7 @@ In italiano, con queste sezioni:
 
 | PR | Titolo | Dipende da | Ondata | Stato |
 | --- | --- | --- | --- | --- |
-| N1 | Scaffold progetto + CI | — | 1 | [ ] |
+| N1 | Scaffold progetto + CI | — | 1 | [x] |
 | N2 | Rete + auth + login | N1 | 2 | [ ] |
 | N3 | Design system + shell a tab | N1 | 2 | [ ] |
 | N4 | Registrazione + Account | N2, N3 | 3 | [ ] |
@@ -150,7 +150,7 @@ Regola per l'orchestratore: lanciare una PR solo quando **tutte** le sue dipende
 - `core/navigation/Routes.kt` con **tutte** le route del piano:
   `Login`, `Register`, `Main` (contenitore tab), `Home`, `Workouts`, `Stats`, `Account`,
   `WorkoutDetail(workoutId: Long)`, `WorkoutEditor(workoutId: Long?)`, `Session(sessionId: Long)`, `SessionComplete(sessionId: Long)`.
-- `RootNavHost.kt`: grafo root `Login` / `Register` / `Main`, ognuna con `PlaceholderScreen("<nome>")`. Start destination `Login` (la logica di gate arriva in N2).
+- `RootNavHost.kt`: grafo root `Login` / `Register` / `Main` + i dettagli fuori dalle tab `WorkoutDetail` / `WorkoutEditor` / `Session` / `SessionComplete`, ognuna con `PlaceholderScreen("<nome>")`. Start destination `Login` (la logica di gate arriva in N2).
 - `core/designsystem/Theme.kt` minimo: colori base da `mobile/src/theme/` (sfondo charcoal, accent `#bfdbf7`), schema solo scuro. Il resto in N3.
 - `BuildConfig.API_BASE_URL` come da [Rete](#rete-in-sviluppo-e-test).
 - Job `android` in `.github/workflows/ci.yml`: JDK 17 (`actions/setup-java`, temurin) + cache Gradle, esegue `./gradlew lintDebug testDebugUnitTest assembleDebug` in `apps/android`.
