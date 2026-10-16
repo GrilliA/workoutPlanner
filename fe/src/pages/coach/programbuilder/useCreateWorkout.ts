@@ -3,47 +3,13 @@ import { useLocation } from "wouter";
 import { ApiError, useQuery } from "@api";
 import type { Weekday } from "@api/schemas/workoutday";
 import { toast } from "@components/toast";
-import {
-  findWeekdayConflict,
-  reindexWorkoutDays,
-  sortWeekdays,
-} from "./mappers/mapWorkoutDays";
-import {
-  createDefaultWorkoutDay,
-  createDefaultSetPrescriptions,
-  DEFAULT_WORKOUT_SETTINGS,
-  pickerExerciseFrom,
-  type CreateWorkoutStatus,
-  type DraftExercise,
-  type DraftWorkoutDay,
-  type NewExerciseInput,
-  type WorkoutSettings,
+import type {
+  DraftWorkoutDay,
+  NewExerciseInput,
+  WorkoutSettings,
 } from "./types";
-
-const WEEKDAY_NAMES = [
-  "lunedì",
-  "martedì",
-  "mercoledì",
-  "giovedì",
-  "venerdì",
-  "sabato",
-  "domenica",
-] as const;
-
-const createClientId = (): string => crypto.randomUUID();
-
-const toDraftExercise = (input: NewExerciseInput): DraftExercise => ({
-  clientId: createClientId(),
-  ...pickerExerciseFrom({ ...input, name: input.name.trim() }),
-  setPrescriptions: input.setPrescriptions.map((entry) => ({ ...entry })),
-});
-
-const updateDay = (
-  days: DraftWorkoutDay[],
-  dayClientId: string,
-  updater: (day: DraftWorkoutDay) => DraftWorkoutDay,
-): DraftWorkoutDay[] =>
-  days.map((day) => (day.clientId === dayClientId ? updater(day) : day));
+import * as workoutForm from "./workoutForm";
+import type { WorkoutDraftSeed } from "./workoutForm";
 
 export type WorkoutFormAdapters = {
   loadDraft?: (
@@ -67,36 +33,6 @@ export type WorkoutFormAdapters = {
   ) => Promise<unknown>;
   successPath: string;
   backHref: string;
-};
-
-export type WorkoutDraftSeed = {
-  name: string;
-  settings: WorkoutSettings;
-  days: DraftWorkoutDay[];
-};
-
-const seedWorkoutForm = (draft?: WorkoutDraftSeed | null) => {
-  if (!draft) {
-    const initialDay = createDefaultWorkoutDay();
-    return {
-      name: "",
-      days: [initialDay],
-      activeDayId: initialDay.clientId,
-      settings: DEFAULT_WORKOUT_SETTINGS,
-    };
-  }
-
-  const days =
-    draft.days.length > 0
-      ? reindexWorkoutDays(draft.days)
-      : [createDefaultWorkoutDay()];
-
-  return {
-    name: draft.name,
-    days,
-    activeDayId: days[0]?.clientId ?? "",
-    settings: draft.settings,
-  };
 };
 
 export function useWorkoutDraft(
@@ -155,231 +91,95 @@ export function useWorkoutForm(
   useEffect(() => {
     adaptersRef.current = adapters;
   });
-  const [seed] = useState(() => seedWorkoutForm(initialDraft));
-  const [name, setName] = useState(seed.name);
-  const [days, setDays] = useState<DraftWorkoutDay[]>(seed.days);
-  const [activeDayId, setActiveDayId] = useState(seed.activeDayId);
-  const [settings, setSettings] = useState<WorkoutSettings>(seed.settings);
-  const [status, setStatus] = useState<CreateWorkoutStatus>("idle");
-  const [nameError, setNameError] = useState<string | null>(null);
-  const [formError, setFormError] = useState<string | null>(null);
+  const [form, setForm] = useState(() => workoutForm.createWorkoutForm(initialDraft));
   const isEditMode = workoutId !== undefined;
 
-  const applyDraft = (draft: WorkoutDraftSeed) => {
-    const next = seedWorkoutForm(draft);
-    setName(next.name);
-    setSettings(next.settings);
-    setDays(next.days);
-    setActiveDayId(next.activeDayId);
-    setNameError(null);
-    setFormError(null);
-    setStatus("idle");
-  };
-
-  const activeDay =
-    days.find((day) => day.clientId === activeDayId) ?? days[0] ?? null;
-
-  const setActiveDayName = (value: string) => {
-    setDays((current) =>
-      updateDay(current, activeDayId, (day) => ({
-        ...day,
-        name: value,
-      })),
-    );
-  };
-
-  const addDay = () => {
-    setDays((current) => {
-      const next = reindexWorkoutDays([
-        ...current,
-        createDefaultWorkoutDay(current.length),
-      ]);
-      const created = next[next.length - 1];
-      setActiveDayId(created.clientId);
-      return next;
-    });
-    setFormError(null);
-  };
-
-  const removeDay = (dayClientId: string) => {
-    setDays((current) => {
-      if (current.length <= 1) {
-        return current;
-      }
-
-      const next = reindexWorkoutDays(
-        current.filter((day) => day.clientId !== dayClientId),
-      );
-
-      setActiveDayId((selected) =>
-        selected === dayClientId ? next[0].clientId : selected,
-      );
-
-      return next;
-    });
-    setFormError(null);
-  };
-
-  const toggleWeekday = (weekday: Weekday) => {
-    setDays((current) => {
-      const day = current.find((item) => item.clientId === activeDayId);
-
-      if (!day) {
-        return current;
-      }
-
-      const conflict = findWeekdayConflict(current, activeDayId, weekday);
-      const isSelected = day.weekdays.includes(weekday);
-
-      if (!isSelected && conflict) {
-        setFormError(
-          `${conflict.name} è già programmato di ${WEEKDAY_NAMES[weekday]}`,
-        );
-        return current;
-      }
-
-      setFormError(null);
-
-      return updateDay(current, activeDayId, (item) => ({
-        ...item,
-        weekdays: isSelected
-          ? item.weekdays.filter((value) => value !== weekday)
-          : sortWeekdays([...item.weekdays, weekday]),
-      }));
-    });
-  };
-
-  const addExercise = (input: NewExerciseInput) => {
-    const trimmedName = input.name.trim();
-
-    if (!trimmedName) {
-      setFormError("Il nome dell'esercizio è obbligatorio");
-      return false;
-    }
-
-    if (input.setPrescriptions.length === 0) {
-      setFormError("Aggiungi almeno una serie");
-      return false;
-    }
-
-    const invalidSet = input.setPrescriptions.find(
-      (entry) =>
-        !Number.isInteger(entry.reps) ||
-        entry.reps < 1 ||
-        !Number.isInteger(entry.restSec) ||
-        entry.restSec < 0,
-    );
-
-    if (invalidSet) {
-      setFormError("Ogni serie deve avere reps e recupero validi");
-      return false;
-    }
-
-    setFormError(null);
-    setDays((current) =>
-      updateDay(current, activeDayId, (day) => ({
-        ...day,
-        exercises: [...day.exercises, toDraftExercise({ ...input, name: trimmedName })],
-      })),
-    );
-    return true;
-  };
-
-  const removeExercise = (exerciseClientId: string) => {
-    setDays((current) =>
-      updateDay(current, activeDayId, (day) => ({
-        ...day,
-        exercises: day.exercises.filter(
-          (exercise) => exercise.clientId !== exerciseClientId,
-        ),
-      })),
-    );
-  };
-
-  const saveDraft = async (trimmedName: string, normalizedDays: DraftWorkoutDay[]) => {
+  const saveDraft = async (name: string, days: DraftWorkoutDay[]) => {
     const { saveNew, saveUpdate } = adaptersRef.current;
 
     if (workoutId !== undefined) {
       if (!saveUpdate) {
         throw new Error("WorkoutFormAdapters.saveUpdate is required to edit a workout");
       }
-      await saveUpdate(workoutId, trimmedName, settings, normalizedDays);
+      await saveUpdate(workoutId, name, form.settings, days);
       return;
     }
 
     if (!saveNew) {
       throw new Error("WorkoutFormAdapters.saveNew is required to create a workout");
     }
-    await saveNew(trimmedName, settings, normalizedDays);
+    await saveNew(name, form.settings, days);
   };
 
   const save = async () => {
-    const trimmedName = name.trim();
+    const saveCheck = workoutForm.checkBeforeSave(form);
 
-    if (!trimmedName) {
-      setStatus("error");
-      setNameError("Il nome della scheda è obbligatorio");
+    if (!saveCheck.isValid) {
+      setForm(saveCheck.form);
       return;
     }
 
-    const invalidDay = days.find((day) => !day.name.trim());
-
-    if (invalidDay) {
-      setStatus("error");
-      setActiveDayId(invalidDay.clientId);
-      setFormError("Ogni giorno di allenamento deve avere un nome");
-      return;
-    }
-
-    setStatus("saving");
-    setNameError(null);
-    setFormError(null);
-
-    const normalizedDays = days.map((day) => ({
-      ...day,
-      name: day.name.trim(),
-      exercises: day.exercises.map((exercise) => ({
-        ...exercise,
-        setPrescriptions:
-          exercise.setPrescriptions.length > 0
-            ? exercise.setPrescriptions
-            : createDefaultSetPrescriptions(3, 10, settings.defaultRestSec),
-      })),
+    setForm((current) => ({
+      ...current,
+      isSaving: true,
+      nameError: null,
+      formError: null,
     }));
 
     try {
-      await saveDraft(trimmedName, normalizedDays);
+      await saveDraft(saveCheck.name, saveCheck.days);
       toast.success("Scheda salvata");
       setLocation(adaptersRef.current.successPath);
     } catch (err) {
-      setStatus("idle");
-      toast.error(
-        ApiError.messageFrom(err, "Impossibile salvare la scheda"),
-      );
+      setForm((current) => ({ ...current, isSaving: false }));
+      toast.error(ApiError.messageFrom(err, "Impossibile salvare la scheda"));
     }
   };
 
+  const addExercise = (input: NewExerciseInput): boolean => {
+    const inputError = workoutForm.findExerciseInputError(input);
+
+    if (inputError) {
+      setForm((current) => ({ ...current, formError: inputError }));
+      return false;
+    }
+
+    const exerciseClientId = crypto.randomUUID();
+    setForm((current) => workoutForm.addExercise(current, input, exerciseClientId));
+    return true;
+  };
+
+  const addDay = () => {
+    const dayClientId = crypto.randomUUID();
+    setForm((current) => workoutForm.addDay(current, dayClientId));
+  };
+
   return {
-    name,
-    setName,
-    days,
-    activeDay,
-    activeDayId,
-    setActiveDayId,
-    setActiveDayName,
+    name: form.name,
+    setName: (name: string) => setForm((current) => ({ ...current, name })),
+    days: form.days,
+    activeDay: workoutForm.findActiveDay(form),
+    activeDayId: form.activeDayId,
+    setActiveDayId: (activeDayId: string) =>
+      setForm((current) => ({ ...current, activeDayId })),
+    setActiveDayName: (name: string) =>
+      setForm((current) => workoutForm.renameActiveDay(current, name)),
     addDay,
-    removeDay,
-    toggleWeekday,
+    removeDay: (dayClientId: string) =>
+      setForm((current) => workoutForm.removeDay(current, dayClientId)),
+    toggleWeekday: (weekday: Weekday) =>
+      setForm((current) => workoutForm.toggleWeekday(current, weekday)),
     addExercise,
-    removeExercise,
-    settings,
-    setSettings,
-    status,
-    nameError,
-    formError,
+    removeExercise: (exerciseClientId: string) =>
+      setForm((current) => workoutForm.removeExercise(current, exerciseClientId)),
+    settings: form.settings,
+    setSettings: (settings: WorkoutSettings) =>
+      setForm((current) => ({ ...current, settings })),
+    nameError: form.nameError,
+    formError: form.formError,
     save,
-    applyDraft,
-    isSaving: status === "saving",
+    applyDraft: (draft: WorkoutDraftSeed) => setForm(workoutForm.createWorkoutForm(draft)),
+    isSaving: form.isSaving,
     isEditMode,
   };
 }

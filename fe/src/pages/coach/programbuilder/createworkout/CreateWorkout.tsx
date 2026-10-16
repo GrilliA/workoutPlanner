@@ -9,9 +9,9 @@ import { WorkoutSettingsPanel } from "../workoutsettings";
 import {
   useWorkoutDraft,
   useWorkoutForm,
-  type WorkoutDraftSeed,
   type WorkoutFormAdapters,
 } from "../useCreateWorkout";
+import type { WorkoutDraftSeed } from "../workoutForm";
 import { SchedaTxtPaste } from "../schedatxt";
 import "./style.css";
 

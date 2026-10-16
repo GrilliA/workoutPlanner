@@ -26,8 +26,6 @@ export const WEEKDAY_LABELS_SHORT = [
   "Dom",
 ] as const;
 
-export type CreateWorkoutStatus = "idle" | "loading" | "saving" | "error";
-
 export type DraftSetPrescription = {
   setNumber: number;
   reps: number;
@@ -107,8 +105,11 @@ export const createDefaultSetPrescriptions = (
     restSec,
   }));
 
-export const createDefaultWorkoutDay = (sortOrder = 0): DraftWorkoutDay => ({
-  clientId: crypto.randomUUID(),
+export const createDefaultWorkoutDay = (
+  sortOrder = 0,
+  clientId: string = crypto.randomUUID(),
+): DraftWorkoutDay => ({
+  clientId,
   name: sortOrder === 0 ? "Giorno 1" : `Giorno ${sortOrder + 1}`,
   sortOrder,
   weekdays: [],
