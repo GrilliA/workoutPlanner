@@ -31,6 +31,7 @@ const MOBILE_PAIRS = [
   { text: "text", background: "bg" },
   { text: "text", background: "surface" },
   { text: "text", background: "surfaceElevated" },
+  { text: "text", background: "accentBg" },
   { text: "onAccent", background: "accent" },
   { text: "accentText", background: "bg" },
   { text: "accentText", background: "surface" },

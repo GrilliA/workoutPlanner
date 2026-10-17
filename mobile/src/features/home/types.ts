@@ -1,3 +1,8 @@
+import type { AthleteHome } from "../../api";
+
+export type HomeProgram = AthleteHome["programs"][number];
+export type HomeWeekEntry = AthleteHome["week"][number];
+
 export type WeekStripDay = {
   dateKey: string;
   weekdayLabel: string;
@@ -8,19 +13,27 @@ export type WeekStripDay = {
   isRest: boolean;
 };
 
-export type HomeStat = {
-  id: string;
-  label: string;
-  value: string;
-  unit: string;
-  trend: string;
+/** Il giorno che "Inizia allenamento" avvia. */
+export type WorkoutSelection = {
+  workoutId: number;
+  workoutDayId: number;
 };
 
-export type HomeRecentSession = {
-  id: number;
-  name: string;
-  dateLabel: string;
-  durationMin: number;
-  volumeKg: number;
-  volumeLabel: string;
+/** Cosa mostra la card arancio per la selezione corrente. */
+export type SelectedWorkout = {
+  programName: string;
+  dayName: string;
+  exerciseCount: number;
+  isToday: boolean;
+};
+
+/** Una scheda nel bottom sheet "Cosa vuoi allenare?". */
+export type WorkoutChoiceSection = {
+  workoutId: number;
+  title: string;
+  rows: Array<{
+    workoutDayId: number;
+    name: string;
+    meta: string;
+  }>;
 };

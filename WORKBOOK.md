@@ -156,8 +156,8 @@ Legend: ⬜ todo · 🟡 in progress · ✅ done
 - **C11 — Session history (lista paginata)** ✅
 - **M1 — Progressi atleta mobile** ✅
 - **M2 — Builder scheda mobile (bozza unica + catalogo)** 🟡 — chunk 1 fatto; chunk 2: riordino esercizi/giorni (frecce), avviso modifiche non salvate
-- **M3 — Mobile semplice (redesign app atleta)** 🟡 — piano in `docs/plans/M3-mobile-simple.md`; M3a home + badge backend (PR aperta), M3b fondamenta UI ✅, poi Home → Schede/Progressi/Account
-- **M4 — Design "Sole" (app atleta + pannello coach)** 🟡 — piano in `docs/plans/M4-design-sole.md`; F0 decisione + script contrasto, F1 fondamenta mobile, poi F2 schermate mobile, F3–F5 web, F6 chiusura
+- **M3 — Mobile semplice (redesign app atleta)** 🟡 — piano in `docs/plans/M3-mobile-simple.md`; M3a home + badge backend ✅, M3b fondamenta UI ✅, M3c Home ✅ (in stile Sole, M4 F2), poi Schede/Progressi/Account
+- **M4 — Design "Sole" (app atleta + pannello coach)** 🟡 — piano in `docs/plans/M4-design-sole.md`; F0 decisione + script contrasto ✅, F1 fondamenta mobile ✅, F2 schermate mobile (Home ✅, Allenamento dopo W9 #82), F3–F5 web, F6 chiusura
 - **U4 — Analytics coach web** ✅
 - **D1 — Design system web** ✅
 - **D2 — PageError pagine coach** ✅
