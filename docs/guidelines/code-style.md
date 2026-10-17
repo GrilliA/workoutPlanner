@@ -1,6 +1,6 @@
 # Code style (all packages)
 
-Applies to `be/`, `fe/` and `mobile/`. The goal: **simple code a reader understands on the first pass**, written in a pragmatic functional style.
+Applies to `be/`, `fe/`, `mobile/` and `landing/`. The goal: **simple code a reader understands on the first pass**, written in a pragmatic functional style.
 
 ## 1. Names explain the code
 

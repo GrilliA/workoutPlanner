@@ -1,0 +1,250 @@
+---
+import Base from '../layouts/Base.astro';
+import WaitlistForm from '../components/WaitlistForm.astro';
+import Phone from '../components/Phone.astro';
+import TabBar from '../components/TabBar.astro';
+const homeHref = import.meta.env.BASE_URL;
+const faqs = [
+  ['Quando esce Traccia?', "Stiamo chiudendo la beta. Chi è in lista entra per primo nel test chiuso su Android, poi apriamo a tutti. Ti scriviamo solo quando c'è qualcosa da provare."],
+  ['È gratis?', "Per chi si allena l'app è gratuita. Per i coach ci sarà un piano a pagamento, e chi è in lista avrà condizioni da fondatore (le trovi qui sopra)."],
+  ['Funziona su iPhone?', "L'app atleta è fatta con Expo e gira su Android e iOS. Partiamo dal Play Store; intanto stiamo preparando anche la versione Android nativa."],
+  ['Mi alleno da solo, senza coach. Fa per me?', "Sì. Crei le tue schede dal telefono: scegli gli esercizi filtrando per gruppo muscolare e imposti ogni serie con una rotella, oppure incolli una scheda scritta con l'AI, registri le serie e guardi i progressi. Se un giorno ti colleghi a un coach, la sua scheda passa davanti."],
+  ["E se in palestra non c'è campo?", "Nessun problema: ogni serie si salva sul telefono e l'allenamento si invia da solo appena torna la rete."],
+  ['Cosa fate con la mia email?', "La usiamo solo per la lista d'attesa e per il lancio. Niente spam, niente cessione a terzi, ti disiscrivi con un clic."],
+];
+---
+<Base title="Traccia: la scheda del coach, sul tuo telefono" description="Il coach crea e assegna la scheda dal web, tu ti alleni con l'app una serie alla volta, anche senza rete. Entra in lista per l'accesso anticipato.">
+  <header class="nav">
+    <div class="wrap">
+      <div class="nav-in">
+        <a class="logo" href={homeHref}>tracci<b>a</b></a>
+        <nav class="nav-links"><a href="#whitelist">Home</a><a href="#funzioni">Funzioni</a><a href="#come">Come funziona</a><a href="#vantaggi">Vantaggi</a><a href="#faq">Domande</a></nav>
+        <a class="btn btn-accent" href="#whitelist">Accesso anticipato</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- HERO -->
+    <section class="hero" id="whitelist">
+      <div class="wrap hero-grid">
+        <div>
+          <span class="chip"><span class="dot"></span>Beta in arrivo su Android</span>
+          <h1 style="margin-top:18px">Oggi tocca a te.<br/>La scheda è già <span class="a">nel telefono</span>.</h1>
+          <p class="lead">Il coach crea e assegna la scheda dal web. Tu apri Traccia, premi "Inizia allenamento" e segni una serie alla volta, anche senza campo. I progressi arrivano al coach da soli.</p>
+          <WaitlistForm id="hero" />
+          <div class="proof"><span class="chip cream">Gratis per chi si allena</span><span class="chip data">Funziona offline</span><span class="chip cream">873 esercizi</span></div>
+        </div>
+        <div class="hero-visual">
+          <Phone label="Home dell'app Traccia">
+            <div class="p-row"><div><div class="p-h1">Ciao, Marco</div><div class="p-meta">sabato 17 ottobre</div></div><span class="av" style="width:34px;height:34px;font-size:11px;margin:0">MB</span></div>
+            <div class="week"><span class="w">Lun<b>12</b></span><span>Mar<b>13</b></span><span class="w">Mer<b>14</b></span><span>Gio<b>15</b></span><span>Ven<b>16</b></span><span class="t">Sab<b>17</b></span><span>Dom<b>18</b></span></div>
+            <div class="today">
+              <div class="k">Oggi tocca a</div>
+              <div class="n">Legs</div>
+              <div class="k" style="margin-bottom:14px">Full Body 3× · 4 esercizi</div>
+              <div class="p-btn ink">Inizia allenamento</div>
+              <div class="link">Cambia allenamento</div>
+            </div>
+            <div class="tiles">
+              <div class="tile-data"><b>3</b><span style="font-size:10.5px;font-weight:600">allenamenti negli ultimi 7 giorni</span></div>
+              <div class="p-card" style="padding:10px 12px"><div class="p-meta">Ultimo allenamento</div><div style="font-weight:800;font-size:14px">Pull</div><div class="p-meta">mer 14 ott · 12.4k kg</div></div>
+            </div>
+            <TabBar active="home" />
+          </Phone>
+          <div class="float f1"><small>Nuovo record</small><b>92 kg</b> <span class="p-meta">e1RM panca</span></div>
+          <div class="float f2"><span class="chip data" style="font-size:12px;padding:4px 10px"><span class="dot"></span>Salvato sul telefono</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section id="funzioni" style="padding-top:24px">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="chip">Cosa fa</span>
+          <h2>Dal coach a chi si allena, <span class="a">tutto in un posto</span>.</h2>
+          <p class="lead">Un pannello web per chi programma, un'app semplice per chi si allena. Basta PDF, fogli Excel e "mi rimandi la scheda?".</p>
+        </div>
+        <div class="features">
+
+          <article class="feature">
+            <div class="txt">
+              <span class="chip data">Per il coach</span>
+              <h3 style="font-size:30px;margin-top:14px">Crea, assegna e segui, dal web.</h3>
+              <p>Schede template riutilizzabili, assegnate con data di inizio e scadenza. Per ogni serie scegli carico, ripetizioni, RIR e note.</p>
+              <ul><li>Vedi subito chi ha la scheda in scadenza o scaduta</li><li>Task prioritari e attività recente dei tuoi atleti</li><li>Inviti l'atleta con un codice e lo colleghi in un attimo</li></ul>
+            </div>
+            <div class="vis">
+              <div class="browser" role="img" aria-label="Pannello coach di Traccia">
+                <div class="bar"><i></i><i></i><i></i><span>traccia · coach</span></div>
+                <div class="body">
+                  <div class="side"><div class="logo">tracci<b>a</b></div><span class="on">Dashboard</span><span>Clienti</span><span>Analisi</span><span>Template</span><span>Schede assegnate</span></div>
+                  <div class="main">
+                    <div class="top"><b>Dashboard</b><span class="mini-btn">Nuova scheda</span></div>
+                    <div class="kpis"><div>Clienti attivi<b>4</b></div><div>In scadenza<b>0</b></div><div class="alert">Da controllare<b>2</b></div></div>
+                    <div class="table">
+                      <div class="tr"><span><span class="av">G</span>Giulia Verdi</span><span class="chip">In scadenza</span></div>
+                      <div class="tr"><span><span class="av">M</span>Marco Bianchi</span><span class="chip data">Attivo</span></div>
+                      <div class="tr"><span><span class="av">P</span>Paolo Neri</span><span class="chip err">Scaduto</span></div>
+                      <div class="tr"><span><span class="av">S</span>Sara F.</span><span class="chip cream">In pausa</span></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="feature rev">
+            <div class="txt">
+              <span class="chip">Per chi si allena</span>
+              <h3 style="font-size:30px;margin-top:14px">Una serie alla volta.</h3>
+              <p>Vedi solo quello che serve adesso: l'esercizio, l'obiettivo del coach e cosa hai fatto l'ultima volta. Regoli peso, ripetizioni e RIR, poi tocchi "Serie fatta".</p>
+              <ul><li>"Ultima volta" sempre in vista, per fare meglio</li><li>Recupero consigliato con timer e notifica</li><li>Tutte le serie a portata di mano, quando ti servono</li></ul>
+            </div>
+            <div class="vis">
+              <Phone label="Allenamento, una serie alla volta">
+                <div class="p-row" style="font-size:10px"><span class="a" style="font-size:16px;font-weight:800">‹</span><div style="text-align:center"><div class="p-meta">Sessione in corso</div><b style="font-size:12.5px">Full Body 3×</b></div><b style="font-size:13px">20:03</b></div>
+                <div class="seg"><i class="on"></i><i></i><i></i><i></i></div>
+                <div class="rest">Recupero consigliato: 02:00<span>Avvia</span></div>
+                <div class="p-card" style="padding:14px">
+                  <div class="p-row"><span class="chip" style="font-size:10.5px;padding:4px 10px">Serie 2 di 4</span><span class="p-meta">Esercizio 1 di 4</span></div>
+                  <div style="font-size:19px;font-weight:800;letter-spacing:-.02em;margin-top:8px">Squat con bilanciere</div>
+                  <div class="p-meta">Ultima volta: 77.5kg × 8</div>
+                  <div class="goal">Obiettivo: 8 reps · RIR 2</div>
+                  <div class="stp-l">Peso (kg)</div><div class="stp"><i>−</i><b>80</b><i>+</i></div>
+                  <div class="stp-l">Ripetizioni</div><div class="stp"><i>−</i><b>8</b><i>+</i></div>
+                  <div class="stp-l">RIR (ripetizioni in riserva)</div><div class="stp"><i>−</i><b>2</b><i>+</i></div>
+                  <div class="p-btn acc" style="margin-top:10px">Serie fatta</div>
+                </div>
+                <div class="p-float">Termina allenamento</div>
+              </Phone>
+            </div>
+          </article>
+
+          <article class="feature">
+            <div class="txt">
+              <span class="chip data">Funziona offline</span>
+              <h3 style="font-size:30px;margin-top:14px">Palestra senza campo? Nessun problema.</h3>
+              <p>Ogni serie si salva subito sul telefono. Se chiudi l'app riprendi da dove eri, e quando torna la rete l'allenamento si invia da solo.</p>
+              <ul><li>Ogni serie tiene il suo orario vero</li><li>Se la rete va e viene, riprova da sola</li><li>Nessun dato perso, niente "riprova più tardi"</li></ul>
+            </div>
+            <div class="vis">
+              <Phone label="Allenamento fatto, salvato offline">
+                <div class="phone-screen orange" style="position:absolute;inset:0;padding:60px 16px 18px;align-items:center;text-align:center;gap:12px">
+                  <span class="chip" style="background:var(--surface);font-size:11px;padding:5px 11px"><span class="dot"></span>Offline · in attesa di invio</span>
+                  <div class="confetti" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+                  <div style="font-size:26px;font-weight:800;letter-spacing:-.03em;line-height:1.1">Allenamento fatto!</div>
+                  <div style="font-weight:600">Legs</div>
+                  <div class="done-tiles" style="width:100%"><div>Durata<b>58 min</b></div><div>Volume<b>12.4k kg</b></div><div>Serie<b>13</b></div></div>
+                  <div class="p-btn ink" style="width:100%;margin-top:auto">Torna alla Home</div>
+                </div>
+              </Phone>
+            </div>
+          </article>
+
+          <article class="feature rev">
+            <div class="txt">
+              <span class="chip">Progressi</span>
+              <h3 style="font-size:30px;margin-top:14px">Guarda i numeri salire.</h3>
+              <p>Allenamenti e chili sollevati su 4 settimane, 12 settimane o un anno. Record, giorni di fila e massimale stimato (e1RM) per ogni esercizio. Il coach vede gli stessi dati dal pannello.</p>
+              <ul><li>Confronto con il periodo precedente</li><li>Progressione per esercizio: e1RM o peso massimo</li><li>Catalogo di 873 esercizi, con ricerca in italiano e inglese</li></ul>
+            </div>
+            <div class="vis">
+              <Phone label="Schermata Progressi">
+                <div class="p-h1">Progressi</div>
+                <div class="p-meta" style="margin-top:-6px">21 set – 18 ott 2026</div>
+                <div class="segctl"><span class="on">4 settimane</span><span>12 settimane</span><span>1 anno</span></div>
+                <div class="datacard">
+                  <div class="big">9</div>
+                  <div style="font-weight:700;font-size:12.5px;margin-top:4px">allenamenti nelle ultime 4 settimane</div>
+                  <div style="font-size:10.5px;opacity:.9;margin-top:2px">38.4k kg sollevati · +20% vs periodo precedente</div>
+                  <div class="bars"><i style="height:55%"></i><i style="height:85%"></i><i style="height:28%"></i><i class="cur" style="height:85%"></i></div>
+                  <div class="bars-l"><span>21/9</span><span>28/9</span><span>5/10</span><span>12/10</span></div>
+                </div>
+                <div class="tiles">
+                  <div class="p-card"><div class="p-meta">Record</div><b style="font-size:22px">2</b><div class="p-meta">Nuovi massimali</div></div>
+                  <div class="p-card"><div class="p-meta">Serie</div><b style="font-size:22px">3</b><div class="p-meta">Giorni di fila</div></div>
+                </div>
+                <TabBar active="progressi" />
+              </Phone>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- HOW -->
+    <section id="come">
+      <div class="wrap">
+        <div class="section-head"><span class="chip">Come funziona</span><h2>Dalla scheda all'allenamento <span class="a">in 3 passi</span>.</h2></div>
+        <div class="steps">
+          <div class="step"><div class="n">1</div><h3>Il coach crea la scheda</h3><p>Dal pannello web, partendo da un template o da zero. Oppure incolla una scheda scritta e Traccia la trasforma.</p></div>
+          <div class="step"><div class="n">2</div><h3>Tu inserisci il codice invito</h3><p>Lo scrivi nell'app e trovi subito l'allenamento di oggi. Se ti alleni da solo, crei le tue schede.</p></div>
+          <div class="step"><div class="n">3</div><h3>Ti alleni, i dati arrivano</h3><p>Segni ogni serie, anche offline. Il coach vede allenamenti, progressi e chi ha bisogno di una spinta.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PERKS -->
+    <section id="vantaggi" style="padding-top:24px">
+      <div class="wrap">
+        <div class="section-head"><span class="chip">Accesso anticipato</span><h2>Chi arriva prima, <span class="a">ci guadagna</span>.</h2><p class="lead">Vantaggi pensati per chi ci aiuta a costruire Traccia. <span class="tag" style="vertical-align:middle">Proposte da confermare</span></p></div>
+        <div class="perks">
+          <div class="perk"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="#A33A12" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.8l2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17l-5.5 3 1-6.2L3 9.4l6.2-.9z"/></svg></div><h3>Badge fondatore</h3><p>Un badge sul profilo per i primi iscritti. Resta tuo per sempre, anche quando saremo in tanti.</p><span class="tag">Proposta</span></div>
+          <div class="perk"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="#3B3F9E" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></div><h3>3 mesi gratis per i coach</h3><p>Se sei un coach in lista, provi il piano completo gratis per 3 mesi, poi hai un prezzo bloccato da fondatore.</p><span class="tag">Proposta</span></div>
+          <div class="perk"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="#A33A12" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 15a2 2 0 0 1-2 2H8l-4 4V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2z"/></svg></div><h3>Voce in capitolo</h3><p>Entri nel test chiuso e hai un canale diretto con noi: le tue richieste finiscono davvero nella roadmap.</p><span class="tag">Proposta</span></div>
+        </div>
+        <div class="referral">
+          <div>
+            <h3>Salta la fila: invita i tuoi amici.</h3>
+            <p>Dopo l'iscrizione ricevi un link personale. Ogni amico che entra in lista ti fa salire e ti fa entrare prima nella beta.</p>
+            <div class="ref-link"><span>traccia.it/?ref=MARCO7</span><span class="btn btn-ink">Copia link</span></div>
+          </div>
+          <div class="queue" aria-hidden="true">
+            <div class="p-meta" style="font-size:12px">La tua posizione</div>
+            <div class="q"><span>#41 · Giulia</span><span class="p-meta">3 inviti</span></div>
+            <div class="q me"><span>#42 · Tu</span><span>↑ 18 posti</span></div>
+            <div class="q"><span>#43 · Paolo</span><span class="p-meta">1 invito</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section id="faq" style="padding-top:24px">
+      <div class="wrap">
+        <div class="section-head"><span class="chip">Domande</span><h2>Domande frequenti</h2></div>
+        <div class="faq">
+          {faqs.map(([q, a], i) => (<details open={i === 0}><summary>{q}</summary><p>{a}</p></details>))}
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta" style="padding-top:0">
+      <div class="wrap">
+        <div class="cta-box">
+          <div class="logo logo-lg">tracci<b>a</b></div>
+          <h2 style="margin-top:4px">La prossima scheda<br/><span class="a">la apri in Traccia.</span></h2>
+          <p class="lead">Lascia la tua email: ti avvisiamo quando apre il test chiuso su Android.</p>
+          <WaitlistForm id="cta" />
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer id="privacy">
+    <div class="wrap">
+      <div class="cols">
+        <div><a class="logo" href={homeHref} style="display:inline-block;margin-bottom:14px">tracci<b>a</b></a>
+          <h4>Privacy in breve</h4>
+          <p>Raccogliamo solo email, ruolo (coach o atleta) ed eventuale codice invito, per gestire la lista d'attesa e avvisarti del lancio (base giuridica: consenso, art. 6.1.a GDPR). Non vendiamo né cediamo i dati. Puoi chiedere accesso, modifica o cancellazione quando vuoi scrivendo a privacy@traccia.it (TODO: contatto privacy). L'informativa completa sarà pubblicata prima di raccogliere dati reali.</p>
+        </div>
+        <div><h4>Prodotto</h4><p><a href="#funzioni">Funzioni</a><br/><a href="#come">Come funziona</a><br/><a href="#faq">Domande</a></p></div>
+        <div><h4>Contatti</h4><p>ciao@traccia.it (TODO: contatto)<br/>Instagram · TikTok</p></div>
+      </div>
+      <p class="fine">© 2026 Traccia · Prototipo pre-lancio · Titolare del trattamento: TODO nome e P.IVA/CF</p>
+    </div>
+  </footer>
+</Base>
