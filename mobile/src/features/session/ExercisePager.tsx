@@ -9,7 +9,7 @@ type ExercisePagerProps = {
   onNext: () => void;
 };
 
-/** Nav esercizi stile mock: PRECEDENTE / PROSSIMO. */
+/** Nav esercizi: precedente / prossimo. */
 export function ExercisePager({
   index,
   total,
@@ -33,7 +33,7 @@ export function ExercisePager({
         accessibilityLabel="Esercizio precedente"
       >
         <AppText style={[styles.prevLabel, !canPrev && styles.disabledLabel]}>
-          ‹ PRECEDENTE
+          ‹ Precedente
         </AppText>
       </Pressable>
 
@@ -50,7 +50,7 @@ export function ExercisePager({
         accessibilityLabel="Esercizio successivo"
       >
         <AppText style={[styles.nextLabel, !canNext && styles.disabledLabel]}>
-          PROSSIMO ›
+          Prossimo ›
         </AppText>
       </Pressable>
     </View>
@@ -82,16 +82,13 @@ const styles = StyleSheet.create({
   },
   prevLabel: {
     fontWeight: "700",
-    fontSize: 12,
-    letterSpacing: 0.6,
+    fontSize: 15,
     color: colors.text,
   },
   nextLabel: {
     fontWeight: "700",
-    fontSize: 12,
-    letterSpacing: 0.8,
+    fontSize: 15,
     color: colors.accentText,
-    textTransform: "uppercase",
   },
   disabledLabel: {
     color: colors.text,

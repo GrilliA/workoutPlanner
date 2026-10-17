@@ -20,7 +20,8 @@ type MascotProps = {
 /** Mascotte Lottie degli stati vuoti (fonti in `assets/lottie/CREDITS.md`). */
 export function Mascot({ name, size = 200, loop = true, style }: MascotProps) {
   return (
-    <View style={[styles.frame, style]}>
+    // Box della misura chiesta: su web il player Lottie altrimenti si allarga.
+    <View style={[styles.frame, { width: size, height: size }, style]}>
       <LottieView
         source={SOURCES[name]}
         autoPlay
@@ -34,5 +35,6 @@ export function Mascot({ name, size = 200, loop = true, style }: MascotProps) {
 const styles = StyleSheet.create({
   frame: {
     alignItems: "center",
+    justifyContent: "center",
   },
 });

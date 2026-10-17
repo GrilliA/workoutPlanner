@@ -8,7 +8,7 @@ type SessionActionBarProps = {
   onComplete: () => void;
 };
 
-/** Barra fissa: solo Termina, outline. */
+/** Barra fissa: solo "Termina allenamento", pill bianca con bordo. */
 export function SessionActionBar({
   busy = false,
   onComplete,
@@ -32,7 +32,7 @@ export function SessionActionBar({
           (busy || pressed) && styles.dimmed,
         ]}
       >
-        <AppText style={styles.completeLabel}>Termina</AppText>
+        <AppText style={styles.completeLabel}>Termina allenamento</AppText>
       </Pressable>
     </View>
   );
@@ -45,16 +45,18 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
   },
   completeBtn: {
-    borderWidth: 1,
-    borderColor: colors.text,
-    borderRadius: radii.lg,
-    paddingVertical: 14,
+    minHeight: 52,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    borderRadius: radii.pill,
     alignItems: "center",
+    justifyContent: "center",
   },
   completeLabel: {
     color: colors.textHeading,
-    fontWeight: "700",
-    fontSize: 15,
+    fontWeight: "800",
+    fontSize: 16,
   },
   dimmed: {
     opacity: 0.55,

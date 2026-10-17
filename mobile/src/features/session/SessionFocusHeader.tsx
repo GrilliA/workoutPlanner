@@ -10,12 +10,14 @@ type SessionFocusHeaderProps = {
   startedAt: Date;
   endedAt: Date | null;
   statusLabel: string;
-  /** 0–1 progresso sessione (esercizi completati / totale). */
-  progress: number;
+  /** Un segmento per esercizio: fatto (arancio), in corso (ink), da fare. */
+  segments: ExerciseSegment[];
   onBack?: () => void;
 };
 
-/** Header sessione: back + titolo + timer + barra progresso (mock ActiveSession). */
+export type ExerciseSegment = "done" | "current" | "todo";
+
+/** Header sessione: back, nome, tempo trascorso e barra a segmenti degli esercizi. */
 export function SessionFocusHeader({
   workoutName,
   exerciseIndex,
@@ -23,10 +25,10 @@ export function SessionFocusHeader({
   startedAt,
   endedAt,
   statusLabel,
-  progress,
+  segments,
   onBack,
 }: SessionFocusHeaderProps) {
-  const clamped = Math.max(0, Math.min(1, progress));
+  const doneCount = segments.filter((segment) => segment === "done").length;
 
   return (
     <View style={styles.wrap}>
@@ -47,7 +49,7 @@ export function SessionFocusHeader({
         </View>
         <View style={[styles.side, styles.sideEnd]}>
           {endedAt ? (
-            <AppText tone="accent" style={styles.elapsed}>
+            <AppText style={styles.elapsed}>
               {formatElapsed(startedAt, endedAt.getTime())}
             </AppText>
           ) : (
@@ -55,9 +57,24 @@ export function SessionFocusHeader({
           )}
         </View>
       </View>
-      <View style={styles.track} accessibilityRole="progressbar">
-        <View style={[styles.fill, { width: `${clamped * 100}%` }]} />
-      </View>
+      {segments.length > 0 ? (
+        <View
+          style={styles.segments}
+          accessibilityRole="progressbar"
+          accessibilityLabel={`${doneCount} esercizi fatti su ${segments.length}`}
+        >
+          {segments.map((segment, index) => (
+            <View
+              key={index}
+              style={[
+                styles.segment,
+                segment === "done" && styles.segmentDone,
+                segment === "current" && styles.segmentCurrent,
+              ]}
+            />
+          ))}
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -84,7 +101,7 @@ function ElapsedClock({ startedAt }: { startedAt: Date }) {
   }, []);
 
   return (
-    <AppText tone="accent" style={styles.elapsed}>
+    <AppText style={styles.elapsed}>
       {formatElapsed(startedAt, nowMs)}
     </AppText>
   );
@@ -116,10 +133,9 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   status: {
-    fontSize: 10,
-    fontWeight: "700",
-    letterSpacing: 1.2,
-    textTransform: "uppercase",
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: "600",
     color: colors.text,
   },
   title: {
@@ -128,23 +144,29 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   exerciseMeta: {
-    fontSize: 11,
+    fontSize: 12,
     color: colors.text,
   },
   elapsed: {
     fontVariant: ["tabular-nums"],
-    fontWeight: "700",
-    fontSize: 14,
+    fontWeight: "800",
+    fontSize: 16,
+    color: colors.textHeading,
   },
-  track: {
-    height: 4,
+  segments: {
+    flexDirection: "row",
+    gap: 6,
+  },
+  segment: {
+    flex: 1,
+    height: 6,
     borderRadius: radii.pill,
     backgroundColor: colors.border,
-    overflow: "hidden",
   },
-  fill: {
-    height: "100%",
+  segmentDone: {
     backgroundColor: colors.accent,
-    borderRadius: radii.pill,
+  },
+  segmentCurrent: {
+    backgroundColor: colors.ink,
   },
 });

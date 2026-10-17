@@ -1,7 +1,6 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useSyncExternalStore } from "react";
 import { CelebrationView } from "../../src/features/session/CelebrationView";
-import { Screen } from "../../src/components";
 import {
   getOfflineSession,
   subscribeOfflineSession,
@@ -24,6 +23,7 @@ export default function SessionCompleteScreen() {
     workoutName?: string;
     volumeKg?: string;
     durationMin?: string;
+    setCount?: string;
   }>();
 
   const offlineSession = useSyncExternalStore(
@@ -38,17 +38,17 @@ export default function SessionCompleteScreen() {
       ? params.workoutName
       : "Allenamento";
 
+  // Niente Screen: il fondo arancio arriva fino al bordo, safe area inclusa.
   return (
-    <Screen padded={false}>
-      <CelebrationView
-        workoutName={workoutName}
-        volumeKg={parseNonNegativeNumber(params.volumeKg)}
-        durationMin={Math.round(parseNonNegativeNumber(params.durationMin))}
-        syncNote={closeIsWaiting ? "Lo salviamo appena torna la rete" : undefined}
-        onDone={() => {
-          router.replace("/(app)");
-        }}
-      />
-    </Screen>
+    <CelebrationView
+      workoutName={workoutName}
+      volumeKg={parseNonNegativeNumber(params.volumeKg)}
+      durationMin={Math.round(parseNonNegativeNumber(params.durationMin))}
+      setCount={Math.round(parseNonNegativeNumber(params.setCount))}
+      syncNote={closeIsWaiting ? "Lo salviamo appena torna la rete" : undefined}
+      onDone={() => {
+        router.replace("/(app)");
+      }}
+    />
   );
 }

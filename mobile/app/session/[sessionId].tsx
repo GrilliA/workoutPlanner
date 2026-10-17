@@ -65,7 +65,10 @@ import {
   type SessionBundle,
 } from "../../src/features/session/sessionBundle";
 import { SessionActionBar } from "../../src/features/session/SessionActionBar";
-import { SessionFocusHeader } from "../../src/features/session/SessionFocusHeader";
+import {
+  SessionFocusHeader,
+  type ExerciseSegment,
+} from "../../src/features/session/SessionFocusHeader";
 import { useRestTimer } from "../../src/features/session/useRestTimer";
 import { colors, spacing } from "../../src/theme";
 
@@ -89,19 +92,25 @@ function errorMessage(err: unknown, fallback: string): string {
   return ApiError.messageFrom(err, fallback);
 }
 
-function sessionProgress(
+/** One segment per exercise for the header bar. */
+function exerciseSegments(
   exercises: Exercise[],
   setsByExercise: Map<number, SetSummary[]>,
-): number {
-  if (exercises.length === 0) {
-    return 0;
-  }
-
-  const completed = exercises.filter((exercise) =>
-    isExerciseComplete(exercise, (setsByExercise.get(exercise.id) ?? []).length),
-  ).length;
-
-  return completed / exercises.length;
+  focusIndex: number,
+): ExerciseSegment[] {
+  return exercises.map((exercise, index) => {
+    const isDone = isExerciseComplete(
+      exercise,
+      (setsByExercise.get(exercise.id) ?? []).length,
+    );
+    if (isDone) {
+      return "done";
+    }
+    if (index === focusIndex) {
+      return "current";
+    }
+    return "todo";
+  });
 }
 
 export default function SessionScreen() {
@@ -331,7 +340,7 @@ export default function SessionScreen() {
       ? "Sessione completata"
       : "Sessione abbandonata"
     : "Sessione in corso";
-  const progress = sessionProgress(exercises, setsByExercise);
+  const segments = exerciseSegments(exercises, setsByExercise, safeFocusIndex);
 
   const suggestedRestSec =
     !readOnly && focusedExercise
@@ -553,6 +562,7 @@ export default function SessionScreen() {
         workoutName,
         volumeKg: String(computeVolumeKg(shownSets)),
         durationMin: String(computeDurationMin(session.startedAt, completedAt)),
+        setCount: String(shownSets.length),
       },
     } as unknown as Href);
   };
@@ -575,7 +585,7 @@ export default function SessionScreen() {
             startedAt={session.startedAt}
             endedAt={readOnly ? (session.completedAt ?? session.startedAt) : null}
             statusLabel={statusLabel}
-            progress={progress}
+            segments={segments}
             onBack={onBack}
           />
         </View>
