@@ -1,5 +1,16 @@
-import { Pressable, StyleSheet, View } from "react-native";
-import { AppText, Field, Meta, SecondaryButton } from "../../components";
+import { useEffect, useRef, useState } from "react";
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+  type LayoutChangeEvent,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+  type StyleProp,
+  type ViewStyle,
+} from "react-native";
+import { AppText, Meta, SecondaryButton } from "../../components";
 import { colors, radii, spacing } from "../../theme";
 import {
   copyPrescription,
@@ -7,6 +18,218 @@ import {
   REST_SEC_OPTIONS,
   type DraftPrescription,
 } from "./prescriptionDraft";
+
+const REP_CHOICES = Array.from({ length: 30 }, (_, index) => String(index + 1));
+const REST_CHOICES = REST_SEC_OPTIONS.map((seconds) => String(seconds));
+const REEL_HEIGHT = 44;
+/** Più basso della finestra: sopra e sotto spunta circa metà cifra. */
+const REPS_ITEM_SIZE = 22;
+const REST_ITEM_SIZE = 64;
+/** Debounce: senza eventi di scroll per questo tempo, il valore più vicino entra nella lente. */
+const SETTLE_AFTER_MS = 150;
+
+/** Tiene il valore corrente anche se non è nella lista (es. reps 40 o recupero importato). */
+function choicesWithCurrent(
+  choices: readonly string[],
+  current: string,
+): string[] {
+  if (current === "" || choices.includes(current)) {
+    return [...choices];
+  }
+  const currentNumber = Number(current);
+  if (!Number.isFinite(currentNumber)) {
+    return [...choices];
+  }
+  return [...choices, current].sort((left, right) => Number(left) - Number(right));
+}
+
+type ScrollAxis = "x" | "y";
+
+type ScrollChoiceProps = {
+  choices: readonly string[];
+  value: string;
+  /** Larghezza della cella se `axis` è x, altezza se è y. */
+  itemSize: number;
+  axis: ScrollAxis;
+  format?: (choice: string) => string;
+  onChange: (choice: string) => void;
+  accessibilityLabel: string;
+  disabled?: boolean;
+  style?: StyleProp<ViewStyle>;
+};
+
+function offsetOf(event: NativeSyntheticEvent<NativeScrollEvent>, axis: ScrollAxis) {
+  return axis === "y"
+    ? event.nativeEvent.contentOffset.y
+    : event.nativeEvent.contentOffset.x;
+}
+
+/** Il valore nella lente è quello scelto. Appena lo scroll si ferma, il più vicino ci entra. */
+function ScrollChoice({
+  choices,
+  value,
+  itemSize,
+  axis,
+  format = (choice) => choice,
+  onChange,
+  accessibilityLabel,
+  disabled = false,
+  style,
+}: ScrollChoiceProps) {
+  const listRef = useRef<ScrollView>(null);
+  const settleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const latestOffset = useRef(0);
+  const isDragging = useRef(false);
+  /** Indice verso cui sta già scattando: il sync non deve interrompere l'animazione. */
+  const snappingTo = useRef<number | null>(null);
+  const [viewport, setViewport] = useState(0);
+  const [scrollOffset, setScrollOffset] = useState(0);
+  const sideInset = Math.max(0, (viewport - itemSize) / 2);
+  const selectedIndex = Math.max(0, choices.indexOf(value));
+  const isVertical = axis === "y";
+
+  const scrollToIndex = (index: number, animated: boolean) => {
+    const offset = index * itemSize;
+    if (isVertical) {
+      listRef.current?.scrollTo({ y: offset, animated });
+      return;
+    }
+    listRef.current?.scrollTo({ x: offset, animated });
+  };
+
+  const clearSettleTimer = () => {
+    if (settleTimer.current) {
+      clearTimeout(settleTimer.current);
+      settleTimer.current = null;
+    }
+  };
+
+  useEffect(() => clearSettleTimer, []);
+
+  useEffect(() => {
+    // Durante il gesto o lo scatto comanda il dito, non il valore.
+    if (viewport === 0 || isDragging.current || settleTimer.current) {
+      return;
+    }
+    if (snappingTo.current === selectedIndex) {
+      snappingTo.current = null;
+      return;
+    }
+    scrollToIndex(selectedIndex, false);
+    setScrollOffset(selectedIndex * itemSize);
+  }, [itemSize, selectedIndex, viewport]);
+
+  /** Scatta sul numero più vicino e lo mette nella bozza. */
+  const settle = () => {
+    settleTimer.current = null;
+    const index = Math.min(
+      choices.length - 1,
+      Math.max(0, Math.round(latestOffset.current / itemSize)),
+    );
+    snappingTo.current = index;
+    scrollToIndex(index, true);
+    setScrollOffset(index * itemSize);
+    const next = choices[index];
+    if (next !== undefined && next !== value) {
+      onChange(next);
+    }
+  };
+  const settleRef = useRef(settle);
+  settleRef.current = settle;
+
+  const scheduleSettle = () => {
+    clearSettleTimer();
+    settleTimer.current = setTimeout(() => settleRef.current(), SETTLE_AFTER_MS);
+  };
+
+  const onLayout = (event: LayoutChangeEvent) => {
+    const layout = event.nativeEvent.layout;
+    setViewport(isVertical ? layout.height : layout.width);
+  };
+
+  const lensStyle = isVertical
+    ? { top: sideInset, height: itemSize, left: 4, right: 4 }
+    : { left: sideInset, width: itemSize, top: 4, bottom: 4 };
+  const contentInsetStyle = isVertical
+    ? { paddingVertical: sideInset }
+    : { paddingHorizontal: sideInset };
+  // Senza un valore (bozza vuota) lo screen reader legge il primo della lista, come la lente.
+  const announcedChoice = value === "" ? (choices[0] ?? "") : value;
+
+  return (
+    <View
+      style={[styles.reel, style]}
+      onLayout={onLayout}
+      accessibilityRole="adjustable"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityValue={{ text: format(announcedChoice) }}
+      accessibilityActions={[{ name: "increment" }, { name: "decrement" }]}
+      onAccessibilityAction={(event) => {
+        const step = event.nativeEvent.actionName === "increment" ? 1 : -1;
+        const next = choices[selectedIndex + step];
+        if (!disabled && next !== undefined) {
+          onChange(next);
+        }
+      }}
+    >
+      {isVertical ? null : (
+        <View pointerEvents="none" style={[styles.reelLens, lensStyle]} />
+      )}
+      <ScrollView
+        ref={listRef}
+        horizontal={!isVertical}
+        showsHorizontalScrollIndicator={false}
+        showsVerticalScrollIndicator={false}
+        style={styles.reelScroll}
+        scrollEnabled={!disabled && viewport > 0}
+        directionalLockEnabled
+        nestedScrollEnabled
+        contentContainerStyle={contentInsetStyle}
+        onScroll={(event) => {
+          const offset = offsetOf(event, axis);
+          latestOffset.current = offset;
+          setScrollOffset(offset);
+          // Anche l'inerzia (e il web, senza eventi di fine) rinvia lo scatto.
+          if (!isDragging.current) {
+            scheduleSettle();
+          }
+        }}
+        scrollEventThrottle={16}
+        onScrollBeginDrag={() => {
+          isDragging.current = true;
+          snappingTo.current = null;
+          clearSettleTimer();
+        }}
+        onScrollEndDrag={(event) => {
+          isDragging.current = false;
+          latestOffset.current = offsetOf(event, axis);
+          scheduleSettle();
+        }}
+      >
+        {choices.map((choice, index) => {
+          const distance = Math.abs(scrollOffset / itemSize - index);
+          const isCentered = distance < 0.5;
+          const itemStyle = isVertical
+            ? { height: itemSize, width: "100%" as const }
+            : { width: itemSize, height: REEL_HEIGHT };
+          return (
+            <View key={choice} style={[styles.reelItem, itemStyle]}>
+              <AppText
+                style={[
+                  styles.reelLabel,
+                  isCentered && styles.reelLabelOn,
+                  isCentered && isVertical && styles.reelLabelReps,
+                ]}
+              >
+                {format(choice)}
+              </AppText>
+            </View>
+          );
+        })}
+      </ScrollView>
+    </View>
+  );
+}
 
 type SetPrescriptionEditorProps = {
   prescriptions: DraftPrescription[];
@@ -41,11 +264,6 @@ export function SetPrescriptionEditor({
     onChange([...prescriptions, nextSet]);
   };
 
-  const steppedRestSec = (restSec: number, step: 1 | -1) =>
-    step > 0
-      ? REST_SEC_OPTIONS.find((option) => option > restSec)
-      : REST_SEC_OPTIONS.filter((option) => option < restSec).at(-1);
-
   return (
     <View style={[styles.root, disabled && styles.dimmed]}>
       <View
@@ -77,72 +295,36 @@ export function SetPrescriptionEditor({
         <View style={styles.removeCol} />
       </View>
       {prescriptions.map((item, index) => {
-        const prevRest = steppedRestSec(item.restSec, -1);
-        const nextRest = steppedRestSec(item.restSec, 1);
-        const canStepDown = !disabled && prevRest !== undefined;
-        const canStepUp = !disabled && nextRest !== undefined;
+        const repChoices = choicesWithCurrent(REP_CHOICES, item.reps);
+        const restChoices = choicesWithCurrent(REST_CHOICES, String(item.restSec));
         return (
           <View key={item.key} style={styles.setRow}>
             <AppText tone="heading" style={[styles.indexCol, styles.setIndex]}>
               {index + 1}
             </AppText>
-            <Field
-              placeholder="reps"
-              keyboardType="number-pad"
+            <ScrollChoice
+              choices={repChoices}
               value={item.reps}
-              onChangeText={(value) => updateAt(item.key, { reps: value })}
-              style={styles.repsField}
-              editable={!disabled}
+              itemSize={REPS_ITEM_SIZE}
+              axis="y"
+              onChange={(reps) => updateAt(item.key, { reps })}
               accessibilityLabel={`Ripetizioni serie ${index + 1}`}
+              disabled={disabled}
+              style={styles.repsReel}
             />
-            <View style={styles.restStepper}>
-              <Pressable
-                onPress={() =>
-                  prevRest !== undefined &&
-                  updateAt(item.key, { restSec: prevRest })
-                }
-                disabled={!canStepDown}
-                style={styles.stepButton}
-                accessibilityRole="button"
-                accessibilityLabel={`Diminuisci recupero serie ${index + 1}`}
-                accessibilityState={{ disabled: !canStepDown }}
-              >
-                <AppText
-                  style={[
-                    styles.stepLabel,
-                    !canStepDown && styles.stepLabelDisabled,
-                  ]}
-                >
-                  ‹
-                </AppText>
-              </Pressable>
-              <AppText
-                style={styles.stepValue}
-                accessibilityLabel={`Recupero serie ${index + 1}: ${item.restSec} secondi`}
-              >
-                {item.restSec}s
-              </AppText>
-              <Pressable
-                onPress={() =>
-                  nextRest !== undefined &&
-                  updateAt(item.key, { restSec: nextRest })
-                }
-                disabled={!canStepUp}
-                style={styles.stepButton}
-                accessibilityRole="button"
-                accessibilityLabel={`Aumenta recupero serie ${index + 1}`}
-                accessibilityState={{ disabled: !canStepUp }}
-              >
-                <AppText
-                  style={[
-                    styles.stepLabel,
-                    !canStepUp && styles.stepLabelDisabled,
-                  ]}
-                >
-                  ›
-                </AppText>
-              </Pressable>
-            </View>
+            <ScrollChoice
+              choices={restChoices}
+              value={String(item.restSec)}
+              itemSize={REST_ITEM_SIZE}
+              axis="x"
+              format={(choice) => `${choice}s`}
+              onChange={(choice) =>
+                updateAt(item.key, { restSec: Number(choice) })
+              }
+              accessibilityLabel={`Recupero serie ${index + 1}`}
+              disabled={disabled}
+              style={styles.restReel}
+            />
             {prescriptions.length > 1 ? (
               <Pressable
                 onPress={() => removeAt(item.key)}
@@ -199,60 +381,64 @@ const styles = StyleSheet.create({
   },
   setIndex: {
     textAlign: "center",
+    fontSize: 15,
     fontWeight: "700",
   },
   repsCol: {
-    width: 72,
-  },
-  repsField: {
-    width: 72,
-    marginBottom: 0,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.xs,
-    textAlign: "center",
-    fontVariant: ["tabular-nums"],
-    backgroundColor: colors.bg,
+    width: 48,
   },
   restCol: {
     flex: 1,
   },
-  restStepper: {
-    flex: 1,
-    height: 44,
-    flexDirection: "row",
-    alignItems: "center",
+  reel: {
     borderRadius: radii.md,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.bg,
+    overflow: "hidden",
+    justifyContent: "center",
   },
-  stepButton: {
-    width: 44,
-    height: "100%",
+  reelScroll: {
+    flex: 1,
+  },
+  repsReel: {
+    width: 48,
+    height: REEL_HEIGHT,
+    backgroundColor: colors.bg,
+  },
+  restReel: {
+    flex: 1,
+    height: REEL_HEIGHT,
+  },
+  reelLens: {
+    position: "absolute",
+    borderRadius: radii.sm,
+    backgroundColor: colors.surface,
+  },
+  reelItem: {
     alignItems: "center",
     justifyContent: "center",
   },
-  stepLabel: {
-    color: colors.accentText,
-    fontSize: 18,
-    fontWeight: "700",
-  },
-  stepLabelDisabled: {
+  reelLabel: {
     color: colors.text,
-    opacity: 0.4,
-  },
-  stepValue: {
-    flex: 1,
-    textAlign: "center",
-    color: colors.textHeading,
-    fontSize: 15,
-    lineHeight: 20,
-    fontWeight: "700",
+    fontSize: 14,
+    fontWeight: "600",
     fontVariant: ["tabular-nums"],
+  },
+  reelLabelOn: {
+    color: colors.textHeading,
+    fontSize: 16,
+    fontWeight: "800",
+  },
+  reelLabelReps: {
+    fontSize: 15,
+    lineHeight: 18,
+    fontWeight: "700",
   },
   removeCol: {
     width: 28,
     alignItems: "center",
+    justifyContent: "center",
   },
   remove: {
     color: colors.danger,

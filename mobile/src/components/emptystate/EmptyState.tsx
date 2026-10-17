@@ -5,7 +5,7 @@ import { Button } from "../button";
 import { Mascot, type MascotName } from "../mascot";
 
 type EmptyStateProps = {
-  mascot: MascotName;
+  mascot?: MascotName;
   title: string;
   body?: string;
   /** Bottone principale (max 280px, come da mockup). */
@@ -28,7 +28,7 @@ export function EmptyState({
 }: EmptyStateProps) {
   return (
     <View style={styles.container}>
-      <Mascot name={mascot} />
+      {mascot ? <Mascot name={mascot} /> : null}
       <Heading style={styles.title}>{title}</Heading>
       {body ? <Body style={styles.body}>{body}</Body> : null}
       {actionLabel && onAction ? (

@@ -9,23 +9,26 @@ import {
   StyleSheet,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   searchCatalogExercises,
   type CatalogExercise,
 } from "../../api";
 import {
   AppText,
-  Body,
-  DangerButton,
+  BUTTON_MIN_HEIGHT,
   ErrorBanner,
   Field,
   Heading,
   Meta,
   PrimaryButton,
   SecondaryButton,
+  SectionLabel,
 } from "../../components";
 import { ExerciseMediaFlip } from "../session/ExerciseMediaFlip";
-import { colors, spacing } from "../../theme";
+import { colors, radii, spacing } from "../../theme";
+import { useKeyboardVisible } from "../../utils/useKeyboardVisible";
+
 import { exerciseEnglishLine, exerciseHeading } from "./exerciseDisplay";
 import {
   prescriptionsFromUniform,
@@ -36,6 +39,50 @@ import {
   workoutDraftExerciseFromCatalog,
   type WorkoutDraftExercise,
 } from "./workoutDraft";
+
+/** Etichetta in italiano, valori = primaryMuscles del catalogo. */
+const MUSCLE_FILTERS = [
+  { label: "Petto", muscles: ["chest"] },
+  { label: "Schiena", muscles: ["lats", "middle back", "lower back", "traps"] },
+  {
+    label: "Gambe",
+    muscles: ["quadriceps", "hamstrings", "glutes", "calves", "adductors", "abductors"],
+  },
+  { label: "Spalle", muscles: ["shoulders"] },
+  { label: "Braccia", muscles: ["biceps", "triceps", "forearms"] },
+] as const;
+
+type MuscleFilter = (typeof MUSCLE_FILTERS)[number];
+
+const RESULT_LIMIT = 20;
+
+async function searchByName(nameQuery: string): Promise<CatalogExercise[]> {
+  const result = await searchCatalogExercises({ q: nameQuery, limit: RESULT_LIMIT });
+  return result.items;
+}
+
+/** Il catalogo filtra un muscolo per volta: si uniscono le liste, senza doppioni. */
+async function searchByMuscles(
+  muscles: readonly string[],
+): Promise<CatalogExercise[]> {
+  const pages = await Promise.all(
+    muscles.map((muscle) =>
+      searchCatalogExercises({ muscle, limit: RESULT_LIMIT }),
+    ),
+  );
+  const items = pages.flatMap((page) => page.items);
+  // Un esercizio con più muscoli primari arriva da più liste: si tiene il primo.
+  return items.filter(
+    (item, index) =>
+      items.findIndex((other) => other.id === item.id) === index,
+  );
+}
+
+type SearchOutcome = {
+  key: string;
+  items: CatalogExercise[];
+  failed: boolean;
+};
 
 export type ExerciseSheetTarget = {
   dayKey: string;
@@ -78,45 +125,55 @@ export function WorkoutExerciseSheet({
   );
   const [picking, setPicking] = useState(target.exercise == null);
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<CatalogExercise[]>([]);
-  const [searching, setSearching] = useState(false);
-  const [searchFailed, setSearchFailed] = useState(false);
+  const [muscleFilter, setMuscleFilter] = useState<MuscleFilter>(
+    MUSCLE_FILTERS[0],
+  );
+  const [outcome, setOutcome] = useState<SearchOutcome | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const insets = useSafeAreaInsets();
+  const keyboardVisible = useKeyboardVisible();
+  const showsSave = Boolean(draft) && !picking;
+  const saveButtonOffset = Math.max(insets.bottom, spacing.md);
+
+  const nameQuery = query.trim();
+  const isNameSearch = nameQuery.length >= 2;
+  const searchKey = isNameSearch ? `q:${nameQuery}` : `m:${muscleFilter.label}`;
+  // Risultati e messaggi solo se appartengono alla ricerca corrente.
+  const currentOutcome = outcome?.key === searchKey ? outcome : null;
+  const searching = picking && currentOutcome === null;
+  const results = currentOutcome?.items ?? [];
+  const searchFailed = currentOutcome?.failed ?? false;
+  const showsNoMuscleResults =
+    currentOutcome !== null && !searchFailed && results.length === 0 && !isNameSearch;
 
   useEffect(() => {
-    const q = query.trim();
-    if (!picking || q.length < 2) {
-      setResults([]);
-      setSearching(false);
-      setSearchFailed(false);
+    if (!picking) {
       return;
     }
 
     let cancelled = false;
-    setSearching(true);
-    setSearchFailed(false);
     const timer = setTimeout(() => {
-      searchCatalogExercises({ q, limit: 20 })
-        .then((result) => {
+      const request = isNameSearch
+        ? searchByName(nameQuery)
+        : searchByMuscles(muscleFilter.muscles);
+      request
+        .then((items) => {
           if (!cancelled) {
-            setResults(result.items);
-            setSearching(false);
+            setOutcome({ key: searchKey, items, failed: false });
           }
         })
         .catch(() => {
           if (!cancelled) {
-            setResults([]);
-            setSearching(false);
-            setSearchFailed(true);
+            setOutcome({ key: searchKey, items: [], failed: true });
           }
         });
-    }, 300);
+    }, isNameSearch ? 300 : 0);
 
     return () => {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [query, picking]);
+  }, [picking, searchKey]);
 
   const adopt = (selected: WorkoutDraftExercise) => {
     setDraft((current) =>
@@ -174,12 +231,29 @@ export function WorkoutExerciseSheet({
           style={styles.flex}
         >
           <ScrollView
-            contentContainerStyle={styles.content}
+            contentContainerStyle={[
+              styles.content,
+              showsSave && {
+                paddingBottom: BUTTON_MIN_HEIGHT + spacing.xl + saveButtonOffset,
+              },
+            ]}
             keyboardShouldPersistTaps="handled"
           >
-            <Heading>
-              {editing ? "Modifica esercizio" : "Nuovo esercizio"}
-            </Heading>
+            <View style={styles.header}>
+              <Heading style={styles.heading}>
+                {editing ? "Modifica esercizio" : "Nuovo esercizio"}
+              </Heading>
+              <Pressable
+                onPress={onCancel}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="Annulla"
+              >
+                <AppText tone="accent" style={styles.cancelLabel}>
+                  Annulla
+                </AppText>
+              </Pressable>
+            </View>
             {error ? <ErrorBanner message={error} /> : null}
 
             {picking ? (
@@ -188,14 +262,43 @@ export function WorkoutExerciseSheet({
                   placeholder="Cerca nel catalogo…"
                   value={query}
                   onChangeText={setQuery}
-                  autoFocus
                 />
+                <View style={styles.muscleRow}>
+                  {MUSCLE_FILTERS.map((filter) => {
+                    const isOn = !isNameSearch && filter === muscleFilter;
+                    return (
+                      <Pressable
+                        key={filter.label}
+                        onPress={() => {
+                          setMuscleFilter(filter);
+                          setQuery("");
+                        }}
+                        style={[styles.muscleChip, isOn && styles.muscleChipOn]}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: isOn }}
+                        accessibilityLabel={filter.label}
+                      >
+                        <AppText
+                          style={[
+                            styles.muscleLabel,
+                            isOn && styles.muscleLabelOn,
+                          ]}
+                        >
+                          {filter.label}
+                        </AppText>
+                      </Pressable>
+                    );
+                  })}
+                </View>
                 {searching ? <Meta>Ricerca…</Meta> : null}
                 {searchFailed ? (
                   <Meta>
                     Ricerca non disponibile, puoi usare un esercizio
                     personalizzato
                   </Meta>
+                ) : null}
+                {!isNameSearch ? (
+                  <SectionLabel>{muscleFilter.label}</SectionLabel>
                 ) : null}
                 {results.map((item) => {
                   const english = exerciseEnglishLine(item);
@@ -226,26 +329,24 @@ export function WorkoutExerciseSheet({
                     </Pressable>
                   );
                 })}
-                {query.trim().length >= 2 ? (
+                {showsNoMuscleResults ? (
+                  <Meta>Nessun esercizio per questo muscolo.</Meta>
+                ) : null}
+                {isNameSearch ? (
                   <Pressable
                     onPress={() =>
-                      adopt(customExercise(query.trim(), defaultRestSec))
+                      adopt(customExercise(nameQuery, defaultRestSec))
                     }
                     style={styles.resultRow}
                     accessibilityRole="button"
                   >
                     <View style={styles.resultText}>
                       <AppText tone="accent" style={styles.resultTitle}>
-                        Usa “{query.trim()}” come esercizio personalizzato
+                        Usa “{nameQuery}” come esercizio personalizzato
                       </AppText>
                     </View>
                   </Pressable>
-                ) : (
-                  <Body>
-                    Scrivi almeno 2 caratteri per cercare, oppure crea un
-                    esercizio personalizzato.
-                  </Body>
-                )}
+                ) : null}
                 {draft ? (
                   <SecondaryButton
                     label="Torna all'esercizio"
@@ -285,18 +386,28 @@ export function WorkoutExerciseSheet({
                     setDraft({ ...draft, prescriptions })
                   }
                 />
-                <PrimaryButton label="Salva esercizio" onPress={onSavePress} />
                 {onRemove ? (
-                  <DangerButton
-                    label="Rimuovi esercizio"
+                  <Pressable
                     onPress={onRemovePress}
-                  />
+                    accessibilityRole="button"
+                    hitSlop={8}
+                  >
+                    <AppText tone="danger" style={styles.removeLabel}>
+                      Rimuovi esercizio
+                    </AppText>
+                  </Pressable>
                 ) : null}
               </View>
             ) : null}
-
-            <SecondaryButton label="Annulla" onPress={onCancel} />
           </ScrollView>
+          {showsSave && !keyboardVisible ? (
+            <View
+              pointerEvents="box-none"
+              style={[styles.saveWrap, { bottom: saveButtonOffset }]}
+            >
+              <PrimaryButton label="Salva esercizio" onPress={onSavePress} />
+            </View>
+          ) : null}
         </KeyboardAvoidingView>
       </View>
     </Modal>
@@ -313,8 +424,55 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     gap: spacing.sm,
   },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: spacing.md,
+  },
+  heading: {
+    flex: 1,
+  },
+  cancelLabel: {
+    fontWeight: "700",
+  },
   block: {
     gap: spacing.sm,
+  },
+  muscleRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.xs,
+  },
+  muscleChip: {
+    minHeight: 36,
+    justifyContent: "center",
+    paddingHorizontal: spacing.md,
+    borderRadius: radii.pill,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  muscleChipOn: {
+    backgroundColor: colors.ink,
+    borderColor: colors.ink,
+  },
+  muscleLabel: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: colors.text,
+  },
+  muscleLabelOn: {
+    color: colors.onInk,
+  },
+  saveWrap: {
+    position: "absolute",
+    left: spacing.lg,
+    right: spacing.lg,
+  },
+  removeLabel: {
+    fontWeight: "700",
+    paddingVertical: spacing.sm,
   },
   resultRow: {
     flexDirection: "row",

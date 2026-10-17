@@ -8,6 +8,7 @@ import {
   emptyWorkoutDraft,
   newWorkoutDraftDay,
   toWorkoutProgramInput,
+  validateWorkoutDay,
   validateWorkoutDraft,
   workoutDraftExerciseFromCatalog,
   workoutDraftFromSchedaTxt,
@@ -352,6 +353,23 @@ describe("newWorkoutDraftDay", () => {
       { key: "d1", name: "G1", weekdays: [0, 1, 2, 3, 4, 5, 6], exercises: [] },
     ]);
     assert.deepEqual(day.weekdays, []);
+  });
+});
+
+describe("validateWorkoutDay", () => {
+  it("ignores the workout name and accepts a day with exercises", () => {
+    const day = {
+      ...newWorkoutDraftDay([]),
+      exercises: [makeDraftExercise()],
+    };
+    assert.equal(validateWorkoutDay(day), null);
+  });
+
+  it("asks for the day name", () => {
+    assert.equal(
+      validateWorkoutDay({ ...newWorkoutDraftDay([]), name: " " }),
+      "Ogni giorno deve avere un nome",
+    );
   });
 });
 

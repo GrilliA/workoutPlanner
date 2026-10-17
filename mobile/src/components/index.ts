@@ -10,7 +10,13 @@ export {
   SectionLabel,
   fontForWeight,
 } from "./text";
-export { Button, PrimaryButton, SecondaryButton, DangerButton } from "./button";
+export {
+  Button,
+  BUTTON_MIN_HEIGHT,
+  PrimaryButton,
+  SecondaryButton,
+  DangerButton,
+} from "./button";
 export { TextField, Field } from "./input";
 export { Card } from "./card";
 export { LoadingBlock, ErrorBanner } from "./feedback";
@@ -22,4 +28,9 @@ export { BrandLogo } from "./brandlogo";
 export { Mascot, type MascotName } from "./mascot";
 export { EmptyState } from "./emptystate";
 export { BottomSheet } from "./bottomsheet";
-export { GlassTabBar, useTabBarInset } from "./glasstabbar";
+export {
+  GlassTabBar,
+  TAB_BAR_HEIGHT,
+  TAB_BAR_MIN_BOTTOM_OFFSET,
+  useTabBarInset,
+} from "./glasstabbar";

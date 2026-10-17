@@ -24,7 +24,7 @@ function AppTabs({ hasUnseenAssignment, onOpenWorkouts }: AppTabsProps) {
       )}
       screenOptions={{
         headerShown: false,
-        animation: "fade",
+        animation: "none",
         sceneStyle: { backgroundColor: colors.bg },
       }}
     >

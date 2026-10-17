@@ -25,6 +25,7 @@ import {
   ErrorBanner,
   LoadingBlock,
   Screen,
+  useTabBarInset,
 } from "../../src/components";
 import { ExerciseCard } from "../../src/features/session/ExerciseCard";
 import { ExercisePager } from "../../src/features/session/ExercisePager";
@@ -140,6 +141,8 @@ export default function SessionScreen() {
   const [fetchId, setFetchId] = useState(0);
   const [focusIndex, setFocusIndex] = useState(0);
   const timer = useRestTimer(sessionId);
+  // Stessa pill della tab bar: stesso spazio sotto il contenuto.
+  const actionBarInset = useTabBarInset();
   const userId = useAuth().user?.id ?? null;
   const offlineSession = useSyncExternalStore(
     subscribeOfflineSession,
@@ -612,7 +615,7 @@ export default function SessionScreen() {
           style={styles.scroll}
           contentContainerStyle={[
             styles.content,
-            !readOnly && styles.contentWithBar,
+            !readOnly && { paddingBottom: actionBarInset },
           ]}
           keyboardShouldPersistTaps="handled"
         >
@@ -724,8 +727,5 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     paddingBottom: spacing.xl,
     gap: spacing.sm,
-  },
-  contentWithBar: {
-    paddingBottom: spacing.xl + spacing.lg,
   },
 });

@@ -1,13 +1,8 @@
 import { Pressable, StyleSheet, View } from "react-native";
-import { AppText, Button, Mascot } from "../../../components";
+import { AppText, Button } from "../../../components";
 import { colors, radii, spacing } from "../../../theme";
 import { formatExerciseCount } from "../mappers/homeSelection";
 import type { SelectedWorkout } from "../types";
-
-const MASCOT_BOX_WIDTH = 140;
-const MASCOT_BOX_HEIGHT = 108;
-// Il robot occupa ~metà del file Lottie: lo si disegna più grande e si ritaglia il margine.
-const MASCOT_SIZE = 180;
 
 type TodayCardProps = {
   workout: SelectedWorkout;
@@ -29,19 +24,14 @@ export function TodayCard({
 
   return (
     <View style={styles.card}>
-      <View style={styles.top}>
-        <View style={styles.text}>
-          <AppText style={styles.eyebrow}>{eyebrow}</AppText>
-          <AppText style={styles.title} numberOfLines={2}>
-            {workout.dayName}
-          </AppText>
-          <AppText style={styles.meta} numberOfLines={1}>
-            {meta}
-          </AppText>
-        </View>
-        <View style={styles.mascot}>
-          <Mascot name="wave" size={MASCOT_SIZE} style={styles.mascotArt} />
-        </View>
+      <View style={styles.text}>
+        <AppText style={styles.eyebrow}>{eyebrow}</AppText>
+        <AppText style={styles.title} numberOfLines={2}>
+          {workout.dayName}
+        </AppText>
+        <AppText style={styles.meta} numberOfLines={1}>
+          {meta}
+        </AppText>
       </View>
 
       <Button
@@ -70,11 +60,6 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     gap: spacing.sm,
   },
-  top: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-  },
   text: {
     flex: 1,
     minWidth: 0,
@@ -98,19 +83,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 18,
     fontWeight: "600",
-  },
-  // Box fisso: su web il player Lottie altrimenti si allarga a tutta la riga.
-  mascot: {
-    width: MASCOT_BOX_WIDTH,
-    height: MASCOT_BOX_HEIGHT,
-    overflow: "hidden",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  mascotArt: {
-    width: MASCOT_SIZE,
-    height: MASCOT_SIZE,
-    justifyContent: "center",
   },
   change: {
     alignSelf: "center",
