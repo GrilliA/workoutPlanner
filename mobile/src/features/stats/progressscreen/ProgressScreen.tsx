@@ -1,6 +1,7 @@
+import { router } from "expo-router";
 import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import {
-  Body,
+  EmptyState,
   ErrorBanner,
   LoadingBlock,
   Meta,
@@ -8,15 +9,15 @@ import {
   Title,
   useTabBarInset,
 } from "../../../components";
-import { colors, radii, spacing } from "../../../theme";
+import { colors, spacing } from "../../../theme";
 import { KpiGrid } from "../kpigrid";
 import { PeriodFilter } from "../periodfilter";
 import { ExerciseProgressionSection } from "../progression";
 import { SessionHistorySection } from "../sessionhistory";
 import { useProgressStats } from "../useProgressStats";
-import { VolumeCard } from "../volumecard";
 import { WeeklyChart } from "../weeklychart";
 
+/** Progressi "Sole": numero grande in indaco, record e serie, storico. */
 export function ProgressScreen() {
   const tabBarInset = useTabBarInset();
   const {
@@ -38,6 +39,10 @@ export function ProgressScreen() {
     return <LoadingBlock />;
   }
 
+  // Nessuna sessione mai: il taccuino aspetta, niente grafici vuoti.
+  const hasNeverTrained = history.total === 0 && !historyLoading && !historyError;
+  const isEmpty = analytics !== null && !analytics.hasData && hasNeverTrained;
+
   return (
     <Screen padded={false}>
       <ScrollView
@@ -51,41 +56,40 @@ export function ProgressScreen() {
         }
       >
         <View style={styles.header}>
-          <Title style={styles.title}>Progressi</Title>
-          {analytics ? <Meta>{analytics.periodLabel}</Meta> : null}
+          <Title>Progressi</Title>
+          {analytics && !isEmpty ? <Meta>{analytics.periodLabel}</Meta> : null}
         </View>
 
-        <PeriodFilter value={range} onChange={setRange} />
+        {error ? <ErrorBanner message={error} onRetry={reload} /> : null}
 
-        {error ? (
-          <ErrorBanner
-            message={error}
-            onRetry={() => {
-              reload();
-            }}
+        {isEmpty ? (
+          <EmptyState
+            mascot="notebook"
+            title="Nessun allenamento ancora"
+            body="Il taccuino aspetta il tuo primo allenamento."
+            actionLabel="Vai alla Home"
+            onAction={() => router.push("/(app)")}
           />
         ) : null}
 
-        {analytics ? (
+        {analytics && !isEmpty ? (
           <>
-            <View style={styles.insightCard}>
-              <Body accessibilityRole="text">{analytics.insight}</Body>
-            </View>
-
-            <KpiGrid items={analytics.kpis} />
-            <WeeklyChart model={analytics.weeklyChart} />
-            <VolumeCard model={analytics.volumeCard} />
+            <PeriodFilter value={range} onChange={setRange} />
+            <WeeklyChart hero={analytics.hero} model={analytics.weeklyChart} />
+            <KpiGrid items={analytics.tiles} />
             <ExerciseProgressionSection options={analytics.progressions} />
           </>
         ) : null}
 
-        <SessionHistorySection
-          history={history}
-          loading={historyLoading}
-          error={historyError}
-          onRetry={reload}
-          onLoadMore={loadMoreHistory}
-        />
+        {isEmpty ? null : (
+          <SessionHistorySection
+            history={history}
+            loading={historyLoading}
+            error={historyError}
+            onRetry={reload}
+            onLoadMore={loadMoreHistory}
+          />
+        )}
       </ScrollView>
     </Screen>
   );
@@ -97,18 +101,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   header: {
-    gap: spacing.xs,
+    gap: 2,
     paddingTop: spacing.sm,
-  },
-  title: {
-    fontSize: 24,
-    lineHeight: 30,
-  },
-  insightCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.md,
   },
 });

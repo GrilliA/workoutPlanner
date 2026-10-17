@@ -40,6 +40,8 @@ const MOBILE_PAIRS = [
   { text: "data", background: "bg" },
   { text: "data", background: "surface" },
   { text: "data", background: "dataBg" },
+  { text: "onData", background: "data" },
+  { text: "dataBg", background: "data" },
   { text: "danger", background: "bg" },
   { text: "danger", background: "surface" },
   { text: "danger", background: "dangerBg" },

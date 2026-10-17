@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import Svg, { Circle, Polyline } from "react-native-svg";
-import { Body, Meta, SectionLabel } from "../../../components";
-import { colors, radii, spacing } from "../../../theme";
+import { AppText, Body, Heading, Meta } from "../../../components";
+import { colors, radii, shadows, spacing } from "../../../theme";
 import {
   buildProgressionPolyline,
   progressionMetricLabel,
@@ -33,7 +33,7 @@ export function ExerciseProgressionSection({ options }: ExerciseProgressionSecti
   if (options.length === 0) {
     return (
       <View style={styles.card}>
-        <SectionLabel>PROGRESSIONE ESERCIZI</SectionLabel>
+        <Heading style={styles.title}>Progressione esercizi</Heading>
         <Body>
           Nessun esercizio con dati pesati nel periodo. Registra peso e ripetizioni per
           vedere l&apos;andamento.
@@ -47,7 +47,7 @@ export function ExerciseProgressionSection({ options }: ExerciseProgressionSecti
 
   return (
     <View style={styles.card} accessibilityLabel="Progressione esercizi">
-      <SectionLabel>PROGRESSIONE ESERCIZI</SectionLabel>
+      <Heading style={styles.title}>Progressione esercizi</Heading>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -66,9 +66,13 @@ export function ExerciseProgressionSection({ options }: ExerciseProgressionSecti
               onPress={() => setSelectedId(option.exerciseId)}
               style={[styles.chip, active && styles.chipSelected]}
             >
-              <Meta style={active ? styles.chipLabelSelected : undefined} numberOfLines={1}>
+              <AppText
+                variant="label"
+                style={active ? styles.chipLabelSelected : styles.chipLabel}
+                numberOfLines={1}
+              >
                 {option.label}
-              </Meta>
+              </AppText>
             </Pressable>
           );
         })}
@@ -88,9 +92,12 @@ export function ExerciseProgressionSection({ options }: ExerciseProgressionSecti
                   onPress={() => setMetric(value)}
                   style={[styles.metricChip, active && styles.chipSelected]}
                 >
-                  <Meta style={active ? styles.chipLabelSelected : undefined}>
-                    {value === "e1rm" ? "e1RM" : "PESO MAX"}
-                  </Meta>
+                  <AppText
+                    variant="label"
+                    style={active ? styles.chipLabelSelected : styles.chipLabel}
+                  >
+                    {value === "e1rm" ? "e1RM" : "Peso max"}
+                  </AppText>
                 </Pressable>
               );
             })}
@@ -143,9 +150,12 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     backgroundColor: colors.surface,
     borderRadius: radii.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
     padding: spacing.md,
+    ...shadows.card,
+  },
+  title: {
+    fontSize: 17,
+    lineHeight: 22,
   },
   chipRow: {
     flexDirection: "row",
@@ -153,20 +163,22 @@ const styles = StyleSheet.create({
     paddingRight: spacing.sm,
   },
   chip: {
-    maxWidth: 180,
-    borderWidth: 1,
-    borderColor: colors.border,
+    maxWidth: 200,
+    minHeight: 40,
+    justifyContent: "center",
     borderRadius: radii.pill,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
     backgroundColor: colors.bg,
   },
   chipSelected: {
-    borderColor: colors.accent,
-    backgroundColor: colors.accentBg,
+    backgroundColor: colors.ink,
+  },
+  chipLabel: {
+    color: colors.text,
+    fontWeight: "700",
   },
   chipLabelSelected: {
-    color: colors.textHeading,
+    color: colors.onInk,
     fontWeight: "700",
   },
   metricRow: {
@@ -174,11 +186,10 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   metricChip: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.md,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
+    minHeight: 40,
+    justifyContent: "center",
+    borderRadius: radii.pill,
+    paddingHorizontal: spacing.md,
     backgroundColor: colors.bg,
   },
 });

@@ -23,6 +23,7 @@ export const colors = {
   onInk: "#FFFFFF",
   data: "#3B3F9E",
   dataBg: "#E6E7FA",
+  onData: "#FFFFFF",
   danger: "#B42318",
   onDanger: "#FFFFFF",
   dangerBg: "#FDE4E1",
