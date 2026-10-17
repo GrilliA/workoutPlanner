@@ -7,11 +7,13 @@ describe("waitlist emails", () => {
     const mail = buildWelcomeMail();
     assert.match(mail.subject, /Traccia/);
     assert.match(mail.text, /Sei in lista/);
-    assert.match(mail.text, /TODO: informativa privacy/);
+    assert.match(mail.text, /lista d'attesa/);
+    assert.doesNotMatch(mail.text, /TODO/);
     assert.match(mail.html, /#FFF8F1/);
     assert.match(mail.html, /#FF7A45/);
     assert.match(mail.html, /#231A14/);
-    assert.match(mail.html, /TODO: informativa privacy/);
+    assert.match(mail.html, /lista d'attesa/);
+    assert.doesNotMatch(mail.html, /TODO/);
   });
 
   it("escapes the notice so a referral cannot inject HTML", () => {

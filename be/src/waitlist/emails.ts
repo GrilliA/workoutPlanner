@@ -1,7 +1,7 @@
 import type { WaitlistRole } from "./schema";
 
 const PRIVACY_LINE =
-  "Usiamo questo indirizzo solo per la lista d'attesa e per avvisarti del lancio. Per cancellarlo, rispondi a questa email. TODO: informativa privacy completa e titolare del trattamento.";
+  "Usiamo questo indirizzo solo per la lista d'attesa e per avvisarti del lancio. Per cancellarlo, rispondi a questa email.";
 
 export type MailContent = {
   subject: string;

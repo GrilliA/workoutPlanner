@@ -13,7 +13,7 @@ La pagina segue il tema **Sole** dell'app (PR #83, analisi in `APP-STYLE.md`): s
 3. **Funzioni** (4 blocchi presi dal repo): pannello coach web (KPI, stati scheda, "Nuova scheda") · allenamento una serie alla volta (peso, ripetizioni, RIR, recupero consigliato) · offline (schermata arancio "Allenamento fatto!") · Progressi (card indaco con barre, record, giorni di fila).
 4. **Come funziona**: il coach crea la scheda → l'atleta riscatta l'invito → ci si allena e i dati arrivano al coach.
 5. **Vantaggi early access** (*proposte*): badge Fondatore, 3 mesi gratis per i coach + prezzo bloccato, accesso al test chiuso. Banner "Salta la fila".
-6. **FAQ** (6 domande), **CTA finale** con secondo form, **footer** con privacy in breve e placeholder del titolare del trattamento.
+6. **FAQ** (6 domande), **CTA finale** con secondo form, **footer** con una riga privacy breve (niente placeholder).
 
 ## Form
 - `action` = `PUBLIC_WAITLIST_ENDPOINT` (vedi `.env.example`). Se non è impostato, il form mostra un esito demo.

@@ -27,7 +27,7 @@ Se `SMTP_HOST` o `SMTP_FROM` mancano, l'iscrizione si salva e il processo logga 
 
 Con SMTP configurato, a ogni nuova iscrizione:
 
-1. mail di benvenuto in italiano allo iscritto (HTML tema Sole + testo, riga privacy con TODO)
+1. mail di benvenuto in italiano allo iscritto (HTML tema Sole + testo, riga privacy breve)
 2. avviso a `WAITLIST_NOTIFY_TO`, se è impostato
 
 ## Env
@@ -45,6 +45,14 @@ Vedi `be/.env.example`. Nessun segreto nel repo.
 | `WAITLIST_CORS_ORIGINS` | facoltativa. Se è vuota vale solo `https://grillia.github.io`. Se è impostata, sostituisce quel default (lista separata da virgole) |
 
 Il limite è 8 richieste per IP ogni 15 minuti. Il body massimo è 2kb.
+
+## Dati legali ancora aperti
+
+Non compaiono sulla landing né nella mail. Da inserire quando ci sono, e solo allora sulla pagina:
+
+- contatto per le richieste di accesso, modifica o cancellazione
+- nome del titolare del trattamento e P.IVA o codice fiscale
+- informativa privacy completa
 
 ## Checklist per metterla online
 
