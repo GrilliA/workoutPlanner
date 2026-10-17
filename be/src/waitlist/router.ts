@@ -5,13 +5,12 @@ import { applyWaitlistCors } from "./cors";
 import { sendWaitlistMail } from "./mailer";
 import { waitlistRateLimit } from "./rateLimit";
 import { readSmtpConfig } from "./smtp";
-import { insertWaitlistSignup, markWaitlistWelcomeSent } from "./store";
+import { insertWaitlistSignup } from "./store";
 
 const postWaitlist = async (req: Request, res: Response): Promise<void> => {
   const result = await acceptWaitlist(req.body, {
     now: new Date(),
     insertSignup: insertWaitlistSignup,
-    markWelcomeSent: markWaitlistWelcomeSent,
     readMailConfig: () => readSmtpConfig(process.env),
     sendMail: sendWaitlistMail,
     log: (line) => {

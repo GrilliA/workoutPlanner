@@ -14,5 +14,4 @@ export const waitlistSignups = pgTable("waitlist_signups", {
   ref: text("ref"),
   consentedAt: timestamp("consented_at").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-  welcomeSentAt: timestamp("welcome_sent_at"),
 });

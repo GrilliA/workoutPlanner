@@ -1,8 +1,5 @@
 import type { WaitlistRole } from "./schema";
 
-const PRIVACY_LINE =
-  "Usiamo questo indirizzo solo per la lista d'attesa e per avvisarti del lancio. Per cancellarlo, rispondi a questa email.";
-
 export type MailContent = {
   subject: string;
   text: string;
@@ -48,25 +45,6 @@ const solePage = (bodyHtml: string): string => `<!doctype html>
     </table>
   </body>
 </html>`;
-
-export const buildWelcomeMail = (): MailContent => {
-  const subject = "Sei in lista per Traccia";
-  const text = [
-    "Sei in lista.",
-    "",
-    "Ti scriviamo quando apre il test chiuso su Android. Fino ad allora non ti mandiamo altre email.",
-    "",
-    PRIVACY_LINE,
-  ].join("\n");
-  const html = solePage(`
-    <p style="margin:0 0 18px;font-size:22px;font-weight:800;letter-spacing:-0.03em;">tracci<span style="color:#A33A12;">a</span></p>
-    <p style="margin:0 0 16px;display:inline-block;background:#FF7A45;color:#231A14;font-weight:700;border-radius:999px;padding:8px 14px;">Sei in lista</p>
-    <h1 style="margin:16px 0 12px;font-size:28px;line-height:1.15;letter-spacing:-0.03em;">La prossima scheda la apri in Traccia.</h1>
-    <p style="margin:0 0 16px;color:#6F625A;">Ti scriviamo quando apre il test chiuso su Android. Fino ad allora non ti mandiamo altre email.</p>
-    <p style="margin:24px 0 0;font-size:13px;line-height:1.45;color:#6F625A;">${escapeHtml(PRIVACY_LINE)}</p>
-  `);
-  return { subject, text, html };
-};
 
 export const buildNoticeMail = (notice: WaitlistNotice): MailContent => {
   const referral = notice.ref ?? "nessuno";

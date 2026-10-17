@@ -19,16 +19,15 @@ Il montaggio, fuori da qui, è solo il collegamento:
 
 Email già presente: stessa risposta di successo, nessuna seconda mail. Non diciamo se l'indirizzo c'era già.
 
-In tabella finiscono solo email, ruolo, `ref`, istante del consenso, `created_at` e `welcome_sent_at` (null finché la mail di benvenuto non parte).
+In tabella finiscono solo email, ruolo, `ref`, istante del consenso e `created_at`.
 
 ## Mail
 
+Chi si iscrive non riceve nessuna email.
+
 Se `SMTP_HOST` o `SMTP_FROM` mancano, l'iscrizione si salva e il processo logga un warning. Non fallisce la richiesta.
 
-Con SMTP configurato, a ogni nuova iscrizione:
-
-1. mail di benvenuto in italiano allo iscritto (HTML tema Sole + testo, riga privacy breve)
-2. avviso a `WAITLIST_NOTIFY_TO`, se è impostato
+Con SMTP configurato, a ogni nuova iscrizione parte solo l'avviso a `WAITLIST_NOTIFY_TO` (email, ruolo, codice invito, orario del consenso). Se `WAITLIST_NOTIFY_TO` manca, l'iscrizione si salva e non parte nessuna mail.
 
 ## Env
 
@@ -48,7 +47,7 @@ Il limite è 8 richieste per IP ogni 15 minuti. Il body massimo è 2kb.
 
 ## Dati legali ancora aperti
 
-Non compaiono sulla landing né nella mail. Da inserire quando ci sono, e solo allora sulla pagina:
+Non compaiono sulla landing. Da inserire quando ci sono, e solo allora sulla pagina:
 
 - contatto per le richieste di accesso, modifica o cancellazione
 - nome del titolare del trattamento e P.IVA o codice fiscale

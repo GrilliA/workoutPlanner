@@ -1,4 +1,4 @@
-import { buildNoticeMail, buildWelcomeMail } from "./emails";
+import { buildNoticeMail } from "./emails";
 import type { OutboundMail } from "./mailer";
 import type { SmtpConfig } from "./smtp";
 import { decideWaitlistBody, type NewWaitlistSignup } from "./validate";
@@ -8,7 +8,6 @@ export type { NewWaitlistSignup };
 export type WaitlistDeps = {
   now: Date;
   insertSignup: (signup: NewWaitlistSignup) => Promise<"created" | "duplicate">;
-  markWelcomeSent: (email: string, sentAt: Date) => Promise<void>;
   readMailConfig: () => SmtpConfig | null;
   sendMail: (config: SmtpConfig, mail: OutboundMail) => Promise<void>;
   log: (line: string) => void;
@@ -33,14 +32,6 @@ const deliverMail = async (signup: NewWaitlistSignup, deps: WaitlistDeps): Promi
   if (!config) {
     deps.log("Waitlist signup saved; SMTP is not configured, so no email was sent.");
     return;
-  }
-
-  const welcome = buildWelcomeMail();
-  try {
-    await deps.sendMail(config, { ...welcome, to: signup.email });
-    await deps.markWelcomeSent(signup.email, deps.now);
-  } catch (error) {
-    deps.log(`Waitlist welcome email failed for ${signup.email}: ${errorText(error)}`);
   }
 
   if (!config.notifyTo) {

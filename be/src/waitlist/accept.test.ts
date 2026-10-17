@@ -26,16 +26,12 @@ const body = {
 const harness = (overrides: Partial<WaitlistDeps> = {}) => {
   const inserted: NewWaitlistSignup[] = [];
   const sent: OutboundMail[] = [];
-  const marked: string[] = [];
   const logs: string[] = [];
   const deps: WaitlistDeps = {
     now,
     insertSignup: async (signup) => {
       inserted.push(signup);
       return "created";
-    },
-    markWelcomeSent: async (email) => {
-      marked.push(email);
     },
     readMailConfig: () => gmail,
     sendMail: async (_config, mail) => {
@@ -46,22 +42,20 @@ const harness = (overrides: Partial<WaitlistDeps> = {}) => {
     },
     ...overrides,
   };
-  return { deps, inserted, sent, marked, logs };
+  return { deps, inserted, sent, logs };
 };
 
 describe("acceptWaitlist", () => {
-  it("stores a new signup and sends the welcome plus the notice", async () => {
-    const { deps, inserted, sent, marked } = harness();
+  it("stores a new signup and notifies us, not the signup", async () => {
+    const { deps, inserted, sent } = harness();
     const result = await acceptWaitlist(body, deps);
 
     assert.deepEqual(result, { status: 200, body: { ok: true } });
     assert.equal(inserted.length, 1);
     assert.equal(inserted[0]?.email, "coach@example.com");
     assert.equal(inserted[0]?.ref, "MARCO7");
-    assert.equal(sent.length, 2);
-    assert.equal(sent[0]?.to, "coach@example.com");
-    assert.equal(sent[1]?.to, "alessio@example.com");
-    assert.deepEqual(marked, ["coach@example.com"]);
+    assert.equal(sent.length, 1);
+    assert.equal(sent[0]?.to, "alessio@example.com");
   });
 
   it("answers success for a duplicate and does not send mail again", async () => {
@@ -95,21 +89,32 @@ describe("acceptWaitlist", () => {
     assert.match(logs.join("\n"), /SMTP is not configured/);
   });
 
-  it("keeps the signup when the welcome email fails, and still notifies", async () => {
-    const { deps, sent, marked, logs } = harness({
+  it("keeps the signup when the notice email fails", async () => {
+    const { deps, inserted, sent, logs } = harness({
       sendMail: async (_config, mail) => {
         sent.push(mail);
-        if (mail.to === "coach@example.com") {
-          throw new Error("mailbox full");
-        }
+        throw new Error("mailbox full");
       },
     });
     const result = await acceptWaitlist(body, deps);
 
     assert.equal(result.status, 200);
-    assert.equal(sent.length, 2);
-    assert.deepEqual(marked, []);
-    assert.match(logs.join("\n"), /welcome email failed/);
+    assert.equal(inserted.length, 1);
+    assert.equal(sent.length, 1);
+    assert.equal(sent[0]?.to, "alessio@example.com");
+    assert.match(logs.join("\n"), /notice email failed/);
+  });
+
+  it("saves the signup and warns when nobody is set to receive the notice", async () => {
+    const { deps, inserted, sent, logs } = harness({
+      readMailConfig: () => ({ ...gmail, notifyTo: null }),
+    });
+    const result = await acceptWaitlist(body, deps);
+
+    assert.equal(result.status, 200);
+    assert.equal(inserted.length, 1);
+    assert.equal(sent.length, 0);
+    assert.match(logs.join("\n"), /WAITLIST_NOTIFY_TO is not set/);
   });
 
   it("rejects a signup without consent", async () => {
