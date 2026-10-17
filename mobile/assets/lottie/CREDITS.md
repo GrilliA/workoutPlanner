@@ -6,14 +6,12 @@ Mascotte degli stati vuoti (piano M3 — stile Telegram). Tutte scaricate da
 
 | File | Animazione | Autore | Fonte |
 | --- | --- | --- | --- |
-| `wave.json` | Bot Say Hello | LottieFiles (free collection) | https://assets9.lottiefiles.com/packages/lf20_1pxqjqps.json |
 | `waiting.json` | Loading Cat | Phuong-Anh Nguyen | https://lottiefiles.com/free-animation/loading-cat-f3bXi3mX2F |
 | `sleeping.json` | Sleeping Cat Breathing Loop | MereCalm | https://lottiefiles.com/free-animation/sleeping-cat-breathing-loop-dPo784b3lF |
 | `notebook.json` | Paper notebook writing animation | MD Abdur Rahim | https://lottiefiles.com/free-animation/paper-notebook-writing-animation-eY3NoiibMr |
 
 Colori adattati al tema "Sole" (M4 F1), forma e animazione invariate:
-`wave.json` — robot da verde acqua a indaco `#3B3F9E`, visiera cacao, occhi
-arancio, fumetto crema; `notebook.json` — foglio azzurro → crema `#FFE7DA`,
+`notebook.json` — foglio azzurro → crema `#FFE7DA`,
 righe e anelli caldi. `waiting.json` e `sleeping.json` già nei toni caldi,
 non toccati.
 

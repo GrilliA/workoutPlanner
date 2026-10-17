@@ -15,7 +15,7 @@
  * - feedback/   LoadingBlock, ErrorBanner
  * - backbutton/ Freccia ‹ per tornare indietro
  * - icon/       Icone SVG allineate alla bottom nav web
- * - mascot/     Mascotte Lottie (wave, waiting, sleeping, notebook)
+ * - mascot/     Mascotte Lottie (waiting, sleeping, notebook)
  * - emptystate/ Stato vuoto stile Telegram (mascotte + titolo + azione)
  * - bottomsheet/ Bottom sheet con dim e maniglia (es. cambio allenamento)
  * - glasstabbar/ Tab bar flottante a pill bianca, tab attiva ink (custom tabBar expo-router)

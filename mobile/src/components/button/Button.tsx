@@ -2,6 +2,9 @@ import { Pressable, StyleSheet } from "react-native";
 import { colors, radii, spacing } from "../../theme";
 import { AppText } from "../text";
 
+/** Esportata per lasciare spazio sotto i bottoni flottanti. */
+export const BUTTON_MIN_HEIGHT = 58;
+
 type Variant = "primary" | "ink" | "soft" | "secondary" | "ghost" | "danger";
 
 type ButtonProps = {
@@ -52,7 +55,7 @@ export function DangerButton(props: Omit<ButtonProps, "variant">) {
 
 const styles = StyleSheet.create({
   base: {
-    minHeight: 58,
+    minHeight: BUTTON_MIN_HEIGHT,
     borderRadius: radii.pill,
     paddingHorizontal: spacing.lg,
     alignItems: "center",

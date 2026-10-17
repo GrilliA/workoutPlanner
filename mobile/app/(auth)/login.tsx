@@ -13,7 +13,6 @@ import {
   AppText,
   Body,
   BrandLogo,
-  Mascot,
   ErrorBanner,
   Field,
   PrimaryButton,
@@ -56,7 +55,6 @@ export default function LoginScreen() {
       >
         <View style={styles.brand}>
           <BrandLogo size="md" />
-          <Mascot name="wave" size={140} />
           <AppText style={styles.title}>Bentornato</AppText>
           <Body style={styles.intro}>Accedi per allenarti e registrare le serie.</Body>
         </View>

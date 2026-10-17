@@ -200,6 +200,29 @@ export function workoutDraftExerciseFromCatalog(
   };
 }
 
+function validateDraftExercise(exercise: WorkoutDraftExercise): string | null {
+  if (exercise.name.trim().length === 0) {
+    return "Ogni esercizio deve avere un nome";
+  }
+
+  const invalid = validatePrescriptionDrafts(exercise.prescriptions);
+  if (invalid) {
+    return `${exerciseHeading(exercise)}: ${invalid}`;
+  }
+
+  return null;
+}
+
+/** Controlli di un giorno: il nome della scheda si chiede solo al salvataggio. */
+export function validateWorkoutDay(day: WorkoutDraftDay): string | null {
+  if (day.name.trim().length === 0) {
+    return "Ogni giorno deve avere un nome";
+  }
+
+  const exerciseErrors = day.exercises.map(validateDraftExercise);
+  return exerciseErrors.find((error) => error !== null) ?? null;
+}
+
 export function validateWorkoutDraft(draft: WorkoutDraft): string | null {
   if (draft.name.trim().length === 0) {
     return "Dai un nome alla scheda";
@@ -211,8 +234,9 @@ export function validateWorkoutDraft(draft: WorkoutDraft): string | null {
 
   const assignedWeekdays = new Set<number>();
   for (const day of draft.days) {
-    if (day.name.trim().length === 0) {
-      return "Ogni giorno deve avere un nome";
+    const invalidDay = validateWorkoutDay(day);
+    if (invalidDay) {
+      return invalidDay;
     }
 
     for (const weekday of day.weekdays) {
@@ -220,17 +244,6 @@ export function validateWorkoutDraft(draft: WorkoutDraft): string | null {
         return `${WEEKDAY_LABELS_SHORT[weekday] ?? "Giorno"} è assegnato a più giorni`;
       }
       assignedWeekdays.add(weekday);
-    }
-
-    for (const exercise of day.exercises) {
-      if (exercise.name.trim().length === 0) {
-        return "Ogni esercizio deve avere un nome";
-      }
-
-      const invalid = validatePrescriptionDrafts(exercise.prescriptions);
-      if (invalid) {
-        return `${exerciseHeading(exercise)}: ${invalid}`;
-      }
     }
   }
 

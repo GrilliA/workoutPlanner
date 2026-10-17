@@ -1,5 +1,6 @@
 import { router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   Alert,
   BackHandler,
@@ -17,6 +18,7 @@ import { ApiError, saveWorkoutProgram } from "../../api";
 import {
   AppText,
   BackHeader,
+  BUTTON_MIN_HEIGHT,
   Body,
   DangerButton,
   ErrorBanner,
@@ -36,6 +38,7 @@ import {
   type ParsedScheda,
 } from "../../schedatxt/parseSchedaTxt";
 import { colors, radii, spacing } from "../../theme";
+import { useKeyboardVisible } from "../../utils/useKeyboardVisible";
 import { exerciseHeading } from "./exerciseDisplay";
 import { ProgramExerciseCard } from "./ProgramExerciseCard";
 import { WeekdayChips } from "./WeekdayChips";
@@ -43,6 +46,7 @@ import {
   newWorkoutDraftDay,
   WEEKDAY_LABELS_SHORT,
   toWorkoutProgramInput,
+  validateWorkoutDay,
   validateWorkoutDraft,
   workoutDraftFromSchedaTxt,
   type WorkoutDraft,
@@ -148,6 +152,17 @@ function ImportSchedaModal({ onClose, onApply }: ImportSchedaModalProps) {
   );
 }
 
+/** Con un giorno aperto il bottone chiude il giorno, altrimenti salva la scheda. */
+function saveButtonLabel(busy: boolean, hasOpenDay: boolean): string {
+  if (busy) {
+    return "Salvataggio…";
+  }
+  if (hasOpenDay) {
+    return "Salva esercizi";
+  }
+  return "Salva scheda";
+}
+
 /** Builder scheda: bozza locale giorni → esercizi → serie, salvata in un colpo. */
 export function WorkoutBuilder({
   initialDraft,
@@ -161,6 +176,9 @@ export function WorkoutBuilder({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<ScrollView>(null);
+  const insets = useSafeAreaInsets();
+  const keyboardVisible = useKeyboardVisible();
+  const saveButtonOffset = Math.max(insets.bottom, spacing.md);
 
   const openDay = draft.days.find((day) => day.key === openDayKey) ?? null;
 
@@ -279,6 +297,19 @@ export function WorkoutBuilder({
     apply();
   };
 
+  const saveExercises = () => {
+    if (!openDay) {
+      return;
+    }
+    const invalid = validateWorkoutDay(openDay);
+    if (invalid) {
+      setError(invalid);
+      return;
+    }
+    setError(null);
+    setOpenDayKey(null);
+  };
+
   const onSave = async () => {
     const invalid = validateWorkoutDraft(draft);
     if (invalid) {
@@ -306,6 +337,15 @@ export function WorkoutBuilder({
     : workoutId != null
       ? "Modifica scheda"
       : "Nuova scheda";
+  const saveLabel = saveButtonLabel(busy, openDay != null);
+
+  const onSaveButtonPress = () => {
+    if (openDay) {
+      saveExercises();
+      return;
+    }
+    void onSave();
+  };
 
   return (
     <Screen padded={false}>
@@ -320,7 +360,12 @@ export function WorkoutBuilder({
         />
         <ScrollView
           ref={scrollRef}
-          contentContainerStyle={styles.content}
+          contentContainerStyle={[
+            styles.content,
+            !readOnly && {
+              paddingBottom: BUTTON_MIN_HEIGHT + spacing.xl + saveButtonOffset,
+            },
+          ]}
           keyboardShouldPersistTaps="handled"
         >
           <Heading>{title}</Heading>
@@ -364,11 +409,16 @@ export function WorkoutBuilder({
                     onPress={addDay}
                     disabled={busy}
                   />
-                  <SecondaryButton
-                    label="Importa da testo"
+                  <Pressable
                     onPress={() => setImportOpen(true)}
                     disabled={busy}
-                  />
+                    accessibilityRole="button"
+                    style={busy ? styles.dimmed : undefined}
+                  >
+                    <AppText tone="accent" style={styles.importLabel}>
+                      Importa da testo
+                    </AppText>
+                  </Pressable>
                 </>
               ) : null}
             </View>
@@ -442,11 +492,14 @@ export function WorkoutBuilder({
           )}
         </ScrollView>
 
-        {!readOnly ? (
-          <View style={styles.saveBar}>
+        {!readOnly && !keyboardVisible ? (
+          <View
+            pointerEvents="box-none"
+            style={[styles.saveWrap, { bottom: saveButtonOffset }]}
+          >
             <PrimaryButton
-              label={busy ? "Salvataggio…" : "Salva scheda"}
-              onPress={() => void onSave()}
+              label={saveLabel}
+              onPress={onSaveButtonPress}
               disabled={busy}
             />
           </View>
@@ -494,12 +547,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
   },
-  saveBar: {
-    paddingHorizontal: spacing.lg,
+  importLabel: {
+    fontWeight: "700",
     paddingVertical: spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    backgroundColor: colors.bg,
+  },
+  dimmed: {
+    opacity: 0.5,
+  },
+  saveWrap: {
+    position: "absolute",
+    left: spacing.lg,
+    right: spacing.lg,
   },
   sheet: {
     flex: 1,

@@ -2,17 +2,12 @@ import * as Haptics from "expo-haptics";
 import { useEffect, useRef } from "react";
 import { Animated, Easing, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { AppText, Button, Mascot } from "../../components";
+import { AppText, Button } from "../../components";
 import { colors, radii, spacing } from "../../theme";
 import {
   formatDurationLabel,
   formatVolumeLabel,
 } from "./celebrationStats";
-
-const MASCOT_BOX_WIDTH = 240;
-const MASCOT_BOX_HEIGHT = 170;
-// Il robot occupa circa metà del file Lottie: lo si disegna più grande e si ritaglia il margine.
-const MASCOT_SIZE = 260;
 
 export type CelebrationViewProps = {
   workoutName: string;
@@ -24,21 +19,6 @@ export type CelebrationViewProps = {
   syncNote?: string;
   onDone: () => void;
 };
-
-function MascotBadge({ progress }: { progress: Animated.Value }) {
-  const scale = progress.interpolate({
-    inputRange: [0, 0.7, 1],
-    outputRange: [0.4, 1.08, 1],
-  });
-
-  return (
-    <Animated.View style={{ opacity: progress, transform: [{ scale }] }}>
-      <View style={styles.mascotBox}>
-        <Mascot name="wave" size={MASCOT_SIZE} style={styles.mascotArt} />
-      </View>
-    </Animated.View>
-  );
-}
 
 function Particle({ delayMs, x }: { delayMs: number; x: number }) {
   const progress = useRef(new Animated.Value(0)).current;
@@ -83,7 +63,7 @@ function Particle({ delayMs, x }: { delayMs: number; x: number }) {
   );
 }
 
-/** Fine allenamento "Sole": fondo arancio, mascotte, tre tile crema, bottone ink. */
+/** Fine allenamento "Sole": fondo arancio, tre tile crema, bottone ink. */
 export function CelebrationView({
   workoutName,
   volumeKg,
@@ -93,7 +73,6 @@ export function CelebrationView({
   onDone,
 }: CelebrationViewProps) {
   const insets = useSafeAreaInsets();
-  const badge = useRef(new Animated.Value(0)).current;
   const title = useRef(new Animated.Value(0)).current;
   const stats = useRef(new Animated.Value(0)).current;
   const cta = useRef(new Animated.Value(0)).current;
@@ -102,12 +81,6 @@ export function CelebrationView({
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
     Animated.sequence([
-      Animated.spring(badge, {
-        toValue: 1,
-        friction: 6,
-        tension: 90,
-        useNativeDriver: true,
-      }),
       Animated.timing(title, {
         toValue: 1,
         duration: 280,
@@ -124,7 +97,7 @@ export function CelebrationView({
         useNativeDriver: true,
       }),
     ]).start();
-  }, [badge, cta, stats, title]);
+  }, [cta, stats, title]);
 
   return (
     <View
@@ -141,7 +114,6 @@ export function CelebrationView({
           <Particle delayMs={80} x={-48} />
           <Particle delayMs={140} x={8} />
           <Particle delayMs={200} x={52} />
-          <MascotBadge progress={badge} />
         </View>
 
         <Animated.View style={[styles.titleBlock, { opacity: title }]}>
@@ -218,20 +190,8 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   badgeWrap: {
+    height: 16,
     alignItems: "center",
-    justifyContent: "center",
-  },
-  // Box fisso: su web il player Lottie altrimenti si allarga.
-  mascotBox: {
-    width: MASCOT_BOX_WIDTH,
-    height: MASCOT_BOX_HEIGHT,
-    overflow: "hidden",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  mascotArt: {
-    width: MASCOT_SIZE,
-    height: MASCOT_SIZE,
     justifyContent: "center",
   },
   particle: {
@@ -240,7 +200,7 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: radii.pill,
     backgroundColor: colors.surface,
-    top: 40,
+    top: 0,
   },
   titleBlock: {
     alignItems: "center",

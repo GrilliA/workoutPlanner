@@ -50,7 +50,7 @@ import { WeekStrip } from "../weekstrip";
 type NoProgramReason = NonNullable<AthleteHome["noProgramReason"]>;
 
 type NoProgramCopy = {
-  mascot: MascotName;
+  mascot?: MascotName;
   title: string;
   body: string;
   actionLabel: string;
@@ -59,7 +59,6 @@ type NoProgramCopy = {
 
 const NO_PROGRAM_COPY: Record<NoProgramReason, NoProgramCopy> = {
   "no-coach": {
-    mascot: "wave",
     title: "Ancora nessuna scheda",
     body: "Collega il tuo coach con il codice invito oppure creane una tu.",
     actionLabel: "Collega coach",
