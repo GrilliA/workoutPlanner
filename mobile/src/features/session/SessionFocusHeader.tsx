@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 1.2,
     textTransform: "uppercase",
-    color: colors.muted,
+    color: colors.text,
   },
   title: {
     fontSize: 16,
@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
   },
   exerciseMeta: {
     fontSize: 11,
-    color: colors.muted,
+    color: colors.text,
   },
   elapsed: {
     fontVariant: ["tabular-nums"],
@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
   track: {
     height: 4,
     borderRadius: radii.pill,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.border,
     overflow: "hidden",
   },
   fill: {

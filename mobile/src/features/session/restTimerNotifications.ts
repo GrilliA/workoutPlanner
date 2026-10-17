@@ -33,7 +33,7 @@ export const ensureRestTimerChannel = (): Promise<void> => {
       sound: "default",
       vibrationPattern: [0, 250, 120, 250],
       lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
-      lightColor: "#bfdbf7",
+      lightColor: "#FF7A45", // colors.accent
     }).then(() => undefined);
   }
 

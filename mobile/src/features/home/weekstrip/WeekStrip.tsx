@@ -33,7 +33,7 @@ export function WeekStrip({
           <>
             <AppText
               variant="eyebrow"
-              tone={isSelected || day.isToday ? "accent" : "muted"}
+              tone={isSelected || day.isToday ? "accent" : "default"}
               style={styles.label}
             >
               {day.weekdayLabel}
@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   dayWorkout: {
-    borderColor: "rgba(191, 219, 247, 0.25)",
+    borderColor: colors.accentBorder,
   },
   dayRest: {
     opacity: 0.5,

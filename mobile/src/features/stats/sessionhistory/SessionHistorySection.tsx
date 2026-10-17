@@ -46,7 +46,7 @@ export function SessionHistorySection({
       )}
 
       {loading ? (
-        <ActivityIndicator color={colors.accent} accessibilityLabel="Caricamento storico" />
+        <ActivityIndicator color={colors.accentText} accessibilityLabel="Caricamento storico" />
       ) : null}
 
       {history.canLoadMore && !loading ? (

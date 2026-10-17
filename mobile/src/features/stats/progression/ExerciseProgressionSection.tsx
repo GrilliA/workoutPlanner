@@ -108,7 +108,7 @@ export function ExerciseProgressionSection({ options }: ExerciseProgressionSecti
                   <Polyline
                     points={chart.points.map((point) => `${point.x},${point.y}`).join(" ")}
                     fill="none"
-                    stroke={colors.accent}
+                    stroke={colors.data}
                     strokeWidth={2}
                   />
                 ) : null}
@@ -118,7 +118,7 @@ export function ExerciseProgressionSection({ options }: ExerciseProgressionSecti
                     cx={point.x}
                     cy={point.y}
                     r={3}
-                    fill={colors.accent}
+                    fill={colors.data}
                     accessibilityLabel={point.label}
                   />
                 ))}

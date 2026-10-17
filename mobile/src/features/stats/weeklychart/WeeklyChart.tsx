@@ -43,7 +43,7 @@ export function WeeklyChart({ model }: WeeklyChartProps) {
               width={model.barWidth}
               height={height}
               rx={3}
-              fill={bar.value > 0 ? colors.accent : colors.border}
+              fill={bar.value > 0 ? colors.data : colors.border}
               accessibilityLabel={bar.accessibilityLabel}
             />
           );

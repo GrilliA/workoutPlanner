@@ -4,12 +4,12 @@ import {
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
-  Text,
   View,
 } from "react-native";
 import { ApiError } from "../../src/api/client";
 import { useAuth } from "../../src/auth";
 import {
+  AppText,
   Body,
   BrandLogo,
   ErrorBanner,
@@ -54,7 +54,7 @@ export default function RegisterScreen() {
       >
         <View style={styles.brand}>
           <BrandLogo size="lg" />
-          <Text style={styles.eyebrow}>CREA ACCOUNT</Text>
+          <AppText style={styles.eyebrow}>CREA ACCOUNT</AppText>
           <Body>
             Registrati per creare le tue schede. Potrai collegare un coach dopo
             con un codice invito.
@@ -90,7 +90,7 @@ export default function RegisterScreen() {
             disabled={busy || !email || password.length < 8}
           />
           <Link href="/(auth)/login" asChild>
-            <Text style={styles.link}>Hai già un account? Accedi</Text>
+            <AppText style={styles.link}>Hai già un account? Accedi</AppText>
           </Link>
         </View>
       </KeyboardAvoidingView>
@@ -106,14 +106,14 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   eyebrow: {
-    color: colors.accent,
+    color: colors.accentText,
     fontSize: 12,
     fontWeight: "700",
     letterSpacing: 1.2,
   },
   form: { marginTop: spacing.md },
   link: {
-    color: colors.accent,
+    color: colors.accentText,
     textAlign: "center",
     marginTop: spacing.md,
     fontWeight: "600",

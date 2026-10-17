@@ -2,16 +2,15 @@ import {
   ActivityIndicator,
   Pressable,
   StyleSheet,
-  Text,
   View,
 } from "react-native";
 import { colors, radii, spacing } from "../../theme";
-import { Body } from "../text";
+import { AppText, Body } from "../text";
 
 export function LoadingBlock({ label = "Caricamento…" }: { label?: string }) {
   return (
     <View style={styles.loading}>
-      <ActivityIndicator color={colors.accent} />
+      <ActivityIndicator color={colors.accentText} />
       <Body>{label}</Body>
     </View>
   );
@@ -26,10 +25,10 @@ export function ErrorBanner({
 }) {
   return (
     <View style={styles.errorBanner}>
-      <Text style={styles.errorText}>{message}</Text>
+      <AppText style={styles.errorText}>{message}</AppText>
       {onRetry ? (
         <Pressable onPress={onRetry} accessibilityRole="button">
-          <Text style={styles.retry}>Riprova</Text>
+          <AppText style={styles.retry}>Riprova</AppText>
         </Pressable>
       ) : null}
     </View>
@@ -48,7 +47,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.dangerBg,
     borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: colors.danger,
+    borderColor: colors.dangerBorder,
     padding: spacing.md,
     marginBottom: spacing.md,
     gap: spacing.sm,
@@ -57,7 +56,7 @@ const styles = StyleSheet.create({
     color: colors.danger,
   },
   retry: {
-    color: colors.accent,
-    fontWeight: "600",
+    color: colors.accentText,
+    fontWeight: "700",
   },
 });

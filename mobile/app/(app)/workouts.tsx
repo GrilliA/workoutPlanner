@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 1,
     fontSize: 12,
-    color: colors.muted,
+    color: colors.text,
   },
   actions: {
     marginTop: spacing.xs,

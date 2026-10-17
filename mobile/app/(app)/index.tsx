@@ -540,7 +540,7 @@ export default function HomeScreen() {
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
-            tintColor={colors.accent}
+            tintColor={colors.accentText}
             onRefresh={() => {
               clearApiCache();
               setRefreshing(true);
@@ -843,7 +843,7 @@ const styles = StyleSheet.create({
     borderColor: colors.accentBorder,
   },
   badgeLabel: {
-    color: colors.accent,
+    color: colors.accentText,
     fontSize: 10,
     fontWeight: "700",
     textTransform: "uppercase",

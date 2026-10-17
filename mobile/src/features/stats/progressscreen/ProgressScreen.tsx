@@ -45,7 +45,7 @@ export function ProgressScreen() {
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
-            tintColor={colors.accent}
+            tintColor={colors.accentText}
             onRefresh={refresh}
           />
         }

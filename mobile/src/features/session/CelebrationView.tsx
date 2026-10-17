@@ -47,7 +47,7 @@ function CheckBadge({ progress }: { progress: Animated.Value }) {
         <Path
           d="M22 37.5 31.5 47 50 26"
           fill="none"
-          stroke={colors.accent}
+          stroke={colors.accentText}
           strokeWidth={3.5}
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   syncNote: {
-    color: colors.muted,
+    color: colors.text,
     fontSize: 13,
     textAlign: "center",
   },

@@ -110,7 +110,7 @@ export function RestTimerCard({
         <View style={[styles.stage, isDone && styles.stageDone]}>
           <View style={styles.stageTop}>
             <Mascot name="sleeping" size={72} />
-            <AppText variant="eyebrow" tone="muted" style={styles.eyebrow}>
+            <AppText variant="eyebrow" style={styles.eyebrow}>
               {isDone ? "RECUPERO FINITO" : "RECUPERO"}
             </AppText>
           </View>
