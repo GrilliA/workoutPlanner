@@ -74,7 +74,12 @@ export function AppShell({ children, hideBottomNav = false }: AppShellProps) {
               <span>{item.label}</span>
             </Link>
           ))}
-          <button type="button" className="item logout" onClick={() => void handleLogout()}>
+          <button
+            type="button"
+            className="item logout"
+            data-leaves-page
+            onClick={() => void handleLogout()}
+          >
             Logout
           </button>
         </nav>

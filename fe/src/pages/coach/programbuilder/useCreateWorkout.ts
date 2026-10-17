@@ -95,21 +95,21 @@ export function useWorkoutForm(
   const [form, setForm] = useState(initialForm);
   const isEditMode = workoutId !== undefined;
 
-  const saveDraft = async (name: string, days: DraftWorkoutDay[]) => {
+  // A missing adapter is a wiring bug, so it throws before the try instead of becoming a toast.
+  const startSave = (name: string, days: DraftWorkoutDay[]): Promise<unknown> => {
     const { saveNew, saveUpdate } = adaptersRef.current;
 
     if (workoutId !== undefined) {
       if (!saveUpdate) {
         throw new Error("WorkoutFormAdapters.saveUpdate is required to edit a workout");
       }
-      await saveUpdate(workoutId, name, form.settings, days);
-      return;
+      return saveUpdate(workoutId, name, form.settings, days);
     }
 
     if (!saveNew) {
       throw new Error("WorkoutFormAdapters.saveNew is required to create a workout");
     }
-    await saveNew(name, form.settings, days);
+    return saveNew(name, form.settings, days);
   };
 
   const save = async () => {
@@ -120,6 +120,7 @@ export function useWorkoutForm(
       return;
     }
 
+    const request = startSave(saveCheck.name, saveCheck.days);
     setForm((current) => ({
       ...current,
       isSaving: true,
@@ -128,7 +129,7 @@ export function useWorkoutForm(
     }));
 
     try {
-      await saveDraft(saveCheck.name, saveCheck.days);
+      await request;
       toast.success("Scheda salvata");
       setLocation(adaptersRef.current.successPath);
     } catch (err) {

@@ -7,29 +7,37 @@ const isPlainLeftClick = (event: MouseEvent): boolean =>
   !event.shiftKey &&
   !event.altKey;
 
-const findInAppLink = (event: MouseEvent): HTMLAnchorElement | null => {
+// Buttons that navigate in code (e.g. Logout) opt in with `data-leaves-page`.
+const findLeavingElement = (event: MouseEvent): HTMLElement | null => {
   if (!(event.target instanceof Element)) {
     return null;
   }
 
-  const link = event.target.closest("a[href]");
-  if (!(link instanceof HTMLAnchorElement)) {
+  const element = event.target.closest("a[href], [data-leaves-page]");
+  if (!(element instanceof HTMLElement)) {
     return null;
   }
+  if (!(element instanceof HTMLAnchorElement)) {
+    return element;
+  }
 
-  const opensElsewhere = link.target !== "" && link.target !== "_self";
-  const isSameOrigin = link.origin === window.location.origin;
-  return isSameOrigin && !opensElsewhere ? link : null;
+  const opensElsewhere = element.target !== "" && element.target !== "_self";
+  const isSameOrigin = element.origin === window.location.origin;
+  return isSameOrigin && !opensElsewhere ? element : null;
 };
 
 /**
  * Asks before leaving a page with unsaved changes.
- * Covers in-app links (Indietro, sidebar, bottom nav) and closing or reloading the tab.
+ * Covers in-app links (Indietro, sidebar, bottom nav), `data-leaves-page` buttons (Logout)
+ * and closing or reloading the tab.
  * The browser back button is not covered: wouter has no way to block history navigation.
  */
 export function useUnsavedChangesGuard(hasUnsavedChanges: boolean) {
-  const [blockedLink, setBlockedLink] = useState<HTMLAnchorElement | null>(null);
+  const [blockedElement, setBlockedElement] = useState<HTMLElement | null>(null);
+  // True only while the confirmed click is being dispatched again.
   const isLeavingRef = useRef(false);
+  // A confirmed plain link loads a new document: the browser must not ask a second time.
+  const isUnloadingRef = useRef(false);
 
   useEffect(() => {
     if (!hasUnsavedChanges) {
@@ -37,20 +45,23 @@ export function useUnsavedChangesGuard(hasUnsavedChanges: boolean) {
     }
 
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (isUnloadingRef.current) {
+        return;
+      }
       event.preventDefault();
     };
 
     // Capture phase on document runs before React's own listeners, so wouter's Link never sees the click.
     const handleLinkClick = (event: MouseEvent) => {
-      const link = findInAppLink(event);
-      const shouldAsk = link !== null && isPlainLeftClick(event) && !isLeavingRef.current;
+      const element = findLeavingElement(event);
+      const shouldAsk = element !== null && isPlainLeftClick(event) && !isLeavingRef.current;
       if (!shouldAsk) {
         return;
       }
 
       event.preventDefault();
       event.stopPropagation();
-      setBlockedLink(link);
+      setBlockedElement(element);
     };
 
     window.addEventListener("beforeunload", handleBeforeUnload);
@@ -62,20 +73,26 @@ export function useUnsavedChangesGuard(hasUnsavedChanges: boolean) {
     };
   }, [hasUnsavedChanges]);
 
-  // Clicking the same link again lets wouter navigate, whatever the router base is.
+  // Clicking the same element again lets wouter (or the button) navigate, whatever the router base is.
+  // dispatchEvent is synchronous and returns false when a handler called preventDefault:
+  // wouter's Link does, so only a link nobody handled loads a new document.
   const leavePage = () => {
-    if (!blockedLink) {
+    if (!blockedElement) {
       return;
     }
 
+    setBlockedElement(null);
     isLeavingRef.current = true;
-    setBlockedLink(null);
-    blockedLink.click();
+    const isNotHandled = blockedElement.dispatchEvent(
+      new MouseEvent("click", { bubbles: true, cancelable: true, view: window }),
+    );
+    isLeavingRef.current = false;
+    isUnloadingRef.current = isNotHandled && blockedElement instanceof HTMLAnchorElement;
   };
 
   return {
-    isLeaveDialogOpen: blockedLink !== null,
+    isLeaveDialogOpen: blockedElement !== null,
     leavePage,
-    stayOnPage: () => setBlockedLink(null),
+    stayOnPage: () => setBlockedElement(null),
   };
 }

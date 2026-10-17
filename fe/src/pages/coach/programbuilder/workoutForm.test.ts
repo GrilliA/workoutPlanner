@@ -163,6 +163,13 @@ describe("moving and duplicating days", () => {
       ["Panca piana", "Squat"],
     );
   });
+
+  it("names the copy of an unnamed day after its chip label", () => {
+    const unnamed = renameActiveDay(createWorkoutForm(), "   ");
+    const form = duplicateActiveDay(unnamed, createCountingIds());
+
+    assert.equal(form.days[1]?.name, "Giorno 1 (copia)");
+  });
 });
 
 describe("toggleWeekday", () => {
