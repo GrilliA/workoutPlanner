@@ -66,6 +66,7 @@ How to use:
 
 ## What we did
 
+- 2026-10-17 — M4 design "Sole": token chiari e Plus Jakarta Sans su mobile (`colors.ts`, `fontFamilies`, `AppText` sceglie il file per peso) e web (`tokens.css`); `scripts/check-contrast.mjs` (42 coppie, job CI `Contrast`). Mobile: Home su `GET /athlete/home` con card arancio e bottom sheet "Cambia allenamento", Progressi con card indaco, Allenamento una serie alla volta ("Tutte le serie" in bottom sheet, RIR di W9 incluso), fine allenamento arancio, Schede con "In uso" e badge, Account a righe con sotto-route `settings/coach|profile|password`. Web: primitive a pill, sidebar bianca con voce attiva ink, KPI e stati scheda nei colori Sole, grafici indaco con la settimana in corso arancio. Branch impilati su W9 (#82) e su `refactor/fe-style-debt` (#80).
 - 2026-10-16 — W9 RIR in sessione (mobile): terzo stepper "RIR" sotto kg/reps, facoltativo (0–10, − sotto 0 lo svuota), precompilato con il RIR prescritto per la serie; colonna RIR nelle tabelle serie e nel "Modifica serie". Salvato nel log offline e inviato con la chiusura.
 - 2026-10-16 — W9 prescrizione completa: `exercise_sets` + `reps_max`, `load_value` + `load_unit` (`kg` | `percent_1rm`), `rir` (0–10); `exercises.notes` (max 500). Tutti facoltativi, migrazione `0012`. Builder web: colonne Fino a / Carico / RIR e campo note; TXT `8-12@90`, `Carico:`, `RIR:`/`RPE:` (RPE convertito in RIR), `Note:`. Mobile: obiettivo della serie e note in sessione, peso precompilato dal carico in kg se non c'è storico, builder mobile che conserva i campi al salvataggio.
 - 2026-10-16 — Track O (logging offline): O1 `PUT`/`DELETE` serie per esercizio + numero (#61); O2 chiusura ripetibile e `completedAt` dal telefono (#62, #63); O3 avvio app senza rete con l'utente salvato in SecureStore (#64); O4 timeout 8 s sulle scritture + errori in italiano (#65); O5 schermata sessione apribile da `bundle.json` (#66); O6/O7 diario della sessione ridotto a fotografia (#68, #71); O7a `loggedAt` per serie nella chiusura (#69); O7b invio della chiusura con attese crescenti (#72); O8 schermata, fine sessione e Home offline (#73). Regole di stile in [`docs/guidelines/code-style.md`](docs/guidelines/code-style.md) (#67, #70). Prova su telefono: checklist in [`mobile/README.md`](mobile/README.md#prova-offline).
@@ -160,8 +161,8 @@ Legend: ⬜ todo · 🟡 in progress · ✅ done
 - **C11 — Session history (lista paginata)** ✅
 - **M1 — Progressi atleta mobile** ✅
 - **M2 — Builder scheda mobile (bozza unica + catalogo)** 🟡 — chunk 1 fatto; chunk 2: riordino esercizi/giorni (frecce), avviso modifiche non salvate
-- **M3 — Mobile semplice (redesign app atleta)** 🟡 — piano in `docs/plans/M3-mobile-simple.md`; M3a home + badge backend ✅, M3b fondamenta UI ✅, M3c Home ✅ (in stile Sole, M4 F2), poi Schede/Progressi/Account
-- **M4 — Design "Sole" (app atleta + pannello coach)** 🟡 — piano in `docs/plans/M4-design-sole.md`; F0 decisione + script contrasto ✅, F1 fondamenta mobile ✅, F2 schermate mobile (Home ✅, Allenamento dopo W9 #82), F3–F5 web, F6 chiusura
+- **M3 — Mobile semplice (redesign app atleta)** 🟡 — piano in `docs/plans/M3-mobile-simple.md`; M3a home + badge backend ✅, M3b fondamenta UI ✅, M3c Home ✅, M3d Schede ✅, M3e Progressi ✅, M3f Account a righe ✅ (tutte in stile Sole, M4 F2); resta M3g (E2E)
+- **M4 — Design "Sole" (app atleta + pannello coach)** ✅ — piano in `docs/plans/M4-design-sole.md`; F0–F2 mobile, F4–F5 web, F6 contrasto in CI e screenshot. F3 (tavole web sul canvas) saltata: il pannello è stato fatto direttamente seguendo le linee guida F3; resta da provare su iOS/Android con luce piena
 - **U4 — Analytics coach web** ✅
 - **D1 — Design system web** ✅
 - **D2 — PageError pagine coach** ✅

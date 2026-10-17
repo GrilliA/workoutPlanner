@@ -136,3 +136,18 @@ jobs:
 
       - name: Typecheck tests
         run: npm run typecheck:test
+
+  contrast:
+    name: Contrast
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Check token contrast (WCAG AA)
+        run: node scripts/check-contrast.mjs
