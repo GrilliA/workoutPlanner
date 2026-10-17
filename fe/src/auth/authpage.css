@@ -31,9 +31,7 @@
     margin: 0;
     font-size: 0.75rem;
     font-weight: 700;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--accent);
+    color: var(--accent-text);
   }
 
   & .auth-tagline {
@@ -49,9 +47,9 @@
     margin: 0;
     max-width: 22rem;
     font-size: 1rem;
-    font-weight: 300;
+    font-weight: 500;
     line-height: 1.5;
-    color: #aaa;
+    color: var(--text);
   }
 
   & .form {
@@ -62,16 +60,15 @@
     gap: 1rem;
     width: 100%;
     max-width: 400px;
-    padding: 1.25rem;
-    border-radius: 10px;
-    border: 1px solid rgba(224, 224, 224, 0.1);
-    background: rgba(255, 255, 255, 0.03);
+    padding: var(--space-6);
+    border-radius: var(--radius-xl);
+    border: 0;
+    background: var(--surface);
     box-shadow: var(--shadow);
   }
 
   & .submit {
     width: 100%;
-    border-radius: 4px;
   }
 
   & .password {
@@ -101,7 +98,7 @@
   }
 
   & .footer-link a {
-    color: var(--accent);
+    color: var(--accent-text);
     text-decoration: none;
     font-weight: 700;
   }

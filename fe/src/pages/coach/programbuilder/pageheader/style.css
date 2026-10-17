@@ -6,5 +6,5 @@
 }
 
 .page-header__save {
-  border-radius: 4px;
+  border-radius: var(--radius-full);
 }

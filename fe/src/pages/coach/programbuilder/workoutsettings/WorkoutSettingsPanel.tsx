@@ -28,7 +28,7 @@ export function WorkoutSettingsPanel({
   return (
     <section className="workout-settings" aria-labelledby="workout-settings-title">
       <h2 id="workout-settings-title" className="eyebrow">
-        IMPOSTAZIONI SCHEDA
+        Impostazioni scheda
       </h2>
 
       <div className="panel">

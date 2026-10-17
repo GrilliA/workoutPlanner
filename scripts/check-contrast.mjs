@@ -5,8 +5,8 @@
  *
  * Usage: node scripts/check-contrast.mjs
  *
- * Today it reads the mobile tokens (`mobile/src/theme/colors.ts`).
- * The web tokens (`fe/src/styles/tokens.css`) join in M4 F4.
+ * Reads the mobile tokens (`mobile/src/theme/colors.ts`) and the web
+ * tokens (`fe/src/styles/tokens.css`).
  */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -14,6 +14,7 @@ import { fileURLToPath } from "node:url";
 
 const repositoryRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const mobileColorsPath = join(repositoryRoot, "mobile/src/theme/colors.ts");
+const webTokensPath = join(repositoryRoot, "fe/src/styles/tokens.css");
 
 const NORMAL_TEXT_MINIMUM = 4.5;
 const LARGE_TEXT_MINIMUM = 3;
@@ -48,6 +49,34 @@ const MOBILE_PAIRS = [
   { text: "onDanger", background: "danger" },
   { text: "warning", background: "warningBg" },
 ];
+
+/** Web pairs use the CSS custom property names, without the leading `--`. */
+const WEB_PAIRS = [
+  { text: "text-h", background: "bg" },
+  { text: "text-h", background: "surface" },
+  { text: "text-h", background: "accent-bg" },
+  { text: "text-h", background: "data-bg" },
+  { text: "text", background: "bg" },
+  { text: "text", background: "surface" },
+  { text: "text", background: "accent-bg" },
+  { text: "on-accent", background: "accent" },
+  { text: "accent-text", background: "bg" },
+  { text: "accent-text", background: "surface" },
+  { text: "accent-text", background: "accent-bg" },
+  { text: "on-ink", background: "ink" },
+  { text: "data", background: "surface" },
+  { text: "data", background: "data-bg" },
+  { text: "on-data", background: "data" },
+  { text: "error", background: "surface" },
+  { text: "error", background: "error-bg" },
+  { text: "warning", background: "warning-bg" },
+];
+
+/** `--name: #rrggbb;` declarations in a CSS file. */
+function readCssHexTokens(source) {
+  const entries = [...source.matchAll(/--([\w-]+):\s*(#[0-9a-fA-F]{6})\s*;/g)];
+  return Object.fromEntries(entries.map((entry) => [entry[1], entry[2]]));
+}
 
 /** `name: "#RRGGBB"` lines inside `export const colors = { … }`. */
 function readHexTokens(source) {
@@ -107,12 +136,17 @@ function formatResult(result) {
   return `${status} ${result.text} on ${result.background} — ${detail}`;
 }
 
-const tokens = readHexTokens(readFileSync(mobileColorsPath, "utf8"));
-const results = MOBILE_PAIRS.map((pair) => checkPair(tokens, pair));
+const mobileTokens = readHexTokens(readFileSync(mobileColorsPath, "utf8"));
+const webTokens = readCssHexTokens(readFileSync(webTokensPath, "utf8"));
+const mobileResults = MOBILE_PAIRS.map((pair) => checkPair(mobileTokens, pair));
+const webResults = WEB_PAIRS.map((pair) => checkPair(webTokens, pair));
+const results = [...mobileResults, ...webResults];
 const failures = results.filter((result) => isFailing(result));
 
 console.log("Mobile (mobile/src/theme/colors.ts)");
-console.log(results.map((result) => `  ${formatResult(result)}`).join("\n"));
+console.log(mobileResults.map((result) => `  ${formatResult(result)}`).join("\n"));
+console.log("\nWeb (fe/src/styles/tokens.css)");
+console.log(webResults.map((result) => `  ${formatResult(result)}`).join("\n"));
 
 if (failures.length > 0) {
   console.error(`\n${failures.length} pair(s) below the minimum contrast.`);

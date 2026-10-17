@@ -20,7 +20,7 @@
   width: 3.25rem;
   height: 3.25rem;
   border: 1px solid var(--border);
-  border-radius: 0.45rem;
+  border-radius: var(--radius-sm);
 }
 
 .catalog-flip--hero {

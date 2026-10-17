@@ -15,7 +15,6 @@
     font-size: 0.72rem;
     font-weight: 700;
     color: var(--text);
-    text-transform: uppercase;
   }
 
   & .index {
@@ -34,7 +33,7 @@
       width: 100%;
       min-width: 0;
       border: 1px solid var(--border);
-      border-radius: 0.5rem;
+      border-radius: var(--radius-md);
       background: var(--surface);
       color: var(--text-h);
       padding: 0.55rem 0.65rem;
@@ -78,7 +77,7 @@
     align-self: flex-start;
     border: 0;
     background: transparent;
-    color: var(--accent);
+    color: var(--accent-text);
     font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;

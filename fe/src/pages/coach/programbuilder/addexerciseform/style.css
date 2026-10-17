@@ -6,7 +6,7 @@
   width: 100%;
   padding: 1rem;
   border: 1px dashed var(--border);
-  border-radius: 1rem;
+  border-radius: var(--radius-xl);
   background: transparent;
   color: var(--text);
   font: inherit;
@@ -23,7 +23,7 @@
     place-items: center;
     width: 1.25rem;
     height: 1.25rem;
-    border-radius: 999px;
+    border-radius: var(--radius-full);
     background: var(--accent);
     color: var(--on-accent);
     font-weight: 700;

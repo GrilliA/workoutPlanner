@@ -1,11 +1,11 @@
 .confirm-dialog {
   width: min(28rem, calc(100vw - 2rem));
-  padding: 1.25rem;
-  border: 1px solid var(--border);
+  padding: var(--space-6);
+  border: 0;
   border-radius: var(--radius-xl);
-  background: var(--surface-elevated);
+  background: var(--surface);
   color: var(--text);
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-strong);
 
   &::backdrop {
     background: var(--overlay);

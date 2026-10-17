@@ -12,7 +12,7 @@
     margin: 0;
     padding: 1rem;
     border: 1px dashed var(--border);
-    border-radius: 1rem;
+    border-radius: var(--radius-xl);
     color: var(--text);
     text-align: center;
   }

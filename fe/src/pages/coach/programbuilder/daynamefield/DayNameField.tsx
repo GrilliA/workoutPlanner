@@ -11,7 +11,7 @@ export function DayNameField({ value, onChange }: DayNameFieldProps) {
     <section className="day-name-field" aria-labelledby="day-name-label">
       <Input
         id="day-name"
-        label="NOME GIORNO"
+        label="Nome giorno"
         name="dayName"
         value={value}
         onChange={(event) => onChange(event.target.value)}

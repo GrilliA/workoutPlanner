@@ -1,17 +1,16 @@
 .renewal-chart {
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 0.85rem;
+  border: 0;
+  box-shadow: var(--shadow);
+  border-radius: var(--radius-xl);
   padding: var(--space-4) var(--space-5);
   margin-bottom: 1.5rem;
 
   & h2 {
     margin: 0 0 0.85rem;
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text);
+    font-size: var(--text-lg);
+    font-weight: 800;
+    color: var(--text-h);
   }
 }
 
@@ -30,6 +29,11 @@
 }
 
 .renewal-chart__bar {
+  fill: var(--data);
+}
+
+/* Settimana in corso in arancio, come nei grafici dell'app. */
+.renewal-chart__bar--current {
   fill: var(--accent);
 }
 

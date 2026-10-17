@@ -16,7 +16,7 @@ export function WorkoutNameField({
     <section className="workout-name-field" aria-labelledby="workout-name-label">
       <Input
         id="workout-name"
-        label="NOME SCHEDA"
+        label="Nome scheda"
         name="workoutName"
         value={value}
         onChange={(event) => onChange(event.target.value)}

@@ -26,7 +26,7 @@ export function ExerciseList({
   return (
     <section className="exercise-list" aria-labelledby="exercise-list-title">
       <h2 id="exercise-list-title" className="title">
-        ESERCIZI ({exercises.length})
+        Esercizi ({exercises.length})
       </h2>
 
       {exercises.length === 0 ? (

@@ -19,7 +19,8 @@
   gap: 0.65rem;
   min-height: 6rem;
   padding-top: 3.5rem;
-  background: var(--overlay);
+  /* Velo chiaro: il contenuto sotto resta riconoscibile mentre si aggiorna. */
+  background: color-mix(in srgb, var(--bg) 65%, transparent);
 }
 
 .busy-region__spinner {

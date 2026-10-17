@@ -29,7 +29,7 @@ export function DaySelector({
     <section className="day-selector" aria-labelledby="day-selector-title">
       <div className="header">
         <h2 id="day-selector-title" className="title">
-          GIORNI
+          Giorni
         </h2>
         <div className="day-actions">
           <button

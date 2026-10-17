@@ -19,7 +19,7 @@
 .client-analytics__insight {
   margin: 0 0 1rem;
   padding: 0.85rem 1rem;
-  border-radius: 0.75rem;
+  border-radius: var(--radius-xl);
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--text-h);
@@ -36,15 +36,13 @@
 .client-analytics__kpi {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 0.75rem;
+  border-radius: var(--radius-xl);
   padding: 0.85rem 1rem;
 
   & .label {
     display: block;
     font-size: 0.65rem;
     font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
     color: var(--text);
     margin-bottom: 0.35rem;
   }
@@ -72,7 +70,7 @@
 
 .client-analytics-skeleton__insight {
   margin-bottom: 1rem;
-  border-radius: 0.75rem;
+  border-radius: var(--radius-xl);
 }
 
 .client-analytics-skeleton .client-analytics__kpi {
@@ -88,7 +86,7 @@
   margin-bottom: 1.5rem;
   padding: 1rem;
   border: 1px solid var(--border);
-  border-radius: 0.85rem;
+  border-radius: var(--radius-xl);
   background: var(--surface);
 }
 
@@ -112,7 +110,7 @@
 
   & li {
     padding: 0.85rem 1rem;
-    border-radius: 0.75rem;
+    border-radius: var(--radius-xl);
     border: 1px solid var(--border);
     background: var(--surface);
     display: flex;

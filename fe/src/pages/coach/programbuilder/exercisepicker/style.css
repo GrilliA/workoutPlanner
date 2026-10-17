@@ -16,7 +16,7 @@
     color: var(--text);
 
     &.selected {
-      color: var(--accent);
+      color: var(--accent-text);
     }
 
     &.error {
@@ -36,7 +36,7 @@
     max-height: 18rem;
     overflow: auto;
     border: 1px solid var(--border);
-    border-radius: 0.75rem;
+    border-radius: var(--radius-xl);
     background: var(--surface-elevated);
     box-shadow: var(--shadow);
   }
@@ -52,7 +52,7 @@
     align-items: center;
     gap: 0.55rem;
     padding: 0.2rem 0.25rem;
-    border-radius: 0.5rem;
+    border-radius: var(--radius-md);
 
     &:hover,
     &:focus-within {
@@ -69,7 +69,7 @@
     gap: 0.1rem;
     padding: 0.45rem 0.35rem;
     border: 0;
-    border-radius: 0.4rem;
+    border-radius: var(--radius-sm);
     background: transparent;
     color: inherit;
     font: inherit;
@@ -77,7 +77,7 @@
     cursor: pointer;
 
     &:focus-visible {
-      outline: 2px solid var(--accent);
+      outline: 2px solid var(--accent-text);
       outline-offset: -2px;
     }
 

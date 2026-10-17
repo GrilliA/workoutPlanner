@@ -36,11 +36,11 @@
   text-decoration: none;
 
   &:hover {
-    color: var(--accent);
+    color: var(--accent-text);
   }
 
   &:focus-visible {
-    outline: var(--focus-ring-width) solid var(--accent);
+    outline: var(--focus-ring-width) solid var(--accent-text);
     outline-offset: var(--focus-ring-offset);
     border-radius: var(--radius-sm);
   }

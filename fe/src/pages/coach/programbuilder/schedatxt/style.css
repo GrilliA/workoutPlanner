@@ -5,7 +5,7 @@
   margin-bottom: 1.5rem;
   padding: 1rem;
   border: 1px solid var(--border);
-  border-radius: 0.85rem;
+  border-radius: var(--radius-xl);
   background: var(--surface);
 }
 
@@ -36,7 +36,7 @@
 .scheda-txt__link {
   border: none;
   background: transparent;
-  color: var(--accent);
+  color: var(--accent-text);
   font: inherit;
   font-size: 0.85rem;
   font-weight: 600;
@@ -61,7 +61,7 @@
   resize: vertical;
   min-height: 8rem;
   padding: 0.75rem;
-  border-radius: 0.65rem;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   background: var(--bg);
   color: var(--text-h);

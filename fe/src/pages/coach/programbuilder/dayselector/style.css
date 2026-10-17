@@ -50,7 +50,7 @@
   & .add-day {
     border: 0;
     background: transparent;
-    color: var(--accent);
+    color: var(--accent-text);
     font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;
@@ -70,7 +70,7 @@
 
   & .chip {
     border: 1px solid var(--border);
-    border-radius: 999px;
+    border-radius: var(--radius-full);
     background: var(--surface);
     color: var(--text);
     padding: 0.45rem 0.85rem;
@@ -80,16 +80,16 @@
   }
 
   & .chip.active {
-    border-color: var(--accent-border);
-    background: var(--accent);
-    color: var(--on-accent);
+    border-color: var(--ink);
+    background: var(--ink);
+    color: var(--on-ink);
   }
 
   & .remove-day {
     width: 1.35rem;
     height: 1.35rem;
     border: 0;
-    border-radius: 999px;
+    border-radius: var(--radius-full);
     background: transparent;
     color: var(--text);
     font-size: 1rem;

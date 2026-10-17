@@ -2,9 +2,9 @@ import type { StatsRange } from "@api";
 import type { AnalyticsRangeOption } from "../types";
 
 export const ANALYTICS_RANGE_OPTIONS: AnalyticsRangeOption[] = [
-  { range: "4w", label: "4 SETT", periodLabel: "ultime 4 settimane" },
-  { range: "12w", label: "12 SETT", periodLabel: "ultime 12 settimane" },
-  { range: "52w", label: "1 ANNO", periodLabel: "ultimo anno" },
+  { range: "4w", label: "4 settimane", periodLabel: "ultime 4 settimane" },
+  { range: "12w", label: "12 settimane", periodLabel: "ultime 12 settimane" },
+  { range: "52w", label: "1 anno", periodLabel: "ultimo anno" },
 ];
 
 export const getRangeOption = (range: StatsRange): AnalyticsRangeOption =>

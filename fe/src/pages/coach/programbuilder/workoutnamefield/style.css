@@ -9,7 +9,7 @@
 
   & .input-base {
     margin-top: 0.5rem;
-    border-radius: 0.85rem;
+    border-radius: var(--radius-xl);
     background: var(--surface);
     border-color: var(--border);
     color: var(--text-h);

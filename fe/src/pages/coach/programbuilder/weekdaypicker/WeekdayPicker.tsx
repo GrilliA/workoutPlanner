@@ -12,7 +12,7 @@ export function WeekdayPicker({ selected, taken, onToggle }: WeekdayPickerProps)
   return (
     <section className="weekday-picker" aria-labelledby="weekday-picker-title">
       <h2 id="weekday-picker-title" className="title">
-        GIORNI SETTIMANA
+        Giorni della settimana
       </h2>
 
       <div className="days" role="group" aria-label="Seleziona i giorni della settimana">

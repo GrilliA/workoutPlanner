@@ -3,8 +3,8 @@
 :root {
   font: var(--text-base) / 1.6 var(--sans);
   font-size: 15px;
-  font-weight: 400;
-  color-scheme: dark;
+  font-weight: 500;
+  color-scheme: light;
   color: var(--text);
   background-color: var(--bg);
   font-synthesis: none;

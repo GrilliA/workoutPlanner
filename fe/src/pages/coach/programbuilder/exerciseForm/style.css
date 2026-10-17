@@ -4,7 +4,7 @@
   gap: 0.85rem;
   padding: 1rem;
   border: 1px solid var(--border);
-  border-radius: 1rem;
+  border-radius: var(--radius-xl);
   background: var(--surface);
 
   & .numbers {

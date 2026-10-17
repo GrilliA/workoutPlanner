@@ -3,7 +3,7 @@
   overflow: hidden;
   background: var(--surface-elevated);
   border: 1px solid var(--accent-border);
-  border-radius: 0.75rem;
+  border-radius: var(--radius-xl);
   padding: 1.35rem 1.25rem;
   box-shadow: var(--shadow);
 
@@ -24,11 +24,9 @@
 }
 
 .library-cta__link {
-  color: var(--accent);
+  color: var(--accent-text);
   font-size: 0.7rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
   text-decoration: none;
 
   &:hover {
