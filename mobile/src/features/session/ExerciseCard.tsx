@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import type { Exercise } from "../../api";
 import type { SetSummary } from "../../api/schemas";
-import { AppText, Meta } from "../../components";
+import { AppText, fontForWeight, Meta } from "../../components";
 import { colors, radii, spacing } from "../../theme";
 import { exerciseEnglishLine, exerciseHeading } from "../workoutprogram/exerciseDisplay";
 import { ExerciseMediaFlip } from "./ExerciseMediaFlip";
@@ -738,7 +738,7 @@ function StepperRow({
 }: StepperRowProps) {
   return (
     <View style={[styles.stepperRow, large && styles.stepperRowLarge]}>
-      <AppText tone="muted" style={styles.stepperLabel}>
+      <AppText style={styles.stepperLabel}>
         {label}
       </AppText>
       <View style={styles.stepperControls}>
@@ -760,10 +760,14 @@ function StepperRow({
         {editing ? (
           <TextInput
             ref={inputRef}
-            style={[styles.valueInput, large && styles.valueInputLarge]}
+            style={[
+              styles.valueInput,
+              large && styles.valueInputLarge,
+              fontForWeight(styles.valueInput),
+            ]}
             value={value}
             placeholder={placeholder}
-            placeholderTextColor={colors.muted}
+            placeholderTextColor={colors.text}
             keyboardType={keyboardType}
             selectTextOnFocus
             onChangeText={onChangeText}
@@ -899,7 +903,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "700",
     textAlign: "center",
-    color: colors.muted,
+    color: colors.text,
   },
   setColSet: {
     width: 40,
@@ -916,13 +920,13 @@ const styles = StyleSheet.create({
   prevText: {
     fontSize: 11,
     fontWeight: "500",
-    color: colors.muted,
+    color: colors.text,
   },
   missedReps: {
     color: colors.danger,
   },
   plannedReps: {
-    color: colors.muted,
+    color: colors.text,
     fontWeight: "600",
   },
   chipRow: {
@@ -954,11 +958,11 @@ const styles = StyleSheet.create({
     color: colors.textHeading,
   },
   chipLabelPending: {
-    color: colors.muted,
+    color: colors.text,
     fontWeight: "600",
   },
   chipLabelNext: {
-    color: colors.accent,
+    color: colors.accentText,
   },
   doneLabel: {
     marginTop: spacing.sm,

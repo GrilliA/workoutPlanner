@@ -1,6 +1,6 @@
 import { router } from "expo-router";
-import { StyleSheet, Text, View } from "react-native";
-import { BrandLogo, PrimaryButton, Screen } from "../components";
+import { StyleSheet, View } from "react-native";
+import { AppText, BrandLogo, PrimaryButton, Screen } from "../components";
 import { colors, spacing } from "../theme";
 import { useAuth } from "./useAuth";
 
@@ -18,12 +18,12 @@ export function CoachBlockScreen() {
     <Screen>
       <View style={styles.content}>
         <BrandLogo size="lg" />
-        <Text style={styles.eyebrow}>AREA COACH</Text>
-        <Text style={styles.title}>Il pannello web è riservato ai coach</Text>
-        <Text style={styles.support}>
+        <AppText style={styles.eyebrow}>AREA COACH</AppText>
+        <AppText style={styles.title}>Il pannello web è riservato ai coach</AppText>
+        <AppText style={styles.support}>
           Accedi dal browser per gestire clienti, schede e assegnazioni. L'app
           mobile è dedicata agli atleti.
-        </Text>
+        </AppText>
         <PrimaryButton label="Esci" onPress={onLogout} />
       </View>
     </Screen>
@@ -38,7 +38,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   eyebrow: {
-    color: colors.accent,
+    color: colors.accentText,
     fontSize: 12,
     fontWeight: "700",
     letterSpacing: 1.2,
@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   support: {
-    color: colors.muted,
+    color: colors.text,
     fontSize: 15,
     lineHeight: 22,
     textAlign: "center",

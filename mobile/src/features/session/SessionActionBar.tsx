@@ -1,5 +1,6 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { AppText } from "../../components";
 import { colors, radii, spacing } from "../../theme";
 
 type SessionActionBarProps = {
@@ -31,7 +32,7 @@ export function SessionActionBar({
           (busy || pressed) && styles.dimmed,
         ]}
       >
-        <Text style={styles.completeLabel}>Termina</Text>
+        <AppText style={styles.completeLabel}>Termina</AppText>
       </Pressable>
     </View>
   );
@@ -45,7 +46,7 @@ const styles = StyleSheet.create({
   },
   completeBtn: {
     borderWidth: 1,
-    borderColor: colors.muted,
+    borderColor: colors.text,
     borderRadius: radii.lg,
     paddingVertical: 14,
     alignItems: "center",

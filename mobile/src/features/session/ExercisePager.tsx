@@ -84,16 +84,16 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     fontSize: 12,
     letterSpacing: 0.6,
-    color: colors.muted,
+    color: colors.text,
   },
   nextLabel: {
     fontWeight: "700",
     fontSize: 12,
     letterSpacing: 0.8,
-    color: colors.accent,
+    color: colors.accentText,
     textTransform: "uppercase",
   },
   disabledLabel: {
-    color: colors.muted,
+    color: colors.text,
   },
 });

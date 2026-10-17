@@ -1,15 +1,17 @@
 import { StyleSheet, TextInput, type TextInputProps } from "react-native";
 import { colors, radii, spacing } from "../../theme";
+import { fontForWeight } from "../text";
 
-/** Campo testo scuro con bordo, allineato agli input web. */
+/** Campo testo bianco con bordo caldo, raggio 16. */
 export function TextField(props: TextInputProps) {
+  const inputStyle = [styles.input, props.style];
   return (
     <TextInput
-      placeholderTextColor={colors.muted}
+      placeholderTextColor={colors.text}
       autoCapitalize="none"
       autoCorrect={false}
       {...props}
-      style={[styles.input, props.style]}
+      style={[inputStyle, fontForWeight(inputStyle)]}
     />
   );
 }
@@ -19,6 +21,7 @@ export const Field = TextField;
 
 const styles = StyleSheet.create({
   input: {
+    minHeight: 52,
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
@@ -28,5 +31,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     marginBottom: spacing.sm,
     fontSize: 16,
+    fontWeight: "500",
   },
 });

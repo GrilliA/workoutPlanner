@@ -20,7 +20,8 @@ const RestTimerActivity = (
 ) => {
   "widget";
 
-  const accent = environment.isLuminanceReduced ? "#ffffff" : "#bfdbf7";
+  // Il widget gira fuori dall'app e non importa il tema: "#FF7A45" = colors.accent.
+  const accent = environment.isLuminanceReduced ? "#ffffff" : "#FF7A45";
   const timerInterval = {
     lower: new Date(props.startedAtMs),
     upper: new Date(props.endsAtMs),

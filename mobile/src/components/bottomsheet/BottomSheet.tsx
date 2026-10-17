@@ -9,7 +9,7 @@ import {
   type ViewStyle,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { colors, spacing } from "../../theme";
+import { colors, radii, spacing } from "../../theme";
 import { Heading } from "../text";
 
 type BottomSheetProps = {
@@ -101,14 +101,12 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(10, 11, 14, 0.6)",
+    backgroundColor: colors.scrim,
   },
   sheet: {
-    backgroundColor: colors.surfaceElevated,
-    borderTopLeftRadius: 22,
-    borderTopRightRadius: 22,
-    borderTopWidth: 1,
-    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: radii.xl,
+    borderTopRightRadius: radii.xl,
     paddingTop: 10,
     paddingHorizontal: spacing.lg,
   },
@@ -117,7 +115,7 @@ const styles = StyleSheet.create({
     width: 38,
     height: 5,
     borderRadius: 3,
-    backgroundColor: "rgba(224, 224, 224, 0.25)",
+    backgroundColor: colors.border,
     marginBottom: spacing.md,
   },
   title: {

@@ -21,6 +21,7 @@ import {
   DangerButton,
   ErrorBanner,
   Field,
+  fontForWeight,
   Heading,
   Meta,
   PrimaryButton,
@@ -128,11 +129,11 @@ function ImportSchedaModal({ onClose, onApply }: ImportSchedaModalProps) {
             />
             <TextInput
               placeholder="Incolla qui la scheda TXT"
-              placeholderTextColor={colors.muted}
+              placeholderTextColor={colors.text}
               value={text}
               onChangeText={setText}
               multiline
-              style={styles.txt}
+              style={[styles.txt, fontForWeight(styles.txt)]}
             />
             <PrimaryButton
               label="Importa"

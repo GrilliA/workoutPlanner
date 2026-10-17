@@ -65,14 +65,14 @@ export function ProgramExerciseCard({
             >
               <AppText
                 variant="eyebrow"
-                tone="muted"
+               
                 style={styles.legendLabel}
               >
                 {prescriptions.length} serie
               </AppText>
               <AppText
                 variant="eyebrow"
-                tone="muted"
+               
                 style={styles.legendLabel}
               >
                 Reps / recupero

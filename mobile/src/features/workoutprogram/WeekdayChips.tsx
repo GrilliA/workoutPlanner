@@ -43,7 +43,7 @@ export function WeekdayChips({
           >
             <AppText
               style={[styles.chipLabel, isOn && styles.chipLabelOn]}
-              tone={isOn ? "heading" : "muted"}
+              tone={isOn ? "heading" : "default"}
             >
               {label}
             </AppText>
@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   chipLabelOn: {
-    color: colors.accent,
+    color: colors.accentText,
   },
   dimmed: {
     opacity: 0.5,

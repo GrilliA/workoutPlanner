@@ -8,6 +8,7 @@ export {
   Eyebrow,
   Meta,
   SectionLabel,
+  fontForWeight,
 } from "./text";
 export { Button, PrimaryButton, SecondaryButton, DangerButton } from "./button";
 export { TextField, Field } from "./input";

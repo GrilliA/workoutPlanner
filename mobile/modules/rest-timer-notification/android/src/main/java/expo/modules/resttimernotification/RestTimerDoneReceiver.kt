@@ -28,7 +28,8 @@ private const val SHOW_REQUEST_CODE = 4204
 private const val DONE_CHANNEL_ID = "rest-timer"
 private const val PREFS_NAME = "rest-timer-notification"
 private const val EXACT_ALARM_PROMPTED_KEY = "exact-alarm-prompted"
-private const val NOTIFICATION_COLOR = 0xFFBFDBF7.toInt()
+// colors.accent del tema "Sole" (mobile/src/theme/colors.ts)
+private const val NOTIFICATION_COLOR = 0xFFFF7A45.toInt()
 
 internal object RestTimerDoneAlarm {
   @Volatile

@@ -55,21 +55,21 @@ export function SetPrescriptionEditor({
       >
         <AppText
           variant="eyebrow"
-          tone="muted"
+         
           style={[styles.headerLabel, styles.indexCol]}
         >
           Serie
         </AppText>
         <AppText
           variant="eyebrow"
-          tone="muted"
+         
           style={[styles.headerLabel, styles.repsCol]}
         >
           Reps
         </AppText>
         <AppText
           variant="eyebrow"
-          tone="muted"
+         
           style={[styles.headerLabel, styles.restCol]}
         >
           Recupero
@@ -234,12 +234,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   stepLabel: {
-    color: colors.accent,
+    color: colors.accentText,
     fontSize: 18,
     fontWeight: "700",
   },
   stepLabelDisabled: {
-    color: colors.muted,
+    color: colors.text,
     opacity: 0.4,
   },
   stepValue: {

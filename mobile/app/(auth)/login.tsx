@@ -4,13 +4,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
-  Text,
   View,
 } from "react-native";
 import { ApiError } from "../../src/api/client";
 import { API_BASE } from "../../src/api/config";
 import { useAuth } from "../../src/auth";
 import {
+  AppText,
   Body,
   BrandLogo,
   ErrorBanner,
@@ -55,7 +55,7 @@ export default function LoginScreen() {
       >
         <View style={styles.brand}>
           <BrandLogo size="lg" />
-          <Text style={styles.eyebrow}>AREA ATLETA</Text>
+          <AppText style={styles.eyebrow}>AREA ATLETA</AppText>
           <Body>Accedi per allenarti e registrare le serie</Body>
         </View>
         <View style={styles.form}>
@@ -82,7 +82,7 @@ export default function LoginScreen() {
             disabled={busy || !email || !password}
           />
           <Link href="/(auth)/register" asChild>
-            <Text style={styles.link}>Crea un account</Text>
+            <AppText style={styles.link}>Crea un account</AppText>
           </Link>
         </View>
       </KeyboardAvoidingView>
@@ -98,14 +98,14 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   eyebrow: {
-    color: colors.accent,
+    color: colors.accentText,
     fontSize: 12,
     fontWeight: "700",
     letterSpacing: 1.2,
   },
   form: { marginTop: spacing.md },
   link: {
-    color: colors.accent,
+    color: colors.accentText,
     textAlign: "center",
     marginTop: spacing.md,
     fontWeight: "600",
