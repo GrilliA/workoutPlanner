@@ -78,6 +78,7 @@ h3{font-size:22px}
 .wl-consent input{margin-top:2px;accent-color:var(--accent);width:17px;height:17px;flex:none}
 .wl-msg{font-size:14px;font-weight:700;color:var(--data);margin:8px 4px 0}
 .wl-msg:empty{display:none}
+.wl-form.err .wl-msg{color:var(--error)}
 
 /* PHONE MOCKUP (schermate Sole) */
 .phone{width:272px;height:560px;border-radius:44px;background:#231A14;padding:9px;box-shadow:0 40px 70px -30px rgb(35 26 20 / .45);position:relative;flex:none}

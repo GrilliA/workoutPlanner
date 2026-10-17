@@ -53,8 +53,8 @@ jobs:
         run: npm run build:pages
         env:
           ASTRO_TELEMETRY_DISABLED: 1
-          # Public form URL. Empty until the owner sets the repository variable.
-          PUBLIC_WAITLIST_ENDPOINT: ${{ vars.PUBLIC_WAITLIST_ENDPOINT }}
+          # Public form URL. The repository variable overrides the Railway default.
+          PUBLIC_WAITLIST_ENDPOINT: ${{ vars.PUBLIC_WAITLIST_ENDPOINT || 'https://workoutplanner-production-974a.up.railway.app/api/waitlist' }}
 
       # One Pages site per repo. The coach panel stays at the site root
       # (https://grillia.github.io/workoutPlanner/). The waitlist is a subpath

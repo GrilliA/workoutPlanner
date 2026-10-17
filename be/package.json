@@ -7,6 +7,7 @@
     "drizzle-orm": "^0.45.2",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
+    "nodemailer": "^10.1.2",
     "pg": "^8.21.0"
   },
   "devDependencies": {
@@ -38,7 +39,7 @@
     "db:up": "docker compose -f ../docker-compose.yml up -d",
     "db:down": "docker compose -f ../docker-compose.yml down",
     "db:logs": "docker compose -f ../docker-compose.yml logs -f postgres",
-    "test": "node --import tsx --test src/services/*.test.ts src/middleware/*.test.ts",
+    "test": "node --import tsx --test src/services/*.test.ts src/middleware/*.test.ts src/waitlist/*.test.ts",
     "test:e2e": "node --import tsx --test src/e2e/*.e2e.test.ts"
   },
   "keywords": [],

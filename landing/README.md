@@ -17,9 +17,9 @@ npm run build:pages  # dist/ with base /workoutPlanner/landing
 
 ## Waitlist form
 
-`PUBLIC_WAITLIST_ENDPOINT` is inlined at build time (see `.env.example`). An empty or missing value leaves `action="#"`, and the form shows the demo success state. The form still requires GDPR consent, ignores the `company` honeypot, and copies `?ref=` into a hidden field.
+`PUBLIC_WAITLIST_ENDPOINT` is inlined at build time (see `.env.example`). An empty or missing value leaves `action="#"`, and the form shows the demo success state. The form still requires GDPR consent, sends the `company` honeypot, and copies `?ref=` into a hidden field. A real endpoint receives JSON and the page shows the API error text when the request fails.
 
-On GitHub the value is the repository variable `PUBLIC_WAITLIST_ENDPOINT` (Settings → Secrets and variables → Actions → Variables). It is not a secret.
+Production target: `https://workoutplanner-production-974a.up.railway.app/api/waitlist`. The Pages workflow uses the repository variable `PUBLIC_WAITLIST_ENDPOINT` when it is set, and that Railway URL otherwise. The handler lives in [`be/src/waitlist`](../be/src/waitlist/README.md).
 
 ## Published URLs
 

@@ -64,6 +64,6 @@ One site, two paths. The coach panel stays where it is; the waitlist is a subpat
 - App: https://grillia.github.io/workoutPlanner/
 - Landing: https://grillia.github.io/workoutPlanner/landing/
 
-The waitlist form uses the repository variable `PUBLIC_WAITLIST_ENDPOINT` at build time. Until that variable is set, the form shows a demo success state. See [`landing/README.md`](landing/README.md).
+The waitlist form posts to the API at `https://workoutplanner-production-974a.up.railway.app/api/waitlist`. See [`be/src/waitlist/README.md`](be/src/waitlist/README.md) and [`landing/README.md`](landing/README.md).
 
 See [`AGENTS.md`](AGENTS.md) for details.
