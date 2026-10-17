@@ -14,18 +14,6 @@ export const formatGreeting = (fullName: string | null | undefined): string => {
   return `Ciao, ${firstName}`;
 };
 
-export const formatInitials = (fullName: string | null | undefined): string => {
-  const parts = (fullName ?? "").trim().split(/\s+/).filter((part) => part.length > 0);
-  if (parts.length === 0) {
-    return "?";
-  }
-  return parts
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
-};
-
 /** "sabato 17 ottobre" da una data YYYY-MM-DD di Roma. */
 export const formatLongDate = (dateKey: string): string =>
   dateFromRomeDateKey(dateKey).toLocaleDateString("it-IT", {

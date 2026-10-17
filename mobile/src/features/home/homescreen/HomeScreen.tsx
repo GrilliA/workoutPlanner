@@ -23,11 +23,11 @@ import {
   type MascotName,
 } from "../../../components";
 import { colors, radii, spacing } from "../../../theme";
+import { formatInitials } from "../../../utils/initials";
 import { toRomeDateKey } from "../../../utils/romeCalendar";
 import { ChangeWorkoutSheet } from "../changeworkoutsheet";
 import {
   formatGreeting,
-  formatInitials,
   formatLastSession,
   formatLongDate,
   formatNextWorkout,
@@ -280,8 +280,8 @@ function NoProgramState({ reason }: { reason: NoProgramReason }) {
   const copy = NO_PROGRAM_COPY[reason];
   const isNoCoach = reason === "no-coach";
   const openNewWorkout = () => router.push("/workout/new");
-  const openSettings = () => router.push("/(app)/settings");
-  const onAction = isNoCoach ? openSettings : openNewWorkout;
+  const openCoach = () => router.push("/(app)/settings/coach");
+  const onAction = isNoCoach ? openCoach : openNewWorkout;
   const onLink = copy.linkLabel ? openNewWorkout : undefined;
 
   return (

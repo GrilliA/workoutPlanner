@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   formatGreeting,
-  formatInitials,
   formatLastSession,
   formatLongDate,
   formatNextWorkout,
@@ -18,13 +17,6 @@ describe("formatGreeting", () => {
   it("says just Ciao without a name", () => {
     assert.equal(formatGreeting(null), "Ciao");
     assert.equal(formatGreeting("  "), "Ciao");
-  });
-});
-
-describe("formatInitials", () => {
-  it("takes up to two initials", () => {
-    assert.equal(formatInitials("marco bianchi rossi"), "MB");
-    assert.equal(formatInitials(undefined), "?");
   });
 });
 
