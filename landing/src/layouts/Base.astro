@@ -25,6 +25,24 @@ const { title, description } = Astro.props;
     <script>
       const params = new URLSearchParams(location.search);
       const forms = document.querySelectorAll<HTMLFormElement>("form[data-waitlist]");
+      const fallbackError = "Qualcosa è andato storto, riprova.";
+
+      const messageFromResponse = async (response: Response): Promise<string> => {
+        const body: unknown = await response.json().catch(() => null);
+        if (!body || typeof body !== "object" || !("error" in body)) {
+          return fallbackError;
+        }
+        const error = body.error;
+        if (typeof error !== "string") {
+          return fallbackError;
+        }
+        const trimmed = error.trim();
+        if (trimmed === "" || trimmed.length > 200) {
+          return fallbackError;
+        }
+        return trimmed;
+      };
+
       for (const form of forms) {
         const ref = form.querySelector<HTMLInputElement>("[data-ref]");
         if (ref) {
@@ -37,26 +55,44 @@ const { title, description } = Astro.props;
             return;
           }
           const data = new FormData(form);
-          if (data.get("company")) {
-            return;
-          }
           const action = form.getAttribute("action");
           const endpointMissing = !action || action === "#";
           if (endpointMissing) {
             message.textContent = "Sei in lista! (demo: endpoint non ancora configurato)";
+            form.classList.remove("err");
             form.classList.add("ok");
             return;
           }
+          const payload = {
+            email: String(data.get("email") ?? ""),
+            role: String(data.get("role") ?? ""),
+            consent: data.get("consent") === "yes",
+            ref: String(data.get("ref") ?? ""),
+            company: String(data.get("company") ?? ""),
+          };
           try {
-            const response = await fetch(action, { method: "POST", body: data });
+            const response = await fetch(action, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Accept: "application/json" },
+              body: JSON.stringify(payload),
+            });
             if (response.ok) {
-              message.textContent = "Sei in lista! Controlla la mail per confermare.";
+              message.textContent = "Sei in lista. Ti avvisiamo quando apre il test.";
+              form.classList.remove("err");
               form.classList.add("ok");
               return;
             }
-            message.textContent = "Qualcosa è andato storto, riprova.";
+            const showServerMessage =
+              response.status === 400 || response.status === 413 || response.status === 429;
+            message.textContent = showServerMessage
+              ? await messageFromResponse(response)
+              : fallbackError;
+            form.classList.remove("ok");
+            form.classList.add("err");
           } catch {
             message.textContent = "Errore di rete, riprova tra poco.";
+            form.classList.remove("ok");
+            form.classList.add("err");
           }
         });
       }

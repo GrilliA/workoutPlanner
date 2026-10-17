@@ -13,3 +13,4 @@ export * from "./exercisesets";
 export * from "./exercisecatalog";
 export * from "./workoutsessions";
 export * from "./loggedsets";
+export * from "../../waitlist/schema";
