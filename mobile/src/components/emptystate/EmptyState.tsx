@@ -41,7 +41,7 @@ export function EmptyState({
           onPress={onLink}
           accessibilityRole="link"
           hitSlop={8}
-          style={({ pressed }) => pressed && styles.linkPressed}
+          style={({ pressed }) => [styles.link, pressed && styles.linkPressed]}
         >
           <AppText variant="label" tone="accent">
             {linkLabel}
@@ -74,6 +74,11 @@ const styles = StyleSheet.create({
     width: "100%",
     maxWidth: 280,
     marginTop: spacing.lg,
+  },
+  link: {
+    minHeight: 48,
+    justifyContent: "center",
+    marginTop: spacing.sm,
   },
   linkPressed: {
     opacity: 0.7,

@@ -7,40 +7,38 @@
 
 .analytics-kpi {
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 0.75rem;
-  padding: 1rem 1.1rem;
+  border: 1px solid var(--surface);
+  border-radius: var(--radius-xl);
+  padding: 1.15rem 1.25rem;
+  box-shadow: var(--shadow);
 
   & .label {
     display: block;
-    font-size: 0.65rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--muted, #666);
-    margin-bottom: 0.5rem;
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: var(--space-2);
   }
 
+  /* Numero grande, nota sotto. */
   & .value-row {
     display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 0.5rem;
+    flex-direction: column;
+    gap: var(--space-1);
   }
 
   & .value {
-    font-size: 1.65rem;
-    font-weight: 700;
+    font-size: 2.25rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
     line-height: 1;
     color: var(--text-h);
   }
 
   & .hint {
-    font-size: 0.65rem;
-    font-weight: 700;
-    color: var(--accent);
-    text-align: right;
-    max-width: 45%;
+    font-size: var(--text-xs);
+    font-weight: 600;
+    color: var(--text);
   }
 }
 
@@ -48,11 +46,18 @@
   color: var(--warning);
 }
 
+/* "Da controllare": tutta la card in rosso tenue. */
+.analytics-kpi--danger {
+  background: var(--error-bg);
+  border-color: var(--error-bg);
+}
+
 .analytics-kpi--danger .value,
-.analytics-kpi--danger .hint {
-  color: var(--error, #f87171);
+.analytics-kpi--danger .hint,
+.analytics-kpi--danger .label {
+  color: var(--error);
 }
 
 .analytics-kpi--accent .hint {
-  color: var(--accent);
+  color: var(--accent-text);
 }

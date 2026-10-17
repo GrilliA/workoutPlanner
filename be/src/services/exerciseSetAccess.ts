@@ -17,6 +17,10 @@ export async function getSetPrescriptionsByExerciseIds(
       exerciseId: exerciseSets.exerciseId,
       setNumber: exerciseSets.setNumber,
       reps: exerciseSets.reps,
+      repsMax: exerciseSets.repsMax,
+      loadValue: exerciseSets.loadValue,
+      loadUnit: exerciseSets.loadUnit,
+      rir: exerciseSets.rir,
       restSec: exerciseSets.restSec,
     })
     .from(exerciseSets)
@@ -33,6 +37,10 @@ export async function getSetPrescriptionsByExerciseIds(
           {
             setNumber: row.setNumber,
             reps: row.reps,
+            repsMax: row.repsMax,
+            loadValue: row.loadValue,
+            loadUnit: row.loadUnit,
+            rir: row.rir,
             restSec: row.restSec,
           },
         ],
@@ -55,9 +63,7 @@ export async function replaceSetPrescriptionsForExercise(
       await tx.insert(exerciseSets).values(
         prescriptions.map((prescription) => ({
           exerciseId,
-          setNumber: prescription.setNumber,
-          reps: prescription.reps,
-          restSec: prescription.restSec,
+          ...prescription,
         })),
       );
     }

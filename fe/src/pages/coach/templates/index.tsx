@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import { getCoachTemplates, useQuery } from "@api";
 import { PageHeader } from "@components/pageHeader";
-import { CoachCard, CoachCardList } from "../coachCard";
+import { CoachCard, CoachCardList, CoachCardListSkeleton } from "../coachCard";
 import "../style.css";
 
 export default function TemplatesPage() {
@@ -24,7 +24,7 @@ export default function TemplatesPage() {
       />
 
       {isPending ? (
-        <p className="coach-empty">Caricamento…</p>
+        <CoachCardListSkeleton />
       ) : null}
 
       {!isPending && templates.length === 0 ? (

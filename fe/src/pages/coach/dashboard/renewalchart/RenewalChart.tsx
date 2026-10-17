@@ -36,6 +36,10 @@ export function RenewalChart({ model }: RenewalChartProps) {
                   : Math.max(8, (bar.count / maxCount) * (CHART_HEIGHT - 24));
               const x = index * slotWidth + BAR_GAP / 2;
               const y = CHART_HEIGHT - height - 8;
+              const isCurrentWeek = index === model.bars.length - 1;
+              const barClassName = isCurrentWeek
+                ? "renewal-chart__bar renewal-chart__bar--current"
+                : "renewal-chart__bar";
 
               return (
                 <rect
@@ -45,7 +49,7 @@ export function RenewalChart({ model }: RenewalChartProps) {
                   width={BAR_WIDTH}
                   height={height}
                   rx={3}
-                  className="renewal-chart__bar"
+                  className={barClassName}
                 >
                   <title>{bar.accessibilityLabel}</title>
                 </rect>

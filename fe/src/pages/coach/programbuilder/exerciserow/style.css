@@ -1,0 +1,95 @@
+.exercise-row {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+
+  & .media {
+    position: relative;
+  }
+
+  & .index {
+    position: absolute;
+    top: 0.65rem;
+    left: 0.65rem;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: var(--radius-full);
+    background: var(--accent);
+    color: var(--on-accent);
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  & .remove {
+    position: absolute;
+    top: 0.65rem;
+    right: 0.65rem;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-md);
+    background: var(--scrim);
+    color: var(--text-h);
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      color: var(--text-h);
+      background: var(--scrim-strong);
+      outline: none;
+    }
+
+    & svg {
+      width: 1rem;
+      height: 1rem;
+    }
+  }
+
+  & .copy {
+    min-width: 0;
+    padding: 0.85rem 1rem 1rem;
+  }
+
+  & .name {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-h);
+  }
+
+  & .name-en {
+    margin: 0.15rem 0 0;
+    font-size: 0.8rem;
+    color: var(--text);
+  }
+
+  & .meta {
+    margin: 0.25rem 0 0;
+    font-size: 0.85rem;
+    color: var(--text);
+  }
+
+  & .notes {
+    margin: var(--space-1) 0 0;
+    font-size: var(--text-sm);
+    font-style: italic;
+    color: var(--text);
+    white-space: pre-line;
+  }
+
+  & .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+  }
+}

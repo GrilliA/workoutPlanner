@@ -30,7 +30,7 @@
 .coach-dashboard__empty {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 0.85rem;
+  border-radius: var(--radius-xl);
   padding: 1.5rem;
 
   & h2 {

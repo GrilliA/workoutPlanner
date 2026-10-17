@@ -26,6 +26,10 @@ async function migrateExerciseSets() {
     const prescriptions = Array.from({ length: setCount }, (_, index) => ({
       setNumber: index + 1,
       reps,
+      repsMax: null,
+      loadValue: null,
+      loadUnit: null,
+      rir: null,
       restSec: row.defaultRestSec,
     }));
 

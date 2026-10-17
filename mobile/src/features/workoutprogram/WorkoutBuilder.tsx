@@ -21,6 +21,7 @@ import {
   DangerButton,
   ErrorBanner,
   Field,
+  fontForWeight,
   Heading,
   Meta,
   PrimaryButton,
@@ -128,11 +129,11 @@ function ImportSchedaModal({ onClose, onApply }: ImportSchedaModalProps) {
             />
             <TextInput
               placeholder="Incolla qui la scheda TXT"
-              placeholderTextColor={colors.muted}
+              placeholderTextColor={colors.text}
               value={text}
               onChangeText={setText}
               multiline
-              style={styles.txt}
+              style={[styles.txt, fontForWeight(styles.txt)]}
             />
             <PrimaryButton
               label="Importa"
@@ -332,7 +333,7 @@ export function WorkoutBuilder({
 
           {!openDay ? (
             <View style={styles.block}>
-              <SectionLabel>NOME SCHEDA</SectionLabel>
+              <SectionLabel>Nome scheda</SectionLabel>
               <Field
                 placeholder="Nome scheda"
                 value={draft.name}
@@ -342,7 +343,7 @@ export function WorkoutBuilder({
                 editable={!readOnly && !busy}
               />
 
-              <SectionLabel>GIORNI</SectionLabel>
+              <SectionLabel>Giorni</SectionLabel>
               {draft.days.map((day) => (
                 <Pressable
                   key={day.key}
@@ -390,7 +391,7 @@ export function WorkoutBuilder({
                 disabled={readOnly || busy}
               />
 
-              <SectionLabel>ESERCIZI</SectionLabel>
+              <SectionLabel>Esercizi</SectionLabel>
               {openDay.exercises.length === 0 ? (
                 <Body>Nessun esercizio in questo giorno.</Body>
               ) : (

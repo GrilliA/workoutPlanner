@@ -19,7 +19,7 @@ import NewAssignmentPage from "@pages/coach/assignments/new";
 import EditClientProgramPage from "@pages/coach/programs/edit";
 import ViewClientProgramPage from "@pages/coach/programs/view";
 
-// Web is coach-only. Athletes use mobile/. Coach reuses workouts/new/** for builders.
+// Web is coach-only. Athletes use mobile/. Templates and client programs share pages/coach/programbuilder/.
 
 function AppRoutes() {
   const [location] = useLocation();

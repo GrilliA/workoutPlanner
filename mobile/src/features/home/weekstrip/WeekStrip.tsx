@@ -5,47 +5,47 @@ import type { WeekStripDay } from "../types";
 
 type WeekStripProps = {
   days: WeekStripDay[];
-  /** Giorno calendario selezionato (YYYY-MM-DD), distinto da “oggi”. */
+  /** Giorno scelto dall'atleta (YYYY-MM-DD), distinto da "oggi". */
   selectedDateKey?: string | null;
   onDayPress?: (day: WeekStripDay) => void;
 };
 
-/** Strip 7 giorni — stati today / selected / workout / rest. */
+/**
+ * Settimana a chip "Sole": oggi = pill ink, giorni con allenamento =
+ * bianco con punto arancio, riposo = solo testo.
+ */
 export function WeekStrip({
   days,
   selectedDateKey = null,
   onDayPress,
 }: WeekStripProps) {
   return (
-    <View style={styles.row} accessibilityLabel="Programma settimanale">
+    <View style={styles.row} accessibilityLabel="Settimana">
       {days.map((day) => {
-        const interactive = Boolean(onDayPress) && !day.isRest;
-        const isSelected = selectedDateKey === day.dateKey;
+        const isInteractive = Boolean(onDayPress) && !day.isRest;
+        const isSelected = selectedDateKey === day.dateKey && !day.isToday;
         const cellStyle = [
           styles.day,
-          day.isToday && !isSelected && styles.dayToday,
+          !day.isRest && styles.dayWorkout,
           isSelected && styles.daySelected,
-          !day.isToday && !isSelected && !day.isRest && styles.dayWorkout,
-          !day.isToday && !isSelected && day.isRest && styles.dayRest,
+          day.isToday && styles.dayToday,
         ];
+        const labelColor = day.isToday ? colors.onInk : colors.text;
+        const numberColor = day.isToday ? colors.onInk : colors.textHeading;
 
         const content = (
           <>
-            <AppText
-              variant="eyebrow"
-              tone={isSelected || day.isToday ? "accent" : "muted"}
-              style={styles.label}
-            >
+            <AppText style={[styles.label, { color: labelColor }]}>
               {day.weekdayLabel}
             </AppText>
-            <AppText tone="heading" style={styles.number}>
+            <AppText style={[styles.number, { color: numberColor }]}>
               {day.dayNumber}
             </AppText>
-            {!day.isRest ? <View style={styles.dot} /> : <View style={styles.dotSpacer} />}
+            <View style={[styles.dot, !day.isRest && styles.dotOn]} />
           </>
         );
 
-        if (!interactive) {
+        if (!isInteractive) {
           return (
             <View key={day.dateKey} style={cellStyle}>
               {content}
@@ -53,16 +53,15 @@ export function WeekStrip({
           );
         }
 
+        const workoutLabel = day.workoutDayName ? `: ${day.workoutDayName}` : "";
         return (
           <Pressable
             key={day.dateKey}
             accessibilityRole="button"
             accessibilityState={{ selected: isSelected }}
-            accessibilityLabel={`${day.weekdayLabel} ${day.dayNumber}${
-              day.workoutDayName ? `: ${day.workoutDayName}` : ""
-            }`}
+            accessibilityLabel={`${day.weekdayLabel} ${day.dayNumber}${workoutLabel}`}
             onPress={() => onDayPress?.(day)}
-            style={cellStyle}
+            style={({ pressed }) => [cellStyle, pressed && styles.pressed]}
           >
             {content}
           </Pressable>
@@ -75,50 +74,47 @@ export function WeekStrip({
 const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
-    gap: spacing.xs,
+    gap: 6,
   },
   day: {
     flex: 1,
+    minHeight: 72,
     alignItems: "center",
+    justifyContent: "center",
     paddingVertical: spacing.sm,
-    borderRadius: radii.md,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderRadius: radii.pill,
+    borderWidth: 1.5,
+    borderColor: "transparent",
     gap: 2,
   },
-  dayToday: {
-    backgroundColor: colors.accentBg,
-    borderColor: colors.accentBorder,
+  dayWorkout: {
+    backgroundColor: colors.surface,
   },
   daySelected: {
-    backgroundColor: colors.accentBg,
     borderColor: colors.accent,
-    borderWidth: 1.5,
   },
-  dayWorkout: {
-    borderColor: "rgba(191, 219, 247, 0.25)",
+  dayToday: {
+    backgroundColor: colors.ink,
   },
-  dayRest: {
-    opacity: 0.5,
+  pressed: {
+    opacity: 0.7,
   },
   label: {
-    fontSize: 10,
-    letterSpacing: 0.5,
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: "600",
   },
   number: {
-    fontSize: 14,
-    fontWeight: "700",
+    fontSize: 17,
+    lineHeight: 22,
+    fontWeight: "800",
   },
   dot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colors.accent,
-    marginTop: 2,
+    width: 5,
+    height: 5,
+    borderRadius: radii.pill,
   },
-  dotSpacer: {
-    width: 4,
-    height: 4,
-    marginTop: 2,
+  dotOn: {
+    backgroundColor: colors.accent,
   },
 });

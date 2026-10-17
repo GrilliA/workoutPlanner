@@ -8,7 +8,7 @@ type ListRowProps = {
   onPress?: () => void;
 };
 
-/** Riga lista (sessioni / schede) con titolo + meta. */
+/** Riga lista (sessioni / schede) con titolo + meta, separatore `border`. */
 export function ListRow({ title, meta, onPress }: ListRowProps) {
   const content = (
     <View style={styles.row}>
@@ -24,7 +24,11 @@ export function ListRow({ title, meta, onPress }: ListRowProps) {
   }
 
   return (
-    <Pressable onPress={onPress} accessibilityRole="button">
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      style={({ pressed }) => pressed && styles.pressed}
+    >
       {content}
     </Pressable>
   );
@@ -32,13 +36,18 @@ export function ListRow({ title, meta, onPress }: ListRowProps) {
 
 const styles = StyleSheet.create({
   row: {
+    minHeight: 56,
+    justifyContent: "center",
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
     gap: 4,
   },
   title: {
-    fontWeight: "600",
+    fontWeight: "700",
     fontSize: 16,
+  },
+  pressed: {
+    opacity: 0.6,
   },
 });

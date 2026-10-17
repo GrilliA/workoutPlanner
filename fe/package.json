@@ -11,7 +11,7 @@
     "preview": "vite preview",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "test": "tsx --tsconfig tsconfig.app.json --test src/pages/workouts/new/schedatxt/*.test.ts src/components/storybookCoverage.test.ts src/pages/coach/dashboard/mappers/mapDashboard.test.ts"
+    "test": "tsx --tsconfig tsconfig.app.json --test 'src/**/*.test.ts'"
   },
   "dependencies": {
     "react": "^19.2.6",

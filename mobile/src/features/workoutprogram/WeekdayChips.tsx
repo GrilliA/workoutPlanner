@@ -43,7 +43,7 @@ export function WeekdayChips({
           >
             <AppText
               style={[styles.chipLabel, isOn && styles.chipLabelOn]}
-              tone={isOn ? "heading" : "muted"}
+              tone={isOn ? "heading" : "default"}
             >
               {label}
             </AppText>
@@ -61,25 +61,26 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   chip: {
-    minWidth: 40,
-    paddingVertical: spacing.xs,
+    minWidth: 48,
+    minHeight: 40,
+    justifyContent: "center",
     paddingHorizontal: spacing.sm,
-    borderRadius: radii.sm,
+    borderRadius: radii.pill,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.bg,
+    backgroundColor: colors.surface,
     alignItems: "center",
   },
   chipOn: {
-    borderColor: colors.accent,
-    backgroundColor: colors.accentBg,
+    borderColor: colors.ink,
+    backgroundColor: colors.ink,
   },
   chipLabel: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: "700",
   },
   chipLabelOn: {
-    color: colors.accent,
+    color: colors.onInk,
   },
   dimmed: {
     opacity: 0.5,

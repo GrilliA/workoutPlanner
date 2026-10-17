@@ -110,11 +110,11 @@ export function RestTimerCard({
         <View style={[styles.stage, isDone && styles.stageDone]}>
           <View style={styles.stageTop}>
             <Mascot name="sleeping" size={72} />
-            <AppText variant="eyebrow" tone="muted" style={styles.eyebrow}>
-              {isDone ? "RECUPERO FINITO" : "RECUPERO"}
+            <AppText variant="eyebrow" style={styles.eyebrow}>
+              {isDone ? "Recupero finito" : "Recupero"}
             </AppText>
           </View>
-          <AppText variant="title" tone="accent" style={styles.clock}>
+          <AppText variant="title" style={styles.clock}>
             {formatCountdown(isDone ? 0 : remainingSec)}
           </AppText>
           <View
@@ -138,19 +138,14 @@ export function RestTimerCard({
                 pressed && styles.pressed,
               ]}
             >
-              <AppText style={styles.skipLabel}>SALTA</AppText>
+              <AppText style={styles.skipLabel}>Salta recupero</AppText>
             </Pressable>
           ) : null}
         </View>
       ) : (
         <View style={styles.suggestBar}>
-          <AppText
-            variant="eyebrow"
-            tone="accent"
-            style={styles.suggestLabel}
-            numberOfLines={1}
-          >
-            {`RIPOSO CONSIGLIATO: ${formatCountdown(suggestedSec)}`}
+          <AppText variant="label" style={styles.suggestLabel} numberOfLines={1}>
+            {`Recupero consigliato: ${formatCountdown(suggestedSec)}`}
           </AppText>
           <Pressable
             onPress={onStartSuggested}
@@ -161,7 +156,7 @@ export function RestTimerCard({
               pressed && styles.pressed,
             ]}
           >
-            <AppText style={styles.suggestActionLabel}>AVVIA</AppText>
+            <AppText style={styles.suggestActionLabel}>Avvia</AppText>
           </Pressable>
         </View>
       )}
@@ -178,15 +173,15 @@ const styles = StyleSheet.create({
   stage: {
     gap: spacing.sm,
     alignItems: "center",
-    backgroundColor: colors.accentBg,
-    borderWidth: 1,
-    borderColor: colors.accentBorder,
-    borderRadius: radii.lg,
+    backgroundColor: colors.dataBg,
+    borderWidth: 1.5,
+    borderColor: colors.dataBg,
+    borderRadius: radii.xl,
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing.md,
   },
   stageDone: {
-    borderColor: colors.accent,
+    borderColor: colors.data,
   },
   stageTop: {
     flexDirection: "row",
@@ -195,14 +190,15 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   eyebrow: {
-    letterSpacing: 1.2,
-    fontSize: 13,
+    color: colors.data,
+    fontSize: 15,
   },
   clock: {
+    color: colors.data,
     fontVariant: ["tabular-nums"],
     fontSize: 64,
     lineHeight: 72,
-    fontWeight: "700",
+    fontWeight: "800",
     textAlign: "center",
   },
   track: {
@@ -214,52 +210,51 @@ const styles = StyleSheet.create({
   },
   fill: {
     height: "100%",
-    backgroundColor: colors.accent,
+    backgroundColor: colors.data,
     borderRadius: radii.pill,
   },
   skip: {
     alignSelf: "stretch",
-    backgroundColor: colors.accent,
-    borderRadius: radii.md,
-    paddingVertical: spacing.md,
+    minHeight: 52,
+    backgroundColor: colors.ink,
+    borderRadius: radii.pill,
     alignItems: "center",
+    justifyContent: "center",
   },
   pressed: {
     opacity: 0.8,
   },
   skipLabel: {
-    color: colors.onAccent,
-    fontSize: 15,
+    color: colors.onInk,
+    fontSize: 16,
     fontWeight: "800",
-    letterSpacing: 0.6,
   },
   suggestBar: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     gap: spacing.sm,
-    backgroundColor: colors.accentBg,
-    borderWidth: 1,
-    borderColor: colors.accentBorder,
-    borderRadius: radii.md,
-    paddingVertical: spacing.sm + 2,
-    paddingHorizontal: spacing.md,
+    backgroundColor: colors.dataBg,
+    borderRadius: radii.pill,
+    paddingVertical: 6,
+    paddingLeft: spacing.md,
+    paddingRight: 6,
   },
   suggestLabel: {
     flex: 1,
-    letterSpacing: 1,
-    fontSize: 11,
+    color: colors.data,
+    fontWeight: "700",
   },
   suggestAction: {
-    backgroundColor: colors.accent,
-    borderRadius: radii.sm,
+    minHeight: 40,
+    justifyContent: "center",
+    backgroundColor: colors.ink,
+    borderRadius: radii.pill,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
   },
   suggestActionLabel: {
-    color: colors.onAccent,
-    fontSize: 13,
+    color: colors.onInk,
+    fontSize: 14,
     fontWeight: "800",
-    letterSpacing: 0.6,
   },
 });

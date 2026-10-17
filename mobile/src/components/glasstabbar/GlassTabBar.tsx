@@ -1,8 +1,8 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import { BlurView } from "expo-blur";
+import { Pressable, StyleSheet, View } from "react-native";
 import type { BottomTabBarProps } from "expo-router/build/react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { colors, spacing } from "../../theme";
+import { colors, radii, shadows, spacing } from "../../theme";
+import { AppText } from "../text";
 
 const BAR_HEIGHT = 64;
 const MIN_BOTTOM_OFFSET = 26;
@@ -25,8 +25,8 @@ type GlassTabBarProps = BottomTabBarProps & {
 };
 
 /**
- * Tab bar flottante in vetro stile Telegram, identica per Android/iOS/web.
- * Spec: `docs/mockups/mobile-simple.html` (`.tabbar`, `.tab`, `.badge-num`).
+ * Tab bar flottante "Sole", identica per Android/iOS/web: pill bianca con ombra;
+ * la tab attiva è una pill ink con icona + etichetta, le altre solo icona.
  */
 export function GlassTabBar({
   state,
@@ -40,12 +40,12 @@ export function GlassTabBar({
       style={[styles.wrap, { bottom: Math.max(insets.bottom, MIN_BOTTOM_OFFSET) }]}
       pointerEvents="box-none"
     >
-      <BlurView intensity={30} tint="dark" style={styles.bar}>
+      <View style={styles.bar}>
         {state.routes.map((route, index) => {
           const focused = state.index === index;
           const options = descriptors[route.key]?.options;
           const label = (options?.title as string) ?? route.name;
-          const color = focused ? colors.accent : "#9a9ea8";
+          const color = focused ? colors.onInk : colors.text;
           const icon =
             typeof options?.tabBarIcon === "function"
               ? options.tabBarIcon({ focused, color, size: 23 })
@@ -82,17 +82,19 @@ export function GlassTabBar({
                 {icon}
                 {showBadge ? (
                   <View style={styles.badge}>
-                    <Text style={styles.badgeText}>1</Text>
+                    <AppText style={styles.badgeText}>1</AppText>
                   </View>
                 ) : null}
               </View>
-              <Text style={[styles.label, { color }]} numberOfLines={1}>
-                {label}
-              </Text>
+              {focused ? (
+                <AppText style={[styles.label, { color }]} numberOfLines={1}>
+                  {label}
+                </AppText>
+              ) : null}
             </Pressable>
           );
         })}
-      </BlurView>
+      </View>
     </View>
   );
 }
@@ -106,29 +108,26 @@ const styles = StyleSheet.create({
   },
   bar: {
     height: BAR_HEIGHT,
-    borderRadius: 32,
-    overflow: "hidden",
+    borderRadius: radii.pill,
     flexDirection: "row",
     alignItems: "stretch",
+    gap: 4,
     padding: 6,
-    backgroundColor: "rgba(44, 48, 56, 0.72)",
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.08)",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.5,
-    shadowRadius: 28,
-    elevation: 12,
+    backgroundColor: colors.surface,
+    ...shadows.tabBar,
   },
   tab: {
     flex: 1,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 2,
-    borderRadius: 32,
+    gap: 6,
+    borderRadius: radii.pill,
   },
   tabOn: {
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    flex: 1.8,
+    backgroundColor: colors.ink,
+    paddingHorizontal: spacing.md,
   },
   pressed: {
     opacity: 0.7,
@@ -143,21 +142,22 @@ const styles = StyleSheet.create({
     minWidth: 17,
     height: 17,
     paddingHorizontal: 4,
-    borderRadius: 9,
-    backgroundColor: "#ff3b30",
+    borderRadius: radii.pill,
+    backgroundColor: colors.danger,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 2.5,
-    borderColor: "rgba(40, 44, 52, 0.9)",
+    borderWidth: 2,
+    borderColor: colors.surface,
   },
   badgeText: {
-    color: "#fff",
+    color: colors.onDanger,
     fontSize: 11,
     fontWeight: "700",
     lineHeight: 12,
   },
   label: {
-    fontSize: 10.5,
-    fontWeight: "600",
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: "700",
   },
 });

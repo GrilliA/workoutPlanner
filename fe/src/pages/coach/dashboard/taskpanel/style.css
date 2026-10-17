@@ -7,11 +7,7 @@
     margin: 0;
     color: var(--text-h);
     font-size: 1.1rem;
-    font-style: italic;
-    text-decoration: underline;
-    text-decoration-color: var(--accent);
-    text-decoration-thickness: 2px;
-    text-underline-offset: 0.45rem;
+    font-weight: 800;
   }
 }
 
@@ -27,7 +23,7 @@
   padding: 0.95rem 1rem;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 0.75rem;
+  border-radius: var(--radius-xl);
   text-decoration: none;
   color: inherit;
   transition: border-color 0.2s;
@@ -42,10 +38,10 @@
 .task-panel__icon {
   width: 2.4rem;
   height: 2.4rem;
-  border-radius: 0.4rem;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--bg);
-  color: var(--muted, #666);
+  color: var(--text);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -56,7 +52,7 @@
 .task-panel__card--accent .task-panel__icon {
   background: var(--accent-bg);
   border-color: var(--accent-border);
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .task-panel__body {
@@ -73,7 +69,7 @@
 }
 
 .task-panel__detail {
-  color: var(--muted, #666);
+  color: var(--text);
   font-size: 0.72rem;
   line-height: 1.4;
   font-style: italic;

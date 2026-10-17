@@ -5,40 +5,11 @@ import {
   updateCoachClientProgram,
   updateCoachTemplateProgram,
   type Exercise,
-  type WorkoutProgramInput,
   type WorkoutSettings,
 } from "@api";
-import type { DraftWorkoutDay } from "@pages/workouts/new/types";
-import { mapExerciseToDraft } from "@pages/workouts/new/mappers/mapDraftExercise";
-
-const toExercisePayload = (exercise: DraftWorkoutDay["exercises"][number]) => ({
-  id: exercise.serverId,
-  name: exercise.name,
-  catalogId: exercise.catalogId ?? null,
-  setPrescriptions: exercise.setPrescriptions.map((entry) => ({
-    setNumber: entry.setNumber,
-    reps: entry.reps,
-    restSec: entry.restSec,
-  })),
-});
-
-export const toProgramInput = (
-  name: string,
-  settings: WorkoutSettings,
-  days: DraftWorkoutDay[],
-): WorkoutProgramInput => ({
-  name,
-  defaultRestSec: settings.defaultRestSec,
-  workoutType: settings.workoutType,
-  frequency: settings.frequency,
-  days: days.map((day) => ({
-    id: day.serverId,
-    name: day.name,
-    sortOrder: day.sortOrder,
-    weekdays: day.weekdays,
-    exercises: day.exercises.map(toExercisePayload),
-  })),
-});
+import type { DraftWorkoutDay } from "@pages/coach/programbuilder/types";
+import { mapExerciseToDraft } from "@pages/coach/programbuilder/mappers/mapDraftExercise";
+import { mapDraftToProgramInput } from "@pages/coach/programbuilder/mappers/mapProgramInput";
 
 const mapDetailToDraft = (workout: {
   name: string;
@@ -96,14 +67,14 @@ export const saveNewTemplate = (
   name: string,
   settings: WorkoutSettings,
   days: DraftWorkoutDay[],
-) => saveCoachTemplateProgram(toProgramInput(name, settings, days));
+) => saveCoachTemplateProgram(mapDraftToProgramInput(name, settings, days));
 
 export const saveUpdatedTemplate = (
   templateId: number,
   name: string,
   settings: WorkoutSettings,
   days: DraftWorkoutDay[],
-) => updateCoachTemplateProgram(templateId, toProgramInput(name, settings, days));
+) => updateCoachTemplateProgram(templateId, mapDraftToProgramInput(name, settings, days));
 
 export const loadClientProgramDraft = async (
   athleteId: number,
@@ -124,5 +95,5 @@ export const saveUpdatedClientProgram = (
   updateCoachClientProgram(
     athleteId,
     workoutId,
-    toProgramInput(name, settings, days),
+    mapDraftToProgramInput(name, settings, days),
   );

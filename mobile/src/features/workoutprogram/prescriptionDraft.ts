@@ -1,9 +1,27 @@
+import type { LoadUnit } from "../../api/schemas/exercise";
+
 export const REST_SEC_OPTIONS = [60, 90, 120, 150] as const;
 
+// The phone builder edits reps and rest only; range, load and RIR come from the web
+// builder or the TXT import and are carried through so saving here does not erase them.
 export type DraftPrescription = {
   key: string;
   reps: string;
   restSec: number;
+  repsMax: number | null;
+  loadValue: number | null;
+  loadUnit: LoadUnit | null;
+  rir: number | null;
+};
+
+type ServerPrescription = {
+  setNumber: number;
+  reps: number;
+  restSec: number | null;
+  repsMax?: number | null;
+  loadValue?: number | null;
+  loadUnit?: LoadUnit | null;
+  rir?: number | null;
 };
 
 export const DEFAULT_REST_SEC = 90;
@@ -16,7 +34,16 @@ export function newPrescription(
     key: `set-${Date.now()}-${Math.random()}`,
     reps,
     restSec,
+    repsMax: null,
+    loadValue: null,
+    loadUnit: null,
+    rir: null,
   };
+}
+
+/** A new set that keeps everything the previous one prescribed. */
+export function copyPrescription(source: DraftPrescription): DraftPrescription {
+  return { ...source, key: `set-${Date.now()}-${Math.random()}` };
 }
 
 export function prescriptionsFromUniform(
@@ -31,7 +58,7 @@ export function prescriptionsFromUniform(
 }
 
 export function prescriptionsFromServer(
-  entries: Array<{ setNumber: number; reps: number; restSec: number | null }>,
+  entries: ServerPrescription[],
   fallbackRestSec: number = DEFAULT_REST_SEC,
 ): DraftPrescription[] {
   if (entries.length === 0) {
@@ -40,17 +67,35 @@ export function prescriptionsFromServer(
 
   return [...entries]
     .sort((a, b) => a.setNumber - b.setNumber)
-    .map((entry) =>
-      newPrescription(String(entry.reps), entry.restSec ?? fallbackRestSec),
-    );
+    .map((entry) => {
+      const hasLoad = entry.loadValue != null;
+
+      return {
+        ...newPrescription(String(entry.reps), entry.restSec ?? fallbackRestSec),
+        repsMax: entry.repsMax ?? null,
+        loadValue: entry.loadValue ?? null,
+        loadUnit: hasLoad ? (entry.loadUnit ?? null) : null,
+        rir: entry.rir ?? null,
+      };
+    });
 }
 
 export function toSetPrescriptions(drafts: DraftPrescription[]) {
-  return drafts.map((item, index) => ({
-    setNumber: index + 1,
-    reps: Number(item.reps),
-    restSec: item.restSec,
-  }));
+  return drafts.map((item, index) => {
+    const reps = Number(item.reps);
+    // Raising reps here above the range top would make the server reject the range.
+    const keepsRange = item.repsMax !== null && item.repsMax > reps;
+
+    return {
+      setNumber: index + 1,
+      reps,
+      repsMax: keepsRange ? item.repsMax : null,
+      loadValue: item.loadValue,
+      loadUnit: item.loadUnit,
+      rir: item.rir,
+      restSec: item.restSec,
+    };
+  });
 }
 
 export function validatePrescriptionDrafts(

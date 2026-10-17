@@ -6,22 +6,28 @@ export type ProgressRangeOption = {
   periodLabel: string;
 };
 
-export type ProgressKpi = {
-  id: "sessions" | "pr" | "streak";
+/** Tile bianca sotto la card indaco: record e serie. */
+export type ProgressTile = {
+  id: "pr" | "streak";
   label: string;
   value: string;
-  unit?: string;
-  trend: string;
+  note: string;
+};
+
+/** Numero grande della card indaco: allenamenti nel periodo + carico. */
+export type ProgressHero = {
+  value: string;
+  label: string;
+  /** "12.4k kg sollevati · +20% vs periodo precedente"; null senza sessioni. */
+  volumeLine: string | null;
 };
 
 export type ProgressViewModel = {
   range: StatsRange;
   periodLabel: string;
-  previousPeriodLabel: string;
-  insight: string;
-  kpis: ProgressKpi[];
+  hero: ProgressHero;
+  tiles: ProgressTile[];
   weeklyChart: WeeklyChartModel;
-  volumeCard: VolumeCardModel;
   progressions: ProgressionOption[];
   hasData: boolean;
 };
@@ -31,6 +37,8 @@ export type WeeklyChartBar = {
   value: number;
   accessibilityLabel: string;
   showLabel: boolean;
+  /** Settimana in corso: barra arancio. */
+  isCurrent: boolean;
 };
 
 export type WeeklyChartModel = {
@@ -41,14 +49,6 @@ export type WeeklyChartModel = {
   barWidth: number;
   barGap: number;
   scrollable: boolean;
-};
-
-export type VolumeCardModel = {
-  title: string;
-  value: string;
-  unit: string;
-  trend: string;
-  trendNeutral: boolean;
 };
 
 export type ProgressionOption = {

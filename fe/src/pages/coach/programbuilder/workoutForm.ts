@@ -1,0 +1,382 @@
+import { EXERCISE_NOTES_MAX_LENGTH } from "@api/schemas/exercise";
+import type { Weekday } from "@api/schemas/workoutday";
+import {
+  findWeekdayConflict,
+  reindexWorkoutDays,
+  sortWeekdays,
+} from "./mappers/mapWorkoutDays";
+import {
+  createDefaultSetPrescriptions,
+  createDefaultWorkoutDay,
+  DEFAULT_WORKOUT_SETTINGS,
+  LOAD_UNIT_LABELS,
+  pickerExerciseFrom,
+  type DraftExercise,
+  type DraftSetPrescription,
+  type DraftWorkoutDay,
+  type NewExerciseInput,
+  type WorkoutSettings,
+} from "./types";
+
+const WEEKDAY_NAMES = [
+  "lunedì",
+  "martedì",
+  "mercoledì",
+  "giovedì",
+  "venerdì",
+  "sabato",
+  "domenica",
+] as const;
+
+const MAX_LOAD_KG = 1000;
+const MAX_LOAD_PERCENT_1RM = 100;
+const MAX_RIR = 10;
+
+export type WorkoutDraftSeed = {
+  name: string;
+  settings: WorkoutSettings;
+  days: DraftWorkoutDay[];
+};
+
+export type WorkoutForm = {
+  name: string;
+  days: DraftWorkoutDay[];
+  activeDayId: string;
+  settings: WorkoutSettings;
+  nameError: string | null;
+  formError: string | null;
+  isSaving: boolean;
+};
+
+export type MoveDirection = "earlier" | "later";
+
+export type SaveCheck =
+  | { isValid: false; form: WorkoutForm }
+  | { isValid: true; name: string; days: DraftWorkoutDay[] };
+
+const updateDay = (
+  days: DraftWorkoutDay[],
+  dayClientId: string,
+  updater: (day: DraftWorkoutDay) => DraftWorkoutDay,
+): DraftWorkoutDay[] =>
+  days.map((day) => (day.clientId === dayClientId ? updater(day) : day));
+
+// Returns the list unchanged when the item is already first (earlier) or last (later).
+const moveItem = <T>(items: T[], index: number, direction: MoveDirection): T[] => {
+  const targetIndex = direction === "earlier" ? index - 1 : index + 1;
+  const isOutOfRange = index < 0 || targetIndex < 0 || targetIndex >= items.length;
+
+  if (isOutOfRange) {
+    return items;
+  }
+
+  return items.map((item, position) => {
+    if (position === index) {
+      return items[targetIndex];
+    }
+    if (position === targetIndex) {
+      return items[index];
+    }
+    return item;
+  });
+};
+
+const toDraftExercise = (
+  input: NewExerciseInput,
+  exerciseClientId: string,
+  serverId?: number,
+): DraftExercise => ({
+  clientId: exerciseClientId,
+  serverId,
+  ...pickerExerciseFrom({ ...input, name: input.name.trim() }),
+  notes: input.notes,
+  setPrescriptions: input.setPrescriptions.map((entry) => ({ ...entry })),
+});
+
+const updateActiveDay = (
+  form: WorkoutForm,
+  updater: (day: DraftWorkoutDay) => DraftWorkoutDay,
+): WorkoutForm => ({
+  ...form,
+  days: updateDay(form.days, form.activeDayId, updater),
+});
+
+export function createWorkoutForm(draft?: WorkoutDraftSeed | null): WorkoutForm {
+  const hasDays = draft !== null && draft !== undefined && draft.days.length > 0;
+  const days = hasDays ? reindexWorkoutDays(draft.days) : [createDefaultWorkoutDay()];
+
+  return {
+    name: draft?.name ?? "",
+    days,
+    activeDayId: days[0].clientId,
+    settings: draft?.settings ?? DEFAULT_WORKOUT_SETTINGS,
+    nameError: null,
+    formError: null,
+    isSaving: false,
+  };
+}
+
+// Only what gets saved counts: selecting a day or seeing an error is not a change.
+const savedContent = (form: WorkoutForm): string =>
+  JSON.stringify({ name: form.name, settings: form.settings, days: form.days });
+
+export function hasUnsavedChanges(form: WorkoutForm, initialForm: WorkoutForm): boolean {
+  return savedContent(form) !== savedContent(initialForm);
+}
+
+export function findActiveDay(form: WorkoutForm): DraftWorkoutDay {
+  const activeDay = form.days.find((day) => day.clientId === form.activeDayId);
+  return activeDay ?? form.days[0];
+}
+
+export function renameActiveDay(form: WorkoutForm, name: string): WorkoutForm {
+  return updateActiveDay(form, (day) => ({ ...day, name }));
+}
+
+export function addDay(form: WorkoutForm, dayClientId: string): WorkoutForm {
+  const newDay = createDefaultWorkoutDay(form.days.length, dayClientId);
+
+  return {
+    ...form,
+    days: reindexWorkoutDays([...form.days, newDay]),
+    activeDayId: dayClientId,
+    formError: null,
+  };
+}
+
+export function removeDay(form: WorkoutForm, dayClientId: string): WorkoutForm {
+  if (form.days.length <= 1) {
+    return form;
+  }
+
+  const days = reindexWorkoutDays(
+    form.days.filter((day) => day.clientId !== dayClientId),
+  );
+  const removedActiveDay = form.activeDayId === dayClientId;
+  const activeDayId = removedActiveDay ? days[0].clientId : form.activeDayId;
+
+  return { ...form, days, activeDayId, formError: null };
+}
+
+export function moveActiveDay(form: WorkoutForm, direction: MoveDirection): WorkoutForm {
+  const index = form.days.findIndex((day) => day.clientId === form.activeDayId);
+  const days = reindexWorkoutDays(moveItem(form.days, index, direction));
+
+  return { ...form, days };
+}
+
+// The copy is a new day for the server, and it gets no weekdays so it cannot clash with the original.
+export function duplicateActiveDay(
+  form: WorkoutForm,
+  createClientId: () => string,
+): WorkoutForm {
+  const activeDay = findActiveDay(form);
+  // Same fallback label the day chip shows for an unnamed day.
+  const sourceName = activeDay.name.trim() || `Giorno ${activeDay.sortOrder + 1}`;
+  const copy: DraftWorkoutDay = {
+    clientId: createClientId(),
+    serverId: undefined,
+    name: `${sourceName} (copia)`,
+    sortOrder: activeDay.sortOrder + 1,
+    weekdays: [],
+    exercises: activeDay.exercises.map((exercise) =>
+      toDraftExercise(exercise, createClientId()),
+    ),
+  };
+  const activeIndex = form.days.indexOf(activeDay);
+  const days = reindexWorkoutDays([
+    ...form.days.slice(0, activeIndex + 1),
+    copy,
+    ...form.days.slice(activeIndex + 1),
+  ]);
+
+  return { ...form, days, activeDayId: copy.clientId, formError: null };
+}
+
+export function toggleWeekday(form: WorkoutForm, weekday: Weekday): WorkoutForm {
+  const activeDay = findActiveDay(form);
+  const isSelected = activeDay.weekdays.includes(weekday);
+  const conflict = findWeekdayConflict(form.days, activeDay.clientId, weekday);
+
+  if (!isSelected && conflict) {
+    return {
+      ...form,
+      formError: `${conflict.name} è già programmato di ${WEEKDAY_NAMES[weekday]}`,
+    };
+  }
+
+  const weekdays = isSelected
+    ? activeDay.weekdays.filter((value) => value !== weekday)
+    : sortWeekdays([...activeDay.weekdays, weekday]);
+  const withWeekdays = updateActiveDay(form, (day) => ({ ...day, weekdays }));
+
+  return { ...withWeekdays, formError: null };
+}
+
+// Same limits as the server, so the coach sees the problem before saving.
+const findOptionalFieldError = (entry: DraftSetPrescription): string | null => {
+  const hasValidRepsMax =
+    entry.repsMax === null || (Number.isInteger(entry.repsMax) && entry.repsMax >= entry.reps);
+
+  if (!hasValidRepsMax) {
+    return `Serie ${entry.setNumber}: il massimo delle reps non può essere sotto il minimo`;
+  }
+
+  const maxLoad = entry.loadUnit === "kg" ? MAX_LOAD_KG : MAX_LOAD_PERCENT_1RM;
+  const hasValidLoad =
+    entry.loadValue === null ||
+    (Number.isFinite(entry.loadValue) && entry.loadValue > 0 && entry.loadValue <= maxLoad);
+
+  if (!hasValidLoad) {
+    return `Serie ${entry.setNumber}: il carico deve essere tra 0 e ${maxLoad} ${LOAD_UNIT_LABELS[entry.loadUnit]}`;
+  }
+
+  const hasValidRir =
+    entry.rir === null || (Number.isInteger(entry.rir) && entry.rir >= 0 && entry.rir <= MAX_RIR);
+
+  if (!hasValidRir) {
+    return `Serie ${entry.setNumber}: il RIR va da 0 a ${MAX_RIR}`;
+  }
+
+  return null;
+};
+
+export function findExerciseInputError(input: NewExerciseInput): string | null {
+  if (!input.name.trim()) {
+    return "Il nome dell'esercizio è obbligatorio";
+  }
+
+  if (input.setPrescriptions.length === 0) {
+    return "Aggiungi almeno una serie";
+  }
+
+  const hasInvalidSet = input.setPrescriptions.some(
+    (entry) =>
+      !Number.isInteger(entry.reps) ||
+      entry.reps < 1 ||
+      !Number.isInteger(entry.restSec) ||
+      entry.restSec < 0,
+  );
+
+  if (hasInvalidSet) {
+    return "Ogni serie deve avere reps e recupero validi";
+  }
+
+  const setError = input.setPrescriptions
+    .map(findOptionalFieldError)
+    .find((error) => error !== null);
+
+  if (setError) {
+    return setError;
+  }
+
+  if (input.notes.trim().length > EXERCISE_NOTES_MAX_LENGTH) {
+    return `Le note possono avere al massimo ${EXERCISE_NOTES_MAX_LENGTH} caratteri`;
+  }
+
+  return null;
+}
+
+export function addExercise(
+  form: WorkoutForm,
+  input: NewExerciseInput,
+  exerciseClientId: string,
+): WorkoutForm {
+  const exercise = toDraftExercise(input, exerciseClientId);
+  const withExercise = updateActiveDay(form, (day) => ({
+    ...day,
+    exercises: [...day.exercises, exercise],
+  }));
+
+  return { ...withExercise, formError: null };
+}
+
+// Keeps clientId and serverId, so the server updates the same exercise instead of creating a new one.
+export function updateExercise(
+  form: WorkoutForm,
+  exerciseClientId: string,
+  input: NewExerciseInput,
+): WorkoutForm {
+  const withExercise = updateActiveDay(form, (day) => ({
+    ...day,
+    exercises: day.exercises.map((exercise) => {
+      if (exercise.clientId !== exerciseClientId) {
+        return exercise;
+      }
+      return toDraftExercise(input, exercise.clientId, exercise.serverId);
+    }),
+  }));
+
+  return { ...withExercise, formError: null };
+}
+
+export function moveExercise(
+  form: WorkoutForm,
+  exerciseClientId: string,
+  direction: MoveDirection,
+): WorkoutForm {
+  return updateActiveDay(form, (day) => {
+    const index = day.exercises.findIndex(
+      (exercise) => exercise.clientId === exerciseClientId,
+    );
+    return { ...day, exercises: moveItem(day.exercises, index, direction) };
+  });
+}
+
+export function removeExercise(form: WorkoutForm, exerciseClientId: string): WorkoutForm {
+  return updateActiveDay(form, (day) => ({
+    ...day,
+    exercises: day.exercises.filter(
+      (exercise) => exercise.clientId !== exerciseClientId,
+    ),
+  }));
+}
+
+const withDefaultSets = (
+  exercise: DraftExercise,
+  defaultRestSec: number,
+): DraftExercise => {
+  if (exercise.setPrescriptions.length > 0) {
+    return exercise;
+  }
+
+  return {
+    ...exercise,
+    setPrescriptions: createDefaultSetPrescriptions(3, 10, defaultRestSec),
+  };
+};
+
+export function checkBeforeSave(form: WorkoutForm): SaveCheck {
+  const name = form.name.trim();
+
+  if (!name) {
+    return {
+      isValid: false,
+      form: { ...form, nameError: "Il nome della scheda è obbligatorio" },
+    };
+  }
+
+  const unnamedDay = form.days.find((day) => !day.name.trim());
+
+  if (unnamedDay) {
+    return {
+      isValid: false,
+      form: {
+        ...form,
+        nameError: null,
+        activeDayId: unnamedDay.clientId,
+        formError: "Ogni giorno di allenamento deve avere un nome",
+      },
+    };
+  }
+
+  const days = form.days.map((day) => ({
+    ...day,
+    name: day.name.trim(),
+    exercises: day.exercises.map((exercise) =>
+      withDefaultSets(exercise, form.settings.defaultRestSec),
+    ),
+  }));
+
+  return { isValid: true, name, days };
+}

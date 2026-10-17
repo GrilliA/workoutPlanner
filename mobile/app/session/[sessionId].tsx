@@ -34,8 +34,10 @@ import {
   formatWeightKg,
   getRestSecForSet,
   getTargetRepsForSet,
+  getTargetRirForSet,
   getTargetSetCount,
   isExerciseComplete,
+  isValidRir,
   resolveLogDefaults,
 } from "../../src/features/session/logDefaults";
 import {
@@ -63,7 +65,10 @@ import {
   type SessionBundle,
 } from "../../src/features/session/sessionBundle";
 import { SessionActionBar } from "../../src/features/session/SessionActionBar";
-import { SessionFocusHeader } from "../../src/features/session/SessionFocusHeader";
+import {
+  SessionFocusHeader,
+  type ExerciseSegment,
+} from "../../src/features/session/SessionFocusHeader";
 import { useRestTimer } from "../../src/features/session/useRestTimer";
 import { colors, spacing } from "../../src/theme";
 
@@ -87,19 +92,25 @@ function errorMessage(err: unknown, fallback: string): string {
   return ApiError.messageFrom(err, fallback);
 }
 
-function sessionProgress(
+/** One segment per exercise for the header bar. */
+function exerciseSegments(
   exercises: Exercise[],
   setsByExercise: Map<number, SetSummary[]>,
-): number {
-  if (exercises.length === 0) {
-    return 0;
-  }
-
-  const completed = exercises.filter((exercise) =>
-    isExerciseComplete(exercise, (setsByExercise.get(exercise.id) ?? []).length),
-  ).length;
-
-  return completed / exercises.length;
+  focusIndex: number,
+): ExerciseSegment[] {
+  return exercises.map((exercise, index) => {
+    const isDone = isExerciseComplete(
+      exercise,
+      (setsByExercise.get(exercise.id) ?? []).length,
+    );
+    if (isDone) {
+      return "done";
+    }
+    if (index === focusIndex) {
+      return "current";
+    }
+    return "todo";
+  });
 }
 
 export default function SessionScreen() {
@@ -123,6 +134,9 @@ export default function SessionScreen() {
   const [weightByExercise, setWeightByExercise] = useState<
     Record<number, string>
   >({});
+  const [rirByExercise, setRirByExercise] = useState<Record<number, string>>(
+    {},
+  );
   const [fetchId, setFetchId] = useState(0);
   const [focusIndex, setFocusIndex] = useState(0);
   const timer = useRestTimer(sessionId);
@@ -195,6 +209,14 @@ export default function SessionScreen() {
           defaultsByExercise.map(({ exerciseId, defaults }) => [
             exerciseId,
             defaults.reps,
+          ]),
+        ),
+      );
+      setRirByExercise(
+        Object.fromEntries(
+          defaultsByExercise.map(({ exerciseId, defaults }) => [
+            exerciseId,
+            defaults.rir,
           ]),
         ),
       );
@@ -318,7 +340,7 @@ export default function SessionScreen() {
       ? "Sessione completata"
       : "Sessione abbandonata"
     : "Sessione in corso";
-  const progress = sessionProgress(exercises, setsByExercise);
+  const segments = exerciseSegments(exercises, setsByExercise, safeFocusIndex);
 
   const suggestedRestSec =
     !readOnly && focusedExercise
@@ -363,6 +385,8 @@ export default function SessionScreen() {
         : Number(repsRaw);
     const weightRaw = weightByExercise[exercise.id]?.trim() ?? "";
     const weightKg = weightRaw === "" ? null : Number(weightRaw);
+    const rirRaw = rirByExercise[exercise.id]?.trim() ?? "";
+    const rir = rirRaw === "" ? null : Number(rirRaw);
 
     if (!Number.isFinite(reps) || reps <= 0) {
       setError("Inserisci le reps");
@@ -374,11 +398,16 @@ export default function SessionScreen() {
       return;
     }
 
+    if (rir !== null && !isValidRir(rir)) {
+      setError("RIR non valido (da 0 a 10)");
+      return;
+    }
+
     const position: SetPosition = { exerciseId: exercise.id, setNumber };
     const values = {
       reps,
       weightKg,
-      rir: null,
+      rir,
       tutSec: null,
       loggedAt: new Date().toISOString(),
     };
@@ -399,6 +428,11 @@ export default function SessionScreen() {
     setRepsByExercise((current) => ({
       ...current,
       [exercise.id]: String(getTargetRepsForSet(exercise, setNumber + 1)),
+    }));
+    const nextTargetRir = getTargetRirForSet(exercise, setNumber + 1);
+    setRirByExercise((current) => ({
+      ...current,
+      [exercise.id]: nextTargetRir === null ? "" : String(nextTargetRir),
     }));
 
     const restSec = getRestSecForSet(exercise, setNumber, defaultRestSec);
@@ -453,12 +487,16 @@ export default function SessionScreen() {
       ...current,
       [exercise.id]: String(lastSet.reps),
     }));
+    setRirByExercise((current) => ({
+      ...current,
+      [exercise.id]: lastSet.rir === null ? "" : String(lastSet.rir),
+    }));
   };
 
   const onEditSet = (
     exercise: Exercise,
     setNumber: number,
-    next: { reps: number; weightKg: number | null },
+    next: { reps: number; weightKg: number | null; rir: number | null },
   ) => {
     const position: SetPosition = { exerciseId: exercise.id, setNumber };
     const editedSet = offlineLog?.sets.find((set) => isSameSet(set, position));
@@ -467,7 +505,7 @@ export default function SessionScreen() {
       return;
     }
 
-    const changedValues = { ...editedSet, reps: next.reps, weightKg: next.weightKg };
+    const changedValues = { ...editedSet, ...next };
     const saved = saveOnPhone(
       (log) => recordSet(log, position, changedValues),
       "Modifica non salvata sul telefono. Riprova.",
@@ -494,6 +532,11 @@ export default function SessionScreen() {
       ...current,
       [exercise.id]: String(getTargetRepsForSet(exercise, setNumber + 1)),
     }));
+    const nextTargetRir = getTargetRirForSet(exercise, setNumber + 1);
+    setRirByExercise((current) => ({
+      ...current,
+      [exercise.id]: nextTargetRir === null ? "" : String(nextTargetRir),
+    }));
   };
 
   /** TERMINA works without network: the close waits on the phone and is sent later. */
@@ -519,6 +562,7 @@ export default function SessionScreen() {
         workoutName,
         volumeKg: String(computeVolumeKg(shownSets)),
         durationMin: String(computeDurationMin(session.startedAt, completedAt)),
+        setCount: String(shownSets.length),
       },
     } as unknown as Href);
   };
@@ -541,7 +585,7 @@ export default function SessionScreen() {
             startedAt={session.startedAt}
             endedAt={readOnly ? (session.completedAt ?? session.startedAt) : null}
             statusLabel={statusLabel}
-            progress={progress}
+            segments={segments}
             onBack={onBack}
           />
         </View>
@@ -585,10 +629,12 @@ export default function SessionScreen() {
                 readOnly
                 weight={weightByExercise[exercise.id] ?? ""}
                 reps={repsByExercise[exercise.id] ?? ""}
+                rir={rirByExercise[exercise.id] ?? ""}
                 exerciseOrdinal={index + 1}
                 exerciseTotal={exercises.length}
                 onChangeWeight={() => undefined}
                 onChangeReps={() => undefined}
+                onChangeRir={() => undefined}
                 onLog={() => undefined}
                 onUndoLast={() => undefined}
                 onEditSet={() => undefined}
@@ -608,6 +654,7 @@ export default function SessionScreen() {
                 exerciseTotal={exercises.length}
                 weight={weightByExercise[focusedExercise.id] ?? ""}
                 reps={repsByExercise[focusedExercise.id] ?? ""}
+                rir={rirByExercise[focusedExercise.id] ?? ""}
                 onChangeWeight={(value) =>
                   setWeightByExercise((current) => ({
                     ...current,
@@ -616,6 +663,12 @@ export default function SessionScreen() {
                 }
                 onChangeReps={(value) =>
                   setRepsByExercise((current) => ({
+                    ...current,
+                    [focusedExercise.id]: value,
+                  }))
+                }
+                onChangeRir={(value) =>
+                  setRirByExercise((current) => ({
                     ...current,
                     [focusedExercise.id]: value,
                   }))

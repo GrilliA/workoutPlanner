@@ -1,4 +1,4 @@
-import { CreateWorkout } from "@pages/workouts/new/createworkout";
+import { CreateWorkout } from "@pages/coach/programbuilder/createworkout";
 import { saveNewTemplate } from "../../programapi";
 
 export default function NewTemplatePage() {

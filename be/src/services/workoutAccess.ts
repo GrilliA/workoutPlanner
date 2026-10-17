@@ -34,6 +34,7 @@ export async function findExerciseForUser(
       name: exercises.name,
       sets: exercises.sets,
       reps: exercises.reps,
+      notes: exercises.notes,
       workoutId: exercises.workoutId,
       workoutDayId: exercises.workoutDayId,
       catalogId: exercises.catalogId,

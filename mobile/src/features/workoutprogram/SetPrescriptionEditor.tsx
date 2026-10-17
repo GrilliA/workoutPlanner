@@ -2,6 +2,7 @@ import { Pressable, StyleSheet, View } from "react-native";
 import { AppText, Field, Meta, SecondaryButton } from "../../components";
 import { colors, radii, spacing } from "../../theme";
 import {
+  copyPrescription,
   newPrescription,
   REST_SEC_OPTIONS,
   type DraftPrescription,
@@ -36,10 +37,8 @@ export function SetPrescriptionEditor({
 
   const addSet = () => {
     const last = prescriptions.at(-1);
-    onChange([
-      ...prescriptions,
-      newPrescription(last?.reps ?? "10", last?.restSec ?? 90),
-    ]);
+    const nextSet = last ? copyPrescription(last) : newPrescription("10", 90);
+    onChange([...prescriptions, nextSet]);
   };
 
   const steppedRestSec = (restSec: number, step: 1 | -1) =>
@@ -56,21 +55,21 @@ export function SetPrescriptionEditor({
       >
         <AppText
           variant="eyebrow"
-          tone="muted"
+         
           style={[styles.headerLabel, styles.indexCol]}
         >
           Serie
         </AppText>
         <AppText
           variant="eyebrow"
-          tone="muted"
+         
           style={[styles.headerLabel, styles.repsCol]}
         >
           Reps
         </AppText>
         <AppText
           variant="eyebrow"
-          tone="muted"
+         
           style={[styles.headerLabel, styles.restCol]}
         >
           Recupero
@@ -183,7 +182,6 @@ const styles = StyleSheet.create({
   headerLabel: {
     fontSize: 11,
     textAlign: "center",
-    textTransform: "uppercase",
   },
   setRow: {
     flexDirection: "row",
@@ -235,12 +233,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   stepLabel: {
-    color: colors.accent,
+    color: colors.accentText,
     fontSize: 18,
     fontWeight: "700",
   },
   stepLabelDisabled: {
-    color: colors.muted,
+    color: colors.text,
     opacity: 0.4,
   },
   stepValue: {

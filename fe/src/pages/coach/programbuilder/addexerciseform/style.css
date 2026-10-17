@@ -1,0 +1,32 @@
+.add-exercise-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 1rem;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-xl);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--accent-border);
+    color: var(--text-h);
+    background: var(--accent-bg);
+  }
+
+  & .icon {
+    display: grid;
+    place-items: center;
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: var(--radius-full);
+    background: var(--accent);
+    color: var(--on-accent);
+    font-weight: 700;
+    line-height: 1;
+  }
+}

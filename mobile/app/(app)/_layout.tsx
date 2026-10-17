@@ -1,5 +1,7 @@
 import { Redirect, Tabs } from "expo-router";
+import { useEffect, useState } from "react";
 import type { ColorValue } from "react-native";
+import { getAthleteHome } from "../../src/api";
 import { GlassTabBar, Icon, type IconName } from "../../src/components";
 import { CoachBlockScreen, useAuth } from "../../src/auth";
 import { colors } from "../../src/theme";
@@ -9,11 +11,12 @@ function TabBarIcon({ name, color }: { name: IconName; color: ColorValue }) {
 }
 
 type AppTabsProps = {
-  /** Badge "scheda nuova" sulla tab Schede — dati reali collegati in M3d. */
+  /** Badge "scheda nuova" sulla tab Schede. */
   hasUnseenAssignment: boolean;
+  onOpenWorkouts: () => void;
 };
 
-function AppTabs({ hasUnseenAssignment }: AppTabsProps) {
+function AppTabs({ hasUnseenAssignment, onOpenWorkouts }: AppTabsProps) {
   return (
     <Tabs
       tabBar={(props) => (
@@ -34,6 +37,7 @@ function AppTabs({ hasUnseenAssignment }: AppTabsProps) {
       />
       <Tabs.Screen
         name="workouts"
+        listeners={{ tabPress: onOpenWorkouts }}
         options={{
           title: "Schede",
           tabBarIcon: ({ color }) => <TabBarIcon name="workout" color={color} />,
@@ -59,6 +63,26 @@ function AppTabs({ hasUnseenAssignment }: AppTabsProps) {
 
 export default function AppLayout() {
   const { status, user } = useAuth();
+  const [hasUnseenAssignment, setHasUnseenAssignment] = useState(false);
+  const isAthlete = status === "authenticated" && user?.role !== "coach";
+
+  // La tab Schede segna la scheda come vista sul server (markAssignmentSeen).
+  useEffect(() => {
+    if (!isAthlete) {
+      return;
+    }
+    let cancelled = false;
+    void getAthleteHome()
+      .then((home) => {
+        if (!cancelled) {
+          setHasUnseenAssignment(home.hasUnseenAssignment);
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [isAthlete, user?.id]);
 
   if (status === "anonymous" || status === "error") {
     return <Redirect href="/(auth)/login" />;
@@ -72,5 +96,10 @@ export default function AppLayout() {
     return <CoachBlockScreen />;
   }
 
-  return <AppTabs hasUnseenAssignment={false} />;
+  return (
+    <AppTabs
+      hasUnseenAssignment={hasUnseenAssignment}
+      onOpenWorkouts={() => setHasUnseenAssignment(false)}
+    />
+  );
 }

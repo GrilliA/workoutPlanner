@@ -3,8 +3,8 @@
 :root {
   font: var(--text-base) / 1.6 var(--sans);
   font-size: 15px;
-  font-weight: 400;
-  color-scheme: dark;
+  font-weight: 500;
+  color-scheme: light;
   color: var(--text);
   background-color: var(--bg);
   font-synthesis: none;
@@ -15,4 +15,17 @@
   @media (width >= 64rem) {
     font-size: 1rem;
   }
+}
+
+/* Text for screen readers only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }

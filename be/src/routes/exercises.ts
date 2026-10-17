@@ -67,6 +67,7 @@ exercisesRouter.post("/", async (req, res) => {
     workoutDayId: (await ensureDefaultWorkoutDay(workoutId)).id,
     setPrescriptions: parsed.value.setPrescriptions,
     catalogId: parsed.value.catalogId,
+    notes: parsed.value.notes,
   });
 
   const [enriched] = await enrichExercises([created]);

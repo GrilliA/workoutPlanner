@@ -8,7 +8,10 @@ export type IconName =
   | "stats"
   | "history"
   | "settings"
-  | "person";
+  | "person"
+  | "pencil"
+  | "key"
+  | "logout";
 
 type IconProps = {
   name: IconName;
@@ -80,6 +83,39 @@ export function Icon({ name, size = 22, color = colors.text }: IconProps) {
           fill="none"
           stroke={color}
           strokeWidth={1.6}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      ) : null}
+      {name === "pencil" ? (
+        <Path
+          d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4Z M13.5 6.5l4 4"
+          fill="none"
+          stroke={color}
+          strokeWidth={1.9}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      ) : null}
+      {name === "key" ? (
+        <>
+          <Circle cx={8} cy={15} r={4} fill="none" stroke={color} strokeWidth={1.9} />
+          <Path
+            d="M11 12l8-8M16 7l2.5 2.5M14 9l2 2"
+            fill="none"
+            stroke={color}
+            strokeWidth={1.9}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </>
+      ) : null}
+      {name === "logout" ? (
+        <Path
+          d="M10 5H6a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h4M15 8l4 4-4 4M19 12H9"
+          fill="none"
+          stroke={color}
+          strokeWidth={1.9}
           strokeLinecap="round"
           strokeLinejoin="round"
         />

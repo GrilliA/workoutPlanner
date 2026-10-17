@@ -122,6 +122,16 @@ describe("closeRequest", () => {
     });
   });
 
+  it("sends the RIR the athlete logged, edits included", () => {
+    const afterLog = recordSet(emptyLog(), benchSet1, { ...values(8), rir: 2 });
+    const afterEdit = recordSet(afterLog, benchSet1, { ...values(8), rir: 1 });
+    const afterClose = recordClose(afterEdit, "completed", closedAt);
+
+    assert.deepEqual(closeRequest(afterClose)?.sets, [
+      { ...benchSet1, ...values(8), rir: 1 },
+    ]);
+  });
+
   it("has nothing to send while the session is open", () => {
     const afterLog = recordSet(emptyLog(), benchSet1, values(8));
 
@@ -136,6 +146,13 @@ describe("offline log on disk", () => {
     const text = encodeOfflineSessionLog(afterClose);
 
     assert.deepEqual(decodeOfflineSessionLog(text), afterClose);
+  });
+
+  it("keeps the logged RIR on disk", () => {
+    const afterLog = recordSet(emptyLog(), benchSet1, { ...values(8), rir: 3 });
+    const readBack = decodeOfflineSessionLog(encodeOfflineSessionLog(afterLog));
+
+    assert.equal(readBack?.sets[0]?.rir, 3);
   });
 
   it("ignores a half-written or a foreign file", () => {

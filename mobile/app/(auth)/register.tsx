@@ -4,12 +4,12 @@ import {
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
-  Text,
   View,
 } from "react-native";
 import { ApiError } from "../../src/api/client";
 import { useAuth } from "../../src/auth";
 import {
+  AppText,
   Body,
   BrandLogo,
   ErrorBanner,
@@ -54,10 +54,10 @@ export default function RegisterScreen() {
       >
         <View style={styles.brand}>
           <BrandLogo size="lg" />
-          <Text style={styles.eyebrow}>CREA ACCOUNT</Text>
-          <Body>
-            Registrati per creare le tue schede. Potrai collegare un coach dopo
-            con un codice invito.
+          <AppText style={styles.title}>Crea il tuo account</AppText>
+          <Body style={styles.intro}>
+            Crea le tue schede da solo. Un coach lo puoi collegare dopo, con il suo
+            codice invito.
           </Body>
         </View>
         <View style={styles.form}>
@@ -90,7 +90,7 @@ export default function RegisterScreen() {
             disabled={busy || !email || password.length < 8}
           />
           <Link href="/(auth)/login" asChild>
-            <Text style={styles.link}>Hai già un account? Accedi</Text>
+            <AppText style={styles.link}>Hai già un account? Accedi</AppText>
           </Link>
         </View>
       </KeyboardAvoidingView>
@@ -105,17 +105,23 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     marginBottom: spacing.md,
   },
-  eyebrow: {
-    color: colors.accent,
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 1.2,
+  title: {
+    color: colors.textHeading,
+    fontSize: 30,
+    lineHeight: 36,
+    fontWeight: "800",
+    letterSpacing: -0.6,
+    marginTop: spacing.sm,
+  },
+  intro: {
+    textAlign: "center",
+    maxWidth: 300,
   },
   form: { marginTop: spacing.md },
   link: {
-    color: colors.accent,
+    color: colors.accentText,
     textAlign: "center",
-    marginTop: spacing.md,
-    fontWeight: "600",
+    paddingVertical: spacing.md,
+    fontWeight: "700",
   },
 });

@@ -2,6 +2,7 @@ import * as Haptics from "expo-haptics";
 import { useRef, useState } from "react";
 import {
   Pressable,
+  ScrollView,
   StyleSheet,
   TextInput,
   View,
@@ -9,16 +10,20 @@ import {
 } from "react-native";
 import type { Exercise } from "../../api";
 import type { SetSummary } from "../../api/schemas";
-import { AppText, Meta } from "../../components";
-import { colors, radii, spacing } from "../../theme";
+import { AppText, BottomSheet, fontForWeight, Meta } from "../../components";
+import { colors, radii, shadows, spacing } from "../../theme";
 import { exerciseEnglishLine, exerciseHeading } from "../workoutprogram/exerciseDisplay";
 import { ExerciseMediaFlip } from "./ExerciseMediaFlip";
 import {
+  formatSetTargetExtras,
+  formatTargetRepsForSet,
   formatWeightKg,
   getTargetRepsForSet,
   getTargetSetCount,
   isExerciseComplete,
+  isValidRir,
   stepReps,
+  stepRir,
   stepWeightKg,
 } from "./logDefaults";
 
@@ -33,13 +38,16 @@ type ExerciseCardProps = {
   busy?: boolean;
   weight: string;
   reps: string;
+  /** Reps in reserve for the next set, empty when not logged. */
+  rir: string;
   onChangeWeight: (value: string) => void;
   onChangeReps: (value: string) => void;
+  onChangeRir: (value: string) => void;
   onLog: () => void;
   onUndoLast: () => void;
   onEditSet: (
     setNumber: number,
-    next: { reps: number; weightKg: number | null },
+    next: { reps: number; weightKg: number | null; rir: number | null },
   ) => void;
   /** Focus mode: larger type, tabella set densità mock. */
   focus?: boolean;
@@ -48,12 +56,13 @@ type ExerciseCardProps = {
   exerciseTotal?: number;
 };
 
-type EditingField = "weight" | "reps" | null;
+type EditingField = "weight" | "reps" | "rir" | null;
 
 type EditDraft = {
   setNumber: number;
   weight: string;
   reps: string;
+  rir: string;
 };
 
 async function tickHaptic() {
@@ -64,10 +73,8 @@ async function tickHaptic() {
   }
 }
 
-function formatLogLabel(weight: string, reps: string, setNumber: number): string {
-  const kg = weight.trim() === "" ? "—" : weight.trim();
-  const repValue = reps.trim() === "" ? "—" : reps.trim();
-  return `LOG ${kg} × ${repValue}  ·  #${setNumber}`;
+function formatRirLabel(rir: number | null): string {
+  return rir === null ? "—" : String(rir);
 }
 
 function formatPreviousLabel(previous: SetSummary | undefined): string {
@@ -88,8 +95,10 @@ export function ExerciseCard({
   busy = false,
   weight,
   reps,
+  rir,
   onChangeWeight,
   onChangeReps,
+  onChangeRir,
   onLog,
   onUndoLast,
   onEditSet,
@@ -100,8 +109,10 @@ export function ExerciseCard({
   const [editing, setEditing] = useState<EditingField>(null);
   const [editDraft, setEditDraft] = useState<EditDraft | null>(null);
   const [editError, setEditError] = useState<string | null>(null);
+  const [isSetsSheetOpen, setIsSetsSheetOpen] = useState(false);
   const weightRef = useRef<TextInputType>(null);
   const repsRef = useRef<TextInputType>(null);
+  const rirRef = useRef<TextInputType>(null);
 
   const targetSets = getTargetSetCount(exercise);
   const complete = isExerciseComplete(exercise, sets.length);
@@ -113,6 +124,12 @@ export function ExerciseCard({
   const actionsDisabled = busy;
   const heading = exerciseHeading(exercise);
   const english = exerciseEnglishLine(exercise);
+  const nextRirLabel = rir.trim() === "" ? "—" : rir.trim();
+  const nextRirSuffix = rir.trim() === "" ? "" : ` · RIR ${rir.trim()}`;
+  const nextTargetExtras = formatSetTargetExtras(exercise, nextSetNumber);
+  const nextTargetLabel = nextTargetExtras
+    ? `${formatTargetRepsForSet(exercise, nextSetNumber)} reps · ${nextTargetExtras}`
+    : `${formatTargetRepsForSet(exercise, nextSetNumber)} reps`;
 
   const startEdit = (field: EditingField) => {
     if (actionsDisabled) {
@@ -124,6 +141,8 @@ export function ExerciseCard({
         weightRef.current?.focus();
       } else if (field === "reps") {
         repsRef.current?.focus();
+      } else if (field === "rir") {
+        rirRef.current?.focus();
       }
     });
   };
@@ -144,6 +163,14 @@ export function ExerciseCard({
     onChangeReps(stepReps(reps, direction));
   };
 
+  const onStepRir = (direction: 1 | -1) => {
+    if (actionsDisabled) {
+      return;
+    }
+    void tickHaptic();
+    onChangeRir(stepRir(rir, direction));
+  };
+
   const openSetEditor = (logged: SetSummary) => {
     if (locked) {
       return;
@@ -154,6 +181,7 @@ export function ExerciseCard({
       weight:
         logged.weightKg === null ? "" : formatWeightKg(logged.weightKg),
       reps: String(logged.reps),
+      rir: logged.rir === null ? "" : String(logged.rir),
     });
   };
 
@@ -174,6 +202,8 @@ export function ExerciseCard({
     const nextReps = Number(editDraft.reps);
     const weightRaw = editDraft.weight.trim();
     const weightKg = weightRaw === "" ? null : Number(weightRaw);
+    const rirRaw = editDraft.rir.trim();
+    const nextRir = rirRaw === "" ? null : Number(rirRaw);
 
     if (!Number.isFinite(nextReps) || nextReps <= 0) {
       rejectEditSave("Inserisci un numero di reps valido (maggiore di 0).");
@@ -185,54 +215,26 @@ export function ExerciseCard({
       return;
     }
 
+    if (nextRir !== null && !isValidRir(nextRir)) {
+      rejectEditSave("Inserisci un RIR valido (da 0 a 10).");
+      return;
+    }
+
     setEditError(null);
-    onEditSet(editDraft.setNumber, { reps: nextReps, weightKg });
+    onEditSet(editDraft.setNumber, { reps: nextReps, weightKg, rir: nextRir });
     setEditDraft(null);
   };
 
-  return (
-    <View
-      style={[
-        styles.card,
-        focus && styles.cardFocus,
-        resting && styles.cardResting,
-        complete && styles.cardDone,
-      ]}
-    >
-      <ExerciseMediaFlip
-        imageUrl={exercise.imageUrl}
-        imageUrlEnd={exercise.imageUrlEnd}
-        variant="hero"
-        placeholder
-      />
-      <View style={[styles.body, focus && styles.bodyFocus]}>
-      {focus && exerciseOrdinal != null && exerciseTotal != null ? (
-        <AppText variant="eyebrow" tone="accent" style={styles.ordinal}>
-          ESERCIZIO {exerciseOrdinal} DI {exerciseTotal}
-        </AppText>
-      ) : null}
-      <View style={styles.titleCopy}>
-        <AppText
-          tone="heading"
-          style={[styles.name, focus && styles.nameFocus]}
-        >
-          {heading}
-        </AppText>
-        {english ? <Meta style={styles.nameEn}>{english}</Meta> : null}
-      </View>
-      {!focus ? (
-        <Meta>
-          Serie {Math.min(sets.length, targetSets)} / {targetSets}
-        </Meta>
-      ) : null}
-
+  const setsTable = (
+    <>
       {focus ? (
         <View style={styles.setTable}>
           <View style={styles.setHeader}>
-            <AppText style={[styles.setCol, styles.setColSet]}>SET</AppText>
-            <AppText style={[styles.setCol, styles.setColPrev]}>PRECEDENTE</AppText>
-            <AppText style={[styles.setCol, styles.setColVal]}>KG</AppText>
-            <AppText style={[styles.setCol, styles.setColVal]}>REPS</AppText>
+            <AppText style={[styles.setCol, styles.setColSet]}>Serie</AppText>
+            <AppText style={[styles.setCol, styles.setColPrev]}>Prima</AppText>
+            <AppText style={[styles.setCol, styles.setColVal]}>Kg</AppText>
+            <AppText style={[styles.setCol, styles.setColVal]}>Reps</AppText>
+            <AppText style={[styles.setCol, styles.setColVal]}>RIR</AppText>
           </View>
           {Array.from({ length: targetSets }, (_, index) => {
             const setNumber = index + 1;
@@ -240,6 +242,8 @@ export function ExerciseCard({
             const previous = previousSets.find((set) => set.setNumber === setNumber);
             const isNext = !logged && setNumber === nextSetNumber && canLog;
             const isPending = !logged && !isNext;
+            const pendingRirLabel = isNext ? nextRirLabel : "—";
+            const rirLabel = logged ? formatRirLabel(logged.rir) : pendingRirLabel;
 
             return (
               <Pressable
@@ -259,7 +263,7 @@ export function ExerciseCard({
                 accessibilityRole={logged && !locked ? "button" : "text"}
                 accessibilityLabel={
                   logged
-                    ? `Serie ${setNumber}: ${logged.weightKg ?? "—"} kg × ${logged.reps}`
+                    ? `Serie ${setNumber}: ${logged.weightKg ?? "—"} kg × ${logged.reps}, RIR ${rirLabel}`
                     : `Serie ${setNumber} in attesa`
                 }
               >
@@ -295,6 +299,12 @@ export function ExerciseCard({
                         : reps.trim()
                       : "—"}
                 </AppText>
+                <AppText
+                  tone="heading"
+                  style={[styles.setCol, styles.setColVal]}
+                >
+                  {rirLabel}
+                </AppText>
               </Pressable>
             );
           })}
@@ -302,10 +312,11 @@ export function ExerciseCard({
       ) : (
         <View style={styles.setTable}>
           <View style={styles.setHeader}>
-            <AppText style={[styles.setCol, styles.setColSet]}>SET</AppText>
-            <AppText style={[styles.setCol, styles.setColVal]}>KG</AppText>
-            <AppText style={[styles.setCol, styles.setColVal]}>REPS</AppText>
-            <AppText style={[styles.setCol, styles.setColVal]}>PIANO</AppText>
+            <AppText style={[styles.setCol, styles.setColSet]}>Serie</AppText>
+            <AppText style={[styles.setCol, styles.setColVal]}>Kg</AppText>
+            <AppText style={[styles.setCol, styles.setColVal]}>Reps</AppText>
+            <AppText style={[styles.setCol, styles.setColVal]}>RIR</AppText>
+            <AppText style={[styles.setCol, styles.setColVal]}>Piano</AppText>
           </View>
           {[
             ...Array.from({ length: targetSets }, (_, index) => index + 1),
@@ -341,6 +352,7 @@ export function ExerciseCard({
                   </AppText>
                   <AppText style={[styles.setCol, styles.setColVal]}>—</AppText>
                   <AppText style={[styles.setCol, styles.setColVal]}>—</AppText>
+                  <AppText style={[styles.setCol, styles.setColVal]}>—</AppText>
                   <AppText
                     style={[
                       styles.setCol,
@@ -348,7 +360,7 @@ export function ExerciseCard({
                       styles.plannedReps,
                     ]}
                   >
-                    {String(plannedReps)}
+                    {formatTargetRepsForSet(exercise, setNumber)}
                   </AppText>
                 </View>
               );
@@ -395,17 +407,19 @@ export function ExerciseCard({
                 >
                   {String(logged.reps)}
                 </AppText>
+                <AppText style={[styles.setCol, styles.setColVal]}>
+                  {formatRirLabel(logged.rir)}
+                </AppText>
                 <AppText
                   style={[styles.setCol, styles.setColVal, styles.plannedReps]}
                 >
-                  {String(plannedReps)}
+                  {formatTargetRepsForSet(exercise, setNumber)}
                 </AppText>
               </Pressable>
             );
           })}
         </View>
       )}
-
       {editDraft ? (
         <View style={styles.editBlock}>
           <Meta style={styles.nextLabel}>Modifica serie #{editDraft.setNumber}</Meta>
@@ -483,6 +497,39 @@ export function ExerciseCard({
             }}
             onEndEditing={() => setEditing(null)}
           />
+          <StepperRow
+            label="rir"
+            value={editDraft.rir}
+            placeholder=""
+            editing={editing === "rir"}
+            inputRef={rirRef}
+            keyboardType="number-pad"
+            large={focus}
+            onMinus={() => {
+              setEditError(null);
+              setEditDraft((current) =>
+                current
+                  ? { ...current, rir: stepRir(current.rir, -1) }
+                  : current,
+              );
+            }}
+            onPlus={() => {
+              setEditError(null);
+              setEditDraft((current) =>
+                current
+                  ? { ...current, rir: stepRir(current.rir, 1) }
+                  : current,
+              );
+            }}
+            onPressValue={() => startEdit("rir")}
+            onChangeText={(value) => {
+              setEditError(null);
+              setEditDraft((current) =>
+                current ? { ...current, rir: value } : current,
+              );
+            }}
+            onEndEditing={() => setEditing(null)}
+          />
           {editError ? (
             <AppText
               tone="danger"
@@ -517,86 +564,189 @@ export function ExerciseCard({
           </View>
         </View>
       ) : null}
+    </>
+  );
 
-      {complete && !readOnly ? (
-        <AppText tone="accent" style={styles.doneLabel}>
-          Esercizio completato
-        </AppText>
-      ) : null}
-
-      {canLog && editDraft === null ? (
-        <View style={styles.logBlock}>
-          <View style={focus ? styles.stepperPair : undefined}>
-            <StepperRow
-              label="kg"
-              value={weight}
-              placeholder="0"
-              editing={editing === "weight"}
-              inputRef={weightRef}
-              keyboardType="decimal-pad"
-              large={focus}
-              onMinus={() => onStepWeight(-1)}
-              onPlus={() => onStepWeight(1)}
-              onPressValue={() => startEdit("weight")}
-              onChangeText={onChangeWeight}
-              onEndEditing={() => setEditing(null)}
-            />
-            <StepperRow
-              label="reps"
-              value={reps}
-              placeholder={String(targetReps)}
-              editing={editing === "reps"}
-              inputRef={repsRef}
-              keyboardType="number-pad"
-              large={focus}
-              onMinus={() => onStepReps(-1)}
-              onPlus={() => onStepReps(1)}
-              onPressValue={() => startEdit("reps")}
-              onChangeText={onChangeReps}
-              onEndEditing={() => setEditing(null)}
-            />
-          </View>
-
-          <Pressable
-            style={({ pressed }) => [
-              styles.logBtn,
-              (pressed || actionsDisabled) && styles.logBtnPressed,
-            ]}
-            onPress={onLog}
-            disabled={actionsDisabled}
-            accessibilityRole="button"
-            accessibilityState={{ disabled: actionsDisabled }}
-            accessibilityLabel={`Logga serie ${nextSetNumber}: ${weight || "senza peso"} kg per ${reps || targetReps} reps`}
-          >
-            <AppText style={styles.logBtnLabel}>
-              {focus
-                ? `LOG SERIE ${nextSetNumber}`
-                : formatLogLabel(weight, reps || String(targetReps), nextSetNumber)}
+  if (!focus) {
+    return (
+      <View style={[styles.card, complete && styles.cardDone]}>
+        <ExerciseMediaFlip
+          imageUrl={exercise.imageUrl}
+          imageUrlEnd={exercise.imageUrlEnd}
+          variant="hero"
+          placeholder
+        />
+        <View style={styles.body}>
+          <View style={styles.titleCopy}>
+            <AppText tone="heading" style={styles.name}>
+              {heading}
             </AppText>
-            {focus ? (
-              <Meta style={styles.logBtnMeta}>
-                {weight.trim() === "" ? "—" : weight.trim()} kg ×{" "}
-                {reps.trim() === "" ? targetReps : reps.trim()}
+            {english ? <Meta style={styles.nameEn}>{english}</Meta> : null}
+          </View>
+          {exercise.notes ? <Meta style={styles.notes}>{exercise.notes}</Meta> : null}
+          <Meta>
+            Serie {Math.min(sets.length, targetSets)} / {targetSets}
+          </Meta>
+          {setsTable}
+        </View>
+      </View>
+    );
+  }
+
+  const badgeLabel = complete
+    ? "Esercizio completato"
+    : `Serie ${nextSetNumber} di ${targetSets}`;
+  const previousForNext =
+    previousSets.find((set) => set.setNumber === nextSetNumber) ?? previousSets.at(-1);
+  const logMeta = `${weight.trim() === "" ? "—" : weight.trim()} kg × ${
+    reps.trim() === "" ? targetReps : reps.trim()
+  }${nextRirSuffix}`;
+
+  const closeSetsSheet = () => {
+    setEditError(null);
+    setEditDraft(null);
+    setIsSetsSheetOpen(false);
+  };
+
+  return (
+    <>
+      <View style={[styles.card, styles.cardFocus, resting && styles.cardResting]}>
+        <ExerciseMediaFlip
+          imageUrl={exercise.imageUrl}
+          imageUrlEnd={exercise.imageUrlEnd}
+          variant="hero"
+          placeholder
+        />
+        <View style={[styles.body, styles.bodyFocus]}>
+          <View style={styles.badgeRow}>
+            <View style={[styles.badge, complete && styles.badgeDone]}>
+              <AppText style={[styles.badgeLabel, complete && styles.badgeLabelDone]}>
+                {badgeLabel}
+              </AppText>
+            </View>
+            {exerciseOrdinal != null && exerciseTotal != null ? (
+              <Meta>
+                Esercizio {exerciseOrdinal} di {exerciseTotal}
               </Meta>
             ) : null}
-          </Pressable>
-        </View>
-      ) : null}
+          </View>
+          <View style={styles.titleCopy}>
+            <AppText tone="heading" style={[styles.name, styles.nameFocus]}>
+              {heading}
+            </AppText>
+            {english ? <Meta style={styles.nameEn}>{english}</Meta> : null}
+          </View>
+          {exercise.notes ? <Meta style={styles.notes}>{exercise.notes}</Meta> : null}
+          {canLog && previousForNext ? (
+            <Meta style={styles.lastTime}>
+              Ultima volta: {formatPreviousLabel(previousForNext)}
+            </Meta>
+          ) : null}
+          {canLog ? (
+            <AppText tone="accent" style={styles.target}>
+              Obiettivo: {nextTargetLabel}
+            </AppText>
+          ) : null}
 
-      {canUndo ? (
-        <Pressable
-          onPress={onUndoLast}
-          disabled={actionsDisabled}
-          style={[styles.textAction, actionsDisabled && styles.actionDisabled]}
-          accessibilityRole="button"
-          accessibilityLabel="Annulla ultima serie"
-          accessibilityState={{ disabled: actionsDisabled }}
-        >
-          <Meta style={styles.undoLabel}>Annulla ultima serie</Meta>
-        </Pressable>
-      ) : null}
+          {canLog ? (
+            <View style={styles.logBlock}>
+              <View style={styles.stepperPair}>
+                <StepperRow
+                  label="Peso (kg)"
+                  value={weight}
+                  placeholder="0"
+                  editing={editing === "weight"}
+                  inputRef={weightRef}
+                  keyboardType="decimal-pad"
+                  large
+                  onMinus={() => onStepWeight(-1)}
+                  onPlus={() => onStepWeight(1)}
+                  onPressValue={() => startEdit("weight")}
+                  onChangeText={onChangeWeight}
+                  onEndEditing={() => setEditing(null)}
+                />
+                <StepperRow
+                  label="Ripetizioni"
+                  value={reps}
+                  placeholder={String(targetReps)}
+                  editing={editing === "reps"}
+                  inputRef={repsRef}
+                  keyboardType="number-pad"
+                  large
+                  onMinus={() => onStepReps(-1)}
+                  onPlus={() => onStepReps(1)}
+                  onPressValue={() => startEdit("reps")}
+                  onChangeText={onChangeReps}
+                  onEndEditing={() => setEditing(null)}
+                />
+                <StepperRow
+                  label="RIR (ripetizioni in riserva)"
+                  value={rir}
+                  placeholder=""
+                  editing={editing === "rir"}
+                  inputRef={rirRef}
+                  keyboardType="number-pad"
+                  onMinus={() => onStepRir(-1)}
+                  onPlus={() => onStepRir(1)}
+                  onPressValue={() => startEdit("rir")}
+                  onChangeText={onChangeRir}
+                  onEndEditing={() => setEditing(null)}
+                />
+              </View>
+
+              <Pressable
+                style={({ pressed }) => [
+                  styles.logBtn,
+                  (pressed || actionsDisabled) && styles.logBtnPressed,
+                ]}
+                onPress={onLog}
+                disabled={actionsDisabled}
+                accessibilityRole="button"
+                accessibilityState={{ disabled: actionsDisabled }}
+                accessibilityLabel={`Serie ${nextSetNumber} fatta: ${weight || "senza peso"} kg per ${reps || targetReps} reps${nextRirSuffix}`}
+              >
+                <AppText style={styles.logBtnLabel}>Serie fatta</AppText>
+                <AppText style={styles.logBtnMeta}>{logMeta}</AppText>
+              </Pressable>
+            </View>
+          ) : null}
+
+          <View style={styles.linksRow}>
+            <Pressable
+              onPress={() => setIsSetsSheetOpen(true)}
+              hitSlop={8}
+              style={styles.textAction}
+              accessibilityRole="button"
+            >
+              <AppText variant="label" tone="accent" style={styles.linkLabel}>
+                Tutte le serie
+              </AppText>
+            </Pressable>
+            {canUndo ? (
+              <Pressable
+                onPress={onUndoLast}
+                disabled={actionsDisabled}
+                hitSlop={8}
+                style={[styles.textAction, actionsDisabled && styles.actionDisabled]}
+                accessibilityRole="button"
+                accessibilityLabel="Annulla ultima serie"
+                accessibilityState={{ disabled: actionsDisabled }}
+              >
+                <AppText variant="label" style={styles.undoLabel}>
+                  Annulla ultima serie
+                </AppText>
+              </Pressable>
+            ) : null}
+          </View>
+        </View>
       </View>
-    </View>
+
+      <BottomSheet visible={isSetsSheetOpen} onClose={closeSetsSheet} title={heading}>
+        <ScrollView style={styles.sheetScroll} keyboardShouldPersistTaps="handled">
+          {setsTable}
+        </ScrollView>
+      </BottomSheet>
+    </>
   );
 }
 
@@ -631,7 +781,7 @@ function StepperRow({
 }: StepperRowProps) {
   return (
     <View style={[styles.stepperRow, large && styles.stepperRowLarge]}>
-      <AppText tone="muted" style={styles.stepperLabel}>
+      <AppText style={styles.stepperLabel}>
         {label}
       </AppText>
       <View style={styles.stepperControls}>
@@ -653,10 +803,14 @@ function StepperRow({
         {editing ? (
           <TextInput
             ref={inputRef}
-            style={[styles.valueInput, large && styles.valueInputLarge]}
+            style={[
+              styles.valueInput,
+              large && styles.valueInputLarge,
+              fontForWeight(styles.valueInput),
+            ]}
             value={value}
             placeholder={placeholder}
-            placeholderTextColor={colors.muted}
+            placeholderTextColor={colors.text}
             keyboardType={keyboardType}
             selectTextOnFocus
             onChangeText={onChangeText}
@@ -701,30 +855,73 @@ function StepperRow({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
-    borderRadius: radii.md,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderRadius: radii.lg,
+    borderWidth: 2,
+    borderColor: colors.surface,
     overflow: "hidden",
     marginTop: spacing.sm,
+    ...shadows.card,
   },
   cardFocus: {
     marginTop: 0,
-    borderRadius: radii.lg,
+    borderRadius: radii.xl,
   },
   cardResting: {
-    borderColor: colors.accent,
+    borderColor: colors.dataBg,
   },
   cardDone: {
     borderColor: colors.accentBorder,
+  },
+  badgeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  badge: {
+    borderRadius: radii.pill,
+    backgroundColor: colors.accentBg,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 6,
+  },
+  badgeDone: {
+    backgroundColor: colors.dataBg,
+  },
+  badgeLabel: {
+    color: colors.accentText,
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: "700",
+  },
+  badgeLabelDone: {
+    color: colors.data,
+  },
+  lastTime: {
+    marginTop: spacing.sm,
+  },
+  linksRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: spacing.md,
+    marginTop: spacing.sm,
+  },
+  linkLabel: {
+    fontWeight: "700",
+  },
+  sheetScroll: {
+    maxHeight: 480,
   },
   name: {
     fontWeight: "700",
     fontSize: 17,
   },
   nameFocus: {
-    fontSize: 24,
-    lineHeight: 30,
-    fontStyle: "italic",
+    fontSize: 26,
+    lineHeight: 32,
+    fontWeight: "800",
+    letterSpacing: -0.4,
   },
   titleCopy: {
     minWidth: 0,
@@ -732,6 +929,14 @@ const styles = StyleSheet.create({
   },
   nameEn: {
     marginTop: 2,
+  },
+  notes: {
+    marginTop: spacing.xs,
+    fontStyle: "italic",
+  },
+  target: {
+    marginTop: spacing.xs,
+    fontWeight: "600",
   },
   body: {
     padding: spacing.md,
@@ -784,7 +989,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "700",
     textAlign: "center",
-    color: colors.muted,
+    color: colors.text,
   },
   setColSet: {
     width: 40,
@@ -801,13 +1006,13 @@ const styles = StyleSheet.create({
   prevText: {
     fontSize: 11,
     fontWeight: "500",
-    color: colors.muted,
+    color: colors.text,
   },
   missedReps: {
     color: colors.danger,
   },
   plannedReps: {
-    color: colors.muted,
+    color: colors.text,
     fontWeight: "600",
   },
   chipRow: {
@@ -839,15 +1044,11 @@ const styles = StyleSheet.create({
     color: colors.textHeading,
   },
   chipLabelPending: {
-    color: colors.muted,
+    color: colors.text,
     fontWeight: "600",
   },
   chipLabelNext: {
-    color: colors.accent,
-  },
-  doneLabel: {
-    marginTop: spacing.sm,
-    fontWeight: "700",
+    color: colors.accentText,
   },
   logBlock: {
     marginTop: spacing.md,
@@ -880,7 +1081,7 @@ const styles = StyleSheet.create({
   },
   saveEditBtn: {
     backgroundColor: colors.accent,
-    borderRadius: radii.md,
+    borderRadius: radii.pill,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
   },
@@ -889,16 +1090,15 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   textAction: {
-    alignSelf: "flex-start",
-    paddingVertical: spacing.xs,
+    minHeight: 44,
+    justifyContent: "center",
   },
   actionDisabled: {
     opacity: 0.5,
   },
   undoLabel: {
     color: colors.danger,
-    fontWeight: "600",
-    marginTop: spacing.xs,
+    fontWeight: "700",
   },
   stepperRow: {
     gap: spacing.xs,
@@ -907,10 +1107,9 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   stepperLabel: {
-    fontSize: 12,
+    fontSize: 14,
+    lineHeight: 18,
     fontWeight: "700",
-    letterSpacing: 0.6,
-    textTransform: "uppercase",
   },
   stepperControls: {
     flexDirection: "row",
@@ -918,35 +1117,31 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   stepBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: radii.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.bg,
+    width: 44,
+    height: 44,
+    borderRadius: radii.pill,
+    backgroundColor: colors.accentBg,
     alignItems: "center",
     justifyContent: "center",
   },
   stepBtnLarge: {
-    width: 56,
-    height: 56,
+    width: 52,
+    height: 52,
   },
   stepBtnPressed: {
-    opacity: 0.7,
-    borderColor: colors.accent,
+    backgroundColor: colors.accentBorder,
   },
   stepBtnLabel: {
-    fontSize: 24,
-    lineHeight: 28,
+    color: colors.accentText,
+    fontSize: 26,
+    lineHeight: 30,
     fontWeight: "700",
   },
   valueTap: {
     flex: 1,
     minHeight: 48,
     borderRadius: radii.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.bg,
+    backgroundColor: colors.surfaceElevated,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: spacing.sm,
@@ -970,7 +1165,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
     borderWidth: 1,
     borderColor: colors.accent,
-    backgroundColor: colors.bg,
+    backgroundColor: colors.surface,
     color: colors.textHeading,
     fontSize: 28,
     fontWeight: "700",
@@ -985,8 +1180,8 @@ const styles = StyleSheet.create({
   logBtn: {
     marginTop: spacing.xs,
     backgroundColor: colors.accent,
-    borderRadius: radii.md,
-    minHeight: 56,
+    borderRadius: radii.pill,
+    minHeight: 64,
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: spacing.md,
@@ -999,13 +1194,14 @@ const styles = StyleSheet.create({
   logBtnLabel: {
     color: colors.onAccent,
     fontWeight: "800",
-    fontSize: 16,
-    letterSpacing: 0.3,
+    fontSize: 18,
+    lineHeight: 22,
     textAlign: "center",
   },
   logBtnMeta: {
     color: colors.onAccent,
-    opacity: 0.85,
+    fontSize: 13,
+    lineHeight: 16,
     fontWeight: "600",
   },
 });

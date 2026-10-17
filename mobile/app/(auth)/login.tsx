@@ -4,15 +4,16 @@ import {
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
-  Text,
   View,
 } from "react-native";
 import { ApiError } from "../../src/api/client";
 import { API_BASE } from "../../src/api/config";
 import { useAuth } from "../../src/auth";
 import {
+  AppText,
   Body,
   BrandLogo,
+  Mascot,
   ErrorBanner,
   Field,
   PrimaryButton,
@@ -54,9 +55,10 @@ export default function LoginScreen() {
         style={styles.flex}
       >
         <View style={styles.brand}>
-          <BrandLogo size="lg" />
-          <Text style={styles.eyebrow}>AREA ATLETA</Text>
-          <Body>Accedi per allenarti e registrare le serie</Body>
+          <BrandLogo size="md" />
+          <Mascot name="wave" size={140} />
+          <AppText style={styles.title}>Bentornato</AppText>
+          <Body style={styles.intro}>Accedi per allenarti e registrare le serie.</Body>
         </View>
         <View style={styles.form}>
           {error ? <ErrorBanner message={error} /> : null}
@@ -82,7 +84,7 @@ export default function LoginScreen() {
             disabled={busy || !email || !password}
           />
           <Link href="/(auth)/register" asChild>
-            <Text style={styles.link}>Crea un account</Text>
+            <AppText style={styles.link}>Crea un account</AppText>
           </Link>
         </View>
       </KeyboardAvoidingView>
@@ -97,17 +99,23 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     marginBottom: spacing.md,
   },
-  eyebrow: {
-    color: colors.accent,
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 1.2,
+  title: {
+    color: colors.textHeading,
+    fontSize: 30,
+    lineHeight: 36,
+    fontWeight: "800",
+    letterSpacing: -0.6,
+    marginTop: spacing.sm,
+  },
+  intro: {
+    textAlign: "center",
+    maxWidth: 300,
   },
   form: { marginTop: spacing.md },
   link: {
-    color: colors.accent,
+    color: colors.accentText,
     textAlign: "center",
-    marginTop: spacing.md,
-    fontWeight: "600",
+    paddingVertical: spacing.md,
+    fontWeight: "700",
   },
 });

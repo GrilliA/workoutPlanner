@@ -1,21 +1,25 @@
+/* Segmented "Sole": pill bianca, periodo attivo = pill ink. */
 .analytics-period {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.5rem;
+  gap: var(--space-1);
   margin-bottom: 1.25rem;
   max-width: 28rem;
+  padding: var(--space-1);
+  border-radius: var(--radius-full);
+  background: var(--surface);
+  box-shadow: var(--shadow);
 }
 
 .analytics-period__chip {
-  border: 1px solid var(--border);
-  border-radius: 0.65rem;
-  background: var(--surface);
+  border: 0;
+  border-radius: var(--radius-full);
+  background: transparent;
   color: var(--text);
   font: inherit;
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   font-weight: 700;
-  letter-spacing: 0.04em;
-  padding: 0.65rem 0.5rem;
+  padding: var(--space-2-5) var(--space-2);
   cursor: pointer;
   transition:
     border-color 0.2s,
@@ -23,17 +27,16 @@
     color 0.2s;
 
   &:hover {
-    border-color: var(--accent-border);
+    background: var(--hover-bg);
   }
 
   &:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: 2px solid var(--accent-text);
     outline-offset: 2px;
   }
 
   &.active {
-    color: var(--text-h);
-    border-color: var(--accent-border);
-    background: var(--accent-bg);
+    color: var(--on-ink);
+    background: var(--ink);
   }
 }

@@ -1,6 +1,6 @@
 .analytics-page__empty {
   padding: 1.25rem;
-  border-radius: 0.85rem;
+  border-radius: var(--radius-xl);
   border: 1px solid var(--border);
   background: var(--surface);
 

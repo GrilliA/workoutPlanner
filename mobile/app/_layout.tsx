@@ -1,13 +1,27 @@
+import {
+  PlusJakartaSans_400Regular,
+  PlusJakartaSans_500Medium,
+  PlusJakartaSans_600SemiBold,
+  PlusJakartaSans_700Bold,
+  PlusJakartaSans_800ExtraBold,
+  useFonts,
+} from "@expo-google-fonts/plus-jakarta-sans";
 import { Stack } from "expo-router";
-import { Pressable, Text } from "react-native";
+import * as SplashScreen from "expo-splash-screen";
+import { StatusBar } from "expo-status-bar";
+import { useEffect } from "react";
+import { Pressable } from "react-native";
 import { API_BASE } from "../src/api/config";
 import { AuthProvider, CoachBlockScreen, useAuth } from "../src/auth";
-import { LoadingBlock, Screen } from "../src/components";
+import { AppText, LoadingBlock, Screen } from "../src/components";
 import { useOfflineSessionSync } from "../src/features/session/useOfflineSessionSync";
 import { useRestNotificationRouting } from "../src/features/session/useRestNotificationRouting";
 import { colors } from "../src/theme";
 
 export { ErrorBoundary } from "expo-router";
+
+// Lo splash resta finché Plus Jakarta Sans non è caricato: niente testo col font di sistema.
+void SplashScreen.preventAutoHideAsync();
 
 function AuthGate({ children }: { children: React.ReactNode }) {
   const { status, user, retryBootstrap } = useAuth();
@@ -26,17 +40,16 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   if (status === "error") {
     return (
       <Screen>
-        <Text style={{ color: colors.textHeading, marginBottom: 8 }}>
+        <AppText tone="heading" style={{ marginBottom: 8 }}>
           Errore di rete verso l'API.
-        </Text>
-        <Text
-          selectable
-          style={{ color: colors.muted, marginBottom: 12, fontSize: 12 }}
-        >
+        </AppText>
+        <AppText selectable variant="meta" style={{ marginBottom: 12 }}>
           {API_BASE}
-        </Text>
+        </AppText>
         <Pressable onPress={retryBootstrap}>
-          <Text style={{ color: colors.accent, fontWeight: "700" }}>Riprova</Text>
+          <AppText tone="accent" style={{ fontWeight: "700" }}>
+            Riprova
+          </AppText>
         </Pressable>
       </Screen>
     );
@@ -46,8 +59,29 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 }
 
 export default function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts({
+    PlusJakartaSans_400Regular,
+    PlusJakartaSans_500Medium,
+    PlusJakartaSans_600SemiBold,
+    PlusJakartaSans_700Bold,
+    PlusJakartaSans_800ExtraBold,
+  });
+  // Con un errore di caricamento si va avanti col font di sistema, non si resta sullo splash.
+  const fontsSettled = fontsLoaded || fontError !== null;
+
+  useEffect(() => {
+    if (fontsSettled) {
+      void SplashScreen.hideAsync();
+    }
+  }, [fontsSettled]);
+
+  if (!fontsSettled) {
+    return null;
+  }
+
   return (
     <AuthProvider>
+      <StatusBar style="dark" />
       <AuthGate>
         <Stack
           screenOptions={{

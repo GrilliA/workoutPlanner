@@ -22,6 +22,7 @@ type WorkoutProgramExercise = {
   id?: number;
   name: string;
   catalogId?: string | null;
+  notes: string | null;
   setPrescriptions: SetPrescription[];
 };
 
@@ -309,6 +310,7 @@ export const saveWorkoutProgram = async (
           sets: summary.sets,
           reps: summary.reps,
           catalogId: exercise.catalogId ?? null,
+          notes: exercise.notes,
         };
         const [savedExercise] = exercise.id
           ? await tx

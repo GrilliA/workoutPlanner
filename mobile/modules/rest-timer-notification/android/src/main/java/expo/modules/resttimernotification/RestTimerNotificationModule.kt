@@ -15,7 +15,8 @@ import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 
 private const val CHANNEL_ID = "rest-timer-ongoing"
-private const val NOTIFICATION_COLOR = 0xFFBFDBF7.toInt()
+// colors.accent del tema "Sole" (mobile/src/theme/colors.ts)
+private const val NOTIFICATION_COLOR = 0xFFFF7A45.toInt()
 
 class RestTimerNotificationModule : Module() {
   override fun definition() = ModuleDefinition {

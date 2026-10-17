@@ -2,7 +2,7 @@
 
 React + Vite. UI copy is **Italian**. Style: functions, immutable data, pure mappers.
 
-A feature (e.g. dashboard) lives **under its page**, not in `components/`. `components/` is shared UI primitives only (`button/`, `input/`, `card/`, `skeleton/`, `appShell/`, `pageHeader/`, `pageError/`).
+A feature (e.g. dashboard) lives **under its page**, not in `components/`. `components/` is shared UI primitives only (`button/`, `input/`, `card/`, `skeleton/`, `appShell/`, `pageHeader/`, `pageError/`, `confirmDialog/`).
 
 Authenticated chrome (`AppShell`) lives once in the router (`App.tsx`), around the inner `Switch` of coach routes. Public routes (`/login`, `/register`, `/`) stay outside. A page `index.tsx` is the feature entry, not a layout wrapper.
 

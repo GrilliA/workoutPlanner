@@ -1,7 +1,8 @@
-import { Pressable, StyleSheet, Text } from "react-native";
+import { Pressable, StyleSheet } from "react-native";
 import { colors, radii, spacing } from "../../theme";
+import { AppText } from "../text";
 
-type Variant = "primary" | "secondary" | "ghost" | "danger";
+type Variant = "primary" | "ink" | "soft" | "secondary" | "ghost" | "danger";
 
 type ButtonProps = {
   label: string;
@@ -10,7 +11,10 @@ type ButtonProps = {
   variant?: Variant;
 };
 
-/** Pulsante stile TRACCIA (primary lime / secondary / ghost / danger). */
+/**
+ * Pulsante pill "Sole": primary arancio (testo cacao), ink scuro (su card arancio),
+ * soft arancio tenue, secondary bianco con bordo, ghost solo testo, danger.
+ */
 export function Button({
   label,
   onPress,
@@ -28,7 +32,7 @@ export function Button({
         (disabled || pressed) && styles.dimmed,
       ]}
     >
-      <Text style={[styles.label, labelStyles[variant]]}>{label}</Text>
+      <AppText style={[styles.label, labelStyles[variant]]}>{label}</AppText>
     </Pressable>
   );
 }
@@ -48,18 +52,20 @@ export function DangerButton(props: Omit<ButtonProps, "variant">) {
 
 const styles = StyleSheet.create({
   base: {
-    borderRadius: radii.md,
-    paddingVertical: 14,
-    paddingHorizontal: spacing.md,
+    minHeight: 58,
+    borderRadius: radii.pill,
+    paddingHorizontal: spacing.lg,
     alignItems: "center",
+    justifyContent: "center",
     marginTop: spacing.sm,
   },
   dimmed: {
     opacity: 0.55,
   },
   label: {
-    fontWeight: "700",
+    fontWeight: "800",
     fontSize: 16,
+    lineHeight: 20,
   },
 });
 
@@ -67,8 +73,14 @@ const variantStyles = StyleSheet.create({
   primary: {
     backgroundColor: colors.accent,
   },
+  ink: {
+    backgroundColor: colors.ink,
+  },
+  soft: {
+    backgroundColor: colors.accentBg,
+  },
   secondary: {
-    backgroundColor: "transparent",
+    backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
   },
@@ -78,7 +90,7 @@ const variantStyles = StyleSheet.create({
   danger: {
     backgroundColor: colors.dangerBg,
     borderWidth: 1,
-    borderColor: colors.danger,
+    borderColor: colors.dangerBorder,
   },
 });
 
@@ -86,11 +98,17 @@ const labelStyles = StyleSheet.create({
   primary: {
     color: colors.onAccent,
   },
+  ink: {
+    color: colors.onInk,
+  },
+  soft: {
+    color: colors.accentText,
+  },
   secondary: {
     color: colors.textHeading,
   },
   ghost: {
-    color: colors.accent,
+    color: colors.accentText,
   },
   danger: {
     color: colors.danger,

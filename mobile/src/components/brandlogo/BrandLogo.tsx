@@ -1,5 +1,6 @@
-import { View, Text, StyleSheet } from "react-native";
+import { View, StyleSheet } from "react-native";
 import { colors } from "../../theme";
+import { AppText } from "../text";
 
 type BrandLogoProps = {
   size?: "sm" | "md" | "lg";
@@ -14,10 +15,12 @@ const WORD_SIZES = {
 export function BrandLogo({ size = "md" }: BrandLogoProps) {
   return (
     <View style={styles.lockup} accessibilityLabel="traccia">
-      <Text style={[styles.word, { fontSize: WORD_SIZES[size] }]}>
+      <AppText style={[styles.word, { fontSize: WORD_SIZES[size] }]}>
         tracci
-        <Text style={styles.a}>a</Text>
-      </Text>
+        <AppText style={[styles.word, styles.a, { fontSize: WORD_SIZES[size] }]}>
+          a
+        </AppText>
+      </AppText>
     </View>
   );
 }
@@ -28,9 +31,10 @@ const styles = StyleSheet.create({
   },
   word: {
     color: colors.textHeading,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: -0.5,
   },
+  /** Logotipo: l'arancio pieno è esente dal contrasto testo (WCAG 1.4.3). */
   a: {
     color: colors.accent,
   },
