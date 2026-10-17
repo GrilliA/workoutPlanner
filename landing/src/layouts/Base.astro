@@ -82,7 +82,11 @@ const { title, description } = Astro.props;
               form.classList.add("ok");
               return;
             }
-            message.textContent = await messageFromResponse(response);
+            const showServerMessage =
+              response.status === 400 || response.status === 413 || response.status === 429;
+            message.textContent = showServerMessage
+              ? await messageFromResponse(response)
+              : fallbackError;
             form.classList.remove("ok");
             form.classList.add("err");
           } catch {
