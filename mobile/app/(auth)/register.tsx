@@ -54,10 +54,10 @@ export default function RegisterScreen() {
       >
         <View style={styles.brand}>
           <BrandLogo size="lg" />
-          <AppText style={styles.eyebrow}>CREA ACCOUNT</AppText>
-          <Body>
-            Registrati per creare le tue schede. Potrai collegare un coach dopo
-            con un codice invito.
+          <AppText style={styles.title}>Crea il tuo account</AppText>
+          <Body style={styles.intro}>
+            Crea le tue schede da solo. Un coach lo puoi collegare dopo, con il suo
+            codice invito.
           </Body>
         </View>
         <View style={styles.form}>
@@ -105,17 +105,23 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     marginBottom: spacing.md,
   },
-  eyebrow: {
-    color: colors.accentText,
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 1.2,
+  title: {
+    color: colors.textHeading,
+    fontSize: 30,
+    lineHeight: 36,
+    fontWeight: "800",
+    letterSpacing: -0.6,
+    marginTop: spacing.sm,
+  },
+  intro: {
+    textAlign: "center",
+    maxWidth: 300,
   },
   form: { marginTop: spacing.md },
   link: {
     color: colors.accentText,
     textAlign: "center",
-    marginTop: spacing.md,
-    fontWeight: "600",
+    paddingVertical: spacing.md,
+    fontWeight: "700",
   },
 });

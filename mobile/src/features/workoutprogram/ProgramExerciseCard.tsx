@@ -145,7 +145,6 @@ const styles = StyleSheet.create({
   },
   legendLabel: {
     fontSize: 11,
-    textTransform: "uppercase",
   },
   grid: {
     borderWidth: 1,

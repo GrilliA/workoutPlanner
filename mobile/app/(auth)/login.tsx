@@ -13,6 +13,7 @@ import {
   AppText,
   Body,
   BrandLogo,
+  Mascot,
   ErrorBanner,
   Field,
   PrimaryButton,
@@ -54,9 +55,10 @@ export default function LoginScreen() {
         style={styles.flex}
       >
         <View style={styles.brand}>
-          <BrandLogo size="lg" />
-          <AppText style={styles.eyebrow}>AREA ATLETA</AppText>
-          <Body>Accedi per allenarti e registrare le serie</Body>
+          <BrandLogo size="md" />
+          <Mascot name="wave" size={140} />
+          <AppText style={styles.title}>Bentornato</AppText>
+          <Body style={styles.intro}>Accedi per allenarti e registrare le serie.</Body>
         </View>
         <View style={styles.form}>
           {error ? <ErrorBanner message={error} /> : null}
@@ -97,17 +99,23 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     marginBottom: spacing.md,
   },
-  eyebrow: {
-    color: colors.accentText,
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 1.2,
+  title: {
+    color: colors.textHeading,
+    fontSize: 30,
+    lineHeight: 36,
+    fontWeight: "800",
+    letterSpacing: -0.6,
+    marginTop: spacing.sm,
+  },
+  intro: {
+    textAlign: "center",
+    maxWidth: 300,
   },
   form: { marginTop: spacing.md },
   link: {
     color: colors.accentText,
     textAlign: "center",
-    marginTop: spacing.md,
-    fontWeight: "600",
+    paddingVertical: spacing.md,
+    fontWeight: "700",
   },
 });

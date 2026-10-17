@@ -182,7 +182,6 @@ const styles = StyleSheet.create({
   headerLabel: {
     fontSize: 11,
     textAlign: "center",
-    textTransform: "uppercase",
   },
   setRow: {
     flexDirection: "row",

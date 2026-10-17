@@ -333,7 +333,7 @@ export function WorkoutBuilder({
 
           {!openDay ? (
             <View style={styles.block}>
-              <SectionLabel>NOME SCHEDA</SectionLabel>
+              <SectionLabel>Nome scheda</SectionLabel>
               <Field
                 placeholder="Nome scheda"
                 value={draft.name}
@@ -343,7 +343,7 @@ export function WorkoutBuilder({
                 editable={!readOnly && !busy}
               />
 
-              <SectionLabel>GIORNI</SectionLabel>
+              <SectionLabel>Giorni</SectionLabel>
               {draft.days.map((day) => (
                 <Pressable
                   key={day.key}
@@ -391,7 +391,7 @@ export function WorkoutBuilder({
                 disabled={readOnly || busy}
               />
 
-              <SectionLabel>ESERCIZI</SectionLabel>
+              <SectionLabel>Esercizi</SectionLabel>
               {openDay.exercises.length === 0 ? (
                 <Body>Nessun esercizio in questo giorno.</Body>
               ) : (

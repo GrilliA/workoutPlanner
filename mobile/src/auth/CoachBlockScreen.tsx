@@ -18,7 +18,7 @@ export function CoachBlockScreen() {
     <Screen>
       <View style={styles.content}>
         <BrandLogo size="lg" />
-        <AppText style={styles.eyebrow}>AREA COACH</AppText>
+        <AppText style={styles.eyebrow}>Area coach</AppText>
         <AppText style={styles.title}>Il pannello web è riservato ai coach</AppText>
         <AppText style={styles.support}>
           Accedi dal browser per gestire clienti, schede e assegnazioni. L'app
@@ -39,15 +39,15 @@ const styles = StyleSheet.create({
   },
   eyebrow: {
     color: colors.accentText,
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: "700",
-    letterSpacing: 1.2,
     marginTop: spacing.md,
   },
   title: {
     color: colors.textHeading,
-    fontSize: 22,
-    fontWeight: "700",
+    fontSize: 24,
+    lineHeight: 30,
+    fontWeight: "800",
     textAlign: "center",
     marginTop: spacing.xs,
   },
