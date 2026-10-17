@@ -21,9 +21,15 @@ cd fe && npm run dev
 # Mobile native (Expo React Native — requires Node ≥22)
 cd mobile && npm start            # Expo Dev Tools (i / a for simulators)
 cd mobile && npm run typecheck
+
+# Landing (Astro, static, Node >= 22.22). Pages: https://grillia.github.io/workoutPlanner/landing/
+cd landing && npm run dev         # :4321
+cd landing && npm run check && npm run build
 ```
 
-**CI:** push or PR to `main` → GitHub Actions (`.github/workflows/ci.yml`): `be` typecheck + test, `fe` lint + build, `mobile` typecheck (Node 22).
+**CI:** push or PR to `main` → GitHub Actions (`.github/workflows/ci.yml`): `be` typecheck + test, `fe` lint + build, `mobile` typecheck, `landing` check + build (Node 22).
+
+**GitHub Pages** (`.github/workflows/pages.yml`): one artifact. Coach panel at https://grillia.github.io/workoutPlanner/, waitlist at https://grillia.github.io/workoutPlanner/landing/.
 
 - `be/.env` credentials: `postgres:postgres` (must match `docker-compose.yml`)
 - Frontend web: relative `/api/...` URLs; Vite proxies them in dev
@@ -40,6 +46,7 @@ workoutPlanner/
 ├── be/                 # Express + Drizzle + Postgres
 ├── fe/                 # React + Vite (coach panel)
 ├── mobile/             # Expo React Native (athlete)
+├── landing/            # Astro static waitlist (GitHub Pages /landing/)
 ├── docs/guidelines/    # conventions split by area
 ├── WORKBOOK.md
 └── AGENTS.md
@@ -51,6 +58,7 @@ workoutPlanner/
 | `fe/src/components/` | Shared UI primitives (`appShell/`, `errorBoundary/`) |
 | `mobile/app/` | Expo Router routes |
 | `mobile/src/api/` | HTTP + Zod (same contract as web, mobile auth) |
+| `landing/` | Pre-launch waitlist. `PUBLIC_WAITLIST_ENDPOINT` at build time |
 
 FE component folders are **camelCase** (`errorBoundary/ErrorBoundary.tsx`). Details: [`docs/guidelines/fe.md`](docs/guidelines/fe.md).
 

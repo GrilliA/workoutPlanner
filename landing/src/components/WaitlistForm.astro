@@ -1,0 +1,28 @@
+---
+// Form whitelist. Endpoint configurabile via PUBLIC_WAITLIST_ENDPOINT (.env).
+interface Props { id: string; compact?: boolean }
+const { id, compact = false } = Astro.props;
+const configuredEndpoint = import.meta.env.PUBLIC_WAITLIST_ENDPOINT;
+const trimmedEndpoint =
+  typeof configuredEndpoint === "string" ? configuredEndpoint.trim() : "";
+const endpoint = trimmedEndpoint === "" ? "#" : trimmedEndpoint;
+---
+<form class:list={['wl-form', { compact }]} action={endpoint} method="POST" data-waitlist>
+  <div class="wl-row">
+    <label class="sr-only" for={`${id}-email`}>Email</label>
+    <input id={`${id}-email`} type="email" name="email" required placeholder="la-tua@email.it" autocomplete="email" />
+    <button type="submit" class="btn btn-accent">Entra in lista</button>
+  </div>
+  <div class="wl-role" role="radiogroup" aria-label="Sei un">
+    <span>Sono un:</span>
+    <label><input type="radio" name="role" value="coach" checked /> Coach o PT</label>
+    <label><input type="radio" name="role" value="atleta" /> Atleta</label>
+  </div>
+  <input type="hidden" name="ref" value="" data-ref />
+  <input type="text" name="company" tabindex="-1" autocomplete="off" class="hp" aria-hidden="true" />
+  <label class="wl-consent">
+    <input type="checkbox" name="consent" value="yes" required />
+    <span>Acconsento a ricevere email su Traccia (lancio e accesso anticipato). Ho letto l'<a href="#privacy">informativa privacy</a>. Disiscrizione in un clic.</span>
+  </label>
+  <p class="wl-msg" aria-live="polite"></p>
+</form>

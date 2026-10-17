@@ -19,9 +19,6 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: fe
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -29,18 +26,46 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: 22
+          # Astro 7 (landing/) needs Node >= 22.22. The coach panel builds on the same runtime.
+          node-version: 22.23.3
           cache: npm
-          cache-dependency-path: fe/package-lock.json
+          cache-dependency-path: |
+            fe/package-lock.json
+            landing/package-lock.json
 
-      - name: Install dependencies
+      - name: Install coach panel dependencies
+        working-directory: fe
         run: npm ci
 
-      - name: Build
+      - name: Build coach panel
+        working-directory: fe
         run: npm run build:pages
         env:
           # Same host the mobile app uses. Public URL, not a secret.
           VITE_API_BASE: https://workoutplanner-production-974a.up.railway.app/api
+
+      - name: Install landing dependencies
+        working-directory: landing
+        run: npm ci
+
+      - name: Build landing
+        working-directory: landing
+        run: npm run build:pages
+        env:
+          ASTRO_TELEMETRY_DISABLED: 1
+          # Public form URL. Empty until the owner sets the repository variable.
+          PUBLIC_WAITLIST_ENDPOINT: ${{ vars.PUBLIC_WAITLIST_ENDPOINT }}
+
+      # One Pages site per repo. The coach panel stays at the site root
+      # (https://grillia.github.io/workoutPlanner/). The waitlist is a subpath
+      # (https://grillia.github.io/workoutPlanner/landing/) so the app URL does not move.
+      - name: Assemble site
+        run: |
+          rm -rf site
+          mkdir -p site/landing
+          cp -a fe/dist/. site/
+          cp -a landing/dist/. site/landing/
+          touch site/.nojekyll
 
       - name: Setup Pages
         uses: actions/configure-pages@v6
@@ -48,7 +73,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v5
         with:
-          path: fe/dist
+          path: site
 
   deploy:
     name: Deploy
