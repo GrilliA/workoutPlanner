@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { and, desc, eq } from "drizzle-orm";
 import { db } from "../db";
+import { isUniqueViolation } from "../db/errors";
 import { loggedSets, workoutSessions, workouts } from "../db/schema";
 import { requireAuth } from "../middleware/requireAuth";
 import {
@@ -35,15 +36,6 @@ function parseWorkoutId(params: Record<string, string | undefined>): number {
 function parseSessionId(params: Record<string, string | undefined>): number {
   return Number(params.sessionId);
 }
-
-const isUniqueViolation = (error: unknown): boolean => {
-  const databaseError = error as {
-    code?: string;
-    cause?: { code?: string };
-  };
-
-  return databaseError?.code === "23505" || databaseError?.cause?.code === "23505";
-};
 
 const sessionColumns = {
   id: workoutSessions.id,

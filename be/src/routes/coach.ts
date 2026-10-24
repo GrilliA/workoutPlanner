@@ -10,6 +10,7 @@ import {
 } from "../db/schema";
 import { requireAuth } from "../middleware/requireAuth";
 import { requireRole } from "../middleware/requireRole";
+import { coachSubscriptionsRouter } from "./coachsubscriptions";
 import { validateAssignmentDates, validatePartialAssignmentDates } from "../services/assignmentStatus";
 import { validateResetPasswordInput } from "../services/clientValidation";
 import {
@@ -52,6 +53,7 @@ import {
 export const coachRouter = Router();
 
 coachRouter.use(requireAuth, requireRole("coach"));
+coachRouter.use(coachSubscriptionsRouter);
 
 const templateColumns = {
   id: workouts.id,

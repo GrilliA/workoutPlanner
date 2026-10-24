@@ -11,7 +11,7 @@ Riferimento visivo: canvas Design "traccia — workoutPlanner", riga **PT · reg
 | Pagamenti | Registro: il PT segna i pagamenti, noi non tocchiamo soldi |
 | Modello | Listino → abbonamento del cliente → **pagato fino al**. Registrare un pagamento sposta la data di N periodi a partire dalla **vecchia scadenza** |
 | Stato | Ricavato dalla data: in regola / in scadenza (≤ 7 g) / scaduto / in pausa. Nessuna rata futura salvata |
-| Pausa | Un periodo dal / al, al massimo una attiva. Sposta "pagato fino al" della sua durata e toglie il cliente da avvisi, rischio ed entrate attese. Non tocca la scheda |
+| Pausa | Un periodo dal / al, al massimo una attiva. Sposta "pagato fino al" della sua durata se il cliente era pagato al suo inizio (altrimenti nulla: [contratto R2](../contracts/pt-registro.md#quanto-sposta-la-pausa)) e toglie il cliente da avvisi, rischio ed entrate attese. Non tocca la scheda |
 | Insoluto | Non blocca nulla |
 | Rischio abbandono | Regola spiegabile: alto = scade entro 14 g **e** (frequenza < 50% **o** nessuna sessione da 7+ g); medio = una sola condizione |
 | Oggi | Una riga per cliente, ordinata per urgenza. "Gestito" nasconde per 7 g, la voce torna prima se peggiora |

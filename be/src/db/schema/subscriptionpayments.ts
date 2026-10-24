@@ -29,6 +29,11 @@ export const subscriptionPayments = pgTable(
     coversFrom: date("covers_from").notNull(),
     coversTo: date("covers_to").notNull(),
     note: text("note"),
+    // Subscription values before this payment, restored on undo. Null on rows written before 0015.
+    previousPaidThrough: date("previous_paid_through"),
+    previousBillingDay: integer("previous_billing_day"),
+    // The subscription revision this payment wrote.
+    revision: integer("revision").notNull().default(0),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [
@@ -43,5 +48,6 @@ export const subscriptionPayments = pgTable(
     check("subscription_payments_periods_check", sql`${table.periods} > 0`),
     check("subscription_payments_method_check", sqlInList(table.method, PAYMENT_METHODS)),
     check("subscription_payments_covers_check", sql`${table.coversTo} > ${table.coversFrom}`),
+    check("subscription_payments_previous_billing_day_check", sql`${table.previousBillingDay} BETWEEN 1 AND 31`),
   ],
 );
