@@ -1,3 +1,5 @@
+import { DrizzleQueryError } from "drizzle-orm";
+
 type ErrorResponse = {
   status: number;
   body: { error: string };
@@ -22,13 +24,52 @@ const isBodyParserError = (err: unknown): err is BodyParserError =>
   "status" in err &&
   typeof err.status === "number";
 
+// Postgres fields that say what failed without quoting a value. `message` and `detail` can quote one:
+// `invalid input syntax for type uuid: "…"`, `Key (email)=(…) already exists.`
+const DATABASE_ERROR_FIELDS = ["code", "table", "column", "constraint"];
+
+// A stack starts with `name: message`. Cut that exact text: a value can itself hold a line like `    at …`.
+const stackFrames = (err: Error) => {
+  const header = `${err.name}: ${err.message}`;
+
+  if (!err.stack?.startsWith(header)) {
+    return [];
+  }
+
+  return err.stack
+    .slice(header.length)
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line !== "");
+};
+
+/**
+ * Drizzle writes the query params into `message`, and so into `stack`: emails, password hashes, tokens.
+ * Its log keeps the query with placeholders, where the code failed and what Postgres rejected.
+ */
+const errorLogWithoutParams = (err: unknown) => {
+  if (!(err instanceof DrizzleQueryError)) {
+    return err;
+  }
+
+  const causeFields = err.cause ? Object.entries(err.cause) : [];
+  const databaseFields = causeFields.filter(([field]) => DATABASE_ERROR_FIELDS.includes(field));
+
+  return {
+    name: "DrizzleQueryError",
+    query: err.query,
+    stack: stackFrames(err),
+    cause: Object.fromEntries(databaseFields),
+  };
+};
+
 /**
  * What the global error handler sends and logs.
  * A rejected body (malformed JSON, or a primitive in strict mode) is the client's fault, never a 500.
  */
 export const errorResponse = (err: unknown): ErrorResponse => {
   if (!isBodyParserError(err)) {
-    return { status: 500, body: INTERNAL_ERROR, log: err };
+    return { status: 500, body: INTERNAL_ERROR, log: errorLogWithoutParams(err) };
   }
 
   // Never the error itself: it keeps the raw body, and a JSON.parse message can quote it
