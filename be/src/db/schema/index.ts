@@ -13,4 +13,8 @@ export * from "./exercisesets";
 export * from "./exercisecatalog";
 export * from "./workoutsessions";
 export * from "./loggedsets";
+export * from "./coachoffers";
+export * from "./clientsubscriptions";
+export * from "./subscriptionpayments";
+export * from "./subscriptionpauses";
 export * from "../../waitlist/schema";
