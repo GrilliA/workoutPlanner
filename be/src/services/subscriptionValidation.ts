@@ -141,11 +141,29 @@ const optional =
     return parse(value);
   };
 
+/**
+ * Postgres rejects U+0000 in text with a 500. The stored text must be what the coach
+ * wrote, so the character is refused instead of stripped.
+ */
+const rejectNul = (field: string, value: string): Invalid | null => {
+  if (value.includes("\0")) {
+    return { ok: false, error: `${field} must not contain a NUL character` };
+  }
+
+  return null;
+};
+
 const parseOfferName: Parse<string> = (value) => {
   const name = typeof value === "string" ? value.trim() : "";
 
   if (name.length === 0) {
     return { ok: false, error: "name is required" };
+  }
+
+  const nulRejection = rejectNul("name", name);
+
+  if (nulRejection !== null) {
+    return nulRejection;
   }
 
   if (name.length > MAX_OFFER_NAME_LENGTH) {
@@ -424,6 +442,24 @@ const paidOnUntil =
 
 const parsePaymentPeriods = integerBetween("periods", 1, MAX_PAYMENT_PERIODS);
 
+/**
+ * The preview suggestion is always an amount the payment POST accepts.
+ * `agreedPriceCents × periods` can pass each field's own cap and still exceed it.
+ */
+export const suggestedPaymentAmount = (
+  agreedPriceCents: number,
+  periods: number,
+): { amountCents: number; isSuggestedAmountCapped: boolean } => {
+  const product = agreedPriceCents * periods;
+  const isSuggestedAmountCapped = product > MAX_CENTS;
+
+  if (isSuggestedAmountCapped) {
+    return { amountCents: MAX_CENTS, isSuggestedAmountCapped };
+  }
+
+  return { amountCents: product, isSuggestedAmountCapped };
+};
+
 const parseNote: Parse<string | null> = (value) => {
   if (value === undefined || value === null) {
     return { ok: true, value: null };
@@ -434,6 +470,11 @@ const parseNote: Parse<string | null> = (value) => {
   }
 
   const note = value.trim();
+  const nulRejection = rejectNul("note", note);
+
+  if (nulRejection !== null) {
+    return nulRejection;
+  }
 
   if (note.length > MAX_NOTE_LENGTH) {
     return { ok: false, error: `note must be at most ${MAX_NOTE_LENGTH} characters` };
