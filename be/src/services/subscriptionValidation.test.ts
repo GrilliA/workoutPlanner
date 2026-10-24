@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   isDatabaseId,
+  suggestedPaymentAmount,
   validateNewSubscription,
   validateOfferInput,
   validateOfferPatch,
@@ -62,6 +63,14 @@ describe("validateOfferInput", () => {
     assert.deepEqual(
       validateOfferInput({ ...offer, name: "x".repeat(101) }),
       invalid("name must be at most 100 characters"),
+    );
+    assert.deepEqual(
+      validateOfferInput({ ...offer, name: "Coaching\u0000mensile" }),
+      invalid("name must not contain a NUL character"),
+    );
+    assert.deepEqual(
+      validateOfferPatch({ name: "Coaching\u0000mensile" }),
+      invalid("name must not contain a NUL character"),
     );
     assert.deepEqual(
       validateOfferInput({ ...offer, priceCents: 1_000_001 }),
@@ -269,6 +278,33 @@ describe("validatePaymentInput", () => {
       validatePaymentInput({ ...payment, note: "x".repeat(501) }, today),
       invalid("note must be at most 500 characters"),
     );
+    assert.deepEqual(
+      validatePaymentInput({ ...payment, note: "prima\u0000dopo" }, today),
+      invalid("note must not contain a NUL character"),
+    );
+  });
+});
+
+describe("suggestedPaymentAmount", () => {
+  it("multiplies the agreed price by the periods", () => {
+    assert.deepEqual(suggestedPaymentAmount(8000, 2), {
+      amountCents: 16000,
+      isSuggestedAmountCapped: false,
+    });
+  });
+
+  it("keeps an amount that sits on the cap", () => {
+    assert.deepEqual(suggestedPaymentAmount(1_000_000, 1), {
+      amountCents: 1_000_000,
+      isSuggestedAmountCapped: false,
+    });
+  });
+
+  it("caps a product the payment POST would reject", () => {
+    assert.deepEqual(suggestedPaymentAmount(1_000_000, 12), {
+      amountCents: 1_000_000,
+      isSuggestedAmountCapped: true,
+    });
   });
 });
 

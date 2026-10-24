@@ -702,6 +702,7 @@ describe("PT payment register smoke", { concurrency: false }, () => {
       periods: 1,
       suggestedStart: "paid_through",
       suggestedAmountCents: 7000,
+      isSuggestedAmountCapped: false,
       options: [
         { start: "paid_through", coversFrom: mainStart, coversTo: mainFirst, isAllowed: true },
         {
@@ -735,6 +736,51 @@ describe("PT payment register smoke", { concurrency: false }, () => {
       400,
       "periods must be an integer between 1 and 12",
     );
+  });
+
+  it("input: a NUL is 400, and the preview never suggests more than the payment cap", async () => {
+    const { coachA, inviteCodeA } = setup();
+    const client = await newClient("nul-and-cap", inviteCodeA);
+    const offer = await createOffer(coachA, {
+      name: "Massimo",
+      priceCents: 1_000_000,
+      periodUnit: "month",
+      periodCount: 1,
+    });
+    await createSubscription(coachA, client, { offerId: offer.id, startedOn: today });
+
+    assertError(
+      await api("POST", "/api/coach/offers", {
+        token: coachA.token,
+        body: { name: "Nome\u0000", priceCents: 1000, periodUnit: "month", periodCount: 1 },
+      }),
+      400,
+      "name must not contain a NUL character",
+    );
+    assertError(
+      await postPayment(coachA, client, {
+        amountCents: 100,
+        paidOn: today,
+        method: "cash",
+        note: "prima\u0000dopo",
+      }),
+      400,
+      "note must not contain a NUL character",
+    );
+
+    const capped = await preview(coachA, client, `paidOn=${today}&periods=12`);
+    assertStatus(capped, 200);
+    const cappedBody = asObject(capped.body);
+    assert.equal(cappedBody.suggestedAmountCents, 1_000_000);
+    assert.equal(cappedBody.isSuggestedAmountCapped, true);
+
+    const paid = await recordPayment(coachA, client, {
+      amountCents: cappedBody.suggestedAmountCents,
+      paidOn: today,
+      method: "cash",
+      periods: 12,
+    });
+    assert.equal(asObject(paid.payment).amountCents, 1_000_000);
   });
 
   // --- Payments -----------------------------------------------------------------------------
@@ -881,6 +927,7 @@ describe("PT payment register smoke", { concurrency: false }, () => {
       periods: 1,
       suggestedStart: "paid_on",
       suggestedAmountCents: 8000,
+      isSuggestedAmountCapped: false,
       options: [
         {
           start: "paid_through",

@@ -146,6 +146,7 @@ Stessi campi di POST, tutti facoltativi, più `archived: boolean`. `archived: tr
 | 400 | `Invalid request body` | body non oggetto |
 | 400 | `Invalid offer id` | `:id` non intero positivo |
 | 400 | `name is required` | assente o vuoto dopo il trim |
+| 400 | `name must not contain a NUL character` | `U+0000`: Postgres lo rifiuta con un 500, e non si toglie in silenzio |
 | 400 | `name must be at most 100 characters` | |
 | 400 | `priceCents must be an integer between 0 and 1000000` | |
 | 400 | `periodUnit must be month or week` | |
@@ -238,6 +239,7 @@ Anteprima senza effetti per il dialog "Registra pagamento". `periods` facoltativ
   "periods": 1,
   "suggestedStart": "paid_through",
   "suggestedAmountCents": 8000,
+  "isSuggestedAmountCapped": false,
   "options": [
     { "start": "paid_through", "coversFrom": "2026-10-17", "coversTo": "2026-11-17", "isAllowed": true },
     { "start": "paid_on", "coversFrom": "2026-10-22", "coversTo": "2026-11-22", "isAllowed": true }
@@ -246,7 +248,7 @@ Anteprima senza effetti per il dialog "Registra pagamento". `periods` facoltativ
 ```
 
 - `suggestedStart = suggestedPaymentStart(...)` (R1, invariato).
-- `suggestedAmountCents = agreedPriceCents × periods` (solo un suggerimento: il POST vuole `amountCents` esplicito).
+- `suggestedAmountCents = min(agreedPriceCents × periods, 1_000_000)`. Il prodotto può superare il tetto del POST anche quando prezzo e `periods` sono ciascuno valido; in quel caso il suggerimento è il tetto e `isSuggestedAmountCapped` è `true`, altrimenti `false`. Il valore suggerito è quindi sempre un `amountCents` che il POST accetta. Il POST vuole comunque l'importo esplicito.
 - `options` contiene sempre due voci, `paid_through` per prima. `isAllowed: false` quando quell'inizio accorcerebbe il pagato (`coversTo < paidThrough` attuale): succede solo per `paid_on`.
 
 | Codice | `error` |
@@ -271,7 +273,7 @@ Anteprima senza effetti per il dialog "Registra pagamento". `periods` facoltativ
 | `method` | `PaymentMethod` | sì | |
 | `periods` | integer | no | default 1, 1..12 |
 | `start` | `PaymentStart` | no | default `suggestedPaymentStart(...)` |
-| `note` | string \| null | no | trim; vuota → `null`; ≤ 500 caratteri dopo il trim |
+| `note` | string \| null | no | trim; vuota → `null`; niente `U+0000`; ≤ 500 caratteri dopo il trim |
 
 Effetto, in un'unica transazione con lock:
 
@@ -298,6 +300,7 @@ Effetto, in un'unica transazione con lock:
 | 400 | `periods must be an integer between 1 and 12` | |
 | 400 | `start must be paid_through or paid_on` | |
 | 400 | `note must be a string or null` | |
+| 400 | `note must not contain a NUL character` | `U+0000`, rifiutato e non rimosso: il testo salvato deve restare quello scritto |
 | 400 | `note must be at most 500 characters` | |
 | 400 | `Payment would shorten the paid period` | regola 2 |
 | 400 | `Resulting paidThrough is out of range` | oltre `2199-12-31` |

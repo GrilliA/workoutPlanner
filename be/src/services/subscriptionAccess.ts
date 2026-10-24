@@ -22,6 +22,7 @@ import {
   type PauseRemoval,
 } from "./subscription";
 import {
+  suggestedPaymentAmount,
   validateNewSubscription,
   validateSubscriptionUpdate,
   type OfferInput,
@@ -459,6 +460,7 @@ export const loadPaymentPreview = async (
     period: subscription,
     periods: query.periods,
   });
+  const suggestedAmount = suggestedPaymentAmount(subscription.agreedPriceCents, query.periods);
 
   return {
     ok: true as const,
@@ -466,7 +468,8 @@ export const loadPaymentPreview = async (
       paidOn: query.paidOn,
       periods: query.periods,
       suggestedStart: preview.suggestedStart,
-      suggestedAmountCents: subscription.agreedPriceCents * query.periods,
+      suggestedAmountCents: suggestedAmount.amountCents,
+      isSuggestedAmountCapped: suggestedAmount.isSuggestedAmountCapped,
       options: preview.options,
     },
   };
