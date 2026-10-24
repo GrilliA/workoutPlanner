@@ -41,6 +41,9 @@ export const clientSubscriptions = pgTable(
     // Day of the month a monthly period ends on. Without it, 31 Jan → 28 Feb would stay on the 28th.
     billingDay: integer("billing_day").notNull(),
     endedOn: date("ended_on"),
+    // Counts the changes that move paidThrough or billingDay. Only the row that wrote
+    // the current value can be undone; timestamps cannot tell which write came last.
+    revision: integer("revision").notNull().default(0),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },

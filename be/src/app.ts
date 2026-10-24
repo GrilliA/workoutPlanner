@@ -2,6 +2,7 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import { apiRouter } from "./routes";
 import { applyCors } from "./middleware/cors";
+import { errorResponse } from "./middleware/errorResponse";
 import { waitlistRouter } from "./waitlist/router";
 
 export const app = express();
@@ -28,10 +29,11 @@ app.use(
     res: express.Response,
     _next: express.NextFunction,
   ) => {
-    console.error(err);
+    const response = errorResponse(err);
+    console.error(response.log);
     if (res.headersSent) {
       return;
     }
-    res.status(500).json({ error: "Internal server error" });
+    res.status(response.status).json(response.body);
   },
 );

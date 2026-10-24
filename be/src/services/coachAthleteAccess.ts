@@ -1,6 +1,14 @@
 import { and, asc, eq, inArray, ne } from "drizzle-orm";
-import { db } from "../db";
-import { coachAthletes, programAssignments, users, workouts } from "../db/schema";
+import { db, type Tx } from "../db";
+import {
+  clientSubscriptions,
+  coachAthletes,
+  programAssignments,
+  users,
+  workouts,
+} from "../db/schema";
+import { todayInRome } from "./assignmentStatus";
+import { hasSubscriptionEnded } from "./subscription";
 
 export const findCoachAthleteLink = async (coachId: number, athleteId: number) => {
   const [link] = await db
@@ -49,14 +57,58 @@ export const getCoachAthlete = async (coachId: number, athleteId: number) => {
   return row ?? null;
 };
 
-export const unlinkCoachAthlete = async (coachId: number, athleteId: number) => {
-  const link = await findCoachAthleteLink(coachId, athleteId);
+/** A client who leaves is a lost client: the subscription stays, ended, for the business numbers. */
+const endOpenSubscription = async (tx: Tx, coachId: number, athleteId: number) => {
+  const [subscription] = await tx
+    .select({
+      id: clientSubscriptions.id,
+      startedOn: clientSubscriptions.startedOn,
+      endedOn: clientSubscriptions.endedOn,
+    })
+    .from(clientSubscriptions)
+    .where(
+      and(
+        eq(clientSubscriptions.coachId, coachId),
+        eq(clientSubscriptions.athleteId, athleteId),
+      ),
+    )
+    .for("update");
 
-  if (!link) {
-    return null;
+  const today = todayInRome();
+
+  if (!subscription || hasSubscriptionEnded(subscription.endedOn, today)) {
+    return;
   }
 
-  await db.transaction(async (tx) => {
+  // endedOn cannot precede startedOn (a database check) when the subscription starts later.
+  const startsLater = subscription.startedOn > today;
+  const endedOn = startsLater ? subscription.startedOn : today;
+
+  await tx
+    .update(clientSubscriptions)
+    .set({ endedOn, updatedAt: new Date() })
+    .where(eq(clientSubscriptions.id, subscription.id));
+};
+
+/**
+ * Locks the link before the subscription, in the same order as the subscription writes:
+ * a write already holding the link finishes first and its subscription gets ended here,
+ * a write that comes later finds no link.
+ */
+export const unlinkCoachAthlete = async (coachId: number, athleteId: number) => {
+  const isUnlinked = await db.transaction(async (tx) => {
+    const [link] = await tx
+      .select({ id: coachAthletes.id })
+      .from(coachAthletes)
+      .where(and(eq(coachAthletes.coachId, coachId), eq(coachAthletes.athleteId, athleteId)))
+      .for("update");
+
+    if (!link) {
+      return false;
+    }
+
+    await endOpenSubscription(tx, coachId, athleteId);
+
     const assignments = await tx
       .select()
       .from(programAssignments)
@@ -92,7 +144,13 @@ export const unlinkCoachAthlete = async (coachId: number, athleteId: number) => 
       .where(
         and(eq(coachAthletes.coachId, coachId), eq(coachAthletes.athleteId, athleteId)),
       );
+
+    return true;
   });
+
+  if (!isUnlinked) {
+    return null;
+  }
 
   return { ok: true as const };
 };
