@@ -127,6 +127,13 @@ describe("withDatePreposition", () => {
     assert.equal(withDatePreposition("il", "2026-11-02"), "il 2 novembre 2026");
     assert.equal(withDatePreposition("del", "2026-11-28"), "del 28 novembre 2026");
   });
+
+  it("uses the given date format", () => {
+    const shortDate = (dateKey: string) => formatShortDate(dateKey, "2026-10-26");
+
+    assert.equal(withDatePreposition("al", "2026-11-05", shortDate), "al 5 nov");
+    assert.equal(withDatePreposition("al", "2026-11-08", shortDate), "all'8 nov");
+  });
 });
 
 describe("isNumberSpokenWithVowel", () => {

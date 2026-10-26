@@ -153,6 +153,7 @@ export type {
 } from "./schemas/subscription";
 export type {
   CoachClient,
+  CoachClientListItem,
   CoachAssignment,
   CoachClientDetail,
   CoachInviteCode,

@@ -1,0 +1,181 @@
+/* A list of cards on a phone, a table once its own box is wide enough (as the offer table). */
+.client-table {
+  container-type: inline-size;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+
+  & table {
+    display: block;
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--text-sm);
+    text-align: left;
+  }
+
+  & thead {
+    display: none;
+  }
+
+  & tbody,
+  & tr,
+  & th,
+  & td {
+    display: block;
+  }
+
+  & tr {
+    padding: var(--space-4);
+    border-bottom: 1px solid var(--border);
+  }
+
+  & tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  & th,
+  & td {
+    padding: var(--space-1) 0;
+    font-weight: 400;
+    color: var(--text-h);
+  }
+
+  & td[data-label]::before {
+    content: attr(data-label) ": ";
+    font-size: var(--text-xs);
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  & .client {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    min-width: 0;
+    padding-bottom: var(--space-2);
+  }
+
+  & .name {
+    font-weight: 700;
+    color: var(--text-h);
+    text-decoration: none;
+    overflow-wrap: anywhere;
+
+    &:hover {
+      color: var(--accent-text);
+      text-decoration: underline;
+    }
+
+    &:focus-visible {
+      outline: var(--focus-ring-width) solid var(--accent-text);
+      outline-offset: var(--focus-ring-offset);
+      border-radius: var(--radius-sm);
+    }
+  }
+
+  & .email {
+    font-size: var(--text-xs);
+    color: var(--text);
+    overflow-wrap: anywhere;
+  }
+
+  & .number {
+    font-weight: 700;
+    color: var(--data);
+    font-variant-numeric: tabular-nums;
+  }
+
+  & .status {
+    display: inline-block;
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-full);
+    font-size: var(--text-xs);
+    font-weight: 700;
+    color: var(--text);
+    background: var(--bg);
+  }
+
+  & .status-until {
+    display: block;
+    margin-top: var(--space-1);
+    font-size: var(--text-xs);
+    color: var(--text);
+  }
+
+  & .status--active {
+    color: var(--data);
+    background: var(--data-bg);
+  }
+
+  & .status--expiring {
+    color: var(--accent-text);
+    background: var(--accent-bg);
+  }
+
+  & .status--expired {
+    color: var(--error);
+    background: var(--error-bg);
+  }
+
+  & .status--paused {
+    color: var(--warning);
+    background: var(--warning-bg);
+  }
+}
+
+@container (width >= 48rem) {
+  .client-table {
+    & table {
+      display: table;
+    }
+
+    & thead {
+      display: table-header-group;
+    }
+
+    & tbody {
+      display: table-row-group;
+    }
+
+    & tr {
+      display: table-row;
+      padding: 0;
+    }
+
+    & th,
+    & td {
+      display: table-cell;
+      padding: var(--space-3) var(--space-4);
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    & thead th {
+      font-size: var(--text-xs);
+      font-weight: 700;
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    & tbody tr:last-child th,
+    & tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    & td[data-label]::before {
+      content: none;
+    }
+
+    & .client {
+      display: table-cell;
+    }
+
+    & .email {
+      display: block;
+      margin-top: var(--space-1);
+    }
+  }
+}

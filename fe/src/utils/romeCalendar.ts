@@ -128,14 +128,21 @@ const ELIDED_PREPOSITIONS: Record<DatePreposition, string> = {
   del: "dell'",
 };
 
-/** "al 2 novembre 2026", "all'11 novembre 2026", "l'8 novembre 2026". */
-export const withDatePreposition = (preposition: DatePreposition, dateKey: string): string => {
-  const longDate = formatLongDate(dateKey);
+/**
+ * "al 2 novembre 2026", "all'11 novembre 2026", "l'8 novembre 2026". `formatDate` swaps the long
+ * date for another one that starts with the day, such as `formatShortDate` ("all'8 nov").
+ */
+export const withDatePreposition = (
+  preposition: DatePreposition,
+  dateKey: string,
+  formatDate: (dateKey: string) => string = formatLongDate,
+): string => {
+  const date = formatDate(dateKey);
   const day = Number(dateKey.slice(8, 10));
 
   if (isNumberSpokenWithVowel(day)) {
-    return `${ELIDED_PREPOSITIONS[preposition]}${longDate}`;
+    return `${ELIDED_PREPOSITIONS[preposition]}${date}`;
   }
 
-  return `${preposition} ${longDate}`;
+  return `${preposition} ${date}`;
 };
