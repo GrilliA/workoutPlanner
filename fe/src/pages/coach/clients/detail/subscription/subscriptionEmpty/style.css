@@ -1,0 +1,35 @@
+.subscription-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+
+  & .title {
+    margin: 0;
+    font-size: var(--text-lg);
+    color: var(--text-h);
+  }
+
+  & .message {
+    margin: 0;
+    color: var(--text);
+  }
+
+  & .offers-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    color: var(--accent-text);
+    font-weight: 700;
+
+    &:focus-visible {
+      outline: var(--focus-ring-width) solid var(--accent-text);
+      outline-offset: var(--focus-ring-offset);
+      border-radius: var(--radius-sm);
+    }
+  }
+}

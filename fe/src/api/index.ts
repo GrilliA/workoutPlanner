@@ -121,6 +121,36 @@ export {
   updateCoachClientProgram,
 } from "./coach";
 export { getCoachAnalyticsOverview, getCoachAthleteAnalytics } from "./coachAnalytics";
+export {
+  getCoachOffers,
+  createCoachOffer,
+  updateCoachOffer,
+  getCoachClientSubscription,
+  saveCoachClientSubscription,
+  getCoachClientPaymentPreview,
+  getCoachClientPayments,
+  recordCoachClientPayment,
+  undoCoachClientPayment,
+  createCoachClientPause,
+  removeCoachClientPause,
+} from "./subscriptions";
+export type {
+  PeriodUnit,
+  PaymentMethod,
+  PaymentStart,
+  Offer,
+  Subscription,
+  SubscriptionState,
+  Pause,
+  SubscriptionDetail,
+  Payment,
+  PaymentOption,
+  PaymentPreview,
+  OfferInput,
+  OfferPatch,
+  SubscriptionInput,
+  PaymentInput,
+} from "./schemas/subscription";
 export type {
   CoachClient,
   CoachAssignment,

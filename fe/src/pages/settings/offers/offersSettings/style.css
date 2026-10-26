@@ -1,0 +1,62 @@
+.offers-settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+
+  & .header {
+    margin-bottom: var(--space-1);
+  }
+
+  & .eyebrow {
+    margin: 0 0 var(--space-1-5);
+    font-size: var(--text-xs);
+    font-weight: 700;
+    color: var(--accent-text);
+  }
+
+  & .title {
+    margin: 0;
+    font-size: 1.75rem;
+    line-height: 1.1;
+    color: var(--text-h);
+  }
+
+  & .offers {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  & .section-title {
+    margin: 0;
+    font-size: var(--text-base);
+    color: var(--text-h);
+  }
+
+  & .note,
+  & .empty {
+    margin: var(--space-1) 0 0;
+    font-size: var(--text-sm);
+    color: var(--text);
+  }
+
+  & .offers-skeleton {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  & .archived {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin-top: var(--space-3);
+  }
+
+  & .archived-title {
+    margin: 0;
+    font-size: var(--text-sm);
+    font-weight: 700;
+    color: var(--text);
+  }
+}

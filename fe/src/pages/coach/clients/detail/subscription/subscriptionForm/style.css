@@ -1,0 +1,44 @@
+.subscription-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+  padding: var(--space-5);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+
+  & .title {
+    margin: 0;
+    font-size: var(--text-lg);
+    color: var(--text-h);
+  }
+
+  & .fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+    gap: var(--space-4);
+    align-items: start;
+  }
+
+  & .warning,
+  & .actions {
+    grid-column: 1 / -1;
+  }
+
+  & .warning {
+    margin: 0;
+    padding: var(--space-3);
+    border-radius: var(--radius-lg);
+    font-size: var(--text-sm);
+    color: var(--warning);
+    background: var(--warning-bg);
+  }
+
+  & .actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--space-2);
+  }
+}
