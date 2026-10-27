@@ -1,0 +1,118 @@
+.select-base {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.select-base__trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  box-sizing: border-box;
+  width: 100%;
+  padding: var(--space-2-5) var(--space-3);
+  font: inherit;
+  color: var(--text-h);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  user-select: none;
+  transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
+}
+
+.select-base__trigger:focus-visible {
+  outline: var(--focus-ring-width) solid var(--accent-text);
+  outline-offset: var(--focus-ring-offset);
+  border-color: var(--accent-border);
+}
+
+.select-base--open .select-base__trigger {
+  border-color: var(--accent-border);
+}
+
+.select-base--error .select-base__trigger {
+  border-color: var(--error);
+}
+
+.select-base--error .select-base__trigger:focus-visible {
+  outline-color: var(--error);
+}
+
+.select-base--disabled .select-base__trigger {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: var(--code-bg);
+}
+
+.select-base__value {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.select-base__value--placeholder {
+  color: var(--text);
+}
+
+.select-base__chevron {
+  flex: none;
+  width: var(--space-2);
+  height: var(--space-2);
+  margin-block-end: var(--space-1);
+  border-right: var(--focus-ring-width) solid currentColor;
+  border-bottom: var(--focus-ring-width) solid currentColor;
+  transform: rotate(45deg);
+  transition: transform var(--duration-fast);
+}
+
+.select-base--open .select-base__chevron {
+  margin-block: var(--space-1) 0;
+  transform: rotate(-135deg);
+}
+
+/* Fixed coordinates come from useFloatingListbox; reset the popover UA centering. */
+.select-base__listbox {
+  position: fixed;
+  inset: auto;
+  z-index: var(--z-toast);
+  box-sizing: border-box;
+  margin: 0;
+  padding: var(--space-1);
+  overflow-y: auto;
+  color: var(--text-h);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-strong);
+}
+
+.select-base__option {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.select-base__option--active {
+  background: var(--accent-bg);
+}
+
+.select-base__option[aria-selected="true"] {
+  font-weight: 600;
+  color: var(--accent-text);
+}
+
+/* Invisible but focusable, so the browser can anchor the `required` bubble here. */
+.select-base__native {
+  position: absolute;
+  inset-inline-start: 0;
+  bottom: 0;
+  width: 100%;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}

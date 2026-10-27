@@ -85,4 +85,4 @@ Verifica a ogni PR: `be` typecheck + test, `fe` lint + build, `mobile` typecheck
 
 ## Prima di R3
 
-1. **Mockup e dati.** Le tavole PT usano numeri dimostrativi, mentre M4 dice "valori ignoti tra parentesi quadre". Il grafico Business colora il mese in corso in indaco tenue, mentre M4 lo vuole arancio. Da allineare sul canvas prima di R3.
+1. **Mockup e dati.** ✅ 2026-10-26. Sulle tavole PT importi, conteggi, metriche Business e piano del coach sono tra parentesi quadre; nomi, date e conteggi per cliente restano perché spiegano le regole (come nelle tavole coach M4). Il mese in corso del grafico Business e l'ultima settimana nel dettaglio cliente sono arancio; la voce di menu attiva è la pill ink come nel pannello.

@@ -16,6 +16,7 @@ import { toast } from "@components/toast";
 import { PageHeader } from "@components/pageHeader";
 import { CoachCard, CoachCardList, CoachCardListSkeleton } from "../../coachCard";
 import { ClientAnalyticsSection } from "./analytics/clientanalytics";
+import { ClientTabs } from "./clientTabs";
 import { useClientDetail } from "./api/useClientDetail";
 import "../../style.css";
 
@@ -43,10 +44,14 @@ const formatSessionDate = (value: string) =>
     year: "numeric",
   });
 
+// Postgres `integer`: a larger id is not a client, and the API would refuse it.
+const MAX_DATABASE_ID = 2_147_483_647;
+
 export default function ClientDetailPage() {
   const [, params] = useRoute("/clients/:id");
   const athleteId = Number(params?.id);
-  const idValid = Number.isInteger(athleteId) && athleteId >= 1;
+  const idValid =
+    Number.isInteger(athleteId) && athleteId >= 1 && athleteId <= MAX_DATABASE_ID;
 
   if (!idValid) {
     return (
@@ -195,6 +200,8 @@ function ClientDetailLoaded({ athleteId }: { athleteId: number }) {
           </Link>
         }
       />
+
+      <ClientTabs athleteId={athleteId} activeTab="workouts" />
 
       {loading ? (
         <CoachCardListSkeleton />

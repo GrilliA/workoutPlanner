@@ -33,9 +33,19 @@ const bottomNavItems = [
   { label: "Schede", href: "/assignments", icon: "assignments" as const },
 ];
 
+// `/profile` is the old address of the settings page.
+const SECTION_ALIASES: Record<string, string> = { "/profile": "/settings" };
+
+/** A section stays active on its sub-routes: `/clients/42/subscription` is still Clienti. */
+const isSectionActive = (location: string, href: string): boolean => {
+  const sectionLocation = SECTION_ALIASES[location] ?? location;
+
+  return sectionLocation === href || sectionLocation.startsWith(`${href}/`);
+};
+
 export function AppShell({ children, hideBottomNav = false }: AppShellProps) {
   const { logout, user } = useAuth();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const displayName = getDisplayName(user);
   const initials = getAvatarInitial(displayName);
 
@@ -68,7 +78,7 @@ export function AppShell({ children, hideBottomNav = false }: AppShellProps) {
             <Link
               key={item.label}
               href={item.href}
-              className={(active) => (active ? "item active" : "item")}
+              className={isSectionActive(location, item.href) ? "item active" : "item"}
             >
               <NavIcon name={item.icon} />
               <span>{item.label}</span>
@@ -92,7 +102,7 @@ export function AppShell({ children, hideBottomNav = false }: AppShellProps) {
           <Link
             key={item.label}
             href={item.href}
-            className={(active) => (active ? "item active" : "item")}
+            className={isSectionActive(location, item.href) ? "item active" : "item"}
           >
             <NavIcon name={item.icon} />
             <span className="label">{item.label}</span>

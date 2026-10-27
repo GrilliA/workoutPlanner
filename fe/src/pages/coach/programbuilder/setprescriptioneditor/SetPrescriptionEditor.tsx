@@ -1,4 +1,5 @@
 import { LOAD_UNITS } from "@api/schemas/exercise";
+import { SelectBase } from "@components/select";
 import {
   createDefaultSetPrescriptions,
   LOAD_UNIT_LABELS,
@@ -6,6 +7,11 @@ import {
   type LoadUnit,
 } from "../types";
 import "./style.css";
+
+const LOAD_UNIT_OPTIONS = LOAD_UNITS.map((unit) => ({
+  value: unit,
+  label: LOAD_UNIT_LABELS[unit],
+}));
 
 export type SetPrescriptionEditorProps = {
   prescriptions: DraftSetPrescription[];
@@ -142,19 +148,12 @@ export function SetPrescriptionEditor({
                 }
               />
             </label>
-            <label>
-              <span className="sr-only">Unità carico serie {entry.setNumber}</span>
-              <select
-                value={entry.loadUnit}
-                onChange={(event) => updateLoadUnit(entry.setNumber, event.target.value)}
-              >
-                {LOAD_UNITS.map((unit) => (
-                  <option key={unit} value={unit}>
-                    {LOAD_UNIT_LABELS[unit]}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <SelectBase
+              aria-label={`Unità carico serie ${entry.setNumber}`}
+              value={entry.loadUnit}
+              options={LOAD_UNIT_OPTIONS}
+              onChange={(unit) => updateLoadUnit(entry.setNumber, unit)}
+            />
           </div>
 
           <label className="field">

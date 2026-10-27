@@ -24,17 +24,17 @@
     }
   }
 
+  /* Fixed coordinates come from useFloatingListbox; reset the popover UA centering. */
   & .results {
-    position: absolute;
-    top: calc(100% + 0.25rem);
-    left: 0;
-    right: 0;
-    z-index: 5;
+    position: fixed;
+    inset: auto;
+    z-index: var(--z-toast);
+    box-sizing: border-box;
     margin: 0;
     padding: 0.35rem;
     list-style: none;
-    max-height: 18rem;
     overflow: auto;
+    color: var(--text-h);
     border: 1px solid var(--border);
     border-radius: var(--radius-xl);
     background: var(--surface-elevated);
@@ -53,9 +53,9 @@
     gap: 0.55rem;
     padding: 0.2rem 0.25rem;
     border-radius: var(--radius-md);
+    cursor: pointer;
 
-    &:hover,
-    &:focus-within {
+    &.result-row--active {
       background: var(--accent-bg);
     }
   }
@@ -68,18 +68,6 @@
     align-items: flex-start;
     gap: 0.1rem;
     padding: 0.45rem 0.35rem;
-    border: 0;
-    border-radius: var(--radius-sm);
-    background: transparent;
-    color: inherit;
-    font: inherit;
-    text-align: left;
-    cursor: pointer;
-
-    &:focus-visible {
-      outline: 2px solid var(--accent-text);
-      outline-offset: -2px;
-    }
 
     & .name {
       color: var(--text-h);
