@@ -56,6 +56,12 @@ describe("prescriptionDraft", () => {
 
   it("validates empty and bad reps", () => {
     assert.equal(validatePrescriptionDrafts([]), "Aggiungi almeno una serie");
+    assert.equal(
+      validatePrescriptionDrafts(
+        Array.from({ length: 31 }, (_, index) => draftSet(String(index), "10", 90)),
+      ),
+      "Un esercizio può avere al massimo 30 serie",
+    );
     assert.match(
       validatePrescriptionDrafts([draftSet("a", "0", 90)]) ?? "",
       /ripetizioni/i,

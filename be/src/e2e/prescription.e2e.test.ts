@@ -198,6 +198,20 @@ describe("prescription fields smoke", { concurrency: false }, () => {
     assert.equal(rejected.status, 400, failMessage(rejected.status, rejected.body));
   });
 
+  it("rejects more than 30 sets for one exercise", async () => {
+    const sets = Array.from({ length: 31 }, (_, index) => ({
+      setNumber: index + 1,
+      reps: 5,
+      restSec: 90,
+    }));
+    const rejected = await api(baseUrl, "PUT", `/api/coach/templates/${templateId}/program`, {
+      token: coachToken,
+      body: programBody("", sets),
+    });
+    assert.equal(rejected.status, 400, failMessage(rejected.status, rejected.body));
+    assert.deepEqual(rejected.body, { error: "setPrescriptions must have at most 30 sets" });
+  });
+
   it("the athlete gets the same prescription in the assigned copy", async () => {
     const invite = await api(baseUrl, "GET", "/api/coach/invite-code", { token: coachToken });
     const registered = await api(baseUrl, "POST", "/api/auth/register", {

@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { clampToSessionWindow, validatePatchSessionInput } from "./sessionValidation";
+import {
+  clampToSessionWindow,
+  MAX_SETS_PER_EXERCISE,
+  MAX_SETS_PER_SESSION,
+  validateLogSetInput,
+  validatePatchSessionInput,
+} from "./sessionValidation";
 
 describe("validatePatchSessionInput", () => {
   it("accepts completed without sets", () => {
@@ -99,6 +105,72 @@ describe("validatePatchSessionInput", () => {
     });
 
     assert.equal(parsed.ok, false);
+  });
+
+  it("leaves out sets past the setNumber cap instead of refusing the close", () => {
+    const parsed = validatePatchSessionInput({
+      status: "completed",
+      sets: [
+        { exerciseId: 1, setNumber: MAX_SETS_PER_EXERCISE, reps: 8 },
+        { exerciseId: 1, setNumber: MAX_SETS_PER_EXERCISE + 1, reps: 8 },
+        { exerciseId: 1, setNumber: 2147483648, reps: 0 },
+      ],
+    });
+
+    assert.equal(parsed.ok, true);
+    if (parsed.ok) {
+      assert.deepEqual(
+        parsed.value.sets?.map((set) => set.setNumber),
+        [MAX_SETS_PER_EXERCISE],
+      );
+    }
+  });
+
+  it("keeps the sets logged first when the close is past the session cap", () => {
+    const firstTime = Date.parse("2026-10-14T08:00:00.000Z");
+    const sets = Array.from({ length: MAX_SETS_PER_SESSION + 1 }, (_, index) => ({
+      exerciseId: index + 1,
+      setNumber: 1,
+      reps: 8,
+      // The first set has no time from the phone: it is stored at the close, so it goes last.
+      loggedAt: index === 0 ? null : new Date(firstTime + index * 1000).toISOString(),
+    }));
+
+    const parsed = validatePatchSessionInput({ status: "completed", sets });
+
+    assert.equal(parsed.ok, true);
+    if (parsed.ok) {
+      const keptExerciseIds = parsed.value.sets?.map((set) => set.exerciseId) ?? [];
+
+      assert.equal(keptExerciseIds.length, MAX_SETS_PER_SESSION);
+      assert.equal(keptExerciseIds.includes(1), false);
+      assert.equal(keptExerciseIds[0], 2);
+    }
+  });
+});
+
+describe("validateLogSetInput", () => {
+  it("accepts the last set number under the cap", () => {
+    const parsed = validateLogSetInput({
+      exerciseId: 1,
+      setNumber: MAX_SETS_PER_EXERCISE,
+      reps: 8,
+    });
+
+    assert.equal(parsed.ok, true);
+  });
+
+  it("rejects a set number past the cap", () => {
+    const parsed = validateLogSetInput({
+      exerciseId: 1,
+      setNumber: MAX_SETS_PER_EXERCISE + 1,
+      reps: 8,
+    });
+
+    assert.deepEqual(parsed, {
+      ok: false,
+      error: `setNumber must be an integer between 1 and ${MAX_SETS_PER_EXERCISE}`,
+    });
   });
 });
 
