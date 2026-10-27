@@ -1,9 +1,10 @@
 import { Router } from "express";
-import { and, desc, eq } from "drizzle-orm";
+import { and, count, desc, eq, ne, or } from "drizzle-orm";
 import { db } from "../db";
 import { isUniqueViolation } from "../db/errors";
 import { loggedSets, workoutSessions, workouts } from "../db/schema";
 import { requireAuth } from "../middleware/requireAuth";
+import { sessionStartRateLimit } from "../middleware/sessionStartRateLimit";
 import {
   findActiveSessionForUser,
   findExerciseInWorkout,
@@ -23,6 +24,7 @@ import {
 import {
   clampToSessionWindow,
   keepInsideSession,
+  MAX_SETS_PER_SESSION,
   validateLogSetInput,
   validatePatchLoggedSetInput,
   validatePatchSessionInput,
@@ -77,6 +79,9 @@ async function loadSessionWithSets(sessionId: number, userId: number) {
 }
 
 export const workoutSessionsRouter = Router({ mergeParams: true });
+
+// Its own registration: passed with the handler, it would widen the handler's req.params type.
+workoutSessionsRouter.post("/", sessionStartRateLimit);
 
 workoutSessionsRouter.post("/", async (req, res) => {
   const user = getAuthUser(req);
@@ -320,6 +325,13 @@ sessionsRouter.patch("/:id", async (req, res) => {
 
     try {
       const result = await db.transaction(async (tx) => {
+        // Same lock as the set writes: one in flight finishes first, a later one sees the close.
+        await tx
+          .select({ id: workoutSessions.id })
+          .from(workoutSessions)
+          .where(eq(workoutSessions.id, id))
+          .for("update");
+
         await tx.delete(loggedSets).where(eq(loggedSets.sessionId, id));
 
         if (setsToStore.length > 0) {
@@ -422,20 +434,49 @@ sessionSetsRouter.post("/", async (req, res) => {
   }
 
   try {
-    const [created] = await db
-      .insert(loggedSets)
-      .values({
-        sessionId,
-        exerciseId: parsed.value.exerciseId,
-        setNumber: parsed.value.setNumber,
-        weightKg: parsed.value.weightKg,
-        reps: parsed.value.reps,
-        rir: parsed.value.rir,
-        tutSec: parsed.value.tutSec,
-      })
-      .returning();
+    const saved = await db.transaction(async (tx) => {
+      // Lock the session: a close or another set write waits, so status and count stay true.
+      const [locked] = await tx
+        .select({ status: workoutSessions.status })
+        .from(workoutSessions)
+        .where(eq(workoutSessions.id, sessionId))
+        .for("update");
 
-    res.status(201).json(created);
+      if (locked?.status !== "in_progress") {
+        return { ok: false as const, error: "Session is not in progress" };
+      }
+
+      const [{ loggedCount }] = await tx
+        .select({ loggedCount: count() })
+        .from(loggedSets)
+        .where(eq(loggedSets.sessionId, sessionId));
+
+      if (loggedCount >= MAX_SETS_PER_SESSION) {
+        return { ok: false as const, error: `Session already has ${MAX_SETS_PER_SESSION} sets` };
+      }
+
+      const [created] = await tx
+        .insert(loggedSets)
+        .values({
+          sessionId,
+          exerciseId: parsed.value.exerciseId,
+          setNumber: parsed.value.setNumber,
+          weightKg: parsed.value.weightKg,
+          reps: parsed.value.reps,
+          rir: parsed.value.rir,
+          tutSec: parsed.value.tutSec,
+        })
+        .returning();
+
+      return { ok: true as const, created };
+    });
+
+    if (!saved.ok) {
+      res.status(409).json({ error: saved.error });
+      return;
+    }
+
+    res.status(201).json(saved.created);
   } catch (error) {
     if (isUniqueViolation(error)) {
       res.status(409).json({
@@ -587,16 +628,51 @@ sessionSetsRouter.put("/:exerciseId/:setNumber", async (req, res) => {
 
   const { exerciseId, setNumber, ...values } = parsed.value;
 
-  const [saved] = await db
-    .insert(loggedSets)
-    .values({ sessionId, exerciseId, setNumber, ...values, loggedAt: loggedAt.value })
-    .onConflictDoUpdate({
-      target: [loggedSets.sessionId, loggedSets.exerciseId, loggedSets.setNumber],
-      set: { ...values, loggedAt: loggedAt.value },
-    })
-    .returning();
+  const saved = await db.transaction(async (tx) => {
+    // Lock the session: a close or another set write waits, so status and count stay true.
+    const [locked] = await tx
+      .select({ status: workoutSessions.status })
+      .from(workoutSessions)
+      .where(eq(workoutSessions.id, sessionId))
+      .for("update");
 
-  res.json(saved);
+    if (locked?.status !== "in_progress") {
+      return { ok: false as const, error: "Session is not in progress" };
+    }
+
+    // A set already at this position is replaced, so it does not count against the cap.
+    const [{ otherCount }] = await tx
+      .select({ otherCount: count() })
+      .from(loggedSets)
+      .where(
+        and(
+          eq(loggedSets.sessionId, sessionId),
+          or(ne(loggedSets.exerciseId, exerciseId), ne(loggedSets.setNumber, setNumber)),
+        ),
+      );
+
+    if (otherCount >= MAX_SETS_PER_SESSION) {
+      return { ok: false as const, error: `Session already has ${MAX_SETS_PER_SESSION} sets` };
+    }
+
+    const [stored] = await tx
+      .insert(loggedSets)
+      .values({ sessionId, exerciseId, setNumber, ...values, loggedAt: loggedAt.value })
+      .onConflictDoUpdate({
+        target: [loggedSets.sessionId, loggedSets.exerciseId, loggedSets.setNumber],
+        set: { ...values, loggedAt: loggedAt.value },
+      })
+      .returning();
+
+    return { ok: true as const, stored };
+  });
+
+  if (!saved.ok) {
+    res.status(409).json({ error: saved.error });
+    return;
+  }
+
+  res.json(saved.stored);
 });
 
 sessionSetsRouter.delete("/:exerciseId/:setNumber", async (req, res) => {

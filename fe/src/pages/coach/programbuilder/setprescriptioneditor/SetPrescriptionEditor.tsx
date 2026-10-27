@@ -1,4 +1,4 @@
-import { LOAD_UNITS } from "@api/schemas/exercise";
+import { LOAD_UNITS, MAX_SETS_PER_EXERCISE } from "@api/schemas/exercise";
 import {
   createDefaultSetPrescriptions,
   LOAD_UNIT_LABELS,
@@ -199,7 +199,12 @@ export function SetPrescriptionEditor({
         </div>
       ))}
 
-      <button type="button" className="add-set" onClick={addSet}>
+      <button
+        type="button"
+        className="add-set"
+        disabled={prescriptions.length >= MAX_SETS_PER_EXERCISE}
+        onClick={addSet}
+      >
         + Aggiungi serie
       </button>
     </div>

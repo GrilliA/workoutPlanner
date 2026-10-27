@@ -28,6 +28,12 @@ export type PatchLoggedSetInput = {
   tutSec?: number | null;
 };
 
+/** Highest setNumber an athlete can log, and the most sets a coach can prescribe per exercise. */
+export const MAX_SETS_PER_EXERCISE = 30;
+
+/** Most sets one session can hold. */
+export const MAX_SETS_PER_SESSION = 200;
+
 const isSessionStatus = (value: string): value is SessionStatus =>
   (SESSION_STATUSES as readonly string[]).includes(value);
 
@@ -78,8 +84,11 @@ export const validateLogSetInput = (
     return { ok: false, error: "exerciseId must be a positive integer" };
   }
 
-  if (!Number.isInteger(setNumber) || setNumber < 1) {
-    return { ok: false, error: "setNumber must be a positive integer" };
+  if (!Number.isInteger(setNumber) || setNumber < 1 || setNumber > MAX_SETS_PER_EXERCISE) {
+    return {
+      ok: false,
+      error: `setNumber must be an integer between 1 and ${MAX_SETS_PER_EXERCISE}`,
+    };
   }
 
   if (!Number.isInteger(reps) || reps < 1) {
@@ -149,6 +158,17 @@ const validateCloseSet = (entry: unknown): Valid<CloseSetInput> | Invalid => {
 const isSameSet = (first: LogSetInput, second: LogSetInput): boolean =>
   first.exerciseId === second.exerciseId && first.setNumber === second.setNumber;
 
+/** A setNumber that is an integer past the cap; anything else is left to the validation. */
+const isPastSetNumberCap = (entry: unknown): boolean => {
+  const setNumber = Number((entry as { setNumber?: unknown } | null)?.setNumber);
+
+  return Number.isInteger(setNumber) && setNumber > MAX_SETS_PER_EXERCISE;
+};
+
+/**
+ * The sets of a close. The phone drops the whole session when a close is refused,
+ * so sets past the caps are left out instead of failing the close.
+ */
 const validateLogSetList = (
   value: unknown,
 ): Valid<CloseSetInput[]> | Invalid => {
@@ -156,7 +176,9 @@ const validateLogSetList = (
     return { ok: false, error: "sets must be an array" };
   }
 
-  const results = value.map((entry) => validateCloseSet(entry));
+  const results = value
+    .filter((entry) => !isPastSetNumberCap(entry))
+    .map((entry) => validateCloseSet(entry));
   const firstInvalid = results.find((result): result is Invalid => !result.ok);
 
   if (firstInvalid) {
@@ -177,7 +199,15 @@ const validateLogSetList = (
     };
   }
 
-  return { ok: true, value: sets };
+  if (sets.length <= MAX_SETS_PER_SESSION) {
+    return { ok: true, value: sets };
+  }
+
+  // Keep the sets logged first; a set with no time from the phone is stored at the close.
+  const loggedTime = (set: CloseSetInput) => set.loggedAt?.getTime() ?? Number.MAX_SAFE_INTEGER;
+  const byLoggedTime = [...sets].sort((first, second) => loggedTime(first) - loggedTime(second));
+
+  return { ok: true, value: byLoggedTime.slice(0, MAX_SETS_PER_SESSION) };
 };
 
 export const validatePatchSessionInput = (

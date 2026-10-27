@@ -204,6 +204,13 @@ describe("exercises", () => {
     assert.equal(
       findExerciseInputError({
         ...benchPress,
+        setPrescriptions: Array.from({ length: 31 }, (_, index) => prescription(index + 1, 10, 90)),
+      }),
+      "Un esercizio può avere al massimo 30 serie",
+    );
+    assert.equal(
+      findExerciseInputError({
+        ...benchPress,
         setPrescriptions: [prescription(1, 0, 90)],
       }),
       "Ogni serie deve avere reps e recupero validi",

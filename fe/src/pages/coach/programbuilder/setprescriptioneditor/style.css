@@ -83,4 +83,9 @@
     cursor: pointer;
     padding: 0.25rem 0;
   }
+
+  & .add-set:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
 }
