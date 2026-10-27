@@ -1,0 +1,77 @@
+.unit-input {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+  box-sizing: border-box;
+  padding-inline-end: var(--space-1);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: border-color var(--duration-fast);
+
+  /* The ring belongs to the field; the tag shows its own. */
+  &:has(.unit-input__field:focus-visible) {
+    outline: var(--focus-ring-width) solid var(--accent-text);
+    outline-offset: var(--focus-ring-offset);
+    border-color: var(--accent-border);
+  }
+}
+
+.unit-input--error {
+  border-color: var(--error);
+
+  &:has(.unit-input__field:focus-visible) {
+    outline-color: var(--error);
+    border-color: var(--error);
+  }
+}
+
+.unit-input--disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: var(--code-bg);
+}
+
+.unit-input__field {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  padding: var(--space-2) var(--space-1-5);
+  border: 0;
+  background: transparent;
+  color: var(--text-h);
+  font: inherit;
+
+  &::placeholder {
+    color: var(--text);
+  }
+
+  /* The wrapper shows the focus ring. */
+  &:focus-visible {
+    outline: none;
+  }
+}
+
+.unit-input__tag {
+  flex-shrink: 0;
+  padding: var(--space-1) var(--space-1-5);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-full);
+  background: var(--accent-bg);
+  color: var(--accent-text);
+  font: inherit;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: var(--focus-ring-width) solid var(--accent-text);
+    outline-offset: var(--focus-ring-offset);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}

@@ -1,9 +1,9 @@
 import { LOAD_UNITS, MAX_SETS_PER_EXERCISE } from "@api/schemas/exercise";
+import { UnitInput } from "@components/unitInput";
 import {
   createDefaultSetPrescriptions,
   LOAD_UNIT_LABELS,
   type DraftSetPrescription,
-  type LoadUnit,
 } from "../types";
 import "./style.css";
 
@@ -13,7 +13,7 @@ export type SetPrescriptionEditorProps = {
 };
 
 type RequiredField = "reps" | "restSec";
-type OptionalField = "repsMax" | "loadValue" | "rir";
+type OptionalField = "loadValue" | "rir";
 
 const reindexPrescriptions = (
   prescriptions: DraftSetPrescription[],
@@ -35,9 +35,6 @@ const toRequiredFieldValue = (value: number): number | string =>
 
 const toOptionalFieldValue = (value: number | null): number | string => value ?? "";
 
-const isLoadUnit = (value: string): value is LoadUnit =>
-  LOAD_UNITS.some((unit) => unit === value);
-
 export function SetPrescriptionEditor({
   prescriptions,
   onChange,
@@ -58,10 +55,14 @@ export function SetPrescriptionEditor({
     updateRow(setNumber, { [field]: parseOptionalNumber(raw) });
   };
 
-  const updateLoadUnit = (setNumber: number, raw: string) => {
-    if (isLoadUnit(raw)) {
-      updateRow(setNumber, { loadUnit: raw });
-    }
+  // The panel no longer edits a rep range (it comes from the TXT import). It stays while the
+  // reps fit under its top; past it the range goes, so a range the coach cannot see never blocks
+  // the save. An empty field is a coach still typing, so it keeps the range.
+  const updateReps = (entry: DraftSetPrescription, raw: string) => {
+    const reps = parseRequiredNumber(raw);
+    const isPastRange = entry.repsMax !== null && reps > entry.repsMax;
+
+    updateRow(entry.setNumber, isPastRange ? { reps, repsMax: null } : { reps });
   };
 
   // A new set copies the last one, so a coach adding a 4th set keeps reps, load and RIR.
@@ -89,7 +90,6 @@ export function SetPrescriptionEditor({
       <div className="header" aria-hidden="true">
         <span>Serie</span>
         <span>Reps</span>
-        <span>Fino a</span>
         <span>Carico</span>
         <span>RIR</span>
         <span>Recupero</span>
@@ -107,55 +107,27 @@ export function SetPrescriptionEditor({
               min={1}
               step={1}
               value={toRequiredFieldValue(entry.reps)}
-              onChange={(event) =>
-                updateRequiredField(entry.setNumber, "reps", event.target.value)
-              }
+              onChange={(event) => updateReps(entry, event.target.value)}
               required
             />
           </label>
 
-          <label className="field">
-            <span className="sr-only">Reps massime serie {entry.setNumber} (facoltativo)</span>
-            <input
-              type="number"
-              min={1}
-              step={1}
-              placeholder="–"
-              value={toOptionalFieldValue(entry.repsMax)}
-              onChange={(event) =>
-                updateOptionalField(entry.setNumber, "repsMax", event.target.value)
-              }
-            />
-          </label>
-
-          <div className="field load">
-            <label>
-              <span className="sr-only">Carico serie {entry.setNumber} (facoltativo)</span>
-              <input
-                type="number"
-                min={0}
-                step={0.5}
-                placeholder="–"
-                value={toOptionalFieldValue(entry.loadValue)}
-                onChange={(event) =>
-                  updateOptionalField(entry.setNumber, "loadValue", event.target.value)
-                }
-              />
-            </label>
-            <label>
-              <span className="sr-only">Unità carico serie {entry.setNumber}</span>
-              <select
-                value={entry.loadUnit}
-                onChange={(event) => updateLoadUnit(entry.setNumber, event.target.value)}
-              >
-                {LOAD_UNITS.map((unit) => (
-                  <option key={unit} value={unit}>
-                    {LOAD_UNIT_LABELS[unit]}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
+          <UnitInput
+            type="number"
+            min={0}
+            step={0.5}
+            placeholder="–"
+            aria-label={`Carico serie ${entry.setNumber} (facoltativo)`}
+            value={toOptionalFieldValue(entry.loadValue)}
+            onChange={(event) =>
+              updateOptionalField(entry.setNumber, "loadValue", event.target.value)
+            }
+            unit={entry.loadUnit}
+            units={LOAD_UNITS}
+            unitLabels={LOAD_UNIT_LABELS}
+            unitAriaLabel={`Unità carico serie ${entry.setNumber}`}
+            onUnitChange={(loadUnit) => updateRow(entry.setNumber, { loadUnit })}
+          />
 
           <label className="field">
             <span className="sr-only">RIR serie {entry.setNumber} (facoltativo)</span>
