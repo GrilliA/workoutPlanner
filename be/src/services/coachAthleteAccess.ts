@@ -24,9 +24,15 @@ import {
   workouts,
 } from "../db/schema";
 import { todayInRome } from "./assignmentStatus";
+import { churnRisk } from "./churnRisk";
 import { FREQUENCY_WINDOW_DAYS, trainingFrequency } from "./clientActivity";
 import { addRomeDays, toRomeDateKey } from "./stats";
-import { hasSubscriptionEnded, subscriptionState, type PauseDates } from "./subscription";
+import {
+  hasSubscriptionEnded,
+  subscriptionState,
+  type PauseDates,
+  type SubscriptionStatus,
+} from "./subscription";
 
 export const findCoachAthleteLink = async (coachId: number, athleteId: number) => {
   const [link] = await db
@@ -137,12 +143,14 @@ const listRecentCompletedSessions = (coachId: number, today: string) => {
 /**
  * Active by its dates, as `computeAssignmentStatus` decides: the stored status changes only
  * on a sync, and this read must not write. Highest id first, as `getActiveAssignmentForAthlete`.
+ * `expiresAt` is for Today; grouping by the primary key allows it.
  */
 const listActiveAssignmentDayCounts = (coachId: number, today: string) =>
   db
     .select({
       athleteId: programAssignments.athleteId,
       workoutDayCount: count(workoutDays.id),
+      expiresAt: programAssignments.expiresAt,
     })
     .from(programAssignments)
     .leftJoin(workoutDays, eq(workoutDays.workoutId, programAssignments.workoutId))
@@ -157,12 +165,19 @@ const listActiveAssignmentDayCounts = (coachId: number, today: string) =>
     .groupBy(programAssignments.id)
     .orderBy(desc(programAssignments.id));
 
+export type ClientSubscriptionSummary = {
+  status: SubscriptionStatus;
+  paidThrough: string;
+  daysLeft: number;
+  pausedUntil: string | null;
+};
+
 /** The subscription of a row; `livePauses` are the coach's pauses not cancelled nor over. */
 const summarizeSubscription = (
   subscription: { id: number; paidThrough: string; endedOn: string | null },
   livePauses: (PauseDates & { subscriptionId: number })[],
   today: string,
-) => {
+): ClientSubscriptionSummary => {
   const activePause = livePauses.find((pause) => pause.subscriptionId === subscription.id) ?? null;
   const state = subscriptionState({
     paidThrough: subscription.paidThrough,
@@ -179,8 +194,11 @@ const summarizeSubscription = (
   };
 };
 
-/** The clients table: a fixed number of queries per request, joined in memory by athlete. */
-export const listCoachClientRows = async (coachId: number, today: string) => {
+/**
+ * The six queries of the clients table, joined in memory by athlete. Today reads the same rows,
+ * plus the end of the active program, which the table does not show.
+ */
+export const loadCoachClientSnapshots = async (coachId: number, today: string) => {
   const [clients, subscriptions, livePauses, lastSessions, recentSessions, activeAssignments] =
     await Promise.all([
       listCoachAthletes(coachId),
@@ -204,17 +222,36 @@ export const listCoachClientRows = async (coachId: number, today: string) => {
     const activeAssignment = activeAssignments.find((row) => row.athleteId === client.id);
 
     return {
-      ...client,
-      subscription:
-        subscription === undefined ? null : summarizeSubscription(subscription, livePauses, today),
-      lastSessionOn,
-      last14Days: trainingFrequency({
-        completedOn,
-        workoutDayCount: activeAssignment?.workoutDayCount ?? null,
-        today,
-      }),
+      row: {
+        ...client,
+        subscription:
+          subscription === undefined ? null : summarizeSubscription(subscription, livePauses, today),
+        lastSessionOn,
+        last14Days: trainingFrequency({
+          completedOn,
+          workoutDayCount: activeAssignment?.workoutDayCount ?? null,
+          today,
+        }),
+      },
+      programExpiresOn: activeAssignment?.expiresAt ?? null,
     };
   });
+};
+
+/** The clients table: a fixed number of queries per request; the risk adds none. */
+export const listCoachClientRows = async (coachId: number, today: string) => {
+  const snapshots = await loadCoachClientSnapshots(coachId, today);
+
+  return snapshots.map(({ row }) => ({
+    ...row,
+    risk: churnRisk({
+      subscription: row.subscription,
+      last14Days: row.last14Days,
+      lastSessionOn: row.lastSessionOn,
+      linkedOn: toRomeDateKey(row.linkedAt),
+      today,
+    }),
+  }));
 };
 
 export const getCoachAthlete = async (coachId: number, athleteId: number) => {
