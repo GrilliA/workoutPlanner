@@ -10,13 +10,30 @@ export const coachClientSchema = z.object({
   linkedAt: z.coerce.string(),
 });
 
+/** Subscription state of a client in the list and in Oggi; null = the coach never set one. */
+const clientSubscriptionSummarySchema = subscriptionStateSchema.extend({ paidThrough: z.string() });
+
+/**
+ * Churn risk of a client (contract: docs/contracts/pt-oggi.md, R5): the same object in
+ * `GET /coach/clients` and `GET /coach/today`. `message` is Italian text to show as is; colours
+ * and icons come from `kind`, never from the text.
+ */
+const churnRiskSchema = z.object({
+  level: z.enum(["high", "medium"]),
+  reasons: z.array(
+    z.object({
+      kind: z.enum(["subscription_expiring", "subscription_expired", "low_frequency", "no_recent_session"]),
+      message: z.string(),
+    }),
+  ),
+});
+
 /**
  * A row of `GET /coach/clients` (contract: docs/contracts/pt-clienti.md, R4). The detail and
  * analytics keep `coachClientSchema`: only the list carries subscription and activity.
  */
 const coachClientListItemSchema = coachClientSchema.extend({
-  /** null = the coach never set a subscription for this client. */
-  subscription: subscriptionStateSchema.extend({ paidThrough: z.string() }).nullable(),
+  subscription: clientSubscriptionSummarySchema.nullable(),
   /** Rome calendar day of the last completed session, null if none. */
   lastSessionOn: z.string().nullable(),
   /** Window of 14 Rome days, today included. `expectedSessions` is null without an active program. */
@@ -24,6 +41,8 @@ const coachClientListItemSchema = coachClientSchema.extend({
     completedSessions: z.number(),
     expectedSessions: z.number().nullable(),
   }),
+  /** null = no risk, also when the subscription is paused (R5). */
+  risk: churnRiskSchema.nullable(),
 });
 
 export const coachClientsSchema = z.array(coachClientListItemSchema);
@@ -67,27 +86,6 @@ export const coachInviteCodeSchema = z.object({
   updatedAt: z.coerce.string(),
 });
 
-export const coachDashboardExpirationItemSchema = z.object({
-  id: z.number(),
-  athleteId: z.number(),
-  athleteName: z.string().nullable(),
-  athleteEmail: z.string(),
-  workoutId: z.number(),
-  workoutName: z.string(),
-  expiresAt: z.string(),
-  daysLeft: z.number(),
-});
-
-export const coachDashboardExpiredItemSchema = z.object({
-  id: z.number(),
-  athleteId: z.number(),
-  athleteName: z.string().nullable(),
-  athleteEmail: z.string(),
-  workoutId: z.number(),
-  workoutName: z.string(),
-  expiresAt: z.string(),
-});
-
 export const coachDashboardActivityItemSchema = z.object({
   sessionId: z.number(),
   athleteId: z.number(),
@@ -98,30 +96,30 @@ export const coachDashboardActivityItemSchema = z.object({
   completedAt: z.coerce.string(),
 });
 
-export const coachDashboardSchema = z.object({
+/** One row per client of `GET /coach/today`: at least one of `risk` and `alerts`. */
+const inboxItemSchema = z.object({
+  athleteId: z.number(),
+  athleteName: z.string().nullable(),
+  athleteEmail: z.string(),
+  severity: z.enum(["high", "medium", "low"]),
+  risk: churnRiskSchema.nullable(),
+  alerts: z.array(
+    z.object({
+      kind: z.enum(["program_expiring", "personal_records"]),
+      message: z.string(),
+    }),
+  ),
+  subscription: clientSubscriptionSummarySchema.nullable(),
+});
+
+/**
+ * `GET /coach/today`. `items` come sorted by urgency; rows hidden by "Gestito" only count in
+ * `handledCount`. `clientCount` counts linked clients, also those without a row.
+ */
+export const coachTodaySchema = z.object({
   clientCount: z.number(),
-  templateCount: z.number(),
-  activeAssignments: z.number(),
-  scheduledAssignments: z.number(),
-  expiringIn7Days: z.number(),
-  expiringIn14Days: z.number(),
-  expiringIn30Days: z.number(),
-  expiredAssignments: z.number(),
-  expirationsByMonth: z.array(
-    z.object({
-      month: z.string(),
-      count: z.number(),
-    }),
-  ),
-  renewalsByWeek: z.array(
-    z.object({
-      weekStart: z.string(),
-      weekEnd: z.string(),
-      count: z.number(),
-    }),
-  ),
-  upcomingExpirations: z.array(coachDashboardExpirationItemSchema),
-  expiredAssignmentsList: z.array(coachDashboardExpiredItemSchema),
+  handledCount: z.number(),
+  items: z.array(inboxItemSchema),
   recentActivity: z.array(coachDashboardActivityItemSchema),
 });
 
@@ -172,16 +170,12 @@ export type CoachClientListItem = z.infer<typeof coachClientListItemSchema>;
 export type CoachAssignment = z.infer<typeof coachAssignmentSchema>;
 export type CoachClientDetail = z.infer<typeof coachClientDetailSchema>;
 export type CoachInviteCode = z.infer<typeof coachInviteCodeSchema>;
-export type CoachDashboard = z.infer<typeof coachDashboardSchema>;
-export type CoachDashboardExpirationItem = z.infer<
-  typeof coachDashboardExpirationItemSchema
->;
-export type CoachDashboardExpiredItem = z.infer<
-  typeof coachDashboardExpiredItemSchema
->;
 export type CoachDashboardActivityItem = z.infer<
   typeof coachDashboardActivityItemSchema
 >;
+export type ChurnRisk = z.infer<typeof churnRiskSchema>;
+export type InboxItem = z.infer<typeof inboxItemSchema>;
+export type CoachToday = z.infer<typeof coachTodaySchema>;
 export type CoachTemplate = z.infer<typeof coachTemplateSchema>;
 export type CreateClientInput = z.input<typeof createClientRequestSchema>;
 export type ResetPasswordInput = z.input<typeof resetPasswordRequestSchema>;

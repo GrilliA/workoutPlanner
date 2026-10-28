@@ -1,1 +1,0 @@
-export { AthletesTable } from "./AthletesTable";

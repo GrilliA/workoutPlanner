@@ -102,7 +102,9 @@ export {
 } from "./sessions";
 export { getStats } from "./stats";
 export {
-  getCoachDashboard,
+  getCoachToday,
+  markClientHandled,
+  unmarkClientHandled,
   getCoachClients,
   getCoachInviteCode,
   rotateCoachInviteCode,
@@ -157,7 +159,10 @@ export type {
   CoachAssignment,
   CoachClientDetail,
   CoachInviteCode,
-  CoachDashboard,
+  CoachDashboardActivityItem,
+  CoachToday,
+  InboxItem,
+  ChurnRisk,
   CoachTemplate,
   CreateAssignmentInput,
   ResetPasswordInput,

@@ -28,6 +28,7 @@ const client = (id: number, clientSubscription: Subscription | null): CoachClien
   subscription: clientSubscription,
   lastSessionOn: null,
   last14Days: { completedSessions: 0, expectedSessions: null },
+  risk: null,
 });
 
 const clients = [

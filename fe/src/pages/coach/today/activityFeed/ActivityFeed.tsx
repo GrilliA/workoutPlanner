@@ -1,9 +1,9 @@
 import { Link } from "wouter";
-import type { DashboardActivityItem } from "../types";
+import type { ActivityFeedItem } from "../types";
 import "./style.css";
 
 type ActivityFeedProps = {
-  items: DashboardActivityItem[];
+  items: ActivityFeedItem[];
 };
 
 export function ActivityFeed({ items }: ActivityFeedProps) {
