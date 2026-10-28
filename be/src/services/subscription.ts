@@ -21,7 +21,7 @@ export type PauseDates = {
 export const PAYMENT_STARTS = ["paid_through", "paid_on"] as const;
 export type PaymentStart = (typeof PAYMENT_STARTS)[number];
 
-type SubscriptionStatus = "active" | "expiring" | "expired" | "paused" | "ended";
+export type SubscriptionStatus = "active" | "expiring" | "expired" | "paused" | "ended";
 
 type SubscriptionState = {
   status: SubscriptionStatus;
@@ -37,7 +37,7 @@ export const dayOfMonth = (dateKey: string): number => {
   return day;
 };
 
-const daysBetween = (from: string, to: string): number =>
+export const daysBetween = (from: string, to: string): number =>
   Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / MS_PER_DAY);
 
 const addMonths = (dateKey: string, months: number, billingDay: number): string => {

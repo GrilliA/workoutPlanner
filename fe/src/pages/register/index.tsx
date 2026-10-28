@@ -34,7 +34,7 @@ const Register = () => {
   };
 
   if (status === "authenticated") {
-    return <Redirect to="/dashboard" replace />;
+    return <Redirect to="/today" replace />;
   }
 
   if (status === "loading") {

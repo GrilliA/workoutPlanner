@@ -11,6 +11,7 @@ import {
 import { requireAuth } from "../middleware/requireAuth";
 import { requireRole } from "../middleware/requireRole";
 import { coachSubscriptionsRouter } from "./coachsubscriptions";
+import { coachTodayRouter } from "./coachtoday";
 import {
   todayInRome,
   validateAssignmentDates,
@@ -58,6 +59,7 @@ export const coachRouter = Router();
 
 coachRouter.use(requireAuth, requireRole("coach"));
 coachRouter.use(coachSubscriptionsRouter);
+coachRouter.use(coachTodayRouter);
 
 const templateColumns = {
   id: workouts.id,

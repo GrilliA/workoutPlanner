@@ -7,7 +7,7 @@ export default function RootPage() {
   const { status } = useAuth();
 
   if (status === "authenticated") {
-    return <Redirect to="/dashboard" replace />;
+    return <Redirect to="/today" replace />;
   }
 
   if (status === "anonymous" || status === "error") {

@@ -17,7 +17,7 @@ export function PageHeader({
   isSaving = false,
   isSaveDisabled = false,
   mode = "create",
-  backHref = "/dashboard",
+  backHref = "/today",
 }: PageHeaderProps) {
   const action = (
     <div className="page-header__actions">

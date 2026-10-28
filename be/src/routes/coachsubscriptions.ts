@@ -45,7 +45,7 @@ const parseAthleteId = (req: Request, res: Response): number | null => {
  * Sends 400 or 404 and returns null unless the athlete is linked to this coach.
  * Writes check the link again under lock: this early check only keeps the order of the errors.
  */
-const findClientAthleteId = async (req: Request, res: Response): Promise<number | null> => {
+export const findClientAthleteId = async (req: Request, res: Response): Promise<number | null> => {
   const athleteId = parseAthleteId(req, res);
 
   if (athleteId === null) {

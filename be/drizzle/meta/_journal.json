@@ -113,6 +113,13 @@
       "when": 1792767261688,
       "tag": "0015_pt_registro_undo",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1793093675450,
+      "tag": "0016_pt_oggi",
+      "breakpoints": true
     }
   ]
 }

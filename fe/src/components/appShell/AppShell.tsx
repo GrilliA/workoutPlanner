@@ -17,7 +17,7 @@ type SidebarLink = {
 };
 
 const sidebarLinks: SidebarLink[] = [
-  { label: "Dashboard", href: "/dashboard", icon: "home" },
+  { label: "Oggi", href: "/today", icon: "home" },
   { label: "Clienti", href: "/clients", icon: "clients" },
   { label: "Analisi", href: "/analytics", icon: "analytics" },
   { label: "Template", href: "/templates", icon: "template" },
@@ -26,7 +26,7 @@ const sidebarLinks: SidebarLink[] = [
 ];
 
 const bottomNavItems = [
-  { label: "Home", href: "/dashboard", icon: "home" as const },
+  { label: "Oggi", href: "/today", icon: "home" as const },
   { label: "Clienti", href: "/clients", icon: "clients" as const },
   { label: "Analisi", href: "/analytics", icon: "analytics" as const },
   { label: "Template", href: "/templates", icon: "template" as const },
