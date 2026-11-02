@@ -14,6 +14,13 @@ describe("translateApiErrorMessage", () => {
     );
   });
 
+  it("translates the cap on prescribed sets", () => {
+    assert.equal(
+      translateApiErrorMessage("setPrescriptions must have at most 30 sets"),
+      "Un esercizio può avere al massimo 30 serie.",
+    );
+  });
+
   it("gives the same copy to every money field", () => {
     const amountCopy = "L'importo deve essere tra 0 e 10.000 €.";
 
