@@ -52,12 +52,12 @@ export default function CoachClientsPage() {
       ) : null}
 
       {!isPending && clients.length === 0 ? (
-        <section className="coach-dashboard__empty">
+        <section className="coach-page__empty">
           <h2>Invita il primo cliente</h2>
           <p className="coach-empty">
             Condividi il codice invito: l&apos;atleta si registra sull&apos;app e si collega a te.
           </p>
-          <div className="coach-dashboard__actions">
+          <div className="coach-page__actions">
             <Link
               href="/clients/new"
               className="coach-btn-link coach-btn-link--primary"

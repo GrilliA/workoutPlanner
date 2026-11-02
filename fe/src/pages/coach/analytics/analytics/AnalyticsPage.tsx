@@ -34,7 +34,7 @@ export function AnalyticsPage() {
             Invita il primo atleta per iniziare a monitorare sessioni, attività e segnali
             operativi.
           </p>
-          <div className="coach-dashboard__actions">
+          <div className="coach-page__actions">
             <Link
               href="/clients/new"
               className="coach-btn-link coach-btn-link--primary"
