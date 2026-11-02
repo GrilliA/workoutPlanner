@@ -4,6 +4,8 @@ import { once } from "node:events";
 import type { Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { after, before, describe, it } from "node:test";
+import { setTimeout as delay } from "node:timers/promises";
+import { sql } from "drizzle-orm";
 import { dayBefore, todayInRome } from "../services/assignmentStatus";
 
 type JsonObject = Record<string, unknown>;
@@ -87,6 +89,33 @@ const asObject = (value: unknown): JsonObject => {
 };
 
 const isoDate = (value: unknown): string => String(value).slice(0, 10);
+
+const deferred = () => {
+  let resolve!: () => void;
+  const promise = new Promise<void>((done) => {
+    resolve = done;
+  });
+  return { promise, resolve };
+};
+
+/** Waits until a statement matching the pattern is blocked on a lock, so the test knows the order. */
+const waitForLockWait = async (
+  database: (typeof import("../db"))["db"],
+  queryPattern: string,
+  attemptsLeft = 100,
+): Promise<void> => {
+  const result = await database.execute(
+    sql`select count(*)::int as waiting from pg_stat_activity
+        where datname = current_database() and wait_event_type = 'Lock'
+        and query ilike ${queryPattern}`,
+  );
+  if (Number(result.rows[0]?.waiting) >= 1) {
+    return;
+  }
+  assert.ok(attemptsLeft > 0, `nothing waited on a lock for ${queryPattern}`);
+  await delay(20);
+  return waitForLockWait(database, queryPattern, attemptsLeft - 1);
+};
 
 const uniqueSuffix = (): string =>
   `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -218,6 +247,45 @@ describe("paid loop smoke", { concurrency: false }, () => {
     assert.equal(typeof inviteBody.code, "string");
     assert.ok(String(inviteBody.code).length > 0);
     inviteCode = String(inviteBody.code);
+  });
+
+  it("a first invite code blocked behind another uncommitted one answers with that code", async () => {
+    const [{ db }, { coachInviteCodes }] = await Promise.all([
+      import("../db"),
+      import("../db/schema"),
+    ]);
+    const registered = await api(baseUrl, "POST", "/api/auth/register", {
+      body: {
+        email: `smoke.coach.race.${suffix}@example.com`,
+        password: PASSWORD,
+        name: "Smoke Race",
+      },
+    });
+    assert.equal(registered.status, 201, failMessage(registered.status, registered.body));
+    const payload = asObject(registered.body);
+    const token = String(payload.accessToken);
+    const coachId = Number(asObject(payload.user).id);
+    const heldCode = `race-${suffix}`;
+    const inserted = deferred();
+    const released = deferred();
+
+    // Holds an uncommitted code for the coach, so the GET finds none and waits on the unique index.
+    const holder = db.transaction(async (tx) => {
+      await tx.insert(coachInviteCodes).values({ coachId, code: heldCode });
+      inserted.resolve();
+      await released.promise;
+    });
+    await inserted.promise;
+
+    const blockedRead = api(baseUrl, "GET", "/api/coach/invite-code", { token });
+    await waitForLockWait(db, '%insert into "coach_invite_codes"%');
+
+    released.resolve();
+    await holder;
+
+    const invite = await blockedRead;
+    assert.equal(invite.status, 200, failMessage(invite.status, invite.body));
+    assert.equal(asObject(invite.body).code, heldCode);
   });
 
   it("athlete registers, redeems the code, and appears in the coach clients", async () => {
