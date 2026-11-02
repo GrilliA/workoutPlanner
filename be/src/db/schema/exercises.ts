@@ -8,6 +8,7 @@ export const exercises = pgTable("exercises", {
   name: text("name").notNull(),
   sets: integer("sets"),
   reps: integer("reps"),
+  notes: text("notes"),
   workoutId: integer("workout_id")
     .notNull()
     .references(() => workouts.id, { onDelete: "cascade" }),

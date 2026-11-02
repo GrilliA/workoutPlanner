@@ -5,7 +5,7 @@ import { Button } from "../button";
 import { Mascot, type MascotName } from "../mascot";
 
 type EmptyStateProps = {
-  mascot: MascotName;
+  mascot?: MascotName;
   title: string;
   body?: string;
   /** Bottone principale (max 280px, come da mockup). */
@@ -28,7 +28,7 @@ export function EmptyState({
 }: EmptyStateProps) {
   return (
     <View style={styles.container}>
-      <Mascot name={mascot} />
+      {mascot ? <Mascot name={mascot} /> : null}
       <Heading style={styles.title}>{title}</Heading>
       {body ? <Body style={styles.body}>{body}</Body> : null}
       {actionLabel && onAction ? (
@@ -41,7 +41,7 @@ export function EmptyState({
           onPress={onLink}
           accessibilityRole="link"
           hitSlop={8}
-          style={({ pressed }) => pressed && styles.linkPressed}
+          style={({ pressed }) => [styles.link, pressed && styles.linkPressed]}
         >
           <AppText variant="label" tone="accent">
             {linkLabel}
@@ -74,6 +74,11 @@ const styles = StyleSheet.create({
     width: "100%",
     maxWidth: 280,
     marginTop: spacing.lg,
+  },
+  link: {
+    minHeight: 48,
+    justifyContent: "center",
+    marginTop: spacing.sm,
   },
   linkPressed: {
     opacity: 0.7,

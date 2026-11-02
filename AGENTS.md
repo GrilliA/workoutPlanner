@@ -24,9 +24,15 @@ cd mobile && npm run typecheck
 
 # Android native (Kotlin + Compose — requires JDK 17 + Android SDK)
 cd apps/android && ./gradlew lintDebug testDebugUnitTest assembleDebug
+
+# Landing (Astro, static, Node >= 22.22). Pages: https://grillia.github.io/workoutPlanner/landing/
+cd landing && npm run dev         # :4321
+cd landing && npm run check && npm run build
 ```
 
-**CI:** push or PR to `main` → GitHub Actions (`.github/workflows/ci.yml`): `be` typecheck + test, `fe` lint + build, `mobile` typecheck (Node 22), `android` lint + unit tests + assembleDebug (JDK 17).
+**CI:** push or PR to `main` → GitHub Actions (`.github/workflows/ci.yml`): `be` typecheck + test, `fe` lint + build, `mobile` typecheck, `landing` check + build (Node 22), `android` lint + unit tests + assembleDebug (JDK 17).
+
+**GitHub Pages** (`.github/workflows/pages.yml`): one artifact. Coach panel at https://grillia.github.io/workoutPlanner/, waitlist at https://grillia.github.io/workoutPlanner/landing/.
 
 - `be/.env` credentials: `postgres:postgres` (must match `docker-compose.yml`)
 - Frontend web: relative `/api/...` URLs; Vite proxies them in dev
@@ -43,6 +49,7 @@ workoutPlanner/
 ├── be/                 # Express + Drizzle + Postgres
 ├── fe/                 # React + Vite (coach panel)
 ├── mobile/             # Expo React Native (athlete)
+├── landing/            # Astro static waitlist (GitHub Pages /landing/)
 ├── apps/android/       # Kotlin + Compose (athlete, native)
 ├── docs/guidelines/    # conventions split by area
 ├── WORKBOOK.md
@@ -55,6 +62,7 @@ workoutPlanner/
 | `fe/src/components/` | Shared UI primitives (`appShell/`, `errorBoundary/`) |
 | `mobile/app/` | Expo Router routes |
 | `mobile/src/api/` | HTTP + Zod (same contract as web, mobile auth) |
+| `landing/` | Pre-launch waitlist. `PUBLIC_WAITLIST_ENDPOINT` at build time |
 | `apps/android/app/src/main/java/com/traccia/android/` | Native app sources (core/ + feature/) |
 
 FE component folders are **camelCase** (`errorBoundary/ErrorBoundary.tsx`). Details: [`docs/guidelines/fe.md`](docs/guidelines/fe.md).
@@ -64,6 +72,7 @@ FE component folders are **camelCase** (`errorBoundary/ErrorBoundary.tsx`). Deta
 | Area | File |
 | --- | --- |
 | Agent process (names, finish check, ask with options) | [`docs/guidelines/agents.md`](docs/guidelines/agents.md) |
+| Code style, all packages (names, simple code, pragmatic functional) | [`docs/guidelines/code-style.md`](docs/guidelines/code-style.md) |
 | Git / branch / commit | [`docs/guidelines/git.md`](docs/guidelines/git.md) |
 | Frontend web (folders, React, CSS, API) | [`docs/guidelines/fe.md`](docs/guidelines/fe.md) |
 | Backend | [`docs/guidelines/be.md`](docs/guidelines/be.md) |

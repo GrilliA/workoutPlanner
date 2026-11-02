@@ -70,3 +70,56 @@ describe("validateWorkoutProgramInput isActive", () => {
     }
   });
 });
+
+describe("validateWorkoutProgramInput prescription fields", () => {
+  it("keeps notes and per-set range, load and RIR on each exercise", () => {
+    const parsed = validateWorkoutProgramInput({
+      name: "Forza",
+      days: [
+        {
+          name: "A",
+          sortOrder: 0,
+          weekdays: [1],
+          exercises: [
+            {
+              name: "Squat",
+              notes: "Fermo 1s in buca",
+              setPrescriptions: [
+                { setNumber: 1, reps: 5, loadValue: 80, loadUnit: "percent_1rm", rir: 2, restSec: 180 },
+                { setNumber: 2, reps: 8, repsMax: 10, loadValue: 100, loadUnit: "kg", restSec: 120 },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    assert.equal(parsed.ok, true);
+    if (parsed.ok) {
+      const squat = parsed.value.days[0].exercises[0];
+      assert.equal(squat.notes, "Fermo 1s in buca");
+      assert.equal(squat.setPrescriptions[0].loadUnit, "percent_1rm");
+      assert.equal(squat.setPrescriptions[0].rir, 2);
+      assert.equal(squat.setPrescriptions[1].repsMax, 10);
+      assert.equal(squat.setPrescriptions[1].loadValue, 100);
+    }
+  });
+
+  it("rejects an exercise with an invalid load", () => {
+    const parsed = validateWorkoutProgramInput({
+      name: "Forza",
+      days: [
+        {
+          name: "A",
+          sortOrder: 0,
+          weekdays: [1],
+          exercises: [
+            { name: "Squat", setPrescriptions: [{ setNumber: 1, reps: 5, loadValue: 80 }] },
+          ],
+        },
+      ],
+    });
+
+    assert.equal(parsed.ok, false);
+  });
+});

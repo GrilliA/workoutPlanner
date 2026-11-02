@@ -1,5 +1,5 @@
 import { and, eq, inArray } from "drizzle-orm";
-import { db } from "../db";
+import { db, type Tx } from "../db";
 import {
   exercises,
   exerciseSets,
@@ -22,6 +22,7 @@ type WorkoutProgramExercise = {
   id?: number;
   name: string;
   catalogId?: string | null;
+  notes: string | null;
   setPrescriptions: SetPrescription[];
 };
 
@@ -156,8 +157,6 @@ export type SaveWorkoutProgramOptions = {
   sourceTemplateId?: number | null;
   isActive?: boolean;
 };
-
-type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 export const saveWorkoutProgram = async (
   userId: number,
@@ -309,6 +308,7 @@ export const saveWorkoutProgram = async (
           sets: summary.sets,
           reps: summary.reps,
           catalogId: exercise.catalogId ?? null,
+          notes: exercise.notes,
         };
         const [savedExercise] = exercise.id
           ? await tx

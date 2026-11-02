@@ -5,10 +5,10 @@
   gap: var(--space-2);
   box-sizing: border-box;
   border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  padding: var(--space-2-5) var(--space-4);
+  border-radius: var(--radius-full);
+  padding: var(--space-2-5) var(--space-5);
   font: inherit;
-  font-weight: 500;
+  font-weight: 700;
   line-height: 1.25;
   cursor: pointer;
   transition:
@@ -19,15 +19,15 @@
 }
 
 .button-base:focus-visible {
-  outline: var(--focus-ring-width) solid var(--accent);
+  outline: var(--focus-ring-width) solid var(--accent-text);
   outline-offset: var(--focus-ring-offset);
 }
 
 .button-base--primary {
   color: var(--on-accent);
   background: var(--accent);
-  border-color: var(--accent-border);
-  font-weight: 700;
+  border-color: var(--accent);
+  font-weight: 800;
 }
 
 .button-base--primary:hover:not(:disabled) {
@@ -35,14 +35,24 @@
 }
 
 .button-base--secondary {
-  color: var(--text);
-  background: var(--code-bg);
+  color: var(--text-h);
+  background: var(--surface);
   border-color: var(--border);
 }
 
 .button-base--secondary:hover:not(:disabled) {
   border-color: var(--accent-border);
   background: var(--accent-bg);
+}
+
+.button-base--ink {
+  color: var(--on-ink);
+  background: var(--ink);
+  border-color: var(--ink);
+}
+
+.button-base--ink:hover:not(:disabled) {
+  filter: brightness(1.25);
 }
 
 .button-base--ghost {
@@ -52,8 +62,8 @@
 }
 
 .button-base--ghost:hover:not(:disabled) {
-  color: var(--text);
-  background: var(--accent-bg);
+  color: var(--text-h);
+  background: var(--hover-bg);
 }
 
 .button-base--sm {

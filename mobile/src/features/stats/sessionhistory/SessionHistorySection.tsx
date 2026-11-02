@@ -1,7 +1,7 @@
 import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
 import { router } from "expo-router";
-import { Body, ErrorBanner, Meta, SectionLabel } from "../../../components";
-import { colors, radii, spacing } from "../../../theme";
+import { AppText, Body, ErrorBanner, Heading, Meta } from "../../../components";
+import { colors, radii, shadows, spacing } from "../../../theme";
 import type { HistoryViewModel } from "../types";
 
 type SessionHistorySectionProps = {
@@ -21,7 +21,7 @@ export function SessionHistorySection({
 }: SessionHistorySectionProps) {
   return (
     <View style={styles.section}>
-      <SectionLabel>STORICO SESSIONI</SectionLabel>
+      <Heading style={styles.title}>Allenamenti</Heading>
       {error ? <ErrorBanner message={error} onRetry={onRetry} /> : null}
 
       {history.rows.length === 0 && !loading ? (
@@ -33,10 +33,12 @@ export function SessionHistorySection({
               key={row.id}
               accessibilityRole="button"
               onPress={() => router.push(`/session/${row.id}`)}
-              style={styles.historyRow}
+              style={({ pressed }) => [styles.historyRow, pressed && styles.pressed]}
             >
               <View style={styles.historyBody}>
-                <Body style={styles.historyTitle}>{row.title}</Body>
+                <AppText tone="heading" style={styles.historyTitle} numberOfLines={1}>
+                  {row.title}
+                </AppText>
                 <Meta>{row.meta}</Meta>
               </View>
               <Meta style={styles.historyVolume}>{row.volumeLabel}</Meta>
@@ -46,7 +48,7 @@ export function SessionHistorySection({
       )}
 
       {loading ? (
-        <ActivityIndicator color={colors.accent} accessibilityLabel="Caricamento storico" />
+        <ActivityIndicator color={colors.accentText} accessibilityLabel="Caricamento storico" />
       ) : null}
 
       {history.canLoadMore && !loading ? (
@@ -56,13 +58,13 @@ export function SessionHistorySection({
           onPress={onLoadMore}
           style={styles.loadMore}
         >
-          <Meta>CARICA ALTRE · pagina {history.page} di {history.totalPages || 1}</Meta>
+          <AppText variant="label" tone="accent">
+            Carica altri · pagina {history.page} di {history.totalPages || 1}
+          </AppText>
         </Pressable>
       ) : null}
 
-      {history.total > 0 ? (
-        <Meta>{history.total} sessioni totali</Meta>
-      ) : null}
+      {history.total > 0 ? <Meta>{history.total} allenamenti in tutto</Meta> : null}
     </View>
   );
 }
@@ -74,15 +76,23 @@ const styles = StyleSheet.create({
   list: {
     gap: spacing.sm,
   },
+  title: {
+    fontSize: 17,
+    lineHeight: 22,
+  },
   historyRow: {
+    minHeight: 64,
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.md,
     backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.md,
-    padding: spacing.sm + 4,
+    borderRadius: radii.lg,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    ...shadows.card,
+  },
+  pressed: {
+    opacity: 0.7,
   },
   historyBody: {
     flex: 1,
@@ -90,7 +100,7 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   historyTitle: {
-    color: colors.textHeading,
+    fontSize: 16,
     fontWeight: "700",
   },
   historyVolume: {
@@ -98,7 +108,8 @@ const styles = StyleSheet.create({
     color: colors.textHeading,
   },
   loadMore: {
+    minHeight: 48,
     alignItems: "center",
-    paddingVertical: spacing.sm,
+    justifyContent: "center",
   },
 });

@@ -12,24 +12,34 @@ type ScaleToken = {
 };
 
 const COLORS: ColorToken[] = [
-  { name: "--accent", value: "#bfdbf7" },
-  { name: "--accent-deep", value: "#4a7fb0" },
-  { name: "--text-h", value: "#e0e0e0" },
-  { name: "--text", value: "#aaaaaa" },
-  { name: "--bg", value: "#1d1f25" },
-  { name: "--app-bg", value: "#1d1f25" },
-  { name: "--border", value: "rgba(224, 224, 224, 0.12)" },
-  { name: "--code-bg", value: "#252830" },
-  { name: "--surface", value: "#252830" },
-  { name: "--surface-elevated", value: "#2c3038" },
-  { name: "--accent-bg", value: "rgba(191, 219, 247, 0.12)" },
-  { name: "--accent-border", value: "rgba(191, 219, 247, 0.4)" },
-  { name: "--on-accent", value: "#111111" },
-  { name: "--error", value: "#f87171" },
-  { name: "--social-bg", value: "rgba(47, 48, 58, 0.5)" },
-  { name: "--hover-bg", value: "rgba(255, 255, 255, 0.06)" },
-  { name: "--bottom-nav-bg", value: "rgba(15, 16, 22, 0.96)" },
-  { name: "--overlay", value: "rgba(29, 31, 37, 0.4)" },
+  { name: "--bg", value: "#fff8f1" },
+  { name: "--app-bg", value: "#fff8f1" },
+  { name: "--surface", value: "#ffffff" },
+  { name: "--surface-elevated", value: "#fff8f1" },
+  { name: "--code-bg", value: "#fff8f1" },
+  { name: "--border", value: "#f0e4d8" },
+  { name: "--text-h", value: "#231a14" },
+  { name: "--text", value: "#6f625a" },
+  { name: "--accent", value: "#ff7a45" },
+  { name: "--on-accent", value: "#231a14" },
+  { name: "--accent-bg", value: "#ffe7da" },
+  { name: "--accent-text", value: "#a33a12" },
+  { name: "--accent-border", value: "#ffc2a6" },
+  { name: "--ink", value: "#231a14" },
+  { name: "--on-ink", value: "#ffffff" },
+  { name: "--data", value: "#3b3f9e" },
+  { name: "--data-bg", value: "#e6e7fa" },
+  { name: "--on-data", value: "#ffffff" },
+  { name: "--error", value: "#b42318" },
+  { name: "--error-bg", value: "#fde4e1" },
+  { name: "--warning", value: "#7a5410" },
+  { name: "--warning-bg", value: "#fdf1d8" },
+  { name: "--info", value: "#3b3f9e" },
+  { name: "--hover-bg", value: "rgb(35 26 20 / 0.04)" },
+  { name: "--bottom-nav-bg", value: "rgb(255 255 255 / 0.94)" },
+  { name: "--overlay", value: "rgb(35 26 20 / 0.4)" },
+  { name: "--scrim", value: "rgb(0 0 0 / 0.45)" },
+  { name: "--scrim-strong", value: "rgb(0 0 0 / 0.7)" },
 ];
 
 const SPACING: ScaleToken[] = [
@@ -45,10 +55,10 @@ const SPACING: ScaleToken[] = [
 ];
 
 const RADII: ScaleToken[] = [
-  { name: "--radius-sm", value: "0.25rem" },
-  { name: "--radius-md", value: "0.375rem" },
-  { name: "--radius-lg", value: "0.5rem" },
-  { name: "--radius-xl", value: "0.75rem" },
+  { name: "--radius-sm", value: "0.5rem" },
+  { name: "--radius-md", value: "0.75rem" },
+  { name: "--radius-lg", value: "1rem" },
+  { name: "--radius-xl", value: "1.5rem" },
   { name: "--radius-full", value: "999px" },
 ];
 
@@ -60,8 +70,8 @@ const TYPE_SIZES: ScaleToken[] = [
 ];
 
 const TYPE_FAMILIES: ScaleToken[] = [
-  { name: "--sans", value: '"Roboto", system-ui, sans-serif' },
-  { name: "--heading", value: '"Roboto", system-ui, sans-serif' },
+  { name: "--sans", value: '"Plus Jakarta Sans", system-ui, sans-serif' },
+  { name: "--heading", value: '"Plus Jakarta Sans", system-ui, sans-serif' },
   { name: "--mono", value: "ui-monospace, Consolas, monospace" },
 ];
 
@@ -292,8 +302,10 @@ function ShadowSection() {
         }}
       />
       <p style={{ ...captionStyle, marginTop: "0.75rem" }}>
-        --shadow · rgba(0, 0, 0, 0.45) 0 12px 24px -6px, rgba(0, 0, 0, 0.3) 0 4px
-        8px -2px
+        --shadow · 0 1px 2px rgb(35 26 20 / 0.04), 0 10px 28px rgb(35 26 20 / 0.07)
+      </p>
+      <p style={{ ...captionStyle, marginTop: "0.35rem" }}>
+        --shadow-strong · 0 14px 34px rgb(35 26 20 / 0.12)
       </p>
       <p style={{ ...captionStyle, marginTop: "0.35rem" }}>--blur · 12px</p>
     </Section>

@@ -36,11 +36,11 @@
   text-decoration: none;
 
   &:hover {
-    color: var(--accent);
+    color: var(--accent-text);
   }
 
   &:focus-visible {
-    outline: var(--focus-ring-width) solid var(--accent);
+    outline: var(--focus-ring-width) solid var(--accent-text);
     outline-offset: var(--focus-ring-offset);
     border-radius: var(--radius-sm);
   }
@@ -89,4 +89,15 @@
   grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
   gap: var(--space-3);
   margin-bottom: var(--space-3);
+}
+
+/* Skeleton lines sit on the card surface, so they need the lighter surface to show. */
+.coach-card-skeleton {
+  & .skeleton {
+    background: var(--surface-elevated);
+  }
+
+  & .coach-card-skeleton__line {
+    margin-top: var(--space-2);
+  }
 }

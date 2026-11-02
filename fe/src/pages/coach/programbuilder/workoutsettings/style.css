@@ -1,0 +1,15 @@
+.workout-settings {
+  & .eyebrow {
+    margin: 0 0 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  & .panel {
+    padding: 0 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    background: var(--surface);
+  }
+}

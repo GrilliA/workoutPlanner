@@ -1,8 +1,14 @@
 .skeleton {
   display: block;
-  border-radius: 0.4rem;
-  background: var(--surface);
-  animation: skeleton-pulse var(--duration-pulse) ease-in-out infinite;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(
+    90deg,
+    var(--border) 0%,
+    var(--surface-elevated) 50%,
+    var(--border) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer var(--duration-pulse) ease-in-out infinite;
 
   &.text {
     height: 0.85rem;
@@ -14,13 +20,13 @@
   }
 }
 
-@keyframes skeleton-pulse {
-  0%,
-  100% {
-    opacity: 1;
+/* Shimmer chiaro: la luce scorre sul fondo crema. */
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 100% 0;
   }
 
-  50% {
-    opacity: 0.45;
+  100% {
+    background-position: -100% 0;
   }
 }

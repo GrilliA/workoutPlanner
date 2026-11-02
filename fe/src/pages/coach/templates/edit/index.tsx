@@ -1,5 +1,5 @@
 import { useRoute } from "wouter";
-import { CreateWorkout } from "@pages/workouts/new/createworkout";
+import { CreateWorkout } from "@pages/coach/programbuilder/createworkout";
 import { loadTemplateDraft, saveUpdatedTemplate } from "../../programapi";
 
 export default function EditTemplatePage() {

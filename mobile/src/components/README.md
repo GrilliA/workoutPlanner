@@ -7,7 +7,7 @@
  * Cartelle (una responsabilità per cartella):
  * - screen/     SafeArea + sfondo pagina
  * - text/       Title, Heading, Body, Eyebrow, Meta…
- * - button/     Primary / Secondary / Danger / Ghost
+ * - button/     Pill: Primary (arancio) / Ink / Soft / Secondary / Danger / Ghost
  * - input/      TextField (alias Field)
  * - card/       Card e Card highlight (oggi)
  * - listrow/    Riga lista tappabile
@@ -15,9 +15,9 @@
  * - feedback/   LoadingBlock, ErrorBanner
  * - backbutton/ Freccia ‹ per tornare indietro
  * - icon/       Icone SVG allineate alla bottom nav web
- * - mascot/     Mascotte Lottie (wave, waiting, sleeping, notebook)
+ * - mascot/     Mascotte Lottie (waiting, sleeping, notebook)
  * - emptystate/ Stato vuoto stile Telegram (mascotte + titolo + azione)
  * - bottomsheet/ Bottom sheet con dim e maniglia (es. cambio allenamento)
- * - glasstabbar/ Tab bar flottante in vetro stile Telegram (custom tabBar expo-router)
+ * - glasstabbar/ Tab bar flottante a pill bianca, tab attiva ink (custom tabBar expo-router)
  */
 export {};

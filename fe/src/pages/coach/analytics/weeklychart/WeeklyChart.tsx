@@ -43,6 +43,10 @@ export function WeeklyChart({ model }: WeeklyChartProps) {
                   : Math.max(8, (bar.sessionValue / model.maxSessionValue) * (chartHeight - 24));
               const x = index * slotWidth;
               const y = chartHeight - height - 8;
+              const isCurrentWeek = index === model.bars.length - 1;
+              const barClassName = isCurrentWeek
+                ? "analytics-chart__bar analytics-chart__bar--current"
+                : "analytics-chart__bar";
 
               return (
                 <rect
@@ -52,7 +56,7 @@ export function WeeklyChart({ model }: WeeklyChartProps) {
                   width={model.barWidth}
                   height={height}
                   rx={3}
-                  className="analytics-chart__bar"
+                  className={barClassName}
                 >
                   <title>{bar.accessibilityLabel}</title>
                 </rect>

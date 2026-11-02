@@ -12,6 +12,8 @@ const DEFAULT_ORIGINS = [
   "ionic://localhost",
   "http://localhost",
   "https://localhost",
+  // GitHub Pages project site. The path /workoutPlanner/ is not part of the origin.
+  "https://grillia.github.io",
 ] as const;
 
 const parseExtraOrigins = (): string[] =>
@@ -21,6 +23,19 @@ const parseExtraOrigins = (): string[] =>
     .filter(Boolean);
 
 const allowedOrigins = new Set<string>([...DEFAULT_ORIGINS, ...parseExtraOrigins()]);
+
+/**
+ * SameSite=None cookies are sent from any site. Browser POSTs always include
+ * Origin, and that origin must be allowed before we set or use the refresh cookie.
+ * A missing Origin is a non-browser client (native app, curl) and is allowed.
+ */
+export const sessionRequestOriginAllowed = (origin: unknown): boolean => {
+  if (origin === undefined) {
+    return true;
+  }
+
+  return typeof origin === "string" && allowedOrigins.has(origin);
+};
 
 export const applyCors = (req: Request, res: Response, next: NextFunction): void => {
   const origin = req.headers.origin;

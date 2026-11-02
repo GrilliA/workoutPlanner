@@ -1,10 +1,9 @@
 import LottieView from "lottie-react-native";
 import { StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 
-export type MascotName = "wave" | "waiting" | "sleeping" | "notebook";
+export type MascotName = "waiting" | "sleeping" | "notebook";
 
 const SOURCES = {
-  wave: require("../../../assets/lottie/wave.json"),
   waiting: require("../../../assets/lottie/waiting.json"),
   sleeping: require("../../../assets/lottie/sleeping.json"),
   notebook: require("../../../assets/lottie/notebook.json"),
@@ -20,7 +19,8 @@ type MascotProps = {
 /** Mascotte Lottie degli stati vuoti (fonti in `assets/lottie/CREDITS.md`). */
 export function Mascot({ name, size = 200, loop = true, style }: MascotProps) {
   return (
-    <View style={[styles.frame, style]}>
+    // Box della misura chiesta: su web il player Lottie altrimenti si allarga.
+    <View style={[styles.frame, { width: size, height: size }, style]}>
       <LottieView
         source={SOURCES[name]}
         autoPlay
@@ -34,5 +34,6 @@ export function Mascot({ name, size = 200, loop = true, style }: MascotProps) {
 const styles = StyleSheet.create({
   frame: {
     alignItems: "center",
+    justifyContent: "center",
   },
 });

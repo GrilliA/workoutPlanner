@@ -7,8 +7,8 @@
 
 .input-label {
   font-size: var(--text-sm);
-  font-weight: 500;
-  color: var(--text);
+  font-weight: 600;
+  color: var(--text-h);
   line-height: 1.25;
 }
 
@@ -21,20 +21,19 @@
   box-sizing: border-box;
   padding: var(--space-2-5) var(--space-3);
   font: inherit;
-  color: var(--text);
-  background: var(--bg);
+  color: var(--text-h);
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
 }
 
 .input-base::placeholder {
   color: var(--text);
-  opacity: 0.7;
 }
 
 .input-base:focus-visible {
-  outline: var(--focus-ring-width) solid var(--accent);
+  outline: var(--focus-ring-width) solid var(--accent-text);
   outline-offset: var(--focus-ring-offset);
   border-color: var(--accent-border);
 }

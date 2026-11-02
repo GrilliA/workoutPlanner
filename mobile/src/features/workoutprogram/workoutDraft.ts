@@ -36,6 +36,8 @@ export type WorkoutDraftExercise = {
   nameEn: string | null;
   imageUrl: string | null;
   imageUrlEnd: string | null;
+  /** Coach notes; edited on the web builder, kept as-is here. */
+  notes: string | null;
   prescriptions: DraftPrescription[];
 };
 
@@ -136,6 +138,7 @@ export function workoutDraftFromServer(
           nameEn: exercise.nameEn ?? null,
           imageUrl: exercise.imageUrl ?? null,
           imageUrlEnd: exercise.imageUrlEnd ?? null,
+          notes: exercise.notes ?? null,
           prescriptions: prescriptionsFromServer(
             exercise.setPrescriptions,
             defaultRestSec,
@@ -160,14 +163,16 @@ export function workoutDraftFromSchedaTxt(parsed: ParsedScheda): WorkoutDraft {
           const media = exercise.catalogId
             ? catalogImageUrlsFromId(exercise.catalogId)
             : null;
+          const nameIt = exercise.nameIt?.trim() || null;
           return {
             key: newDraftKey("ex"),
             catalogId: exercise.catalogId ?? null,
-            name: exercise.name,
-            nameIt: null,
-            nameEn: null,
+            name: nameIt || exercise.name,
+            nameIt,
+            nameEn: exercise.nameEn?.trim() || null,
             imageUrl: media?.imageUrl ?? null,
             imageUrlEnd: media?.imageUrlEnd ?? null,
+            notes: exercise.notes.trim() || null,
             prescriptions: prescriptionsFromServer(
               exercise.setPrescriptions,
               parsed.settings.defaultRestSec,
@@ -190,8 +195,32 @@ export function workoutDraftExerciseFromCatalog(
     nameEn: item.name,
     imageUrl: item.imageUrl,
     imageUrlEnd: item.imageUrlEnd ?? deriveImageUrlEnd(item.imageUrl),
+    notes: null,
     prescriptions: prescriptionsFromUniform(3, 10, restSec),
   };
+}
+
+function validateDraftExercise(exercise: WorkoutDraftExercise): string | null {
+  if (exercise.name.trim().length === 0) {
+    return "Ogni esercizio deve avere un nome";
+  }
+
+  const invalid = validatePrescriptionDrafts(exercise.prescriptions);
+  if (invalid) {
+    return `${exerciseHeading(exercise)}: ${invalid}`;
+  }
+
+  return null;
+}
+
+/** Controlli di un giorno: il nome della scheda si chiede solo al salvataggio. */
+export function validateWorkoutDay(day: WorkoutDraftDay): string | null {
+  if (day.name.trim().length === 0) {
+    return "Ogni giorno deve avere un nome";
+  }
+
+  const exerciseErrors = day.exercises.map(validateDraftExercise);
+  return exerciseErrors.find((error) => error !== null) ?? null;
 }
 
 export function validateWorkoutDraft(draft: WorkoutDraft): string | null {
@@ -205,8 +234,9 @@ export function validateWorkoutDraft(draft: WorkoutDraft): string | null {
 
   const assignedWeekdays = new Set<number>();
   for (const day of draft.days) {
-    if (day.name.trim().length === 0) {
-      return "Ogni giorno deve avere un nome";
+    const invalidDay = validateWorkoutDay(day);
+    if (invalidDay) {
+      return invalidDay;
     }
 
     for (const weekday of day.weekdays) {
@@ -214,17 +244,6 @@ export function validateWorkoutDraft(draft: WorkoutDraft): string | null {
         return `${WEEKDAY_LABELS_SHORT[weekday] ?? "Giorno"} è assegnato a più giorni`;
       }
       assignedWeekdays.add(weekday);
-    }
-
-    for (const exercise of day.exercises) {
-      if (exercise.name.trim().length === 0) {
-        return "Ogni esercizio deve avere un nome";
-      }
-
-      const invalid = validatePrescriptionDrafts(exercise.prescriptions);
-      if (invalid) {
-        return `${exerciseHeading(exercise)}: ${invalid}`;
-      }
     }
   }
 
@@ -263,6 +282,7 @@ export function toWorkoutProgramInput(
         ...(exercise.id !== undefined ? { id: exercise.id } : {}),
         name: exercise.name.trim(),
         catalogId: exercise.catalogId,
+        notes: exercise.notes,
         setPrescriptions: toSetPrescriptions(exercise.prescriptions),
       })),
     })),

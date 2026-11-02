@@ -10,8 +10,9 @@ import {
 import { Button } from "@components/button";
 import { toast } from "@components/toast";
 import { PageHeader } from "@components/pageHeader";
-import { CoachCard } from "../../coachCard";
+import { CoachCard, CoachCardListSkeleton } from "../../coachCard";
 import "../../style.css";
+import "./style.css";
 
 export default function InviteClientPage() {
   const { data: code, isPending, setData: setCode } = useQuery({
@@ -53,7 +54,7 @@ export default function InviteClientPage() {
       />
 
       {isPending ? (
-        <p className="coach-empty">Caricamento…</p>
+        <CoachCardListSkeleton />
       ) : null}
 
       {!isPending && !code ? (
@@ -62,25 +63,14 @@ export default function InviteClientPage() {
 
       {!isPending && code ? (
         <section className="coach-section">
-          <p className="coach-empty" style={{ marginBottom: "1rem" }}>
+          <p className="coach-empty invite-code__intro">
             L&apos;atleta crea da solo l&apos;account su mobile, poi collega il tuo codice
             nella sezione Coach. Un atleta può avere un solo coach alla volta.
           </p>
-          <CoachCard style={{ textAlign: "center" }}>
-            <p className="coach-empty" style={{ marginBottom: "0.5rem" }}>
-              Codice invito
-            </p>
-            <p
-              style={{
-                fontSize: "2rem",
-                fontWeight: 700,
-                letterSpacing: "0.2em",
-                margin: "0.5rem 0 1rem",
-              }}
-            >
-              {code}
-            </p>
-            <div className="coach-card-actions" style={{ justifyContent: "center" }}>
+          <CoachCard className="invite-code">
+            <p className="coach-empty invite-code__label">Codice invito</p>
+            <p className="invite-code__value">{code}</p>
+            <div className="coach-card-actions invite-code__actions">
               <Button
                 type="button"
                 variant="primary"

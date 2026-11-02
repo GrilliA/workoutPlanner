@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, View } from "react-native";
 import type { StatsRange } from "../../../api";
-import { Meta } from "../../../components";
-import { colors, radii, spacing } from "../../../theme";
+import { AppText } from "../../../components";
+import { colors, radii, shadows } from "../../../theme";
 import { PROGRESS_RANGE_OPTIONS } from "../mappers/formatters";
 
 type PeriodFilterProps = {
@@ -9,29 +9,32 @@ type PeriodFilterProps = {
   onChange: (range: StatsRange) => void;
 };
 
-/** Segmented control 4 SETT / 12 SETT / 1 ANNO. */
+/** Segmented "Sole": pill bianca, periodo attivo = pill ink. */
 export function PeriodFilter({ value, onChange }: PeriodFilterProps) {
   return (
     <View
       style={styles.row}
       accessibilityRole="tablist"
-      accessibilityLabel="Filtro periodo"
+      accessibilityLabel="Periodo"
     >
       {PROGRESS_RANGE_OPTIONS.map((option) => {
-        const selected = option.range === value;
+        const isSelected = option.range === value;
 
         return (
           <Pressable
             key={option.range}
             accessibilityRole="tab"
-            accessibilityState={{ selected }}
+            accessibilityState={{ selected: isSelected }}
             accessibilityLabel={option.label}
             onPress={() => onChange(option.range)}
-            style={[styles.chip, selected && styles.chipSelected]}
+            style={[styles.segment, isSelected && styles.segmentSelected]}
           >
-            <Meta style={selected ? styles.labelSelected : undefined}>
+            <AppText
+              variant="label"
+              style={isSelected ? styles.labelSelected : styles.label}
+            >
               {option.label}
-            </Meta>
+            </AppText>
           </Pressable>
         );
       })}
@@ -42,23 +45,28 @@ export function PeriodFilter({ value, onChange }: PeriodFilterProps) {
 const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
-    gap: spacing.xs,
+    padding: 4,
+    gap: 4,
+    borderRadius: radii.pill,
+    backgroundColor: colors.surface,
+    ...shadows.card,
   },
-  chip: {
+  segment: {
     flex: 1,
+    minHeight: 44,
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.md,
-    paddingVertical: spacing.sm,
-    backgroundColor: colors.bg,
+    justifyContent: "center",
+    borderRadius: radii.pill,
   },
-  chipSelected: {
-    borderColor: colors.accent,
-    backgroundColor: colors.accentBg,
+  segmentSelected: {
+    backgroundColor: colors.ink,
+  },
+  label: {
+    color: colors.text,
+    fontWeight: "700",
   },
   labelSelected: {
-    color: colors.textHeading,
+    color: colors.onInk,
     fontWeight: "700",
   },
 });

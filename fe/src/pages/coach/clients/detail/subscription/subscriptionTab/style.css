@@ -1,0 +1,43 @@
+.subscription-tab {
+  & .loading {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  & .content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+  }
+
+  & .ended-notice {
+    margin: 0;
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-lg);
+    font-size: var(--text-sm);
+    font-weight: 700;
+    color: var(--text-h);
+    background: var(--accent-bg);
+  }
+
+  & .overview {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-4);
+    align-items: start;
+  }
+
+  & .column {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    min-width: 0;
+  }
+}
+
+@container page (width >= 48rem) {
+  .subscription-tab .overview {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  }
+}

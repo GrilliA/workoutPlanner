@@ -2,10 +2,10 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
-  padding: var(--space-4) var(--space-5);
-  border: 1px solid var(--border);
+  padding: var(--space-5) var(--space-6);
+  border: 0;
   border-radius: var(--radius-xl);
-  background: var(--bg);
+  background: var(--surface);
   box-shadow: var(--shadow);
 
   & .title {

@@ -1,21 +1,14 @@
-import { z } from "zod";
 import { apiRequest } from "./client";
 import { CACHE_SHORT } from "./responseCache";
 import {
-  logSetRequestSchema,
-  loggedSetSchema,
-  patchLoggedSetRequestSchema,
   patchSessionRequestSchema,
   sessionHistoryResponseSchema,
   startSessionRequestSchema,
   workoutSessionSummariesSchema,
   workoutSessionWithSetsSchema,
   workoutSessionsSchema,
-  type LogSetInput,
-  type PatchLoggedSetInput,
   type PatchSessionInput,
   type StartSessionInput,
-  type LoggedSet,
   type WorkoutSession,
   type WorkoutSessionSummary,
   type WorkoutSessionWithSets,
@@ -81,42 +74,7 @@ export async function patchSession(
   });
 }
 
-/** Completes session without touching logged sets (omit `sets` in PATCH body). */
-export async function completeSession(
-  id: number,
-): Promise<WorkoutSessionWithSets> {
-  return patchSession(id, { status: "completed" });
-}
-
 export async function abandonSession(id: number): Promise<WorkoutSessionWithSets> {
   return patchSession(id, { status: "abandoned" });
 }
 
-export async function logSet(sessionId: number, input: LogSetInput): Promise<LoggedSet> {
-  return apiRequest(`/sessions/${sessionId}/sets`, {
-    method: "POST",
-    body: input,
-    requestSchema: logSetRequestSchema,
-    schema: loggedSetSchema,
-  });
-}
-
-export async function patchLoggedSet(
-  sessionId: number,
-  setId: number,
-  input: PatchLoggedSetInput,
-): Promise<LoggedSet> {
-  return apiRequest(`/sessions/${sessionId}/sets/${setId}`, {
-    method: "PATCH",
-    body: input,
-    requestSchema: patchLoggedSetRequestSchema,
-    schema: loggedSetSchema,
-  });
-}
-
-export async function deleteLoggedSet(sessionId: number, setId: number): Promise<void> {
-  await apiRequest(`/sessions/${sessionId}/sets/${setId}`, {
-    method: "DELETE",
-    schema: z.undefined(),
-  });
-}

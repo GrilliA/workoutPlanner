@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { weekdaySchema } from "./workoutday";
-import { exerciseSchema, setPrescriptionSchema } from "./exercise";
+import { exerciseNotesSchema, exerciseSchema, setPrescriptionsRequestSchema } from "./exercise";
 
 export const REST_SEC_OPTIONS = [60, 90, 120, 150] as const;
 
@@ -77,7 +77,8 @@ const workoutProgramExerciseSchema = z.object({
   id: z.number().int().positive().optional(),
   name: z.string().trim().min(1, "name is required"),
   catalogId: z.string().trim().min(1).nullable().optional(),
-  setPrescriptions: z.array(setPrescriptionSchema).min(1, "At least one set is required"),
+  notes: exerciseNotesSchema.optional(),
+  setPrescriptions: setPrescriptionsRequestSchema,
 });
 
 const workoutProgramDaySchema = z.object({

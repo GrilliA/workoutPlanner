@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AppState, Platform } from "react-native";
 import {
   dismissRestTimerNotification,
+  setRestTimerSessionMounted,
   showRestTimerNotification,
 } from "../../../modules/rest-timer-notification";
 import {
@@ -15,7 +16,8 @@ import {
   clearRestNotification,
   ensureRestTimerPermission,
   formatRestClock,
-  scheduleRestDoneNotification,
+  scheduleExactRestDoneAlarm,
+  scheduleRestDoneAlert,
 } from "./restTimerNotifications";
 
 Notifications.setNotificationHandler({
@@ -66,25 +68,46 @@ export function useRestTimer(sessionId: number) {
   const firedRef = useRef(false);
   const doneNotificationIdRef = useRef<string | null>(null);
   const appInForegroundRef = useRef(true);
+  const restAttemptRef = useRef(0);
+  const alertsChainRef = useRef<Promise<void>>(Promise.resolve());
 
-  const clearNotifications = useCallback(async () => {
-    const doneId = doneNotificationIdRef.current;
-    doneNotificationIdRef.current = null;
-    await clearRestNotification(doneId);
-    dismissRestTimerNotification();
+  const enqueueAlerts = useCallback((task: () => Promise<void>) => {
+    const next = alertsChainRef.current.then(task, task);
+    alertsChainRef.current = next.then(
+      () => undefined,
+      () => undefined,
+    );
+    return next;
   }, []);
 
+  const hideRestAlerts = useCallback(() => {
+    const doneId = doneNotificationIdRef.current;
+    doneNotificationIdRef.current = null;
+    dismissRestTimerNotification();
+    endRestTimerActivities();
+    return doneId;
+  }, []);
+
+  const finishScheduledCleanup = useCallback(
+    (doneId: string | null) =>
+      Promise.all([
+        clearRestNotification(doneId),
+        cancelScheduledRestDone(sessionId).catch(() => undefined),
+      ]).then(() => undefined),
+    [sessionId],
+  );
+
   const cancel = useCallback(() => {
+    restAttemptRef.current += 1;
     endsAtRef.current = null;
     firedRef.current = false;
     setStatus("idle");
     setRemainingSec(0);
     setTotalSec(0);
     setRestingExerciseId(null);
-    void clearNotifications();
-    void cancelScheduledRestDone(sessionId).catch(() => undefined);
-    endRestTimerActivities();
-  }, [clearNotifications, sessionId]);
+    const doneId = hideRestAlerts();
+    void enqueueAlerts(() => finishScheduledCleanup(doneId));
+  }, [enqueueAlerts, finishScheduledCleanup, hideRestAlerts]);
 
   const fireDone = useCallback(async () => {
     if (firedRef.current || endsAtRef.current === null) {
@@ -92,10 +115,11 @@ export function useRestTimer(sessionId: number) {
     }
 
     firedRef.current = true;
+    restAttemptRef.current += 1;
     setRemainingSec(0);
     setStatus("done");
-    await clearNotifications();
-    endRestTimerActivities();
+    const doneId = hideRestAlerts();
+    await enqueueAlerts(() => finishScheduledCleanup(doneId));
 
     if (appInForegroundRef.current) {
       try {
@@ -113,7 +137,7 @@ export function useRestTimer(sessionId: number) {
       setTotalSec(0);
       setRestingExerciseId(null);
     }, DONE_FLASH_MS);
-  }, [clearNotifications]);
+  }, [enqueueAlerts, finishScheduledCleanup, hideRestAlerts]);
 
   const checkExpiry = useCallback(() => {
     const endsAt = endsAtRef.current;
@@ -132,8 +156,8 @@ export function useRestTimer(sessionId: number) {
 
   const start = useCallback(
     async (restSec: number, exerciseId: number) => {
-      cancel();
-
+      const attempt = restAttemptRef.current + 1;
+      restAttemptRef.current = attempt;
       const endsAt = Date.now() + restSec * 1000;
       endsAtRef.current = endsAt;
       firedRef.current = false;
@@ -141,24 +165,53 @@ export function useRestTimer(sessionId: number) {
       setRemainingSec(restSec);
       setRestingExerciseId(exerciseId);
       setStatus("running");
-      startRestTimerActivity({ sessionId, startedAtMs: Date.now(), endsAtMs: endsAt });
-      showRestTimerNotification({
-        sessionId,
-        endsAtMs: endsAt,
-        title: "Recupero in corso",
-        body: `Termina alle ${formatRestClock(endsAt)}`,
-      });
+      const previousDoneId = hideRestAlerts();
 
-      try {
-        doneNotificationIdRef.current = await scheduleRestDoneNotification({
+      await enqueueAlerts(async () => {
+        await finishScheduledCleanup(previousDoneId);
+        if (attempt !== restAttemptRef.current || endsAtRef.current !== endsAt) {
+          return;
+        }
+
+        startRestTimerActivity({
           sessionId,
+          startedAtMs: Date.now(),
           endsAtMs: endsAt,
         });
-      } catch {
-        // Expo web / simulatore: timer UI resta attivo senza notifica.
-      }
+
+        const granted = await ensureRestTimerPermission().catch(() => false);
+        if (attempt !== restAttemptRef.current || endsAtRef.current !== endsAt) {
+          endRestTimerActivities();
+          return;
+        }
+        if (!granted) {
+          return;
+        }
+
+        showRestTimerNotification({
+          sessionId,
+          endsAtMs: endsAt,
+          title: "Recupero in corso",
+          body: `Termina alle ${formatRestClock(endsAt)}`,
+        });
+
+        try {
+          const doneId = await scheduleRestDoneAlert({
+            sessionId,
+            endsAtMs: endsAt,
+          });
+          if (attempt !== restAttemptRef.current) {
+            await clearRestNotification(doneId);
+            dismissRestTimerNotification();
+            return;
+          }
+          doneNotificationIdRef.current = doneId;
+        } catch {
+          // Expo web / simulatore: timer UI resta attivo senza notifica.
+        }
+      });
     },
-    [cancel, sessionId],
+    [enqueueAlerts, finishScheduledCleanup, hideRestAlerts, sessionId],
   );
 
   useEffect(() => {
@@ -168,7 +221,9 @@ export function useRestTimer(sessionId: number) {
     }
 
     mountedRestSessionId = sessionId;
+    setRestTimerSessionMounted(true);
     return () => {
+      setRestTimerSessionMounted(false);
       if (mountedRestSessionId === sessionId) {
         mountedRestSessionId = null;
       }
@@ -186,15 +241,34 @@ export function useRestTimer(sessionId: number) {
 
   useEffect(() => {
     const sub = AppState.addEventListener("change", (next) => {
-      appInForegroundRef.current = next === "active";
+      const inForeground = next === "active";
+      appInForegroundRef.current = inForeground;
 
-      if (next === "active") {
-        checkExpiry();
+      if (!inForeground) {
+        return;
       }
+
+      const endsAt = endsAtRef.current;
+      const expoNotificationId = doneNotificationIdRef.current;
+      if (
+        endsAt &&
+        expoNotificationId &&
+        !firedRef.current &&
+        endsAt > Date.now() &&
+        scheduleExactRestDoneAlarm({ sessionId, endsAtMs: endsAt })
+      ) {
+        doneNotificationIdRef.current = null;
+        void enqueueAlerts(async () => {
+          await clearRestNotification(expoNotificationId);
+          await cancelScheduledRestDone(sessionId);
+        });
+      }
+
+      checkExpiry();
     });
 
     return () => sub.remove();
-  }, [checkExpiry]);
+  }, [checkExpiry, enqueueAlerts, sessionId]);
 
   useEffect(() => {
     const sub = Notifications.addNotificationReceivedListener((notification) => {

@@ -1,76 +1,67 @@
 import { Pressable, StyleSheet, View } from "react-native";
 import { AppText, Meta } from "../../../components";
-import { colors, radii, spacing } from "../../../theme";
-import type { HomeRecentSession } from "../types";
+import { colors, radii, shadows, spacing } from "../../../theme";
 
 type RecentRowProps = {
-  session: HomeRecentSession;
+  /** null = nessun allenamento completato finora. */
+  session: { title: string; meta: string } | null;
   onPress?: () => void;
 };
 
-/** Riga ultimi allenamenti: titolo, data·durata, volume a destra. */
+/** Tile "Ultimo allenamento" della Home: titolo, data · volume, tap → riepilogo. */
 export function RecentRow({ session, onPress }: RecentRowProps) {
+  const content = (
+    <>
+      <Meta>Ultimo allenamento</Meta>
+      {session ? (
+        <View style={styles.body}>
+          <AppText tone="heading" style={styles.title} numberOfLines={1}>
+            {session.title}
+          </AppText>
+          <Meta numberOfLines={2}>{session.meta}</Meta>
+        </View>
+      ) : (
+        <AppText tone="heading" style={styles.title}>
+          Ancora nessuno
+        </AppText>
+      )}
+    </>
+  );
+
+  if (!session || !onPress) {
+    return <View style={styles.tile}>{content}</View>;
+  }
+
   return (
     <Pressable
+      accessibilityRole="button"
       onPress={onPress}
-      accessibilityRole={onPress ? "button" : undefined}
-      style={styles.row}
+      style={({ pressed }) => [styles.tile, pressed && styles.pressed]}
     >
-      <View style={styles.icon}>
-        <AppText tone="accent" style={styles.iconGlyph}>
-          ●
-        </AppText>
-      </View>
-      <View style={styles.body}>
-        <AppText tone="heading" style={styles.title} numberOfLines={1}>
-          {session.name}
-        </AppText>
-        <Meta>
-          {session.dateLabel} · {session.durationMin} min
-        </Meta>
-      </View>
-      <AppText tone="heading" style={styles.volume}>
-        {session.volumeLabel}
-      </AppText>
+      {content}
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
+  tile: {
+    flex: 1,
+    minHeight: 120,
     backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.md,
-    padding: spacing.sm + 4,
+    borderRadius: radii.lg,
+    padding: spacing.md,
+    gap: spacing.xs,
+    ...shadows.card,
   },
-  icon: {
-    width: 44,
-    height: 44,
-    borderRadius: radii.sm + 2,
-    backgroundColor: colors.surfaceElevated,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  iconGlyph: {
-    fontSize: 10,
+  pressed: {
+    opacity: 0.7,
   },
   body: {
-    flex: 1,
     gap: 2,
-    minWidth: 0,
   },
   title: {
-    fontSize: 14,
-    fontWeight: "700",
-  },
-  volume: {
-    fontSize: 14,
+    fontSize: 17,
+    lineHeight: 22,
     fontWeight: "700",
   },
 });

@@ -1,0 +1,101 @@
+---
+import '@fontsource/plus-jakarta-sans/400.css';
+import '@fontsource/plus-jakarta-sans/500.css';
+import '@fontsource/plus-jakarta-sans/600.css';
+import '@fontsource/plus-jakarta-sans/700.css';
+import '@fontsource/plus-jakarta-sans/800.css';
+import '../styles/global.css';
+interface Props { title: string; description: string }
+const { title, description } = Astro.props;
+---
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta name="theme-color" content="#FFF8F1" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='9' fill='%23FF7A45'/><text x='16' y='23' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='%23231A14'>a</text></svg>" />
+  </head>
+  <body>
+    <slot />
+    <script>
+      const params = new URLSearchParams(location.search);
+      const forms = document.querySelectorAll<HTMLFormElement>("form[data-waitlist]");
+      const fallbackError = "Qualcosa è andato storto, riprova.";
+
+      const messageFromResponse = async (response: Response): Promise<string> => {
+        const body: unknown = await response.json().catch(() => null);
+        if (!body || typeof body !== "object" || !("error" in body)) {
+          return fallbackError;
+        }
+        const error = body.error;
+        if (typeof error !== "string") {
+          return fallbackError;
+        }
+        const trimmed = error.trim();
+        if (trimmed === "" || trimmed.length > 200) {
+          return fallbackError;
+        }
+        return trimmed;
+      };
+
+      for (const form of forms) {
+        const ref = form.querySelector<HTMLInputElement>("[data-ref]");
+        if (ref) {
+          ref.value = params.get("ref") ?? "";
+        }
+        form.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const message = form.querySelector(".wl-msg");
+          if (!(message instanceof HTMLElement)) {
+            return;
+          }
+          const data = new FormData(form);
+          const action = form.getAttribute("action");
+          const endpointMissing = !action || action === "#";
+          if (endpointMissing) {
+            message.textContent = "Sei in lista! (demo: endpoint non ancora configurato)";
+            form.classList.remove("err");
+            form.classList.add("ok");
+            return;
+          }
+          const payload = {
+            email: String(data.get("email") ?? ""),
+            role: String(data.get("role") ?? ""),
+            consent: data.get("consent") === "yes",
+            ref: String(data.get("ref") ?? ""),
+            company: String(data.get("company") ?? ""),
+          };
+          try {
+            const response = await fetch(action, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Accept: "application/json" },
+              body: JSON.stringify(payload),
+            });
+            if (response.ok) {
+              message.textContent = "Sei in lista. Ti avvisiamo quando apre il test.";
+              form.classList.remove("err");
+              form.classList.add("ok");
+              return;
+            }
+            const showServerMessage =
+              response.status === 400 || response.status === 413 || response.status === 429;
+            message.textContent = showServerMessage
+              ? await messageFromResponse(response)
+              : fallbackError;
+            form.classList.remove("ok");
+            form.classList.add("err");
+          } catch {
+            message.textContent = "Errore di rete, riprova tra poco.";
+            form.classList.remove("ok");
+            form.classList.add("err");
+          }
+        });
+      }
+    </script>
+  </body>
+</html>

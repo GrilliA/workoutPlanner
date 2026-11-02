@@ -1,0 +1,8 @@
+---
+interface Props { tilt?: 'left' | 'right' | 'none'; label?: string }
+const { tilt = 'none', label = '' } = Astro.props;
+---
+<div class:list={['phone', `tilt-${tilt}`]} role="img" aria-label={label}>
+  <div class="phone-notch"></div>
+  <div class="phone-screen"><slot /></div>
+</div>

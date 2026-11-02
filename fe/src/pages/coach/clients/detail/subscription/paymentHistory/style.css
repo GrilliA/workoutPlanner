@@ -1,0 +1,171 @@
+.payment-history {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-width: 0;
+
+  & .title {
+    margin: 0;
+    font-size: var(--text-lg);
+    color: var(--text-h);
+  }
+
+  & .loading {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    width: 100%;
+  }
+
+  & .empty {
+    margin: 0;
+    color: var(--text);
+  }
+
+  /* A list of cards on a phone, a table once its own box is wide enough. */
+  & .frame {
+    container-type: inline-size;
+    width: 100%;
+    min-width: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    background: var(--surface);
+    overflow: hidden;
+  }
+
+  & table {
+    display: block;
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--text-sm);
+    text-align: left;
+  }
+
+  & thead {
+    display: none;
+  }
+
+  & tbody,
+  & tr,
+  & th,
+  & td {
+    display: block;
+  }
+
+  & tr {
+    padding: var(--space-4);
+    border-bottom: 1px solid var(--border);
+  }
+
+  & tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  & th,
+  & td {
+    padding: var(--space-1) 0;
+    color: var(--text-h);
+  }
+
+  & td[data-label]::before {
+    content: attr(data-label) ": ";
+    font-size: var(--text-xs);
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  & .paid-on {
+    font-weight: 700;
+  }
+
+  & .number {
+    color: var(--data);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  & .note {
+    overflow-wrap: anywhere;
+  }
+
+  & .actions:empty {
+    display: none;
+  }
+
+  & .undo {
+    min-height: 2.75rem;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--error);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      text-decoration: underline;
+    }
+
+    &:focus-visible {
+      outline: var(--focus-ring-width) solid var(--error);
+      outline-offset: var(--focus-ring-offset);
+      border-radius: var(--radius-sm);
+    }
+
+    &:disabled {
+      color: var(--text);
+      cursor: not-allowed;
+    }
+  }
+}
+
+@container (width >= 40rem) {
+  .payment-history {
+    & table {
+      display: table;
+    }
+
+    & thead {
+      display: table-header-group;
+    }
+
+    & tbody {
+      display: table-row-group;
+    }
+
+    & tr {
+      display: table-row;
+      padding: 0;
+    }
+
+    & th,
+    & td,
+    & .actions:empty {
+      display: table-cell;
+      padding: var(--space-3) var(--space-4);
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    & thead th {
+      font-size: var(--text-xs);
+      font-weight: 700;
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    & tbody tr:last-child th,
+    & tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    & td[data-label]::before {
+      content: none;
+    }
+
+    & .actions {
+      text-align: right;
+    }
+  }
+}

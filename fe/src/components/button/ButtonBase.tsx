@@ -2,7 +2,7 @@ import { forwardRef, type ComponentPropsWithoutRef } from "react";
 import { cx } from "@utils/cx";
 import { ButtonSpinner } from "./ButtonSpinner";
 
-export type ButtonVariant = "primary" | "secondary" | "ghost";
+export type ButtonVariant = "primary" | "secondary" | "ink" | "ghost";
 export type ButtonSize = "sm" | "md" | "lg";
 
 export type ButtonBaseProps = Omit<ComponentPropsWithoutRef<"button">, "disabled"> & {

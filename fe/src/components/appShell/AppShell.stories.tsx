@@ -7,7 +7,7 @@ import { AppShell } from "@components/appShell";
 
 function AppShellProviders({ children }: { children: ReactNode }) {
   const { hook } = useMemo(
-    () => memoryLocation({ path: "/dashboard" }),
+    () => memoryLocation({ path: "/today" }),
     [],
   );
 
@@ -40,7 +40,7 @@ function FakePage() {
   return (
     <div>
       <h1 style={{ margin: 0, color: "var(--text-h)", fontSize: "1.25rem" }}>
-        Dashboard
+        Oggi
       </h1>
       <p style={{ margin: "0.5rem 0 0", color: "var(--text)" }}>
         Contenuto di esempio nel guscio.

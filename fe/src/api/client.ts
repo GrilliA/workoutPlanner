@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { API_BASE } from "./config";
+import { translateApiErrorMessage } from "./knownErrorMessages";
 import { apiErrorSchema } from "./schemas";
 import { accessTokenSchema } from "./schemas/auth";
 import { authStore } from "@auth/authStore";
@@ -35,6 +36,12 @@ export class ApiError extends Error {
 
     if (err.status >= 500) {
       return "Errore del server. Riprova.";
+    }
+
+    const translated = translateApiErrorMessage(err.message);
+
+    if (translated !== null) {
+      return translated;
     }
 
     return err.message.trim() !== "" ? err.message : fallback;

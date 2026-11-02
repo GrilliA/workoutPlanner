@@ -1,8 +1,10 @@
 import { Router } from "express";
-import { and, desc, eq } from "drizzle-orm";
+import { and, count, desc, eq, ne, or } from "drizzle-orm";
 import { db } from "../db";
+import { isUniqueViolation } from "../db/errors";
 import { loggedSets, workoutSessions, workouts } from "../db/schema";
 import { requireAuth } from "../middleware/requireAuth";
+import { sessionStartRateLimit } from "../middleware/sessionStartRateLimit";
 import {
   findActiveSessionForUser,
   findExerciseInWorkout,
@@ -20,6 +22,9 @@ import {
   parseSessionHistoryPage,
 } from "../services/sessionHistoryAccess";
 import {
+  clampToSessionWindow,
+  keepInsideSession,
+  MAX_SETS_PER_SESSION,
   validateLogSetInput,
   validatePatchLoggedSetInput,
   validatePatchSessionInput,
@@ -33,15 +38,6 @@ function parseWorkoutId(params: Record<string, string | undefined>): number {
 function parseSessionId(params: Record<string, string | undefined>): number {
   return Number(params.sessionId);
 }
-
-const isUniqueViolation = (error: unknown): boolean => {
-  const databaseError = error as {
-    code?: string;
-    cause?: { code?: string };
-  };
-
-  return databaseError?.code === "23505" || databaseError?.cause?.code === "23505";
-};
 
 const sessionColumns = {
   id: workoutSessions.id,
@@ -83,6 +79,9 @@ async function loadSessionWithSets(sessionId: number, userId: number) {
 }
 
 export const workoutSessionsRouter = Router({ mergeParams: true });
+
+// Its own registration: passed with the handler, it would widen the handler's req.params type.
+workoutSessionsRouter.post("/", sessionStartRateLimit);
 
 workoutSessionsRouter.post("/", async (req, res) => {
   const user = getAuthUser(req);
@@ -261,15 +260,34 @@ sessionsRouter.patch("/:id", async (req, res) => {
     return;
   }
 
-  const session = await findSessionForUser(id, user.id);
+  const session = await loadSessionWithSets(id, user.id);
 
   if (!session) {
     res.status(404).json({ error: "Session not found" });
     return;
   }
 
+  // A close resent after a lost response finds the session already closed
+  // the same way: answer with what was saved instead of failing.
+  if (session.status === parsed.value.status) {
+    res.json(session);
+    return;
+  }
+
   if (session.status !== "in_progress") {
     res.status(409).json({ error: "Session is not in progress" });
+    return;
+  }
+
+  const completedAt = clampToSessionWindow(
+    "completedAt",
+    req.body.completedAt,
+    session.startedAt,
+    new Date(),
+  );
+
+  if (!completedAt.ok) {
+    res.status(400).json({ error: completedAt.error });
     return;
   }
 
@@ -289,29 +307,42 @@ sessionsRouter.patch("/:id", async (req, res) => {
       }
     }
 
+    // Sets logged offline keep the time on the phone, held inside the session.
+    const setsToStore = flushSets.map((set) => ({
+      sessionId: id,
+      exerciseId: set.exerciseId,
+      setNumber: set.setNumber,
+      weightKg: set.weightKg,
+      reps: set.reps,
+      rir: set.rir,
+      tutSec: set.tutSec,
+      loggedAt: keepInsideSession(
+        set.loggedAt ?? completedAt.value,
+        session.startedAt,
+        completedAt.value,
+      ),
+    }));
+
     try {
       const result = await db.transaction(async (tx) => {
+        // Same lock as the set writes: one in flight finishes first, a later one sees the close.
+        await tx
+          .select({ id: workoutSessions.id })
+          .from(workoutSessions)
+          .where(eq(workoutSessions.id, id))
+          .for("update");
+
         await tx.delete(loggedSets).where(eq(loggedSets.sessionId, id));
 
-        if (flushSets.length > 0) {
-          await tx.insert(loggedSets).values(
-            flushSets.map((set) => ({
-              sessionId: id,
-              exerciseId: set.exerciseId,
-              setNumber: set.setNumber,
-              weightKg: set.weightKg,
-              reps: set.reps,
-              rir: set.rir,
-              tutSec: set.tutSec,
-            })),
-          );
+        if (setsToStore.length > 0) {
+          await tx.insert(loggedSets).values(setsToStore);
         }
 
         const [updated] = await tx
           .update(workoutSessions)
           .set({
             status: parsed.value.status,
-            completedAt: new Date(),
+            completedAt: completedAt.value,
           })
           .where(eq(workoutSessions.id, id))
           .returning();
@@ -342,7 +373,7 @@ sessionsRouter.patch("/:id", async (req, res) => {
       .update(workoutSessions)
       .set({
         status: parsed.value.status,
-        completedAt: new Date(),
+        completedAt: completedAt.value,
       })
       .where(eq(workoutSessions.id, id))
       .returning();
@@ -403,20 +434,49 @@ sessionSetsRouter.post("/", async (req, res) => {
   }
 
   try {
-    const [created] = await db
-      .insert(loggedSets)
-      .values({
-        sessionId,
-        exerciseId: parsed.value.exerciseId,
-        setNumber: parsed.value.setNumber,
-        weightKg: parsed.value.weightKg,
-        reps: parsed.value.reps,
-        rir: parsed.value.rir,
-        tutSec: parsed.value.tutSec,
-      })
-      .returning();
+    const saved = await db.transaction(async (tx) => {
+      // Lock the session: a close or another set write waits, so status and count stay true.
+      const [locked] = await tx
+        .select({ status: workoutSessions.status })
+        .from(workoutSessions)
+        .where(eq(workoutSessions.id, sessionId))
+        .for("update");
 
-    res.status(201).json(created);
+      if (locked?.status !== "in_progress") {
+        return { ok: false as const, error: "Session is not in progress" };
+      }
+
+      const [{ loggedCount }] = await tx
+        .select({ loggedCount: count() })
+        .from(loggedSets)
+        .where(eq(loggedSets.sessionId, sessionId));
+
+      if (loggedCount >= MAX_SETS_PER_SESSION) {
+        return { ok: false as const, error: `Session already has ${MAX_SETS_PER_SESSION} sets` };
+      }
+
+      const [created] = await tx
+        .insert(loggedSets)
+        .values({
+          sessionId,
+          exerciseId: parsed.value.exerciseId,
+          setNumber: parsed.value.setNumber,
+          weightKg: parsed.value.weightKg,
+          reps: parsed.value.reps,
+          rir: parsed.value.rir,
+          tutSec: parsed.value.tutSec,
+        })
+        .returning();
+
+      return { ok: true as const, created };
+    });
+
+    if (!saved.ok) {
+      res.status(409).json({ error: saved.error });
+      return;
+    }
+
+    res.status(201).json(saved.created);
   } catch (error) {
     if (isUniqueViolation(error)) {
       res.status(409).json({
@@ -503,6 +563,155 @@ sessionSetsRouter.delete("/:setId", async (req, res) => {
   }
 
   await db.delete(loggedSets).where(eq(loggedSets.id, setId));
+
+  res.status(204).send();
+});
+
+/**
+ * Offline sync: a set is addressed by exercise + set number, so the phone can
+ * resend the same write after a lost response without creating a duplicate.
+ */
+sessionSetsRouter.put("/:exerciseId/:setNumber", async (req, res) => {
+  const user = getAuthUser(req);
+  const sessionId = parseSessionId(req.params);
+
+  if (Number.isNaN(sessionId)) {
+    res.status(400).json({ error: "Invalid session id" });
+    return;
+  }
+
+  if (!req.body || typeof req.body !== "object" || Array.isArray(req.body)) {
+    res.status(400).json({ error: "Invalid request body" });
+    return;
+  }
+
+  const parsed = validateLogSetInput({
+    ...req.body,
+    exerciseId: req.params.exerciseId,
+    setNumber: req.params.setNumber,
+  });
+
+  if (!parsed.ok) {
+    res.status(400).json({ error: parsed.error });
+    return;
+  }
+
+  const session = await findSessionForUser(sessionId, user.id);
+
+  if (!session) {
+    res.status(404).json({ error: "Session not found" });
+    return;
+  }
+
+  if (session.status !== "in_progress") {
+    res.status(409).json({ error: "Session is not in progress" });
+    return;
+  }
+
+  const exercise = await findExerciseInWorkout(
+    parsed.value.exerciseId,
+    session.workoutId,
+    session.workoutDayId,
+  );
+
+  if (!exercise) {
+    res.status(400).json({ error: "Exercise does not belong to this workout" });
+    return;
+  }
+
+  const loggedAt = clampToSessionWindow("loggedAt", req.body.loggedAt, session.startedAt, new Date());
+
+  if (!loggedAt.ok) {
+    res.status(400).json({ error: loggedAt.error });
+    return;
+  }
+
+  const { exerciseId, setNumber, ...values } = parsed.value;
+
+  const saved = await db.transaction(async (tx) => {
+    // Lock the session: a close or another set write waits, so status and count stay true.
+    const [locked] = await tx
+      .select({ status: workoutSessions.status })
+      .from(workoutSessions)
+      .where(eq(workoutSessions.id, sessionId))
+      .for("update");
+
+    if (locked?.status !== "in_progress") {
+      return { ok: false as const, error: "Session is not in progress" };
+    }
+
+    // A set already at this position is replaced, so it does not count against the cap.
+    const [{ otherCount }] = await tx
+      .select({ otherCount: count() })
+      .from(loggedSets)
+      .where(
+        and(
+          eq(loggedSets.sessionId, sessionId),
+          or(ne(loggedSets.exerciseId, exerciseId), ne(loggedSets.setNumber, setNumber)),
+        ),
+      );
+
+    if (otherCount >= MAX_SETS_PER_SESSION) {
+      return { ok: false as const, error: `Session already has ${MAX_SETS_PER_SESSION} sets` };
+    }
+
+    const [stored] = await tx
+      .insert(loggedSets)
+      .values({ sessionId, exerciseId, setNumber, ...values, loggedAt: loggedAt.value })
+      .onConflictDoUpdate({
+        target: [loggedSets.sessionId, loggedSets.exerciseId, loggedSets.setNumber],
+        set: { ...values, loggedAt: loggedAt.value },
+      })
+      .returning();
+
+    return { ok: true as const, stored };
+  });
+
+  if (!saved.ok) {
+    res.status(409).json({ error: saved.error });
+    return;
+  }
+
+  res.json(saved.stored);
+});
+
+sessionSetsRouter.delete("/:exerciseId/:setNumber", async (req, res) => {
+  const user = getAuthUser(req);
+  const sessionId = parseSessionId(req.params);
+  const exerciseId = Number(req.params.exerciseId);
+  const setNumber = Number(req.params.setNumber);
+
+  if (
+    Number.isNaN(sessionId) ||
+    !Number.isInteger(exerciseId) ||
+    !Number.isInteger(setNumber)
+  ) {
+    res.status(400).json({ error: "Invalid session, exercise or set number" });
+    return;
+  }
+
+  const session = await findSessionForUser(sessionId, user.id);
+
+  if (!session) {
+    res.status(404).json({ error: "Session not found" });
+    return;
+  }
+
+  if (session.status !== "in_progress") {
+    res.status(409).json({ error: "Session is not in progress" });
+    return;
+  }
+
+  // Already gone is fine: a retried delete must not fail.
+  await db
+    .delete(loggedSets)
+    .where(
+      and(
+        eq(loggedSets.sessionId, sessionId),
+        eq(loggedSets.exerciseId, exerciseId),
+        eq(loggedSets.setNumber, setNumber),
+      ),
+    );
 
   res.status(204).send();
 });

@@ -1,5 +1,6 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import { colors, spacing } from "../../theme";
+import { AppText } from "../text";
 
 type BackButtonProps = {
   onPress: () => void;
@@ -15,7 +16,7 @@ export function BackButton({ onPress }: BackButtonProps) {
       hitSlop={12}
       style={styles.hit}
     >
-      <Text style={styles.arrow}>‹</Text>
+      <AppText style={styles.arrow}>‹</AppText>
     </Pressable>
   );
 }
@@ -35,9 +36,9 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
   },
   arrow: {
-    color: colors.accent,
+    color: colors.accentText,
     fontSize: 36,
-    fontWeight: "300",
+    fontWeight: "400",
     lineHeight: 36,
   },
   bar: {

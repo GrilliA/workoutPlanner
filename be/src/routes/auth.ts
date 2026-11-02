@@ -1,8 +1,9 @@
-import { Router, type Request } from "express";
+import { Router, type Request, type Response } from "express";
 import { and, eq, isNull } from "drizzle-orm";
 import { db } from "../db";
 import { refreshTokens, users } from "../db/schema";
 import { authRateLimit } from "../middleware/authRateLimit";
+import { sessionRequestOriginAllowed } from "../middleware/cors";
 import { requireAuth } from "../middleware/requireAuth";
 import { signAccessToken, toAuthUser } from "../services/accessToken";
 import { hashPassword, verifyPassword } from "../services/password";
@@ -33,6 +34,16 @@ const UNAUTHORIZED = "Unauthorized";
 const isMobileClient = (req: Request): boolean =>
   req.header("X-Client")?.toLowerCase() === "mobile";
 
+/** Blocks login CSRF and cross-site refresh/logout once the cookie is SameSite=None. */
+const forbidUntrustedOrigin = (req: Request, res: Response): boolean => {
+  if (sessionRequestOriginAllowed(req.headers.origin)) {
+    return false;
+  }
+
+  res.status(403).json({ error: "Forbidden" });
+  return true;
+};
+
 const readRefreshToken = (req: Request): string | undefined => {
   const fromCookie = req.cookies[REFRESH_COOKIE_NAME] as string | undefined;
 
@@ -45,6 +56,10 @@ const readRefreshToken = (req: Request): string | undefined => {
 };
 
 authRouter.post("/register", authRateLimit, async (req, res) => {
+  if (forbidUntrustedOrigin(req, res)) {
+    return;
+  }
+
   const parsed = validateRegisterInput(req.body);
 
   if (!parsed.ok) {
@@ -82,6 +97,10 @@ authRouter.post("/register", authRateLimit, async (req, res) => {
 });
 
 authRouter.post("/login", authRateLimit, async (req, res) => {
+  if (forbidUntrustedOrigin(req, res)) {
+    return;
+  }
+
   const parsed = validateLoginInput(req.body);
 
   if (!parsed.ok) {
@@ -123,6 +142,10 @@ authRouter.post("/login", authRateLimit, async (req, res) => {
 });
 
 authRouter.post("/refresh", async (req, res) => {
+  if (forbidUntrustedOrigin(req, res)) {
+    return;
+  }
+
   const refreshToken = readRefreshToken(req);
 
   if (!refreshToken) {
@@ -175,6 +198,10 @@ authRouter.post("/refresh", async (req, res) => {
 });
 
 authRouter.post("/logout", async (req, res) => {
+  if (forbidUntrustedOrigin(req, res)) {
+    return;
+  }
+
   const refreshToken = readRefreshToken(req);
 
   if (refreshToken) {

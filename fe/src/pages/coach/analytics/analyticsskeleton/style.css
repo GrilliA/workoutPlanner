@@ -17,7 +17,7 @@
   min-height: 5.2rem;
   padding: 1rem 1.1rem;
   border: 1px solid var(--border);
-  border-radius: 0.75rem;
+  border-radius: var(--radius-xl);
   background: var(--surface);
 }
 
@@ -28,7 +28,7 @@
   margin-bottom: 1.5rem;
   padding: 1rem;
   border: 1px solid var(--border);
-  border-radius: 0.85rem;
+  border-radius: var(--radius-xl);
   background: var(--surface);
 }
 

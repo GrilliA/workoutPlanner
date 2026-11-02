@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { AthleteAnalytics } from "../../../api";
 import { buildWeeklyChartModel } from "./buildWeeklyChart";
-import { mapProgressInsight, mapProgressStats } from "./mapProgressStats";
+import { mapProgressStats } from "./mapProgressStats";
 import { formatPeriodBounds, formatSignedPercent } from "./formatters";
 
 const baseAnalytics = (): AthleteAnalytics => ({
@@ -34,19 +34,25 @@ const baseAnalytics = (): AthleteAnalytics => ({
 });
 
 describe("mapProgressStats", () => {
-  it("builds session, PR and streak KPIs", () => {
+  it("builds the hero number and the record and streak tiles", () => {
     const view = mapProgressStats(baseAnalytics());
-    assert.deepEqual(
-      view.kpis.map((kpi) => kpi.id),
-      ["sessions", "pr", "streak"],
+    assert.equal(view.hero.value, "6");
+    assert.equal(view.hero.label, "allenamenti nelle ultime 4 settimane");
+    assert.equal(
+      view.hero.volumeLine,
+      "12.0k\u00A0kg sollevati · +20% vs periodo precedente",
     );
-    assert.equal(view.kpis.find((kpi) => kpi.id === "streak")?.value, "3");
-    assert.match(view.insight, /6 sessioni/i);
-    assert.doesNotMatch(view.insight, /aderenza/i);
+    assert.deepEqual(
+      view.tiles.map((tile) => [tile.id, tile.value]),
+      [
+        ["pr", "2"],
+        ["streak", "3"],
+      ],
+    );
   });
 
-  it("returns neutral insight without sessions", () => {
-    const insight = mapProgressInsight({
+  it("has no volume line and no data without sessions", () => {
+    const view = mapProgressStats({
       ...baseAnalytics(),
       sessionsCompleted: 0,
       weeklySeries: [],
@@ -54,7 +60,14 @@ describe("mapProgressStats", () => {
       prCount: 0,
       streakDays: 0,
     });
-    assert.match(insight, /Non ci sono abbastanza sessioni/i);
+    assert.equal(view.hero.volumeLine, null);
+    assert.equal(view.hasData, false);
+    assert.equal(view.tiles[0]?.note, "Nessuno nel periodo");
+  });
+
+  it("uses the singular for one workout", () => {
+    const view = mapProgressStats({ ...baseAnalytics(), sessionsCompleted: 1 });
+    assert.equal(view.hero.label, "allenamento nelle ultime 4 settimane");
   });
 });
 
@@ -63,6 +76,10 @@ describe("buildWeeklyChartModel", () => {
     const chart = buildWeeklyChartModel(baseAnalytics());
     assert.equal(chart.bars.length, 2);
     assert.match(chart.summary, /2 sessioni in 1 settimane attive su 2/i);
+    assert.deepEqual(
+      chart.bars.map((bar) => bar.isCurrent),
+      [false, true],
+    );
   });
 
   it("marks 52-week charts as scrollable with sparse labels", () => {

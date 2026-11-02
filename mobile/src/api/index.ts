@@ -30,11 +30,7 @@ export {
   getSession,
   getSessionHistory,
   patchSession,
-  completeSession,
   abandonSession,
-  logSet,
-  patchLoggedSet,
-  deleteLoggedSet,
 } from "./sessions";
 export { getStats, getAthleteAnalytics } from "./stats";
 export {

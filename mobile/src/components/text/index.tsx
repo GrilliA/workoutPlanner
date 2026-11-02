@@ -6,4 +6,5 @@ export {
   Eyebrow,
   Meta,
   SectionLabel,
+  fontForWeight,
 } from "./AppText";

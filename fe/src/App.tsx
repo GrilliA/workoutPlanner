@@ -1,4 +1,4 @@
-import { Router, Route, Switch, useLocation } from "wouter";
+import { Redirect, Router, Route, Switch, useLocation } from "wouter";
 import { RequireAuth } from "@auth";
 import { AppShell } from "@components/appShell";
 import { ErrorBoundary } from "@components/errorBoundary";
@@ -6,11 +6,13 @@ import RootPage from "@pages/root";
 import LoginPage from "@pages/login";
 import RegisterPage from "@pages/register";
 import SettingsPage from "@pages/settings";
-import CoachDashboardPage from "@pages/coach/dashboard";
+import OffersSettingsPage from "@pages/settings/offers";
+import CoachTodayPage from "@pages/coach/today";
 import CoachAnalyticsPage from "@pages/coach/analytics";
 import CoachClientsPage from "@pages/coach/clients";
 import NewClientPage from "@pages/coach/clients/new";
 import ClientDetailPage from "@pages/coach/clients/detail";
+import ClientSubscriptionPage from "@pages/coach/clients/detail/subscription";
 import TemplatesPage from "@pages/coach/templates";
 import NewTemplatePage from "@pages/coach/templates/new";
 import EditTemplatePage from "@pages/coach/templates/edit";
@@ -19,7 +21,7 @@ import NewAssignmentPage from "@pages/coach/assignments/new";
 import EditClientProgramPage from "@pages/coach/programs/edit";
 import ViewClientProgramPage from "@pages/coach/programs/view";
 
-// Web is coach-only. Athletes use mobile/. Coach reuses workouts/new/** for builders.
+// Web is coach-only. Athletes use mobile/. Templates and client programs share pages/coach/programbuilder/.
 
 function AppRoutes() {
   const [location] = useLocation();
@@ -34,7 +36,11 @@ function AppRoutes() {
           <AppShell>
             <ErrorBoundary key={location}>
               <Switch>
-                <Route path="/dashboard" component={CoachDashboardPage} />
+                <Route path="/today" component={CoachTodayPage} />
+                {/* Old address of the home page (before R5): bookmarks land on Oggi. */}
+                <Route path="/dashboard">
+                  <Redirect to="/today" replace />
+                </Route>
                 <Route path="/analytics" component={CoachAnalyticsPage} />
                 <Route path="/clients/new" component={NewClientPage} />
                 <Route
@@ -45,6 +51,7 @@ function AppRoutes() {
                   path="/clients/:athleteId/programs/:workoutId"
                   component={ViewClientProgramPage}
                 />
+                <Route path="/clients/:id/subscription" component={ClientSubscriptionPage} />
                 <Route path="/clients/:id" component={ClientDetailPage} />
                 <Route path="/clients" component={CoachClientsPage} />
                 <Route path="/templates/new" component={NewTemplatePage} />
@@ -52,6 +59,7 @@ function AppRoutes() {
                 <Route path="/templates" component={TemplatesPage} />
                 <Route path="/assignments/new" component={NewAssignmentPage} />
                 <Route path="/assignments" component={AssignmentsPage} />
+                <Route path="/settings/offers" component={OffersSettingsPage} />
                 <Route path="/settings" component={SettingsPage} />
                 <Route path="/profile" component={SettingsPage} />
               </Switch>
@@ -63,9 +71,13 @@ function AppRoutes() {
   );
 }
 
+// Vite BASE_URL is "/" in dev and "/workoutPlanner/" for `vite build --mode pages`.
+// Wouter concatenates base + path, so the trailing slash has to come off.
+const routerBase = import.meta.env.BASE_URL.replace(/\/$/, "");
+
 function App() {
   return (
-    <Router>
+    <Router base={routerBase}>
       <AppRoutes />
     </Router>
   );

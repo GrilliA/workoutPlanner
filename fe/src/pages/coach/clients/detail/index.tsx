@@ -10,11 +10,13 @@ import {
   type CoachAssignment,
 } from "@api";
 import { Button } from "@components/button";
+import { ConfirmDialog } from "@components/confirmDialog";
 import { Input } from "@components/input";
 import { toast } from "@components/toast";
 import { PageHeader } from "@components/pageHeader";
-import { CoachCard, CoachCardList } from "../../coachCard";
+import { CoachCard, CoachCardList, CoachCardListSkeleton } from "../../coachCard";
 import { ClientAnalyticsSection } from "./analytics/clientanalytics";
+import { ClientTabs } from "./clientTabs";
 import { useClientDetail } from "./api/useClientDetail";
 import "../../style.css";
 
@@ -42,10 +44,14 @@ const formatSessionDate = (value: string) =>
     year: "numeric",
   });
 
+// Postgres `integer`: a larger id is not a client, and the API would refuse it.
+const MAX_DATABASE_ID = 2_147_483_647;
+
 export default function ClientDetailPage() {
   const [, params] = useRoute("/clients/:id");
   const athleteId = Number(params?.id);
-  const idValid = Number.isInteger(athleteId) && athleteId >= 1;
+  const idValid =
+    Number.isInteger(athleteId) && athleteId >= 1 && athleteId <= MAX_DATABASE_ID;
 
   if (!idValid) {
     return (
@@ -64,6 +70,7 @@ function ClientDetailLoaded({ athleteId }: { athleteId: number }) {
   const { detail, setDetail, loading } = useClientDetail(athleteId);
   const [drafts, setDrafts] = useState<Record<number, AssignmentDraft>>({});
   const [password, setPassword] = useState("");
+  const [assignmentToRevoke, setAssignmentToRevoke] = useState<CoachAssignment | null>(null);
 
   const client = detail?.client ?? null;
   const assignments = detail?.assignments ?? [];
@@ -158,6 +165,16 @@ function ClientDetailLoaded({ athleteId }: { athleteId: number }) {
     unlink.mutate();
   };
 
+  const revokedWorkoutName = assignmentToRevoke?.workoutName ?? "La scheda";
+  const revokeMessage = `«${revokedWorkoutName}» verrà revocata: non potrai più modificarla né cambiarne le date.`;
+
+  const confirmRevoke = () => {
+    if (assignmentToRevoke) {
+      revoke.mutate(assignmentToRevoke.id);
+    }
+    setAssignmentToRevoke(null);
+  };
+
   const updateDraft = (assignment: CoachAssignment, patch: Partial<AssignmentDraft>) => {
     setDrafts((existing) => ({
       ...existing,
@@ -184,8 +201,10 @@ function ClientDetailLoaded({ athleteId }: { athleteId: number }) {
         }
       />
 
+      <ClientTabs athleteId={athleteId} activeTab="workouts" />
+
       {loading ? (
-        <p className="coach-empty">Caricamento…</p>
+        <CoachCardListSkeleton />
       ) : null}
 
       {!loading && !client ? (
@@ -260,7 +279,7 @@ function ClientDetailLoaded({ athleteId }: { athleteId: number }) {
                           {assignment.workoutName ?? `Scheda #${assignment.workoutId}`}
                         </Link>
                       </h2>
-                      <p style={{ marginBottom: "0.75rem" }}>
+                      <p className="coach-card__status">
                         <span className={`coach-status ${assignment.status}`}>
                           {statusLabel[assignment.status]}
                         </span>
@@ -322,7 +341,7 @@ function ClientDetailLoaded({ athleteId }: { athleteId: number }) {
                           <button
                             type="button"
                             className="coach-text-action coach-text-action--danger"
-                            onClick={() => revoke.mutate(assignment.id)}
+                            onClick={() => setAssignmentToRevoke(assignment)}
                             disabled={
                               revoke.isPending && revoke.variables === assignment.id
                             }
@@ -342,7 +361,7 @@ function ClientDetailLoaded({ athleteId }: { athleteId: number }) {
 
           <section className="coach-section coach-section--spaced">
             <h2>Scollega cliente</h2>
-            <p className="coach-empty" style={{ marginBottom: "0.75rem" }}>
+            <p className="coach-empty coach-section__intro">
               Rimuove il collegamento coach-atleta e revoca le schede assegnate. L&apos;account
               atleta non viene eliminato.
             </p>
@@ -356,6 +375,15 @@ function ClientDetailLoaded({ athleteId }: { athleteId: number }) {
           </section>
         </>
       ) : null}
+
+      <ConfirmDialog
+        isOpen={assignmentToRevoke !== null}
+        title="Revocare la scheda?"
+        message={revokeMessage}
+        confirmLabel="Revoca"
+        onConfirm={confirmRevoke}
+        onCancel={() => setAssignmentToRevoke(null)}
+      />
     </div>
   );
 }

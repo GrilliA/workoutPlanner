@@ -17,13 +17,18 @@
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--text-h);
-  box-shadow: var(--shadow);
+  font-weight: 600;
+  box-shadow: var(--shadow-strong);
 }
 
 .toast--error {
-  border-color: var(--error);
+  color: var(--error);
+  background: var(--error-bg);
+  border-color: var(--error-bg);
 }
 
 .toast--success {
-  border-color: var(--accent);
+  color: var(--data);
+  background: var(--data-bg);
+  border-color: var(--data-bg);
 }

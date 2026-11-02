@@ -85,6 +85,41 @@
       "when": 1791043289805,
       "tag": "0011_lucky_leo",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792158494834,
+      "tag": "0012_set_prescription_fields",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792243200000,
+      "tag": "0013_waitlist_signups",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1792762011853,
+      "tag": "0014_pt_registro",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1792767261688,
+      "tag": "0015_pt_registro_undo",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1793093675450,
+      "tag": "0016_pt_oggi",
+      "breakpoints": true
     }
   ]
 }

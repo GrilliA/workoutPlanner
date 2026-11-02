@@ -1,0 +1,10 @@
+.page-header__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.page-header__save {
+  border-radius: var(--radius-full);
+}

@@ -1,0 +1,16 @@
+---
+// GlassTabBar dell'app: pill bianca, tab attiva = pill ink con icona + etichetta (icone da mobile/src/components/icon/Icon.tsx)
+interface Props { active: 'home' | 'schede' | 'progressi' | 'account' }
+const { active } = Astro.props;
+const tabs = [
+  { key: "home", label: "Home", svg: '<path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9.5Z" fill="currentColor"/>' },
+  { key: "schede", label: "Schede", svg: '<path d="M6.5 8.5 4 11v2l2.5 2.5M17.5 8.5 20 11v2l-2.5 2.5M9 12h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>' },
+  { key: "progressi", label: "Progressi", svg: '<path d="M5 19V9m7 10V5m7 14v-7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>' },
+  { key: "account", label: "Account", svg: '<circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M4.5 20c1.4-3.8 4-5.3 7.5-5.3s6.1 1.5 7.5 5.3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>' },
+];
+---
+<div class="tabbar">
+  {tabs.map((tab) => (
+    <span class={tab.key === active ? "on" : ""}><svg viewBox="0 0 24 24" set:html={tab.svg} />{tab.key === active && tab.label}</span>
+  ))}
+</div>

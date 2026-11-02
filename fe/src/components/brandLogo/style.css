@@ -17,12 +17,13 @@
 
 .brand-logo__word {
   font-family: var(--heading);
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: -0.03em;
   color: var(--text-h);
   white-space: nowrap;
 }
 
+/* Logotipo: l'arancio pieno è esente dal contrasto testo (WCAG 1.4.3). */
 .brand-logo__a {
   color: var(--accent);
 }
@@ -30,9 +31,7 @@
 .brand-logo__badge {
   font-size: 0.68rem;
   font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .brand-logo--sm .brand-logo__word {

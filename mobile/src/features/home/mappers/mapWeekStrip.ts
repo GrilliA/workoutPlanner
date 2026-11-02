@@ -1,39 +1,20 @@
-import type { WorkoutSchedule } from "../../../api";
-import {
-  WEEKDAY_LABELS_SHORT,
-  buildRomeWeekDateKeys,
-  getDayNumberFromDateKey,
-  toRomeDateKey,
-} from "../../../utils/romeCalendar";
-import type { WeekStripDay } from "../types";
+import { getDayNumberFromDateKey } from "../../../utils/romeCalendar";
+import type { HomeWeekEntry, WeekStripDay } from "../types";
 
-export const mapWeekStrip = (
-  schedules: WorkoutSchedule[],
-  reference = new Date(),
-): WeekStripDay[] => {
-  const todayKey = toRomeDateKey(reference);
+/** Sentence case come il resto della copy (niente MAIUSCOLO). */
+const WEEKDAY_LABELS = ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"] as const;
 
-  return schedules.map((schedule) => ({
-    dateKey: schedule.date,
-    weekdayLabel: WEEKDAY_LABELS_SHORT[schedule.weekday],
-    dayNumber: getDayNumberFromDateKey(schedule.date),
-    isToday: schedule.date === todayKey,
-    workoutDayId: schedule.workoutDay?.id ?? null,
-    workoutDayName: schedule.workoutDay?.name ?? null,
-    isRest: schedule.workoutDay === null,
+/** Settimana lun→dom di `GET /athlete/home` → chip della Home. */
+export const mapHomeWeek = (
+  week: HomeWeekEntry[],
+  todayKey: string,
+): WeekStripDay[] =>
+  week.map((entry) => ({
+    dateKey: entry.date,
+    weekdayLabel: WEEKDAY_LABELS[entry.weekday],
+    dayNumber: getDayNumberFromDateKey(entry.date),
+    isToday: entry.date === todayKey,
+    workoutDayId: entry.workoutDayId,
+    workoutDayName: entry.workoutDayName,
+    isRest: entry.workoutDayId === null,
   }));
-};
-
-export const buildRestWeekStrip = (reference = new Date()): WeekStripDay[] => {
-  const todayKey = toRomeDateKey(reference);
-
-  return buildRomeWeekDateKeys(reference).map((dateKey, weekday) => ({
-    dateKey,
-    weekdayLabel: WEEKDAY_LABELS_SHORT[weekday],
-    dayNumber: getDayNumberFromDateKey(dateKey),
-    isToday: dateKey === todayKey,
-    workoutDayId: null,
-    workoutDayName: null,
-    isRest: true,
-  }));
-};

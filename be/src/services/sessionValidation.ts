@@ -9,10 +9,16 @@ export type LogSetInput = {
   tutSec: number | null;
 };
 
+/** A set sent with the close; the route keeps loggedAt inside the session. */
+export type CloseSetInput = LogSetInput & {
+  /** When the set was logged on the phone; null when the phone did not say. */
+  loggedAt: Date | null;
+};
+
 export type PatchSessionInput = {
   status: "completed" | "abandoned";
-  /** Present only on complete: flush client-buffered sets in one write. */
-  sets?: LogSetInput[];
+  /** Present only on complete: replaces every set of the session in one write. */
+  sets?: CloseSetInput[];
 };
 
 export type PatchLoggedSetInput = {
@@ -21,6 +27,12 @@ export type PatchLoggedSetInput = {
   rir?: number | null;
   tutSec?: number | null;
 };
+
+/** Highest setNumber an athlete can log, and the most sets a coach can prescribe per exercise. */
+export const MAX_SETS_PER_EXERCISE = 30;
+
+/** Most sets one session can hold. */
+export const MAX_SETS_PER_SESSION = 200;
 
 const isSessionStatus = (value: string): value is SessionStatus =>
   (SESSION_STATUSES as readonly string[]).includes(value);
@@ -72,8 +84,11 @@ export const validateLogSetInput = (
     return { ok: false, error: "exerciseId must be a positive integer" };
   }
 
-  if (!Number.isInteger(setNumber) || setNumber < 1) {
-    return { ok: false, error: "setNumber must be a positive integer" };
+  if (!Number.isInteger(setNumber) || setNumber < 1 || setNumber > MAX_SETS_PER_EXERCISE) {
+    return {
+      ok: false,
+      error: `setNumber must be an integer between 1 and ${MAX_SETS_PER_EXERCISE}`,
+    };
   }
 
   if (!Number.isInteger(reps) || reps < 1) {
@@ -119,39 +134,80 @@ export const validateLogSetInput = (
   };
 };
 
+type Valid<T> = { ok: true; value: T };
+type Invalid = { ok: false; error: string };
+
+const validateCloseSet = (entry: unknown): Valid<CloseSetInput> | Invalid => {
+  const parsed = validateLogSetInput(entry);
+
+  if (!parsed.ok) {
+    return parsed;
+  }
+
+  // validateLogSetInput already checked that entry is an object.
+  const rawLoggedAt = (entry as { loggedAt?: unknown }).loggedAt;
+  const loggedAt = parseOptionalTime("loggedAt", rawLoggedAt);
+
+  if (!loggedAt.ok) {
+    return loggedAt;
+  }
+
+  return { ok: true, value: { ...parsed.value, loggedAt: loggedAt.value } };
+};
+
+const isSameSet = (first: LogSetInput, second: LogSetInput): boolean =>
+  first.exerciseId === second.exerciseId && first.setNumber === second.setNumber;
+
+/** A setNumber that is an integer past the cap; anything else is left to the validation. */
+const isPastSetNumberCap = (entry: unknown): boolean => {
+  const setNumber = Number((entry as { setNumber?: unknown } | null)?.setNumber);
+
+  return Number.isInteger(setNumber) && setNumber > MAX_SETS_PER_EXERCISE;
+};
+
+/**
+ * The sets of a close. The phone drops the whole session when a close is refused,
+ * so sets past the caps are left out instead of failing the close.
+ */
 const validateLogSetList = (
   value: unknown,
-):
-  | { ok: true; value: LogSetInput[] }
-  | { ok: false; error: string } => {
+): Valid<CloseSetInput[]> | Invalid => {
   if (!Array.isArray(value)) {
     return { ok: false, error: "sets must be an array" };
   }
 
-  const sets: LogSetInput[] = [];
-  const seen = new Set<string>();
+  const results = value
+    .filter((entry) => !isPastSetNumberCap(entry))
+    .map((entry) => validateCloseSet(entry));
+  const firstInvalid = results.find((result): result is Invalid => !result.ok);
 
-  for (const entry of value) {
-    const parsed = validateLogSetInput(entry);
-
-    if (!parsed.ok) {
-      return parsed;
-    }
-
-    const key = `${parsed.value.exerciseId}:${parsed.value.setNumber}`;
-
-    if (seen.has(key)) {
-      return {
-        ok: false,
-        error: "sets must not contain duplicate exerciseId and setNumber",
-      };
-    }
-
-    seen.add(key);
-    sets.push(parsed.value);
+  if (firstInvalid) {
+    return firstInvalid;
   }
 
-  return { ok: true, value: sets };
+  const sets = results
+    .filter((result): result is Valid<CloseSetInput> => result.ok)
+    .map((result) => result.value);
+  const hasDuplicate = sets.some(
+    (set, index) => sets.findIndex((other) => isSameSet(other, set)) !== index,
+  );
+
+  if (hasDuplicate) {
+    return {
+      ok: false,
+      error: "sets must not contain duplicate exerciseId and setNumber",
+    };
+  }
+
+  if (sets.length <= MAX_SETS_PER_SESSION) {
+    return { ok: true, value: sets };
+  }
+
+  // Keep the sets logged first; a set with no time from the phone is stored at the close.
+  const loggedTime = (set: CloseSetInput) => set.loggedAt?.getTime() ?? Number.MAX_SAFE_INTEGER;
+  const byLoggedTime = [...sets].sort((first, second) => loggedTime(first) - loggedTime(second));
+
+  return { ok: true, value: byLoggedTime.slice(0, MAX_SETS_PER_SESSION) };
 };
 
 export const validatePatchSessionInput = (
@@ -255,3 +311,68 @@ export const validatePatchLoggedSetInput = (
 };
 
 export const isValidSessionStatus = isSessionStatus;
+
+/** A time from the phone: missing → null, an ISO string → its date, anything else → error. */
+const parseOptionalTime = (
+  field: string,
+  value: unknown,
+):
+  | { ok: true; value: Date | null }
+  | { ok: false; error: string } => {
+  if (value === undefined || value === null) {
+    return { ok: true, value: null };
+  }
+
+  const time = typeof value === "string" ? new Date(value) : null;
+
+  if (!time || Number.isNaN(time.getTime())) {
+    return { ok: false, error: `${field} must be an ISO date-time string` };
+  }
+
+  return { ok: true, value: time };
+};
+
+/**
+ * Hold a time from the phone between the session start and its end, so a
+ * wrong phone clock cannot place it before the start or in the future.
+ */
+export const keepInsideSession = (
+  time: Date,
+  startedAt: Date,
+  end: Date,
+): Date => {
+  if (time < startedAt) {
+    return startedAt;
+  }
+
+  if (time > end) {
+    return end;
+  }
+
+  return time;
+};
+
+/**
+ * A time sent late from the phone (a set's loggedAt, a session's completedAt)
+ * is kept inside the session window. Missing → now.
+ */
+export const clampToSessionWindow = (
+  field: string,
+  value: unknown,
+  startedAt: Date,
+  now: Date,
+):
+  | { ok: true; value: Date }
+  | { ok: false; error: string } => {
+  const parsed = parseOptionalTime(field, value);
+
+  if (!parsed.ok) {
+    return parsed;
+  }
+
+  if (parsed.value === null) {
+    return { ok: true, value: now };
+  }
+
+  return { ok: true, value: keepInsideSession(parsed.value, startedAt, now) };
+};

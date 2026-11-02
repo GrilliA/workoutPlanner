@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { Animated, Easing, Pressable, StyleSheet, View } from "react-native";
-import { AppText } from "../../components";
+import { AppText, Mascot } from "../../components";
 import { colors, radii, spacing } from "../../theme";
 
 type RestTimerCardProps = {
   status: "idle" | "running" | "done";
   remainingSec: number;
+  /** Durata del recupero in corso, per la barra che si svuota. */
+  totalSec?: number;
   /** Secondi riposo consigliati (prossima serie) quando idle. */
   suggestedSec?: number;
   onSkip: () => void;
@@ -34,11 +36,13 @@ function fadeOut(
 }
 
 /**
- * Barra riposo compatta (mock): consigliato+AVVIA in idle, countdown+SALTA in running.
+ * Recupero: riga «consigliato + Avvia» da fermo;
+ * palco con mascotte, countdown e Salta mentre scorre.
  */
 export function RestTimerCard({
   status,
   remainingSec,
+  totalSec = 0,
   suggestedSec = 0,
   onSkip,
   onStartSuggested,
@@ -92,48 +96,70 @@ export function RestTimerCard({
   }
 
   const isDone = status === "done" || (status === "running" && remainingSec <= 0);
+  const showStage = status === "running" || status === "done";
   const showSkip = status === "running" && remainingSec > 0;
-
-  const label = isDone
-    ? "RECUPERO FINITO"
-    : status === "running"
-      ? `RECUPERO ${formatCountdown(remainingSec)}`
-      : `RIPOSO CONSIGLIATO: ${formatCountdown(suggestedSec)}`;
+  const ratio =
+    totalSec > 0 ? Math.max(0, Math.min(1, remainingSec / totalSec)) : 0;
 
   return (
     <Animated.View
       style={[styles.shell, { opacity: progress }]}
       pointerEvents="auto"
     >
-      <View style={[styles.bar, isDone && styles.barDone]}>
-        <AppText variant="eyebrow" tone="accent" style={styles.label} numberOfLines={1}>
-          {label}
-        </AppText>
-        {showSkip ? (
-          <Pressable
-            onPress={onSkip}
-            accessibilityRole="button"
-            style={({ pressed }) => [
-              styles.action,
-              pressed && styles.actionPressed,
-            ]}
+      {showStage ? (
+        <View style={[styles.stage, isDone && styles.stageDone]}>
+          <View style={styles.stageTop}>
+            <Mascot name="sleeping" size={72} />
+            <AppText variant="eyebrow" style={styles.eyebrow}>
+              {isDone ? "Recupero finito" : "Recupero"}
+            </AppText>
+          </View>
+          <AppText variant="title" style={styles.clock}>
+            {formatCountdown(isDone ? 0 : remainingSec)}
+          </AppText>
+          <View
+            style={styles.track}
+            accessibilityRole="progressbar"
+            accessibilityValue={{
+              min: 0,
+              max: totalSec,
+              now: isDone ? 0 : remainingSec,
+            }}
           >
-            <AppText style={styles.actionLabel}>SALTA</AppText>
-          </Pressable>
-        ) : null}
-        {showSuggested ? (
+            <View style={[styles.fill, { width: `${ratio * 100}%` }]} />
+          </View>
+          {showSkip ? (
+            <Pressable
+              onPress={onSkip}
+              accessibilityRole="button"
+              accessibilityLabel="Salta recupero"
+              style={({ pressed }) => [
+                styles.skip,
+                pressed && styles.pressed,
+              ]}
+            >
+              <AppText style={styles.skipLabel}>Salta recupero</AppText>
+            </Pressable>
+          ) : null}
+        </View>
+      ) : (
+        <View style={styles.suggestBar}>
+          <AppText variant="label" style={styles.suggestLabel} numberOfLines={1}>
+            {`Recupero consigliato: ${formatCountdown(suggestedSec)}`}
+          </AppText>
           <Pressable
             onPress={onStartSuggested}
             accessibilityRole="button"
+            accessibilityLabel="Avvia recupero consigliato"
             style={({ pressed }) => [
-              styles.action,
-              pressed && styles.actionPressed,
+              styles.suggestAction,
+              pressed && styles.pressed,
             ]}
           >
-            <AppText style={styles.actionLabel}>AVVIA</AppText>
+            <AppText style={styles.suggestActionLabel}>Avvia</AppText>
           </Pressable>
-        ) : null}
-      </View>
+        </View>
+      )}
     </Animated.View>
   );
 }
@@ -144,39 +170,91 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.sm,
   },
-  bar: {
+  stage: {
+    gap: spacing.sm,
+    alignItems: "center",
+    backgroundColor: colors.dataBg,
+    borderWidth: 1.5,
+    borderColor: colors.dataBg,
+    borderRadius: radii.xl,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.md,
+  },
+  stageDone: {
+    borderColor: colors.data,
+  },
+  stageTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.sm,
+  },
+  eyebrow: {
+    color: colors.data,
+    fontSize: 15,
+  },
+  clock: {
+    color: colors.data,
+    fontVariant: ["tabular-nums"],
+    fontSize: 64,
+    lineHeight: 72,
+    fontWeight: "800",
+    textAlign: "center",
+  },
+  track: {
+    alignSelf: "stretch",
+    height: spacing.sm,
+    borderRadius: radii.pill,
+    backgroundColor: colors.surface,
+    overflow: "hidden",
+  },
+  fill: {
+    height: "100%",
+    backgroundColor: colors.data,
+    borderRadius: radii.pill,
+  },
+  skip: {
+    alignSelf: "stretch",
+    minHeight: 52,
+    backgroundColor: colors.ink,
+    borderRadius: radii.pill,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  pressed: {
+    opacity: 0.8,
+  },
+  skipLabel: {
+    color: colors.onInk,
+    fontSize: 16,
+    fontWeight: "800",
+  },
+  suggestBar: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     gap: spacing.sm,
-    backgroundColor: colors.accentBg,
-    borderWidth: 1,
-    borderColor: colors.accentBorder,
-    borderRadius: radii.md,
-    paddingVertical: spacing.sm + 2,
+    backgroundColor: colors.dataBg,
+    borderRadius: radii.pill,
+    paddingVertical: 6,
+    paddingLeft: spacing.md,
+    paddingRight: 6,
+  },
+  suggestLabel: {
+    flex: 1,
+    color: colors.data,
+    fontWeight: "700",
+  },
+  suggestAction: {
+    minHeight: 40,
+    justifyContent: "center",
+    backgroundColor: colors.ink,
+    borderRadius: radii.pill,
     paddingHorizontal: spacing.md,
   },
-  barDone: {
-    borderColor: colors.accent,
-  },
-  label: {
-    flex: 1,
-    letterSpacing: 1,
-    fontSize: 11,
-  },
-  action: {
-    backgroundColor: colors.accent,
-    borderRadius: radii.sm,
-    paddingHorizontal: spacing.sm + 2,
-    paddingVertical: spacing.xs + 2,
-  },
-  actionPressed: {
-    opacity: 0.8,
-  },
-  actionLabel: {
-    color: colors.onAccent,
-    fontSize: 10,
+  suggestActionLabel: {
+    color: colors.onInk,
+    fontSize: 14,
     fontWeight: "800",
-    letterSpacing: 0.6,
   },
 });

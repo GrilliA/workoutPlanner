@@ -50,6 +50,7 @@ export const buildWeeklyChartModel = (analytics: AthleteAnalytics): WeeklyChartM
       label,
       value,
       showLabel: shouldShowBarLabel(index, analytics.weeklySeries.length, stride),
+      isCurrent: index === analytics.weeklySeries.length - 1,
       accessibilityLabel: `Settimana dal ${week.weekStart}: ${formatInteger(value)} sessioni`,
     };
   });

@@ -4,6 +4,8 @@ import { once } from "node:events";
 import type { Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { after, before, describe, it } from "node:test";
+import { setTimeout as delay } from "node:timers/promises";
+import { sql } from "drizzle-orm";
 import { dayBefore, todayInRome } from "../services/assignmentStatus";
 
 type JsonObject = Record<string, unknown>;
@@ -88,6 +90,33 @@ const asObject = (value: unknown): JsonObject => {
 
 const isoDate = (value: unknown): string => String(value).slice(0, 10);
 
+const deferred = () => {
+  let resolve!: () => void;
+  const promise = new Promise<void>((done) => {
+    resolve = done;
+  });
+  return { promise, resolve };
+};
+
+/** Waits until a statement matching the pattern is blocked on a lock, so the test knows the order. */
+const waitForLockWait = async (
+  database: (typeof import("../db"))["db"],
+  queryPattern: string,
+  attemptsLeft = 100,
+): Promise<void> => {
+  const result = await database.execute(
+    sql`select count(*)::int as waiting from pg_stat_activity
+        where datname = current_database() and wait_event_type = 'Lock'
+        and query ilike ${queryPattern}`,
+  );
+  if (Number(result.rows[0]?.waiting) >= 1) {
+    return;
+  }
+  assert.ok(attemptsLeft > 0, `nothing waited on a lock for ${queryPattern}`);
+  await delay(20);
+  return waitForLockWait(database, queryPattern, attemptsLeft - 1);
+};
+
 const uniqueSuffix = (): string =>
   `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
@@ -160,6 +189,7 @@ describe("paid loop smoke", { concurrency: false }, () => {
   let firstAssignment!: Assignment;
   let firstWorkout!: Workout;
   let completedSession!: Session;
+  let openSession!: Session;
 
   before(async () => {
     requireScratchDatabase();
@@ -219,6 +249,45 @@ describe("paid loop smoke", { concurrency: false }, () => {
     inviteCode = String(inviteBody.code);
   });
 
+  it("a first invite code blocked behind another uncommitted one answers with that code", async () => {
+    const [{ db }, { coachInviteCodes }] = await Promise.all([
+      import("../db"),
+      import("../db/schema"),
+    ]);
+    const registered = await api(baseUrl, "POST", "/api/auth/register", {
+      body: {
+        email: `smoke.coach.race.${suffix}@example.com`,
+        password: PASSWORD,
+        name: "Smoke Race",
+      },
+    });
+    assert.equal(registered.status, 201, failMessage(registered.status, registered.body));
+    const payload = asObject(registered.body);
+    const token = String(payload.accessToken);
+    const coachId = Number(asObject(payload.user).id);
+    const heldCode = `race-${suffix}`;
+    const inserted = deferred();
+    const released = deferred();
+
+    // Holds an uncommitted code for the coach, so the GET finds none and waits on the unique index.
+    const holder = db.transaction(async (tx) => {
+      await tx.insert(coachInviteCodes).values({ coachId, code: heldCode });
+      inserted.resolve();
+      await released.promise;
+    });
+    await inserted.promise;
+
+    const blockedRead = api(baseUrl, "GET", "/api/coach/invite-code", { token });
+    await waitForLockWait(db, '%insert into "coach_invite_codes"%');
+
+    released.resolve();
+    await holder;
+
+    const invite = await blockedRead;
+    assert.equal(invite.status, 200, failMessage(invite.status, invite.body));
+    assert.equal(asObject(invite.body).code, heldCode);
+  });
+
   it("athlete registers, redeems the code, and appears in the coach clients", async () => {
     const registered = await api(baseUrl, "POST", "/api/auth/register", {
       mobile: true,
@@ -270,7 +339,10 @@ describe("paid loop smoke", { concurrency: false }, () => {
         athleteId: athlete.user.id,
         startsAt: today,
         expiresAt: firstExpiresAt,
-        name: "Smoke A",
+        program: {
+          name: "Smoke A",
+          days: [{ name: "Giorno 1", exercises: [{ name: "Panca piana" }] }],
+        },
       },
     });
     assert.equal(
@@ -432,5 +504,212 @@ describe("paid loop smoke", { concurrency: false }, () => {
       201,
       failMessage(started.status, started.body),
     );
+    openSession = asObject(started.body) as Session;
   });
+
+  it("a set resent by key after a lost response is stored once", async () => {
+    const exerciseId = await firstExerciseId();
+    const path = `/api/sessions/${openSession.id}/sets/${exerciseId}/1`;
+
+    const first = await api(baseUrl, "PUT", path, {
+      token: athlete.accessToken,
+      mobile: true,
+      body: { reps: 8, weightKg: 60 },
+    });
+    assert.equal(first.status, 200, failMessage(first.status, first.body));
+
+    const retried = await api(baseUrl, "PUT", path, {
+      token: athlete.accessToken,
+      mobile: true,
+      body: { reps: 10, weightKg: 60 },
+    });
+    assert.equal(retried.status, 200, failMessage(retried.status, retried.body));
+
+    const sets = await loggedSetsOf(openSession.id);
+    assert.equal(sets.length, 1);
+    assert.equal(sets[0].reps, 10);
+    assert.equal(sets[0].setNumber, 1);
+  });
+
+  it("a set synced late keeps a time inside the session", async () => {
+    const exerciseId = await firstExerciseId();
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+    const saved = await api(
+      baseUrl,
+      "PUT",
+      `/api/sessions/${openSession.id}/sets/${exerciseId}/2`,
+      {
+        token: athlete.accessToken,
+        mobile: true,
+        body: { reps: 6, loggedAt: yesterday },
+      },
+    );
+    assert.equal(saved.status, 200, failMessage(saved.status, saved.body));
+
+    const session = asObject(
+      (await api(baseUrl, "GET", `/api/sessions/${openSession.id}`, {
+        token: athlete.accessToken,
+        mobile: true,
+      })).body,
+    );
+    assert.equal(
+      asObject(saved.body).loggedAt,
+      session.startedAt,
+      "a time before the start is moved to the start",
+    );
+  });
+
+  it("a set deleted by key stays deleted when the delete is resent", async () => {
+    const exerciseId = await firstExerciseId();
+    const path = `/api/sessions/${openSession.id}/sets/${exerciseId}/2`;
+
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const deleted = await api(baseUrl, "DELETE", path, {
+        token: athlete.accessToken,
+        mobile: true,
+      });
+      assert.equal(deleted.status, 204, failMessage(deleted.status, deleted.body));
+    }
+
+    const sets = await loggedSetsOf(openSession.id);
+    assert.deepEqual(
+      sets.map((set) => set.setNumber),
+      [1],
+    );
+  });
+
+  it("a set for an exercise outside the workout is rejected", async () => {
+    const rejected = await api(
+      baseUrl,
+      "PUT",
+      `/api/sessions/${openSession.id}/sets/999999/1`,
+      {
+        token: athlete.accessToken,
+        mobile: true,
+        body: { reps: 5 },
+      },
+    );
+    assert.equal(rejected.status, 400, failMessage(rejected.status, rejected.body));
+  });
+
+  it("a set sent after the session is closed is refused", async () => {
+    const exerciseId = await firstExerciseId();
+    const completed = await api(baseUrl, "PATCH", `/api/sessions/${openSession.id}`, {
+      token: athlete.accessToken,
+      mobile: true,
+      body: {
+        status: "completed",
+        completedAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      },
+    });
+    assert.equal(completed.status, 200, failMessage(completed.status, completed.body));
+    assert.ok(
+      new Date(String(asObject(completed.body).completedAt)).getTime() <= Date.now(),
+      "a close time from a phone clock ahead is moved back to now",
+    );
+
+    const late = await api(
+      baseUrl,
+      "PUT",
+      `/api/sessions/${openSession.id}/sets/${exerciseId}/3`,
+      {
+        token: athlete.accessToken,
+        mobile: true,
+        body: { reps: 5 },
+      },
+    );
+    assert.equal(late.status, 409, failMessage(late.status, late.body));
+  });
+
+  it("a close resent after a lost response returns the saved session", async () => {
+    const path = `/api/sessions/${openSession.id}`;
+    const before = await api(baseUrl, "GET", path, {
+      token: athlete.accessToken,
+      mobile: true,
+    });
+    assert.equal(before.status, 200, failMessage(before.status, before.body));
+
+    const resent = await api(baseUrl, "PATCH", path, {
+      token: athlete.accessToken,
+      mobile: true,
+      body: { status: "completed", sets: [] },
+    });
+    assert.equal(resent.status, 200, failMessage(resent.status, resent.body));
+
+    const body = asObject(resent.body);
+    const saved = asObject(before.body);
+    assert.equal(body.status, "completed");
+    assert.equal(body.completedAt, saved.completedAt, "the close time does not move");
+    assert.deepEqual(body.sets, saved.sets, "a resent close does not touch the sets");
+  });
+
+  it("a closed session cannot be closed the other way", async () => {
+    const abandoned = await api(baseUrl, "PATCH", `/api/sessions/${openSession.id}`, {
+      token: athlete.accessToken,
+      mobile: true,
+      body: { status: "abandoned" },
+    });
+    assert.equal(abandoned.status, 409, failMessage(abandoned.status, abandoned.body));
+  });
+
+  it("a session closed with its sets keeps the time each set was logged", async () => {
+    const started = await api(
+      baseUrl,
+      "POST",
+      `/api/workouts/${firstWorkout.id}/sessions`,
+      { token: athlete.accessToken, mobile: true, body: {} },
+    );
+    assert.equal(started.status, 201, failMessage(started.status, started.body));
+    const offlineSession = asObject(started.body) as Session;
+    const exerciseId = await firstExerciseId();
+    const startedAt = new Date(String(asObject(started.body).startedAt));
+    // Let a little time pass, so a time inside the session is already in the past.
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    const loggedInside = new Date(startedAt.getTime() + 20).toISOString();
+    const loggedBefore = new Date(startedAt.getTime() - 60 * 60 * 1000).toISOString();
+
+    const closed = await api(baseUrl, "PATCH", `/api/sessions/${offlineSession.id}`, {
+      token: athlete.accessToken,
+      mobile: true,
+      body: {
+        status: "completed",
+        sets: [
+          { exerciseId, setNumber: 1, reps: 8, weightKg: 60, loggedAt: loggedInside },
+          { exerciseId, setNumber: 2, reps: 8, weightKg: 60, loggedAt: loggedBefore },
+        ],
+      },
+    });
+    assert.equal(closed.status, 200, failMessage(closed.status, closed.body));
+
+    const storedTimes = (asObject(closed.body).sets as JsonObject[]).map(
+      (set) => set.loggedAt,
+    );
+    assert.deepEqual(
+      storedTimes,
+      [loggedInside, startedAt.toISOString()],
+      "a time before the start is moved to the start",
+    );
+  });
+
+  async function firstExerciseId(): Promise<number> {
+    const listed = await api(
+      baseUrl,
+      "GET",
+      `/api/workouts/${firstWorkout.id}/exercises`,
+      { token: athlete.accessToken, mobile: true },
+    );
+    assert.equal(listed.status, 200, failMessage(listed.status, listed.body));
+    assert.ok(Array.isArray(listed.body) && listed.body.length > 0);
+    return Number(asObject(listed.body[0]).id);
+  }
+
+  async function loggedSetsOf(sessionId: number): Promise<JsonObject[]> {
+    const session = await api(baseUrl, "GET", `/api/sessions/${sessionId}`, {
+      token: athlete.accessToken,
+      mobile: true,
+    });
+    assert.equal(session.status, 200, failMessage(session.status, session.body));
+    return asObject(session.body).sets as JsonObject[];
+  }
 });

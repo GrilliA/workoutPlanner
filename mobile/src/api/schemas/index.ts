@@ -53,6 +53,7 @@ export {
   logSetRequestSchema,
   patchSessionRequestSchema,
   patchLoggedSetRequestSchema,
+  setPositionSchema,
   SESSION_STATUSES,
   type LoggedSet,
   type WorkoutSession,
@@ -61,6 +62,8 @@ export {
   type LogSetInput,
   type PatchSessionInput,
   type PatchLoggedSetInput,
+  type SetPosition,
+  type SetSummary,
   sessionHistoryResponseSchema,
   type SessionHistoryResponse,
 } from "./session";

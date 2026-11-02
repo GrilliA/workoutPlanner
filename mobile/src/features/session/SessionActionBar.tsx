@@ -1,45 +1,35 @@
-import { useState } from "react";
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Meta } from "../../components";
-import { colors, radii, spacing } from "../../theme";
+import {
+  AppText,
+  TAB_BAR_HEIGHT,
+  TAB_BAR_MIN_BOTTOM_OFFSET,
+} from "../../components";
+import { colors, radii, shadows, spacing } from "../../theme";
+import { useKeyboardVisible } from "../../utils/useKeyboardVisible";
 
 type SessionActionBarProps = {
   busy?: boolean;
   onComplete: () => void;
-  onAbandon: () => void;
 };
 
-/** Barra fissa: TERMINA rosso dominante (mock); ABBANDONA dietro conferma. */
+/** Pill flottante, stesso guscio della tab bar: bianco, ombra, niente fascia a tutta larghezza. */
 export function SessionActionBar({
   busy = false,
   onComplete,
-  onAbandon,
 }: SessionActionBarProps) {
   const insets = useSafeAreaInsets();
-  const [showAbandon, setShowAbandon] = useState(false);
+  const keyboardVisible = useKeyboardVisible();
 
-  const requestAbandon = () => {
-    Alert.alert(
-      "Abbandonare la sessione?",
-      "La sessione verrà segnata come abbandonata. Le serie già registrate restano salvate.",
-      [
-        { text: "Annulla", style: "cancel" },
-        {
-          text: "Abbandona",
-          style: "destructive",
-          onPress: onAbandon,
-        },
-      ],
-    );
-  };
+  // La pill è assoluta: con la tastiera aperta coprirebbe il campo in modifica.
+  if (keyboardVisible) {
+    return null;
+  }
 
   return (
     <View
-      style={[
-        styles.bar,
-        { paddingBottom: Math.max(insets.bottom, spacing.sm) },
-      ]}
+      pointerEvents="box-none"
+      style={[styles.wrap, { bottom: Math.max(insets.bottom, TAB_BAR_MIN_BOTTOM_OFFSET) }]}
     >
       <Pressable
         onPress={onComplete}
@@ -51,66 +41,33 @@ export function SessionActionBar({
           (busy || pressed) && styles.dimmed,
         ]}
       >
-        <Text style={styles.completeLabel}>TERMINA ALLENAMENTO</Text>
+        <AppText style={styles.completeLabel}>Termina allenamento</AppText>
       </Pressable>
-
-      {showAbandon ? (
-        <Pressable
-          onPress={requestAbandon}
-          disabled={busy}
-          style={styles.abandonBtn}
-          accessibilityRole="button"
-          accessibilityLabel="Abbandona sessione"
-        >
-          <Meta style={styles.abandonLabel}>Abbandona sessione</Meta>
-        </Pressable>
-      ) : (
-        <Pressable
-          onPress={() => setShowAbandon(true)}
-          disabled={busy}
-          style={styles.moreBtn}
-          accessibilityRole="button"
-          accessibilityLabel="Altre azioni"
-        >
-          <Meta>Altre azioni</Meta>
-        </Pressable>
-      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  bar: {
-    backgroundColor: colors.bg,
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.sm,
-    gap: spacing.xs,
+  wrap: {
+    position: "absolute",
+    left: spacing.md,
+    right: spacing.md,
+    zIndex: 15,
   },
   completeBtn: {
-    backgroundColor: colors.danger,
-    borderRadius: radii.sm,
-    paddingVertical: 16,
+    height: TAB_BAR_HEIGHT,
+    backgroundColor: colors.surface,
+    borderRadius: radii.pill,
     alignItems: "center",
+    justifyContent: "center",
+    ...shadows.tabBar,
   },
   completeLabel: {
-    color: "#ffffff",
+    color: colors.textHeading,
     fontWeight: "800",
-    fontSize: 15,
-    letterSpacing: 0.4,
+    fontSize: 16,
   },
   dimmed: {
     opacity: 0.55,
-  },
-  moreBtn: {
-    alignSelf: "center",
-    paddingVertical: spacing.sm,
-  },
-  abandonBtn: {
-    alignSelf: "center",
-    paddingVertical: spacing.sm,
-  },
-  abandonLabel: {
-    color: colors.danger,
-    fontWeight: "700",
   },
 });

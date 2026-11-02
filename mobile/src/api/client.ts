@@ -28,6 +28,16 @@ const KNOWN_API_ERROR_MESSAGES: Record<string, string> = {
     "Questa scheda non ti è assegnata dal coach.",
   "No workout scheduled for today":
     "Nessun allenamento in programma per oggi.",
+  "setNumber must be an integer between 1 and 30":
+    "Puoi registrare al massimo 30 serie per esercizio.",
+  "Session already has 200 sets":
+    "Hai raggiunto il massimo di 200 serie in questa sessione.",
+  "setPrescriptions must have at most 30 sets":
+    "Un esercizio può avere al massimo 30 serie.",
+  "sets must be an integer between 1 and 30":
+    "Un esercizio può avere al massimo 30 serie.",
+  "Too many sessions started. Try again later":
+    "Hai avviato troppi allenamenti nelle ultime 24 ore. Riprova più tardi.",
 };
 
 export class ApiError extends Error {
@@ -91,6 +101,33 @@ const parseJsonBody = async (response: Response): Promise<unknown> => {
   return JSON.parse(text) as unknown;
 };
 
+/** A write on a slow network fails as a network error instead of hanging the screen. */
+const WRITE_TIMEOUT_MS = 8_000;
+
+const toNetworkError = (error: unknown): ApiError => {
+  const detail = error instanceof Error ? error.message : "network error";
+  return new ApiError(0, `Rete: ${detail}`);
+};
+
+async function fetchWithTimeout(
+  url: string,
+  init: RequestInit,
+  timeoutMs: number,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } catch (error) {
+    throw controller.signal.aborted
+      ? new ApiError(0, "Rete: timeout")
+      : toNetworkError(error);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 let refreshPromise: Promise<string | null> | null = null;
 
 const refreshAccessTokenDirect = async (): Promise<string | null> => {
@@ -100,15 +137,19 @@ const refreshAccessTokenDirect = async (): Promise<string | null> => {
     return null;
   }
 
-  const response = await fetch(`${API_BASE}/auth/refresh`, {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      "X-Client": MOBILE_CLIENT_HEADER,
+  const response = await fetchWithTimeout(
+    `${API_BASE}/auth/refresh`,
+    {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "X-Client": MOBILE_CLIENT_HEADER,
+      },
+      body: JSON.stringify({ refreshToken }),
     },
-    body: JSON.stringify({ refreshToken }),
-  });
+    WRITE_TIMEOUT_MS,
+  );
 
   if (response.status === 401) {
     authStore.clear();
@@ -186,14 +227,13 @@ async function sendRequestJson<TResponse>(
     headers.set("Authorization", `Bearer ${accessToken}`);
   }
 
-  const response = await fetch(`${API_BASE}${path}`, {
-    method,
-    headers,
-    body: encodedBody,
-  }).catch((error: unknown) => {
-    const detail = error instanceof Error ? error.message : "network error";
-    throw new ApiError(0, `Rete: ${detail}`);
-  });
+  const init: RequestInit = { method, headers, body: encodedBody };
+  const response =
+    method === "GET"
+      ? await fetch(`${API_BASE}${path}`, init).catch((error: unknown) => {
+          throw toNetworkError(error);
+        })
+      : await fetchWithTimeout(`${API_BASE}${path}`, init, WRITE_TIMEOUT_MS);
 
   if (response.status === 401 && !isRetry && !isAuthPath(path)) {
     const newToken = await refreshAccessToken();

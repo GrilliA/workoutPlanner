@@ -23,7 +23,10 @@ const errorState = (): AuthState => ({
 
 async function bootstrapSession(): Promise<AuthState> {
   try {
-    await authStore.hydrateRefreshToken();
+    await Promise.all([
+      authStore.hydrateRefreshToken(),
+      authStore.hydrateSavedUser(),
+    ]);
     const accessToken = await refreshAccessToken();
 
     if (!accessToken) {
@@ -31,11 +34,26 @@ async function bootstrapSession(): Promise<AuthState> {
     }
 
     const { user } = await authApi.getMe();
+    await authStore.setSavedUser(user);
     return authenticatedState(user);
   } catch (error) {
     if (error instanceof ApiError && error.status === 401) {
       authStore.clear();
       return anonymousState();
+    }
+
+    const savedUser = authStore.getSavedUser();
+
+    // No network at start: open with the saved user. The first request after
+    // the network returns gets 401 without an access token and the client
+    // refreshes it then.
+    if (
+      error instanceof ApiError &&
+      error.status === 0 &&
+      savedUser &&
+      authStore.getRefreshToken()
+    ) {
+      return authenticatedState(savedUser);
     }
 
     if (__DEV__) {
@@ -77,6 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (input: LoginInput) => {
     const session = await authApi.login(input);
     authStore.setAccessToken(session.accessToken);
+    void authStore.setSavedUser(session.user);
 
     if (session.refreshToken) {
       try {
@@ -93,6 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = async (input: RegisterInput) => {
     const session = await authApi.register(input);
     authStore.setAccessToken(session.accessToken);
+    void authStore.setSavedUser(session.user);
 
     if (session.refreshToken) {
       try {
@@ -116,6 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const setUser = (user: AuthUser) => {
+    void authStore.setSavedUser(user);
     setState(authenticatedState(user));
   };
 

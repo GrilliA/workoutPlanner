@@ -1,23 +1,24 @@
 import { StyleSheet, View } from "react-native";
-import { StatCard } from "../../../components";
-import { spacing } from "../../../theme";
-import type { ProgressKpi } from "../types";
+import { AppText, Meta } from "../../../components";
+import { colors, radii, shadows, spacing } from "../../../theme";
+import type { ProgressTile } from "../types";
 
 type KpiGridProps = {
-  items: ProgressKpi[];
+  items: ProgressTile[];
 };
 
+/** Tile bianche sotto la card indaco (record, serie). */
 export function KpiGrid({ items }: KpiGridProps) {
   return (
-    <View style={styles.grid} accessibilityLabel="Indicatori principali">
+    <View style={styles.grid} accessibilityLabel="Record e serie">
       {items.map((item) => (
-        <StatCard
-          key={item.id}
-          label={item.label}
-          value={item.value}
-          unit={item.unit}
-          trend={item.trend}
-        />
+        <View key={item.id} style={styles.tile}>
+          <Meta>{item.label}</Meta>
+          <AppText tone="heading" style={styles.value}>
+            {item.value}
+          </AppText>
+          <Meta>{item.note}</Meta>
+        </View>
       ))}
     </View>
   );
@@ -26,7 +27,20 @@ export function KpiGrid({ items }: KpiGridProps) {
 const styles = StyleSheet.create({
   grid: {
     flexDirection: "row",
-    flexWrap: "wrap",
     gap: spacing.sm,
+  },
+  tile: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    borderRadius: radii.lg,
+    padding: spacing.md,
+    gap: 2,
+    ...shadows.card,
+  },
+  value: {
+    fontSize: 30,
+    lineHeight: 36,
+    fontWeight: "800",
+    letterSpacing: -0.6,
   },
 });
