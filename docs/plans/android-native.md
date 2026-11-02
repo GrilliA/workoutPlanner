@@ -142,7 +142,7 @@ Regola per l'orchestratore: lanciare una PR solo quando **tutte** le sue dipende
 
 ### N1 — Scaffold progetto + CI
 
-**Obiettivo:** progetto Gradle che compila, app che si apre su una schermata placeholder con il tema scuro, CI verde.
+**Obiettivo:** progetto Gradle che compila, app che si apre su una schermata placeholder con il tema Sole, CI verde.
 
 - Progetto in `apps/android/` con Gradle wrapper, Kotlin DSL, version catalog, modulo unico `:app`.
 - Plugin: Android application, Kotlin, Compose compiler, kotlinx.serialization, Hilt (KSP), Roborazzi.
@@ -151,14 +151,14 @@ Regola per l'orchestratore: lanciare una PR solo quando **tutte** le sue dipende
   `Login`, `Register`, `Main` (contenitore tab), `Home`, `Workouts`, `Stats`, `Account`,
   `WorkoutDetail(workoutId: Long)`, `WorkoutEditor(workoutId: Long?)`, `Session(sessionId: Long)`, `SessionComplete(sessionId: Long)`.
 - `RootNavHost.kt`: grafo root `Login` / `Register` / `Main` + i dettagli fuori dalle tab `WorkoutDetail` / `WorkoutEditor` / `Session` / `SessionComplete`, ognuna con `PlaceholderScreen("<nome>")`. Start destination `Login` (la logica di gate arriva in N2).
-- `core/designsystem/Theme.kt` minimo: colori base da `mobile/src/theme/` (sfondo charcoal, accent `#bfdbf7`), schema solo scuro. Il resto in N3.
+- `core/designsystem/Theme.kt` minimo: colori base da `mobile/src/theme/` (sfondo crema, arancio solo come riempimento), schema solo chiaro. Il resto in N3.
 - `BuildConfig.API_BASE_URL` come da [Rete](#rete-in-sviluppo-e-test).
 - Job `android` in `.github/workflows/ci.yml`: JDK 17 (`actions/setup-java`, temurin) + cache Gradle, esegue `./gradlew lintDebug testDebugUnitTest assembleDebug` in `apps/android`.
 - `environment.yaml`: in `initialize` installa JDK 17 + Android command-line tools + `platforms;android-<compileSdk>` + `build-tools`, imposta `ANDROID_HOME`; in `knowledge` aggiunge i comandi Gradle a `lint` / `test`.
 - Doc: `apps/android/README.md` (setup Android Studio, emulatore, `local.properties`, comandi, glossario RN → Compose sul modello di `mobile/README.md`), `docs/guidelines/android.md` (questo contratto in forma di regole permanenti), righe in `AGENTS.md` (dev env + tabelle layout/guidelines).
 
 **Tocca anche:** `.github/workflows/ci.yml`, `environment.yaml`, `AGENTS.md`, `docs/guidelines/`.
-**Fatto quando:** CI verde con il nuovo job; l'APK debug si installa e mostra "Login" su sfondo scuro.
+**Fatto quando:** CI verde con il nuovo job; l'APK debug si installa e mostra "Login" su sfondo crema.
 
 ### N2 — Rete + auth + login
 
