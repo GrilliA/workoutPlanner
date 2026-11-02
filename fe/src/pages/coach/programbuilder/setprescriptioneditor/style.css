@@ -28,7 +28,8 @@
     align-items: center;
     gap: 0.25rem;
 
-    & input {
+    & input,
+    & select {
       width: 100%;
       min-width: 0;
       border: 1px solid var(--border);
@@ -48,14 +49,9 @@
       min-width: 0;
     }
 
-    & .select-base {
+    & select {
       width: auto;
-    }
-
-    /* Same height and radius as the row inputs. */
-    & .select-base__trigger {
-      padding: 0.55rem 0.65rem;
-      border-radius: var(--radius-md);
+      padding-inline: var(--space-1-5);
     }
   }
 

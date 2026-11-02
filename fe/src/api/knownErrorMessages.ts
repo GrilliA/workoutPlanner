@@ -1,6 +1,6 @@
 // Italian copy for the API `error` strings the coach can trigger. The contract keeps errors
 // in English; the strings come from be/src/services/subscriptionValidation.ts,
-// subscriptionAccess.ts and routes/coachsubscriptions.ts.
+// subscriptionAccess.ts, exerciseSetValidation.ts and routes/coachsubscriptions.ts.
 
 const AMOUNT_RANGE = "L'importo deve essere tra 0 e 10.000 €.";
 const PERIOD_RANGE = "La durata deve essere da 1 a 52 mesi o settimane.";
@@ -50,6 +50,7 @@ const KNOWN_API_ERROR_MESSAGES: Record<string, string> = {
   "Pause has already ended": "La pausa è già finita.",
   "No active pause": "Nessuna pausa attiva.",
   "Client not found": "Questo cliente non è più collegato a te.",
+  "setPrescriptions must have at most 30 sets": "Un esercizio può avere al massimo 30 serie.",
 };
 
 // These messages carry a field name or a list of values, so they match by pattern.

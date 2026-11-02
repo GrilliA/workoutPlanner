@@ -22,6 +22,7 @@ const OFFERS_ERROR = "Impossibile caricare il listino";
  */
 export function useClientSubscription(athleteId: number) {
   const [reloadCount, setReloadCount] = useState(0);
+  const [failedPaymentsReload, setFailedPaymentsReload] = useState<number | null>(null);
 
   const subscription = useQuery({
     queryKey: [athleteId, reloadCount],
@@ -51,6 +52,8 @@ export function useClientSubscription(athleteId: number) {
     throwOnError: false,
     keepPreviousData: true,
     onError: (error) => {
+      setFailedPaymentsReload(reloadCount);
+
       // A missing client is already shown by the subscription read.
       if (error.status === 404) {
         return;
@@ -73,6 +76,10 @@ export function useClientSubscription(athleteId: number) {
 
   const reload = () => setReloadCount((count) => count + 1);
 
+  // A failed read will not answer: the buttons stop waiting, and the API still refuses a stale undo.
+  const hasPaymentsReadFailed = failedPaymentsReload === reloadCount;
+  const hasPaymentsAnswered = payments.data?.reloadCount === reloadCount;
+
   /** Shows what a write answered right away, then reloads what it did not return. */
   const showSavedDetail = (detail: SubscriptionDetail) => {
     subscription.setData({ clientSubscription: detail, reloadCount });
@@ -85,7 +92,7 @@ export function useClientSubscription(athleteId: number) {
     isSubscriptionRefreshing: subscription.data?.reloadCount !== reloadCount,
     payments: payments.data?.payments,
     isPaymentsPending: payments.isPending,
-    isPaymentsRefreshing: payments.data?.reloadCount !== reloadCount,
+    isPaymentsRefreshing: !hasPaymentsAnswered && !hasPaymentsReadFailed,
     offers: offers.data,
     reload,
     showSavedDetail,
