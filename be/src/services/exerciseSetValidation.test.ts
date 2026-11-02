@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { validateExerciseNotes, validateSetPrescriptions } from "./exerciseSetValidation";
+import { MAX_SETS_PER_EXERCISE } from "./sessionValidation";
 
 describe("validateSetPrescriptions", () => {
   it("fills the new fields with null and the rest with the workout default", () => {
@@ -103,6 +104,17 @@ describe("validateSetPrescriptions", () => {
 
     assert.equal(duplicate.ok, false);
     assert.equal(gap.ok, false);
+  });
+
+  it("accepts up to the per-exercise cap and rejects one set more", () => {
+    const prescriptions = (count: number) =>
+      Array.from({ length: count }, (_, index) => ({ setNumber: index + 1, reps: 5 }));
+
+    assert.equal(validateSetPrescriptions(prescriptions(MAX_SETS_PER_EXERCISE), 90).ok, true);
+    assert.deepEqual(validateSetPrescriptions(prescriptions(MAX_SETS_PER_EXERCISE + 1), 90), {
+      ok: false,
+      error: `setPrescriptions must have at most ${MAX_SETS_PER_EXERCISE} sets`,
+    });
   });
 });
 

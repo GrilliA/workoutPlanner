@@ -28,6 +28,16 @@ const KNOWN_API_ERROR_MESSAGES: Record<string, string> = {
     "Questa scheda non ti è assegnata dal coach.",
   "No workout scheduled for today":
     "Nessun allenamento in programma per oggi.",
+  "setNumber must be an integer between 1 and 30":
+    "Puoi registrare al massimo 30 serie per esercizio.",
+  "Session already has 200 sets":
+    "Hai raggiunto il massimo di 200 serie in questa sessione.",
+  "setPrescriptions must have at most 30 sets":
+    "Un esercizio può avere al massimo 30 serie.",
+  "sets must be an integer between 1 and 30":
+    "Un esercizio può avere al massimo 30 serie.",
+  "Too many sessions started. Try again later":
+    "Hai avviato troppi allenamenti nelle ultime 24 ore. Riprova più tardi.",
 };
 
 export class ApiError extends Error {

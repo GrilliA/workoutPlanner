@@ -4,6 +4,7 @@ import {
   WORKOUT_TYPE_OPTIONS,
   type WorkoutSettings,
 } from "../api/schemas/workout";
+import { MAX_SETS_PER_EXERCISE } from "../api/schemas/exercise";
 import catalogPromptExercises from "./catalogPromptExercises.json" with { type: "json" };
 
 export type LoadUnit = "kg" | "percent_1rm";
@@ -327,6 +328,13 @@ export const parseSchedaTxt = (input: string): ParseSchedaResult => {
       return {
         ok: false,
         error: `L'esercizio "${currentExercise.name}" non ha serie/reps`,
+      };
+    }
+
+    if (currentExercise.setPrescriptions.length > MAX_SETS_PER_EXERCISE) {
+      return {
+        ok: false,
+        error: `L'esercizio "${currentExercise.name}" ha più di ${MAX_SETS_PER_EXERCISE} serie`,
       };
     }
 
