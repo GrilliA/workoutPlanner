@@ -1,4 +1,4 @@
-import { isWeekday, type Weekday } from "./workoutSchedule";
+import { isWeekday, parseScheduledDate, type Weekday } from "./workoutSchedule";
 
 export type CreateWorkoutDayInput = {
   name: string;
@@ -126,10 +126,9 @@ export const validateScheduleOverrideInput = (
   }
 
   const input = body as Record<string, unknown>;
-  const scheduledDate =
-    typeof input.scheduledDate === "string" ? input.scheduledDate : "";
+  const scheduledDate = parseScheduledDate(input.scheduledDate);
 
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(scheduledDate)) {
+  if (!scheduledDate) {
     return { ok: false, error: "scheduledDate must be YYYY-MM-DD" };
   }
 

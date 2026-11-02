@@ -17,6 +17,23 @@ describe("parseScheduledDate", () => {
     assert.equal(parseScheduledDate("15-07-2026"), null);
     assert.equal(parseScheduledDate(null), null);
   });
+
+  it("rejects dates that are not on the calendar", () => {
+    assert.equal(parseScheduledDate("2026-13-45"), null);
+    assert.equal(parseScheduledDate("2026-02-30"), null);
+    assert.equal(parseScheduledDate("2026-02-29"), null);
+    assert.equal(parseScheduledDate("2026-04-31"), null);
+  });
+
+  it("rejects the years 0000 to 0099", () => {
+    assert.equal(parseScheduledDate("0000-01-01"), null);
+    assert.equal(parseScheduledDate("0099-01-01"), null);
+    assert.equal(parseScheduledDate("0100-01-01"), "0100-01-01");
+  });
+
+  it("accepts a leap day", () => {
+    assert.equal(parseScheduledDate("2028-02-29"), "2028-02-29");
+  });
 });
 
 describe("getRomeWeekday", () => {

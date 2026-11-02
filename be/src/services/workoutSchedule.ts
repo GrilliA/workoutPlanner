@@ -1,3 +1,5 @@
+import { isValidIsoDate } from "./assignmentStatus";
+
 const ROME_TIME_ZONE = "Europe/Rome";
 
 export const WEEKDAY_LABELS_IT = [
@@ -45,7 +47,7 @@ export const getRomeWeekday = (date: Date): Weekday => {
 };
 
 export const parseScheduledDate = (value: unknown): string | null => {
-  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+  if (typeof value !== "string" || !isValidIsoDate(value)) {
     return null;
   }
 
