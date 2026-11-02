@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { subscriptionStateSchema } from "./subscription";
 import { workoutProgramRequestSchema } from "./workout";
 
 export const coachClientSchema = z.object({
@@ -9,7 +10,23 @@ export const coachClientSchema = z.object({
   linkedAt: z.coerce.string(),
 });
 
-export const coachClientsSchema = z.array(coachClientSchema);
+/**
+ * A row of `GET /coach/clients` (contract: docs/contracts/pt-clienti.md, R4). The detail and
+ * analytics keep `coachClientSchema`: only the list carries subscription and activity.
+ */
+const coachClientListItemSchema = coachClientSchema.extend({
+  /** null = the coach never set a subscription for this client. */
+  subscription: subscriptionStateSchema.extend({ paidThrough: z.string() }).nullable(),
+  /** Rome calendar day of the last completed session, null if none. */
+  lastSessionOn: z.string().nullable(),
+  /** Window of 14 Rome days, today included. `expectedSessions` is null without an active program. */
+  last14Days: z.object({
+    completedSessions: z.number(),
+    expectedSessions: z.number().nullable(),
+  }),
+});
+
+export const coachClientsSchema = z.array(coachClientListItemSchema);
 
 export const coachAssignmentSchema = z.object({
   id: z.number(),
@@ -151,6 +168,7 @@ export const createAssignmentRequestSchema = z.object({
 });
 
 export type CoachClient = z.infer<typeof coachClientSchema>;
+export type CoachClientListItem = z.infer<typeof coachClientListItemSchema>;
 export type CoachAssignment = z.infer<typeof coachAssignmentSchema>;
 export type CoachClientDetail = z.infer<typeof coachClientDetailSchema>;
 export type CoachInviteCode = z.infer<typeof coachInviteCodeSchema>;

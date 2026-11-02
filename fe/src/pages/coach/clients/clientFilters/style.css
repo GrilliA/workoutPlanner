@@ -1,0 +1,39 @@
+/* Chips that wrap on a phone; the pressed one is ink, as the payment method chips. */
+.client-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+
+  & .filter {
+    min-height: 2.75rem;
+    padding: 0 var(--space-4);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-full);
+    background: var(--surface);
+    color: var(--text-h);
+    font: inherit;
+    font-size: var(--text-sm);
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+      border-color var(--duration-fast),
+      background var(--duration-fast),
+      color var(--duration-fast);
+
+    &:hover {
+      border-color: var(--accent-border);
+    }
+
+    &:focus-visible {
+      outline: var(--focus-ring-width) solid var(--accent-text);
+      outline-offset: var(--focus-ring-offset);
+    }
+
+    &[aria-pressed="true"] {
+      border-color: var(--ink);
+      background: var(--ink);
+      color: var(--on-ink);
+    }
+  }
+}

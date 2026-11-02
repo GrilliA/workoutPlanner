@@ -111,6 +111,10 @@ export function HomeScreen({ offlineSessionBanner }: HomeScreenProps) {
   };
 
   const onWeekDayPress = (day: WeekStripDay) => {
+    if (day.isToday) {
+      setChosen(null);
+      return;
+    }
     const workoutId = home ? weekWorkoutId(home) : null;
     if (workoutId === null || day.workoutDayId === null) {
       return;

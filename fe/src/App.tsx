@@ -6,11 +6,13 @@ import RootPage from "@pages/root";
 import LoginPage from "@pages/login";
 import RegisterPage from "@pages/register";
 import SettingsPage from "@pages/settings";
+import OffersSettingsPage from "@pages/settings/offers";
 import CoachDashboardPage from "@pages/coach/dashboard";
 import CoachAnalyticsPage from "@pages/coach/analytics";
 import CoachClientsPage from "@pages/coach/clients";
 import NewClientPage from "@pages/coach/clients/new";
 import ClientDetailPage from "@pages/coach/clients/detail";
+import ClientSubscriptionPage from "@pages/coach/clients/detail/subscription";
 import TemplatesPage from "@pages/coach/templates";
 import NewTemplatePage from "@pages/coach/templates/new";
 import EditTemplatePage from "@pages/coach/templates/edit";
@@ -45,6 +47,7 @@ function AppRoutes() {
                   path="/clients/:athleteId/programs/:workoutId"
                   component={ViewClientProgramPage}
                 />
+                <Route path="/clients/:id/subscription" component={ClientSubscriptionPage} />
                 <Route path="/clients/:id" component={ClientDetailPage} />
                 <Route path="/clients" component={CoachClientsPage} />
                 <Route path="/templates/new" component={NewTemplatePage} />
@@ -52,6 +55,7 @@ function AppRoutes() {
                 <Route path="/templates" component={TemplatesPage} />
                 <Route path="/assignments/new" component={NewAssignmentPage} />
                 <Route path="/assignments" component={AssignmentsPage} />
+                <Route path="/settings/offers" component={OffersSettingsPage} />
                 <Route path="/settings" component={SettingsPage} />
                 <Route path="/profile" component={SettingsPage} />
               </Switch>

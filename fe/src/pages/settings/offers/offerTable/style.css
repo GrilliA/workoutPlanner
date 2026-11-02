@@ -1,0 +1,149 @@
+/* A list of cards on a phone, a table once its own box is wide enough. */
+.offer-table {
+  container-type: inline-size;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  overflow: hidden;
+
+  & table {
+    display: block;
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--text-sm);
+    text-align: left;
+  }
+
+  & thead {
+    display: none;
+  }
+
+  & tbody,
+  & tr,
+  & th,
+  & td {
+    display: block;
+  }
+
+  & tr {
+    padding: var(--space-4);
+    border-bottom: 1px solid var(--border);
+  }
+
+  & tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  & th,
+  & td {
+    padding: var(--space-1) 0;
+    color: var(--text-h);
+  }
+
+  & td[data-label]::before {
+    content: attr(data-label) ": ";
+    font-size: var(--text-xs);
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  & .name {
+    font-weight: 700;
+    overflow-wrap: anywhere;
+  }
+
+  & .number {
+    color: var(--data);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  & .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-4);
+  }
+
+  & .action {
+    min-height: 2.75rem;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--accent-text);
+    font: inherit;
+    font-size: var(--text-sm);
+    font-weight: 700;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      text-decoration: underline;
+    }
+
+    &:focus-visible {
+      outline: var(--focus-ring-width) solid var(--accent-text);
+      outline-offset: var(--focus-ring-offset);
+      border-radius: var(--radius-sm);
+    }
+
+    &:disabled {
+      color: var(--text);
+      cursor: not-allowed;
+    }
+  }
+}
+
+@container (width >= 40rem) {
+  .offer-table {
+    & table {
+      display: table;
+    }
+
+    & thead {
+      display: table-header-group;
+    }
+
+    & tbody {
+      display: table-row-group;
+    }
+
+    & tr {
+      display: table-row;
+      padding: 0;
+    }
+
+    & th,
+    & td {
+      display: table-cell;
+      padding: var(--space-3) var(--space-4);
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    & thead th {
+      font-size: var(--text-xs);
+      font-weight: 700;
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    & tbody tr:last-child th,
+    & tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    & td[data-label]::before {
+      content: none;
+    }
+
+    & .actions {
+      display: table-cell;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    & .action + .action {
+      margin-left: var(--space-4);
+    }
+  }
+}
