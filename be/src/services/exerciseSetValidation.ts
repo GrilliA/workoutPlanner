@@ -1,4 +1,5 @@
 import { LOAD_UNITS, type LoadUnit } from "../db/schema/exercisesets";
+import { MAX_SETS_PER_EXERCISE } from "./sessionValidation";
 
 export type SetPrescription = {
   setNumber: number;
@@ -144,6 +145,13 @@ export const validateSetPrescriptions = (
 
   if (value.length === 0) {
     return { ok: false, error: "At least one set is required" };
+  }
+
+  if (value.length > MAX_SETS_PER_EXERCISE) {
+    return {
+      ok: false,
+      error: `setPrescriptions must have at most ${MAX_SETS_PER_EXERCISE} sets`,
+    };
   }
 
   const results = value.map((item) => validateSetPrescription(item, defaultRestSec));

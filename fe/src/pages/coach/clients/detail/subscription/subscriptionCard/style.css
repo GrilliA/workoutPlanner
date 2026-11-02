@@ -1,0 +1,137 @@
+.subscription-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+  padding: var(--space-5);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+
+  & .head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+
+  & .title {
+    margin: 0;
+    font-size: var(--text-lg);
+    color: var(--text-h);
+  }
+
+  & .edit {
+    min-height: 2.75rem;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--accent-text);
+    font: inherit;
+    font-size: var(--text-sm);
+    font-weight: 700;
+    cursor: pointer;
+
+    &:hover {
+      text-decoration: underline;
+    }
+
+    &:focus-visible {
+      outline: var(--focus-ring-width) solid var(--accent-text);
+      outline-offset: var(--focus-ring-offset);
+      border-radius: var(--radius-sm);
+    }
+  }
+
+  & .paid-through {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-1);
+    padding: var(--space-4);
+    border-radius: var(--radius-lg);
+    background: var(--data-bg);
+  }
+
+  & .label {
+    font-size: var(--text-xs);
+    font-weight: 700;
+    color: var(--text-h);
+  }
+
+  & .date {
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1.15;
+    color: var(--data);
+  }
+
+  & .days-left {
+    font-size: var(--text-sm);
+    color: var(--text-h);
+  }
+
+  & .status {
+    margin-top: var(--space-1);
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-full);
+    font-size: var(--text-xs);
+    font-weight: 700;
+    color: var(--text);
+    background: var(--bg);
+  }
+
+  & .status--active {
+    color: var(--data);
+    background: var(--surface);
+  }
+
+  & .status--expiring {
+    color: var(--accent-text);
+    background: var(--accent-bg);
+  }
+
+  & .status--expired {
+    color: var(--error);
+    background: var(--error-bg);
+  }
+
+  & .status--paused {
+    color: var(--warning);
+    background: var(--warning-bg);
+  }
+
+  & .terms {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+    gap: var(--space-4);
+    margin: 0;
+  }
+
+  & .term {
+    min-width: 0;
+  }
+
+  & dt {
+    font-size: var(--text-xs);
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  & dd {
+    margin: var(--space-1) 0 0;
+    font-size: var(--text-sm);
+    font-weight: 700;
+    color: var(--text-h);
+    overflow-wrap: anywhere;
+  }
+
+  & .number {
+    color: var(--data);
+  }
+
+  & .secondary {
+    font-weight: 400;
+    color: var(--text);
+  }
+}

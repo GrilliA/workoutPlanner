@@ -6,6 +6,7 @@ import { Input } from "@components/input";
 import { Button } from "@components/button";
 import { toast } from "@components/toast";
 import { getAvatarInitial, getDisplayName } from "@utils/displayName";
+import { SettingsTabs } from "../settingsTabs";
 import "./style.css";
 
 export function AccountSettings() {
@@ -87,6 +88,8 @@ export function AccountSettings() {
         <p className="eyebrow">Impostazioni</p>
         <h1 className="title">Account</h1>
       </header>
+
+      <SettingsTabs activeTab="account" />
 
       <section className="profile-card" aria-labelledby="profile-title">
         <div className="avatar" aria-hidden="true">

@@ -22,7 +22,8 @@ export function WeekStrip({
   return (
     <View style={styles.row} accessibilityLabel="Settimana">
       {days.map((day) => {
-        const isInteractive = Boolean(onDayPress) && !day.isRest;
+        // Il riposo non apre un allenamento, ma oggi resta tappabile per tornarci.
+        const isInteractive = Boolean(onDayPress) && (day.isToday || !day.isRest);
         const isSelected = selectedDateKey === day.dateKey && !day.isToday;
         const cellStyle = [
           styles.day,

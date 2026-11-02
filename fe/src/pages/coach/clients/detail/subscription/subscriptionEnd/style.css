@@ -1,0 +1,38 @@
+.subscription-end {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+
+  & .title {
+    flex-basis: 100%;
+    margin: 0;
+    font-size: var(--text-sm);
+    font-weight: 700;
+    color: var(--text-h);
+  }
+
+  & .status {
+    margin: 0;
+    font-size: var(--text-sm);
+    font-weight: 700;
+    color: var(--text-h);
+  }
+
+  & .fields {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--space-3);
+    width: 100%;
+  }
+
+  & .fields > .input {
+    flex: 1 1 12rem;
+  }
+}

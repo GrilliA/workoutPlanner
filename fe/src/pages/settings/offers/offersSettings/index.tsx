@@ -1,0 +1,1 @@
+export { OffersSettings } from "./OffersSettings";

@@ -11,11 +11,16 @@ import {
 import { requireAuth } from "../middleware/requireAuth";
 import { requireRole } from "../middleware/requireRole";
 import { coachSubscriptionsRouter } from "./coachsubscriptions";
-import { validateAssignmentDates, validatePartialAssignmentDates } from "../services/assignmentStatus";
+import { coachTodayRouter } from "./coachtoday";
+import {
+  todayInRome,
+  validateAssignmentDates,
+  validatePartialAssignmentDates,
+} from "../services/assignmentStatus";
 import { validateResetPasswordInput } from "../services/clientValidation";
 import {
   getCoachAthlete,
-  listCoachAthletes,
+  listCoachClientRows,
   unlinkCoachAthlete,
 } from "../services/coachAthleteAccess";
 import {
@@ -54,6 +59,7 @@ export const coachRouter = Router();
 
 coachRouter.use(requireAuth, requireRole("coach"));
 coachRouter.use(coachSubscriptionsRouter);
+coachRouter.use(coachTodayRouter);
 
 const templateColumns = {
   id: workouts.id,
@@ -127,7 +133,7 @@ coachRouter.post("/invite-code/rotate", async (req, res) => {
 
 coachRouter.get("/clients", async (req, res) => {
   const coach = getAuthUser(req);
-  const clients = await listCoachAthletes(coach.id);
+  const clients = await listCoachClientRows(coach.id, todayInRome());
   res.json(clients);
 });
 

@@ -11,6 +11,7 @@ import {
   type SetPrescription,
 } from "./exerciseSetValidation";
 import { deriveImageUrlEnd } from "./catalogI18n";
+import { MAX_SETS_PER_EXERCISE } from "./sessionValidation";
 
 type ExerciseRow = typeof exercises.$inferSelect;
 
@@ -199,8 +200,11 @@ export const parseExerciseBody = (
   const sets = input.sets === undefined ? 3 : Number(input.sets);
   const reps = input.reps === undefined ? 10 : Number(input.reps);
 
-  if (!Number.isInteger(sets) || sets < 1) {
-    return { ok: false, error: "sets must be a positive integer" };
+  if (!Number.isInteger(sets) || sets < 1 || sets > MAX_SETS_PER_EXERCISE) {
+    return {
+      ok: false,
+      error: `sets must be an integer between 1 and ${MAX_SETS_PER_EXERCISE}`,
+    };
   }
 
   if (!Number.isInteger(reps) || reps < 1) {

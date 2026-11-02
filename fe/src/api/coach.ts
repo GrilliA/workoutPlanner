@@ -5,9 +5,9 @@ import {
   coachAssignmentsSchema,
   coachClientDetailSchema,
   coachClientsSchema,
-  coachDashboardSchema,
   coachInviteCodeSchema,
   coachTemplatesSchema,
+  coachTodaySchema,
   okResponseSchema,
   resetPasswordRequestSchema,
   updateAssignmentDatesRequestSchema,
@@ -22,8 +22,22 @@ import {
   type WorkoutProgramInput,
 } from "./schemas/workout";
 
-export const getCoachDashboard = ({ signal }: { signal?: AbortSignal } = {}) =>
-  apiRequest("/coach/dashboard", { schema: coachDashboardSchema, signal });
+export const getCoachToday = ({ signal }: { signal?: AbortSignal } = {}) =>
+  apiRequest("/coach/today", { schema: coachTodaySchema, signal });
+
+/** Hides the client's row of Oggi for 7 days; the server computes the severity it remembers. */
+export const markClientHandled = (athleteId: number) =>
+  apiRequest(`/coach/today/${athleteId}/handled`, {
+    method: "POST",
+    schema: z.undefined(),
+  });
+
+/** Undoes "Gestito": the row comes back on the next read. */
+export const unmarkClientHandled = (athleteId: number) =>
+  apiRequest(`/coach/today/${athleteId}/handled`, {
+    method: "DELETE",
+    schema: z.undefined(),
+  });
 
 export const getCoachClients = ({ signal }: { signal?: AbortSignal } = {}) =>
   apiRequest("/coach/clients", { schema: coachClientsSchema, signal });

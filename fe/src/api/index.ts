@@ -102,7 +102,9 @@ export {
 } from "./sessions";
 export { getStats } from "./stats";
 export {
-  getCoachDashboard,
+  getCoachToday,
+  markClientHandled,
+  unmarkClientHandled,
   getCoachClients,
   getCoachInviteCode,
   rotateCoachInviteCode,
@@ -121,12 +123,46 @@ export {
   updateCoachClientProgram,
 } from "./coach";
 export { getCoachAnalyticsOverview, getCoachAthleteAnalytics } from "./coachAnalytics";
+export {
+  getCoachOffers,
+  createCoachOffer,
+  updateCoachOffer,
+  getCoachClientSubscription,
+  saveCoachClientSubscription,
+  getCoachClientPaymentPreview,
+  getCoachClientPayments,
+  recordCoachClientPayment,
+  undoCoachClientPayment,
+  createCoachClientPause,
+  removeCoachClientPause,
+} from "./subscriptions";
+export type {
+  PeriodUnit,
+  PaymentMethod,
+  PaymentStart,
+  Offer,
+  Subscription,
+  SubscriptionState,
+  Pause,
+  SubscriptionDetail,
+  Payment,
+  PaymentOption,
+  PaymentPreview,
+  OfferInput,
+  OfferPatch,
+  SubscriptionInput,
+  PaymentInput,
+} from "./schemas/subscription";
 export type {
   CoachClient,
+  CoachClientListItem,
   CoachAssignment,
   CoachClientDetail,
   CoachInviteCode,
-  CoachDashboard,
+  CoachDashboardActivityItem,
+  CoachToday,
+  InboxItem,
+  ChurnRisk,
   CoachTemplate,
   CreateAssignmentInput,
   ResetPasswordInput,

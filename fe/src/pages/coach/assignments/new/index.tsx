@@ -10,6 +10,7 @@ import {
 } from "@api";
 import { Button } from "@components/button";
 import { Input } from "@components/input";
+import { Select } from "@components/select";
 import { toast } from "@components/toast";
 import { PageHeader } from "@components/pageHeader";
 import { SchedaTxtPaste } from "@pages/coach/programbuilder/schedatxt";
@@ -35,6 +36,17 @@ export default function NewAssignmentPage() {
   });
   const clients = data?.[0] ?? [];
   const templates = data?.[1] ?? [];
+  const clientOptions = clients.map((client) => ({
+    value: String(client.id),
+    label: client.name ?? client.email,
+  }));
+  const templateOptions = [
+    { value: "", label: "Da zero" },
+    ...templates.map((template) => ({
+      value: String(template.id),
+      label: template.name,
+    })),
+  ];
   const [athleteId, setAthleteId] = useState(
     presetAthleteId ? String(presetAthleteId) : "",
   );
@@ -98,39 +110,25 @@ export default function NewAssignmentPage() {
         </section>
       ) : (
       <form className="coach-form" onSubmit={(event) => void handleSubmit(event)}>
-        <label>
-          Cliente
-          <select
-            required
-            value={athleteId}
-            onChange={(event) => setAthleteId(event.target.value)}
-          >
-            <option value="">Seleziona…</option>
-            {clients.map((client) => (
-              <option key={client.id} value={client.id}>
-                {client.name ?? client.email}
-              </option>
-            ))}
-          </select>
-        </label>
+        <Select
+          id="assignment-athlete"
+          label="Cliente"
+          required
+          value={athleteId}
+          options={clientOptions}
+          onChange={setAthleteId}
+        />
 
-        <label>
-          Template (opzionale)
-          <select
-            value={templateId}
-            onChange={(event) => {
-              setTemplateId(event.target.value);
-              setParsedTxt(null);
-            }}
-          >
-            <option value="">Da zero</option>
-            {templates.map((template) => (
-              <option key={template.id} value={template.id}>
-                {template.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <Select
+          id="assignment-template"
+          label="Template (opzionale)"
+          value={templateId}
+          options={templateOptions}
+          onChange={(nextTemplateId) => {
+            setTemplateId(nextTemplateId);
+            setParsedTxt(null);
+          }}
+        />
 
         {!templateId ? (
           <>

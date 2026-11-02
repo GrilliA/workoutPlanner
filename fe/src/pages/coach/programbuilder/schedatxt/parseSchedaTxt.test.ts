@@ -71,6 +71,20 @@ Recupero default: 120
 `);
     assert.equal(result.ok, false);
   });
+
+  it("rejects an exercise with more than 30 sets", () => {
+    const sets = (count: number) => Array.from({ length: count }, () => "10").join(" ");
+    const scheda = (count: number) => `## Giorno 1: Upper
+### Panca piana
+${sets(count)}
+`;
+
+    assert.equal(parseSchedaTxt(scheda(30)).ok, true);
+    assert.deepEqual(parseSchedaTxt(scheda(31)), {
+      ok: false,
+      error: `L'esercizio "Panca piana" ha più di 30 serie`,
+    });
+  });
 });
 
 describe("parseSchedaTxt prescription fields", () => {
