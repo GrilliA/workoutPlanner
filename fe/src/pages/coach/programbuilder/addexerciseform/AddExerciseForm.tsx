@@ -18,8 +18,17 @@ export function AddExerciseForm({ defaultRestSec, onAdd }: AddExerciseFormProps)
         className="add-exercise-trigger"
         onClick={() => setIsOpen(true)}
       >
+        {/* An SVG, not a "+" glyph: the font draws the glyph off its line box centre. */}
         <span className="icon" aria-hidden="true">
-          +
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M12 5v14M5 12h14"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinecap="round"
+            />
+          </svg>
         </span>
         Aggiungi esercizio
       </button>

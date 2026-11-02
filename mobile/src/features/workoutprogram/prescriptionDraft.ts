@@ -1,4 +1,4 @@
-import type { LoadUnit } from "../../api/schemas/exercise";
+import { MAX_SETS_PER_EXERCISE, type LoadUnit } from "../../api/schemas/exercise";
 
 export const REST_SEC_OPTIONS = [60, 90, 120, 150] as const;
 
@@ -103,6 +103,10 @@ export function validatePrescriptionDrafts(
 ): string | null {
   if (drafts.length === 0) {
     return "Aggiungi almeno una serie";
+  }
+
+  if (drafts.length > MAX_SETS_PER_EXERCISE) {
+    return `Un esercizio può avere al massimo ${MAX_SETS_PER_EXERCISE} serie`;
   }
 
   for (const item of drafts) {

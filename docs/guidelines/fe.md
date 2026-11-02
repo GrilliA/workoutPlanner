@@ -73,6 +73,7 @@ export function mapRecentWorkouts(workouts: Workout[]): RecentWorkout[] {
 - **Token-only in components**: colors, spacing, radii, durations come from `src/styles/tokens.css` via `var(--…)` — no hex/`rgba()`/magic px in shared component CSS; no `var(--x, #fallback)` (tokens are always loaded)
 - Mobile-first: viewport queries only for AppShell chrome (`--bp-lg` / `64rem`)
 - Feature reflow uses `@container page` on `.page-container` plus `auto-fit` / `minmax`
+- A component inside a card can be its own container (`container-type: inline-size`), because `page` does not see the card padding (`athletestable`, `setprescriptioneditor`)
 - Do not copy `64rem` into feature styles; `var(--bp-*)` cannot be used in `@media` or `@container` conditions
 - Page width: `.page-container` / `--wide`, not copied `max-width`s
 - Page inset: AppShell `.content` (`--page-padding-*` + `--bottom-nav-offset`); do not pad `.coach-page`

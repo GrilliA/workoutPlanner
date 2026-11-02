@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { AppText, Meta, SecondaryButton } from "../../components";
 import { colors, radii, spacing } from "../../theme";
+import { MAX_SETS_PER_EXERCISE } from "../../api/schemas/exercise";
 import {
   copyPrescription,
   newPrescription,
@@ -345,7 +346,7 @@ export function SetPrescriptionEditor({
       <SecondaryButton
         label="+ Aggiungi serie"
         onPress={addSet}
-        disabled={disabled}
+        disabled={disabled || prescriptions.length >= MAX_SETS_PER_EXERCISE}
       />
     </View>
   );
