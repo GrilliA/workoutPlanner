@@ -26,7 +26,10 @@
     border-radius: var(--radius-full);
     background: var(--accent);
     color: var(--on-accent);
-    font-weight: 700;
-    line-height: 1;
+
+    & svg {
+      width: 0.75rem;
+      height: 0.75rem;
+    }
   }
 }

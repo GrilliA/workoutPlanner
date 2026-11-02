@@ -1,4 +1,4 @@
-import { EXERCISE_NOTES_MAX_LENGTH } from "@api/schemas/exercise";
+import { EXERCISE_NOTES_MAX_LENGTH, MAX_SETS_PER_EXERCISE } from "@api/schemas/exercise";
 import type { Weekday } from "@api/schemas/workoutday";
 import {
   findWeekdayConflict,
@@ -248,6 +248,10 @@ export function findExerciseInputError(input: NewExerciseInput): string | null {
 
   if (input.setPrescriptions.length === 0) {
     return "Aggiungi almeno una serie";
+  }
+
+  if (input.setPrescriptions.length > MAX_SETS_PER_EXERCISE) {
+    return `Un esercizio può avere al massimo ${MAX_SETS_PER_EXERCISE} serie`;
   }
 
   const hasInvalidSet = input.setPrescriptions.some(
