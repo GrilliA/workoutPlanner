@@ -16,12 +16,18 @@ export const generateInviteCode = (): string => {
   return code;
 };
 
-export const getOrCreateCoachInviteCode = async (coachId: number) => {
+const findCoachInviteCode = async (coachId: number) => {
   const [existing] = await db
     .select()
     .from(coachInviteCodes)
     .where(eq(coachInviteCodes.coachId, coachId))
     .limit(1);
+
+  return existing ?? null;
+};
+
+export const getOrCreateCoachInviteCode = async (coachId: number) => {
+  const existing = await findCoachInviteCode(coachId);
 
   if (existing) {
     return existing;
@@ -30,15 +36,22 @@ export const getOrCreateCoachInviteCode = async (coachId: number) => {
   for (let attempt = 0; attempt < 5; attempt += 1) {
     const code = generateInviteCode();
     try {
+      // A request for the same coach may get here first: its code stays and this insert adds nothing.
       const [created] = await db
         .insert(coachInviteCodes)
         .values({ coachId, code })
+        .onConflictDoNothing({ target: coachInviteCodes.coachId })
         .returning();
       if (created) {
         return created;
       }
+
+      const storedMeanwhile = await findCoachInviteCode(coachId);
+      if (storedMeanwhile) {
+        return storedMeanwhile;
+      }
     } catch {
-      // retry on unique collision
+      // Any failure tries again: a collision with another coach's code needs a new one.
     }
   }
 
