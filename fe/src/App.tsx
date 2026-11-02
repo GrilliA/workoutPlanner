@@ -1,4 +1,4 @@
-import { Router, Route, Switch, useLocation } from "wouter";
+import { Redirect, Router, Route, Switch, useLocation } from "wouter";
 import { RequireAuth } from "@auth";
 import { AppShell } from "@components/appShell";
 import { ErrorBoundary } from "@components/errorBoundary";
@@ -7,7 +7,7 @@ import LoginPage from "@pages/login";
 import RegisterPage from "@pages/register";
 import SettingsPage from "@pages/settings";
 import OffersSettingsPage from "@pages/settings/offers";
-import CoachDashboardPage from "@pages/coach/dashboard";
+import CoachTodayPage from "@pages/coach/today";
 import CoachAnalyticsPage from "@pages/coach/analytics";
 import CoachClientsPage from "@pages/coach/clients";
 import NewClientPage from "@pages/coach/clients/new";
@@ -36,7 +36,11 @@ function AppRoutes() {
           <AppShell>
             <ErrorBoundary key={location}>
               <Switch>
-                <Route path="/dashboard" component={CoachDashboardPage} />
+                <Route path="/today" component={CoachTodayPage} />
+                {/* Old address of the home page (before R5): bookmarks land on Oggi. */}
+                <Route path="/dashboard">
+                  <Redirect to="/today" replace />
+                </Route>
                 <Route path="/analytics" component={CoachAnalyticsPage} />
                 <Route path="/clients/new" component={NewClientPage} />
                 <Route

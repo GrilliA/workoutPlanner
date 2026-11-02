@@ -17,4 +17,5 @@ export * from "./coachoffers";
 export * from "./clientsubscriptions";
 export * from "./subscriptionpayments";
 export * from "./subscriptionpauses";
+export * from "./coachinboxhandled";
 export * from "../../waitlist/schema";

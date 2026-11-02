@@ -1,0 +1,17 @@
+/* Inbox and activity feed one under the other, side by side once the page is wide enough. */
+.today-page {
+  & .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-8);
+    align-items: start;
+  }
+}
+
+@container page (width >= 48rem) {
+  .today-page {
+    & .layout {
+      grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr);
+    }
+  }
+}

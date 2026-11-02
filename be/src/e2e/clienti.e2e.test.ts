@@ -28,8 +28,9 @@ type Fixtures = {
 const PASSWORD = "smoketest-password";
 
 // Field lists of the contract (docs/contracts/pt-clienti.md): nothing more, nothing less.
+// `risk` is R5's additive field (docs/contracts/pt-oggi.md), checked in oggi.e2e.test.ts.
 const CLIENT_KEYS = ["createdAt", "email", "id", "linkedAt", "name"];
-const ROW_KEYS = [...CLIENT_KEYS, "last14Days", "lastSessionOn", "subscription"];
+const ROW_KEYS = [...CLIENT_KEYS, "last14Days", "lastSessionOn", "risk", "subscription"];
 const SUBSCRIPTION_SUMMARY_KEYS = ["daysLeft", "paidThrough", "pausedUntil", "status"];
 const FREQUENCY_KEYS = ["completedSessions", "expectedSessions"];
 const SUBSCRIPTION_STATUSES = ["active", "expiring", "expired", "paused", "ended"];

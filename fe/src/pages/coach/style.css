@@ -204,3 +204,28 @@
   gap: 0.65rem;
   margin-top: 0.85rem;
 }
+
+/* Empty state and action row shared by the coach pages (Oggi, Clienti, Schede, Analisi). */
+.coach-dashboard__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.coach-dashboard__empty {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 1.5rem;
+
+  & h2 {
+    margin: 0 0 0.5rem;
+    color: var(--text-h);
+    font-size: 1.15rem;
+  }
+
+  & .coach-dashboard__actions {
+    margin-top: 1rem;
+  }
+}
