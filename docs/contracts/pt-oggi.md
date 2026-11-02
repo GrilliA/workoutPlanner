@@ -290,7 +290,7 @@ Condizioni:
 | Nome | Vera quando |
 | --- | --- |
 | **A — abbonamento** | `subscription !== null`, `status` ∈ {`active`, `expiring`, `expired`} e `daysLeft <= 14` (**Q5**: uno scaduto la soddisfa sempre) |
-| **B1 — frequenza** | scheda attiva (`last14Days.expectedSessions !== null`) e `completedSessions * 2 < expectedSessions` (strettamente sotto il 50%: 3 su 6 non è rischio) |
+| **B1 — frequenza** | scheda attiva (`last14Days.expectedSessions !== null`) e `completedSessions * 2 < attese` (strettamente sotto il 50%: 3 su 6 non è rischio). `attese` = `expectedSessions × settimane / 2`, dove `settimane` sono le settimane intere (massimo 2) da `max(startsAt della scheda, giorno di Roma di linkedAt)` a oggi (**C5**, 2026-11-02: nei primi 7 giorni non si attende nulla, come per B2) |
 | **B2 — inattività** | `oggi − max(lastSessionOn, giorno di Roma di linkedAt) >= 7` (**Q3**; **C4**, 2026-10-27: le sessioni fatte prima del collegamento non anticipano il rischio, un cliente collegato da meno di 7 giorni non è mai inattivo) |
 | **B — attività** | B1 **o** B2 |
 
@@ -309,13 +309,14 @@ Motivi, in quest'ordine, uno per condizione vera:
 | --- | --- | --- |
 | `subscription_expiring` | A con `daysLeft >= 0` | `Abbonamento in scadenza oggi` (0) · `Abbonamento in scadenza domani` (1) · `Abbonamento in scadenza tra N giorni` |
 | `subscription_expired` | A con `daysLeft < 0` | `Abbonamento scaduto ieri` (−1) · `Abbonamento scaduto da N giorni` |
-| `low_frequency` | B1 | `C sessioni su E negli ultimi 14 giorni` (`1 sessione su 6 …` al singolare; `0 sessioni su 6 …`) |
+| `low_frequency` | B1 | con 2 settimane: `C sessioni su E negli ultimi 14 giorni` (`1 sessione su 6 …` al singolare; `0 sessioni su 6 …`); con 1 settimana: `C sessioni su E da quando ha la scheda`. `E` è il valore `attese` |
 | `no_recent_session` | B2 | con `lastSessionOn` dal giorno del collegamento in poi: `Nessuna sessione da N giorni`; senza `lastSessionOn` o con l'ultima sessione prima del collegamento: `Nessuna sessione da quando è cliente (N giorni)` |
 
 ```ts
 export const churnRisk = (input: {                         // (N6)
   subscription: { status: SubscriptionStatus; daysLeft: number } | null;
   last14Days: TrainingFrequency;                            // da trainingFrequency (R4), riusata
+  programStartedOn: string | null;                          // startsAt della scheda attiva (C5)
   lastSessionOn: string | null;
   linkedOn: string;                                         // giorno di Roma di coach_athletes.created_at
   today: string;
@@ -324,7 +325,7 @@ export const churnRisk = (input: {                         // (N6)
 
 Riusa `FREQUENCY_WINDOW_DAYS` e `TrainingFrequency` di `clientActivity.ts`; `SubscriptionStatus` va esportato da `subscription.ts` (oggi è un tipo locale) o ridefinito nel tipo d'ingresso. La conversione `Date → giorno di Roma` resta al bordo (accesso DB).
 
-**Limite accettato** (conseguenza di D6 di R4): una scheda iniziata 3 giorni fa con 3 giorni a settimana e 1 sessione fatta dà `1 su 6` e quindi B1. Con abbonamento in scadenza il rischio è alto. La regola resta quella del piano; se diventa rumore si corregge solo il valore di `expectedSessions`, senza cambiare la forma.
+**C5, 2026-11-02** (supera il limite accettato di D6): un cliente collegato oggi con una scheda e l'abbonamento non ancora pagato risultava `high` con `0 sessioni su 6`. `last14Days.expectedSessions` resta grezzo come in R4 per la tabella Clienti; solo B1 conta le settimane intere. Le sessioni completate restano quelle della finestra di 14 giorni, anche se precedono la scheda.
 
 ### Test (`be/src/services/churnRisk.test.ts`)
 
@@ -340,6 +341,7 @@ Riusa `FREQUENCY_WINDOW_DAYS` e `TrainingFrequency` di `clientActivity.ts`; `Sub
 10. Mai allenato, collegato 6 giorni fa → `null`; 7 giorni fa → `medium`, "da quando è cliente (7 giorni)".
 11. B1 e B2 senza A → `medium` con due motivi nell'ordine `low_frequency`, `no_recent_session`.
 12. Messaggi: `daysLeft` 0 "oggi", 1 "domani"; "1 sessione su 6".
+13. Settimane intere (**C5**): collegato oggi con scheda e abbonamento non pagato → `medium` senza `low_frequency`; 6 giorni → nessuna attesa; 7 giorni → "0 sessioni su 3 da quando ha la scheda"; 14 giorni → "0 sessioni su 6 negli ultimi 14 giorni"; scheda precedente al collegamento → conta dal collegamento.
 
 ## Inbox (`be/src/services/coachToday.ts`)
 

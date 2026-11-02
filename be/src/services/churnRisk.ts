@@ -3,6 +3,8 @@ import { daysBetween, type SubscriptionStatus } from "./subscription";
 
 const RISK_EXPIRY_WINDOW_DAYS = 14;
 const INACTIVE_AFTER_DAYS = 7;
+const DAYS_PER_WEEK = 7;
+const WINDOW_WEEKS = FREQUENCY_WINDOW_DAYS / DAYS_PER_WEEK;
 
 /** A paused subscription has no risk at all, and an ended one does not expire: it is closed. */
 export const STATUSES_WITH_DUE_DATE: SubscriptionStatus[] = ["active", "expiring", "expired"];
@@ -76,20 +78,56 @@ const subscriptionReason = (
   return { kind, message: subscriptionMessage(subscription.daysLeft) };
 };
 
+/**
+ * Whole weeks of the window with both the program and the link in place. A client has the same
+ * 7 days as for the days without a session: on the first day of a program nobody is behind.
+ */
+const wholeWeeksOfProgram = (input: {
+  programStartedOn: string;
+  linkedOn: string;
+  today: string;
+}): number => {
+  const followedSince =
+    input.programStartedOn > input.linkedOn ? input.programStartedOn : input.linkedOn;
+  const wholeWeeks = Math.floor(daysBetween(followedSince, input.today) / DAYS_PER_WEEK);
+
+  return Math.min(wholeWeeks, WINDOW_WEEKS);
+};
+
 // Without an active program nothing is expected, so only the days without a session count.
-const lowFrequencyReason = (last14Days: TrainingFrequency): ChurnRiskReason | null => {
-  const { completedSessions, expectedSessions } = last14Days;
+const lowFrequencyReason = (input: {
+  last14Days: TrainingFrequency;
+  programStartedOn: string | null;
+  linkedOn: string;
+  today: string;
+}): ChurnRiskReason | null => {
+  const { completedSessions, expectedSessions } = input.last14Days;
+
+  if (expectedSessions === null || input.programStartedOn === null) {
+    return null;
+  }
+
+  const wholeWeeks = wholeWeeksOfProgram({
+    programStartedOn: input.programStartedOn,
+    linkedOn: input.linkedOn,
+    today: input.today,
+  });
+  const expectedSoFar = (expectedSessions * wholeWeeks) / WINDOW_WEEKS;
 
   // Strictly under half: 3 out of 6 is not a risk.
-  if (expectedSessions === null || completedSessions * 2 >= expectedSessions) {
+  if (completedSessions * 2 >= expectedSoFar) {
     return null;
   }
 
   const sessionWord = completedSessions === 1 ? "sessione" : "sessioni";
+  const period =
+    wholeWeeks === WINDOW_WEEKS
+      ? `negli ultimi ${FREQUENCY_WINDOW_DAYS} giorni`
+      : "da quando ha la scheda";
 
   return {
     kind: "low_frequency",
-    message: `${completedSessions} ${sessionWord} su ${expectedSessions} negli ultimi ${FREQUENCY_WINDOW_DAYS} giorni`,
+    message: `${completedSessions} ${sessionWord} su ${expectedSoFar} ${period}`,
   };
 };
 
@@ -127,6 +165,8 @@ const isReason = (reason: ChurnRiskReason | null): reason is ChurnRiskReason => 
 export const churnRisk = (input: {
   subscription: { status: SubscriptionStatus; daysLeft: number } | null;
   last14Days: TrainingFrequency;
+  /** Start of the active program, null without one. */
+  programStartedOn: string | null;
   lastSessionOn: string | null;
   linkedOn: string;
   today: string;
@@ -136,9 +176,7 @@ export const churnRisk = (input: {
   }
 
   const dueReason = subscriptionReason(input.subscription);
-  const activityReasons = [lowFrequencyReason(input.last14Days), noRecentSessionReason(input)].filter(
-    isReason,
-  );
+  const activityReasons = [lowFrequencyReason(input), noRecentSessionReason(input)].filter(isReason);
   const isSubscriptionDue = dueReason !== null;
   const isActivityLow = activityReasons.length > 0;
 

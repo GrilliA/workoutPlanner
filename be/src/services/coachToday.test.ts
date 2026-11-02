@@ -20,6 +20,7 @@ const quietClient = {
   subscription: activeSubscription,
   lastSessionOn: "2026-10-26",
   last14Days: { completedSessions: 6, expectedSessions: 6 },
+  programStartedOn: "2026-01-10",
   programExpiresOn: null,
   personalRecordExercises: [],
   today,

@@ -103,6 +103,7 @@ export const inboxItem = (input: {
   subscription: ClientSubscriptionSummary | null;
   lastSessionOn: string | null;
   last14Days: TrainingFrequency;
+  programStartedOn: string | null;
   programExpiresOn: string | null;
   personalRecordExercises: string[];
   today: string;
@@ -114,6 +115,7 @@ export const inboxItem = (input: {
   const risk = churnRisk({
     subscription: input.subscription,
     last14Days: input.last14Days,
+    programStartedOn: input.programStartedOn,
     lastSessionOn: input.lastSessionOn,
     linkedOn: input.client.linkedOn,
     today: input.today,

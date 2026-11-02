@@ -503,6 +503,7 @@ describe("PT Today inbox smoke (R5)", { concurrency: false }, () => {
 
     // Expiring in 3 days and 2 sessions out of 6: high.
     const high = await newClient("high", coachSetup, "Bianca Alta");
+    await setLinkedOn(coach, high, addDays(today, -30));
     await createSubscription(coachSetup, high, {
       startedOn: addDays(today, -40),
       paidThrough: addDays(today, 3),
@@ -750,10 +751,29 @@ describe("PT Today inbox smoke (R5)", { concurrency: false }, () => {
     assert.deepEqual((await readToday(otherCoach.coach)).items, []);
   });
 
+  it("a client linked today with a new program is not behind: the table keeps the raw numbers", async () => {
+    const coachSetup = await newCoach("coach-new-program");
+    const { coach } = coachSetup;
+    const client = await unpaidClient("new-program", coachSetup);
+    await assign(coachSetup, client, {
+      startsAt: today,
+      expiresAt: addDays(today, 30),
+      program: programWithDays("Tre giorni", 3),
+    });
+
+    const row = (await listClients(coach)).find((candidate) => candidate.id === client.id);
+    const reasonKinds = asList(asObject(row?.risk).reasons).map((reason) => reason.kind);
+
+    assert.deepEqual(row?.last14Days, { completedSessions: 1, expectedSessions: 6 });
+    assert.equal(reasonKinds.includes("low_frequency"), false);
+    assert.equal(itemOf(await itemsOf(coach), client)?.severity, "medium");
+  });
+
   it("handled: hides the row, a worse row comes back, marking again hides it, DELETE restores it", async () => {
     const coachSetup = await newCoach("coach-handled");
     const { coach } = coachSetup;
     const client = await unpaidClient("handled", coachSetup);
+    await setLinkedOn(coach, client, addDays(today, -30));
     const other = await unpaidClient("handled-other", coachSetup);
 
     assert.equal(itemOf(await itemsOf(coach), client)?.severity, "medium");

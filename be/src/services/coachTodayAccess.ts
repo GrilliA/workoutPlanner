@@ -115,7 +115,7 @@ const loadInboxEntries = async (coachId: number, today: string) => {
     athleteSets.push(set);
   }
 
-  const entries = snapshots.flatMap(({ row, programExpiresOn }) => {
+  const entries = snapshots.flatMap(({ row, programStartedOn, programExpiresOn }) => {
     const linkedOn = toRomeDateKey(row.linkedAt);
     const personalRecordExercises = recentPersonalRecords({
       sets: recordSetsByAthlete.get(row.id) ?? [],
@@ -126,6 +126,7 @@ const loadInboxEntries = async (coachId: number, today: string) => {
       subscription: row.subscription,
       lastSessionOn: row.lastSessionOn,
       last14Days: row.last14Days,
+      programStartedOn,
       programExpiresOn,
       personalRecordExercises,
       today,

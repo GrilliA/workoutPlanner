@@ -143,13 +143,14 @@ const listRecentCompletedSessions = (coachId: number, today: string) => {
 /**
  * Active by its dates, as `computeAssignmentStatus` decides: the stored status changes only
  * on a sync, and this read must not write. Highest id first, as `getActiveAssignmentForAthlete`.
- * `expiresAt` is for Today; grouping by the primary key allows it.
+ * `startsAt` is for the risk and `expiresAt` for Today; grouping by the primary key allows them.
  */
 const listActiveAssignmentDayCounts = (coachId: number, today: string) =>
   db
     .select({
       athleteId: programAssignments.athleteId,
       workoutDayCount: count(workoutDays.id),
+      startsAt: programAssignments.startsAt,
       expiresAt: programAssignments.expiresAt,
     })
     .from(programAssignments)
@@ -233,6 +234,7 @@ export const loadCoachClientSnapshots = async (coachId: number, today: string) =
           today,
         }),
       },
+      programStartedOn: activeAssignment?.startsAt ?? null,
       programExpiresOn: activeAssignment?.expiresAt ?? null,
     };
   });
@@ -242,11 +244,12 @@ export const loadCoachClientSnapshots = async (coachId: number, today: string) =
 export const listCoachClientRows = async (coachId: number, today: string) => {
   const snapshots = await loadCoachClientSnapshots(coachId, today);
 
-  return snapshots.map(({ row }) => ({
+  return snapshots.map(({ row, programStartedOn }) => ({
     ...row,
     risk: churnRisk({
       subscription: row.subscription,
       last14Days: row.last14Days,
+      programStartedOn,
       lastSessionOn: row.lastSessionOn,
       linkedOn: toRomeDateKey(row.linkedAt),
       today,

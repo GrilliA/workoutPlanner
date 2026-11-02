@@ -7,6 +7,7 @@ const today = "2026-10-27";
 // Expected dates are written by hand, not with the code under test.
 const regularActivity = {
   last14Days: { completedSessions: 6, expectedSessions: 6 },
+  programStartedOn: "2026-01-10",
   lastSessionOn: "2026-10-26",
   linkedOn: "2026-01-10",
   today,
@@ -22,6 +23,7 @@ describe("churnRisk", () => {
     const risk = churnRisk({
       subscription: withSubscription("paused", -3),
       last14Days: { completedSessions: 0, expectedSessions: 6 },
+      programStartedOn: "2026-01-10",
       lastSessionOn: "2026-10-01",
       linkedOn: "2026-01-10",
       today,
@@ -161,6 +163,7 @@ describe("churnRisk", () => {
     const linkedSixDaysAgo = churnRisk({
       subscription: null,
       last14Days: { completedSessions: 0, expectedSessions: null },
+      programStartedOn: null,
       lastSessionOn: null,
       linkedOn: "2026-10-21",
       today,
@@ -168,6 +171,7 @@ describe("churnRisk", () => {
     const linkedSevenDaysAgo = churnRisk({
       subscription: null,
       last14Days: { completedSessions: 0, expectedSessions: null },
+      programStartedOn: null,
       lastSessionOn: null,
       linkedOn: "2026-10-20",
       today,
@@ -186,6 +190,7 @@ describe("churnRisk", () => {
     const withoutSubscription = {
       subscription: null,
       last14Days: { completedSessions: 0, expectedSessions: null },
+      programStartedOn: null,
       lastSessionOn: "2026-09-01",
       today,
     };
@@ -249,6 +254,89 @@ describe("churnRisk", () => {
     assert.deepEqual(noSession?.reasons, [
       { kind: "low_frequency", message: "0 sessioni su 6 negli ultimi 14 giorni" },
     ]);
+  });
+
+  describe("13. the sessions expected only count the whole weeks of the program", () => {
+    const newProgram = {
+      subscription: null,
+      last14Days: { completedSessions: 0, expectedSessions: 6 },
+      lastSessionOn: null,
+      linkedOn: "2026-01-10",
+      today,
+    };
+
+    it("a client linked today with a program and an unpaid subscription is not behind", () => {
+      const risk = churnRisk({
+        ...newProgram,
+        subscription: withSubscription("expiring", 0),
+        programStartedOn: today,
+        linkedOn: today,
+      });
+
+      assert.deepEqual(risk, {
+        level: "medium",
+        reasons: [{ kind: "subscription_expiring", message: "Abbonamento in scadenza oggi" }],
+      });
+    });
+
+    it("nothing is expected for 6 days; after 7 the first week counts", () => {
+      const sixDays = churnRisk({
+        ...newProgram,
+        lastSessionOn: "2026-10-26",
+        programStartedOn: "2026-10-21",
+      });
+      const sevenDays = churnRisk({
+        ...newProgram,
+        lastSessionOn: "2026-10-26",
+        programStartedOn: "2026-10-20",
+      });
+
+      assert.equal(sixDays, null);
+      assert.deepEqual(sevenDays?.reasons, [
+        { kind: "low_frequency", message: "0 sessioni su 3 da quando ha la scheda" },
+      ]);
+    });
+
+    it("half of the first week is not a risk", () => {
+      const twoOfThree = churnRisk({
+        ...newProgram,
+        last14Days: { completedSessions: 2, expectedSessions: 6 },
+        lastSessionOn: "2026-10-26",
+        programStartedOn: "2026-10-20",
+      });
+
+      assert.equal(twoOfThree, null);
+    });
+
+    it("from 14 days on it is the whole window", () => {
+      const thirteenDays = churnRisk({
+        ...newProgram,
+        lastSessionOn: "2026-10-26",
+        programStartedOn: "2026-10-14",
+      });
+      const fourteenDays = churnRisk({
+        ...newProgram,
+        lastSessionOn: "2026-10-26",
+        programStartedOn: "2026-10-13",
+      });
+
+      assert.deepEqual(thirteenDays?.reasons, [
+        { kind: "low_frequency", message: "0 sessioni su 3 da quando ha la scheda" },
+      ]);
+      assert.deepEqual(fourteenDays?.reasons, [
+        { kind: "low_frequency", message: "0 sessioni su 6 negli ultimi 14 giorni" },
+      ]);
+    });
+
+    it("a program dated before the link counts from the link", () => {
+      const risk = churnRisk({
+        ...newProgram,
+        programStartedOn: "2026-09-01",
+        linkedOn: "2026-10-25",
+      });
+
+      assert.equal(risk, null);
+    });
   });
 });
 
