@@ -16,7 +16,7 @@ export const generateInviteCode = (): string => {
   return code;
 };
 
-const findCoachInviteCode = async (coachId: number) => {
+const findInviteCodeOfCoach = async (coachId: number) => {
   const [existing] = await db
     .select()
     .from(coachInviteCodes)
@@ -27,7 +27,7 @@ const findCoachInviteCode = async (coachId: number) => {
 };
 
 export const getOrCreateCoachInviteCode = async (coachId: number) => {
-  const existing = await findCoachInviteCode(coachId);
+  const existing = await findInviteCodeOfCoach(coachId);
 
   if (existing) {
     return existing;
@@ -46,7 +46,7 @@ export const getOrCreateCoachInviteCode = async (coachId: number) => {
         return created;
       }
 
-      const storedMeanwhile = await findCoachInviteCode(coachId);
+      const storedMeanwhile = await findInviteCodeOfCoach(coachId);
       if (storedMeanwhile) {
         return storedMeanwhile;
       }

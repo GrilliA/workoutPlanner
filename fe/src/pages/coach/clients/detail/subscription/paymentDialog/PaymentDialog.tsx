@@ -249,6 +249,7 @@ export function PaymentDialog({
           <span id={periodsLabelId} className="field-label">
             {paymentPeriodsLabel(subscription)}
           </span>
+          {/* SVGs, not "+" and "−" glyphs: the font draws the glyphs off their line box centre. */}
           <div className="stepper" role="group" aria-labelledby={periodsLabelId}>
             <button
               type="button"
@@ -257,7 +258,15 @@ export function PaymentDialog({
               disabled={draft.periods <= MIN_PAYMENT_PERIODS}
               onClick={() => changePeriods(draft.periods - 1)}
             >
-              −
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M5 12h14"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                />
+              </svg>
             </button>
             <output className="count" aria-live="polite">
               {draft.periods}
@@ -269,7 +278,15 @@ export function PaymentDialog({
               disabled={draft.periods >= MAX_PAYMENT_PERIODS}
               onClick={() => changePeriods(draft.periods + 1)}
             >
-              +
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M12 5v14M5 12h14"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                />
+              </svg>
             </button>
           </div>
         </div>

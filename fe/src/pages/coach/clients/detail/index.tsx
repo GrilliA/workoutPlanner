@@ -14,6 +14,7 @@ import { ConfirmDialog } from "@components/confirmDialog";
 import { Input } from "@components/input";
 import { toast } from "@components/toast";
 import { PageHeader } from "@components/pageHeader";
+import { isDatabaseId } from "@utils/databaseId";
 import { CoachCard, CoachCardList, CoachCardListSkeleton } from "../../coachCard";
 import { ClientAnalyticsSection } from "./analytics/clientanalytics";
 import { ClientTabs } from "./clientTabs";
@@ -44,16 +45,11 @@ const formatSessionDate = (value: string) =>
     year: "numeric",
   });
 
-// Postgres `integer`: a larger id is not a client, and the API would refuse it.
-const MAX_DATABASE_ID = 2_147_483_647;
-
 export default function ClientDetailPage() {
   const [, params] = useRoute("/clients/:id");
   const athleteId = Number(params?.id);
-  const idValid =
-    Number.isInteger(athleteId) && athleteId >= 1 && athleteId <= MAX_DATABASE_ID;
 
-  if (!idValid) {
+  if (!isDatabaseId(athleteId)) {
     return (
       <div className="coach-page page-container page-container--wide">
         <PageHeader title="Cliente" />
