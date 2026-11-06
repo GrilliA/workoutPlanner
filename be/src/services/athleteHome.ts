@@ -1,7 +1,10 @@
 import { and, desc, eq, gte, inArray, isNotNull } from "drizzle-orm";
 import { db } from "../db";
 import { loggedSets, workoutDays, workoutSessions, workouts } from "../db/schema";
-import { getActiveAssignmentForAthlete } from "./coachDashboard";
+import {
+  getActiveAssignmentForAthlete,
+  getUpcomingAssignmentForAthlete,
+} from "./coachDashboard";
 import { getAthleteCoach } from "./coachInvite";
 import {
   ROLLING_WINDOW_DAYS,
@@ -40,6 +43,14 @@ export type AthleteHomeAssignment = {
   seenAt: Date | null;
 };
 
+export type AthleteHomeUpcomingAssignment = {
+  workoutId: number;
+  name: string;
+  startsAt: string;
+  expiresAt: string;
+  coachName: string | null;
+};
+
 export type AthleteHomeDay = {
   id: number;
   name: string;
@@ -74,6 +85,7 @@ export type AthleteHomeInput = {
   weekStartKey: string;
   workouts: AthleteHomeWorkout[];
   activeAssignment: AthleteHomeAssignment | null;
+  upcomingAssignment: AthleteHomeUpcomingAssignment | null;
   hasLinkedCoach: boolean;
   daysByWorkout: { workoutId: number; days: AthleteHomeDay[] }[];
   schedules: AthleteHomeSchedule[];
@@ -110,6 +122,15 @@ export type AthleteHome = {
     volumeKg: number;
   } | null;
   hasUnseenAssignment: boolean;
+  /** Coach program that starts after today: visible, not yet usable for a session. */
+  upcomingProgram: {
+    workoutId: number;
+    name: string;
+    startsAt: string;
+    expiresAt: string;
+    coachName: string | null;
+    days: AthleteHomeDay[];
+  } | null;
 };
 
 export const selectHomePrograms = <T extends AthleteHomeWorkout>(
@@ -198,6 +219,18 @@ export const buildAthleteHome = (input: AthleteHomeInput): AthleteHome => {
     isWithinRollingWindow(session.completedAt, input.now, ROLLING_WINDOW_DAYS),
   ).length;
 
+  const findDays = (workoutId: number): AthleteHomeDay[] =>
+    (input.daysByWorkout.find((entry) => entry.workoutId === workoutId)?.days ?? []).map(
+      (day) => ({
+        id: day.id,
+        name: day.name,
+        weekdays: day.weekdays,
+        exerciseCount: day.exerciseCount,
+      }),
+    );
+
+  const upcoming = input.upcomingAssignment;
+
   const [latest] = [...input.completedSessions].sort(
     (a, b) => b.completedAt.getTime() - a.completedAt.getTime() || b.sessionId - a.sessionId,
   );
@@ -212,14 +245,7 @@ export const buildAthleteHome = (input: AthleteHomeInput): AthleteHome => {
       name: program.name,
       source: input.activeAssignment ? "coach" : "self",
       expiresAt: input.activeAssignment?.expiresAt ?? null,
-      days: (
-        input.daysByWorkout.find((entry) => entry.workoutId === program.id)?.days ?? []
-      ).map((day) => ({
-        id: day.id,
-        name: day.name,
-        weekdays: day.weekdays,
-        exerciseCount: day.exerciseCount,
-      })),
+      days: findDays(program.id),
     })),
     today,
     week,
@@ -234,6 +260,16 @@ export const buildAthleteHome = (input: AthleteHomeInput): AthleteHome => {
         }
       : null,
     hasUnseenAssignment: input.activeAssignment !== null && input.activeAssignment.seenAt === null,
+    upcomingProgram: upcoming
+      ? {
+          workoutId: upcoming.workoutId,
+          name: upcoming.name,
+          startsAt: upcoming.startsAt,
+          expiresAt: upcoming.expiresAt,
+          coachName: upcoming.coachName,
+          days: findDays(upcoming.workoutId),
+        }
+      : null,
   };
 };
 
@@ -306,6 +342,7 @@ export const loadAthleteHome = async (
   const nextDaysStartKey = addDaysToDateKey(todayKey, 1);
 
   const activeAssignment = await getActiveAssignmentForAthlete(userId);
+  const upcomingAssignment = await getUpcomingAssignmentForAthlete(userId);
 
   const [userWorkouts, coach, completedSessions] = await Promise.all([
     db
@@ -328,11 +365,16 @@ export const loadAthleteHome = async (
     userId,
   );
 
+  const listedWorkoutIds = [
+    ...programs.map((program) => program.id),
+    ...(upcomingAssignment ? [upcomingAssignment.workoutId] : []),
+  ];
+
   const [daysByWorkout, schedules] = await Promise.all([
     Promise.all(
-      programs.map(async (program) => ({
-        workoutId: program.id,
-        days: await listEnrichedWorkoutDays(program.id),
+      listedWorkoutIds.map(async (workoutId) => ({
+        workoutId,
+        days: await listEnrichedWorkoutDays(workoutId),
       })),
     ),
     Promise.all(
@@ -355,6 +397,15 @@ export const loadAthleteHome = async (
     weekStartKey,
     workouts: userWorkouts,
     activeAssignment,
+    upcomingAssignment: upcomingAssignment
+      ? {
+          workoutId: upcomingAssignment.workoutId,
+          name: upcomingAssignment.workoutName,
+          startsAt: upcomingAssignment.startsAt,
+          expiresAt: upcomingAssignment.expiresAt,
+          coachName: upcomingAssignment.coachName,
+        }
+      : null,
     hasLinkedCoach: coach !== null,
     daysByWorkout,
     schedules,
