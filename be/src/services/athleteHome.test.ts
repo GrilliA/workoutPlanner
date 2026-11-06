@@ -68,6 +68,7 @@ const input = (overrides: Partial<AthleteHomeInput> = {}): AthleteHomeInput => (
   ...WEDNESDAY,
   workouts: [],
   activeAssignment: null,
+  upcomingAssignment: null,
   hasLinkedCoach: false,
   daysByWorkout: [],
   schedules: [],
@@ -158,6 +159,66 @@ describe("buildAthleteHome noProgramReason", () => {
     );
 
     assert.equal(home.noProgramReason, "coach-program-inactive");
+  });
+});
+
+describe("buildAthleteHome upcomingProgram", () => {
+  const upcomingAssignment = {
+    workoutId: 5,
+    name: "Upper Lower",
+    startsAt: "2026-09-28",
+    expiresAt: "2026-10-25",
+    coachName: "Sofia Ricci",
+  };
+
+  it("shows the coach program that starts later with its days, outside programs", () => {
+    const home = buildAthleteHome(
+      input({
+        hasLinkedCoach: true,
+        workouts: [workout({ id: 5, createdByUserId: COACH_ID, isActive: false })],
+        upcomingAssignment,
+        daysByWorkout: [
+          {
+            workoutId: 5,
+            days: [{ id: 51, name: "Upper", weekdays: [0], exerciseCount: 5 }],
+          },
+        ],
+      }),
+    );
+
+    assert.deepEqual(home.programs, []);
+    // Older clients only know this reason: keep it until they all read upcomingProgram.
+    assert.equal(home.noProgramReason, "coach-program-inactive");
+    assert.deepEqual(home.upcomingProgram, {
+      ...upcomingAssignment,
+      days: [{ id: 51, name: "Upper", weekdays: [0], exerciseCount: 5 }],
+    });
+  });
+
+  it("sits next to the program in use", () => {
+    const home = buildAthleteHome(
+      input({
+        hasLinkedCoach: true,
+        workouts: [
+          workout({ id: 1, createdByUserId: COACH_ID }),
+          workout({ id: 5, createdByUserId: COACH_ID, isActive: false }),
+        ],
+        activeAssignment: { workoutId: 1, expiresAt: "2026-09-27", seenAt: null },
+        upcomingAssignment,
+        schedules: [schedule(1, WEDNESDAY)],
+      }),
+    );
+
+    assert.deepEqual(
+      home.programs.map((program) => program.workoutId),
+      [1],
+    );
+    assert.equal(home.upcomingProgram?.workoutId, 5);
+    assert.deepEqual(home.upcomingProgram?.days, []);
+  });
+
+  it("is null without a later coach program", () => {
+    assert.equal(buildAthleteHome(input()).upcomingProgram, null);
   });
 });
 

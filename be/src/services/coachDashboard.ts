@@ -1,4 +1,4 @@
-import { and, count, desc, eq, gte, isNotNull, lte, ne } from "drizzle-orm";
+import { and, asc, count, desc, eq, gt, gte, isNotNull, lte, ne } from "drizzle-orm";
 import { db } from "../db";
 import {
   coachAthletes,
@@ -306,6 +306,35 @@ export const getActiveAssignmentForAthlete = async (athleteId: number) => {
       ),
     )
     .orderBy(desc(programAssignments.id))
+    .limit(1);
+
+  return rows[0] ?? null;
+};
+
+/** The next coach program that starts after today, so the athlete can see it coming. */
+export const getUpcomingAssignmentForAthlete = async (athleteId: number) => {
+  const today = todayInRome();
+
+  const rows = await db
+    .select({
+      id: programAssignments.id,
+      workoutId: programAssignments.workoutId,
+      startsAt: programAssignments.startsAt,
+      expiresAt: programAssignments.expiresAt,
+      workoutName: workouts.name,
+      coachName: users.name,
+    })
+    .from(programAssignments)
+    .innerJoin(workouts, eq(programAssignments.workoutId, workouts.id))
+    .innerJoin(users, eq(programAssignments.coachId, users.id))
+    .where(
+      and(
+        eq(programAssignments.athleteId, athleteId),
+        ne(programAssignments.status, "revoked"),
+        gt(programAssignments.startsAt, today),
+      ),
+    )
+    .orderBy(asc(programAssignments.startsAt), desc(programAssignments.id))
     .limit(1);
 
   return rows[0] ?? null;

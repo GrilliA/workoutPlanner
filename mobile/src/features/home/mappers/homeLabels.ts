@@ -39,6 +39,17 @@ export const formatNextWorkout = (
   return `Prossimo allenamento: ${when} · ${nextWorkout.workoutDayName}`;
 };
 
+/** "domani" o "lunedì 9 novembre": quando parte la scheda in arrivo. */
+export const formatUpcomingStart = (startsAt: string, todayKey: string): string =>
+  startsAt === addRomeDays(todayKey, 1) ? "domani" : formatLongDate(startsAt);
+
+/** Giorni di calendario da oggi a una data futura (1 = domani). */
+export const daysUntil = (dateKey: string, todayKey: string): number =>
+  Math.round(
+    (dateFromRomeDateKey(dateKey).getTime() - dateFromRomeDateKey(todayKey).getTime()) /
+      86_400_000,
+  );
+
 export const formatSessionsLast7Days = (count: number): string => {
   if (count === 1) {
     return "allenamento negli ultimi 7 giorni";

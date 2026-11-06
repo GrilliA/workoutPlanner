@@ -1,6 +1,13 @@
 import { z } from "zod";
 import { weekdaySchema } from "./workoutday";
 
+const homeDaySchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  weekdays: z.array(weekdaySchema),
+  exerciseCount: z.number(),
+});
+
 export const athleteHomeSchema = z.object({
   noProgramReason: z
     .enum(["no-coach", "coach-pending", "coach-program-inactive"])
@@ -11,14 +18,7 @@ export const athleteHomeSchema = z.object({
       name: z.string(),
       source: z.enum(["coach", "self"]),
       expiresAt: z.string().nullable(),
-      days: z.array(
-        z.object({
-          id: z.number(),
-          name: z.string(),
-          weekdays: z.array(weekdaySchema),
-          exerciseCount: z.number(),
-        }),
-      ),
+      days: z.array(homeDaySchema),
     }),
   ),
   today: z
@@ -53,6 +53,18 @@ export const athleteHomeSchema = z.object({
     })
     .nullable(),
   hasUnseenAssignment: z.boolean(),
+  /** Scheda del coach che parte dopo oggi: si vede, non si usa ancora. */
+  upcomingProgram: z
+    .object({
+      workoutId: z.number(),
+      name: z.string(),
+      startsAt: z.string(),
+      expiresAt: z.string(),
+      coachName: z.string().nullable(),
+      days: z.array(homeDaySchema),
+    })
+    .nullable()
+    .default(null),
 });
 
 export type AthleteHome = z.infer<typeof athleteHomeSchema>;

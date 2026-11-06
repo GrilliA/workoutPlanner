@@ -1,11 +1,13 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  daysUntil,
   formatGreeting,
   formatLastSession,
   formatLongDate,
   formatNextWorkout,
   formatSessionsLast7Days,
+  formatUpcomingStart,
 } from "./homeLabels";
 import { mapHomeWeek } from "./mapWeekStrip";
 
@@ -93,5 +95,22 @@ describe("mapHomeWeek", () => {
         isRest: true,
       },
     ]);
+  });
+});
+
+describe("formatUpcomingStart", () => {
+  it("says domani for tomorrow", () => {
+    assert.equal(formatUpcomingStart("2026-11-06", "2026-11-05"), "domani");
+  });
+
+  it("writes the full date further away", () => {
+    assert.equal(formatUpcomingStart("2026-11-09", "2026-11-05"), "lunedì 9 novembre");
+  });
+});
+
+describe("daysUntil", () => {
+  it("counts calendar days, across the DST change", () => {
+    assert.equal(daysUntil("2026-11-09", "2026-11-05"), 4);
+    assert.equal(daysUntil("2026-10-26", "2026-10-24"), 2);
   });
 });

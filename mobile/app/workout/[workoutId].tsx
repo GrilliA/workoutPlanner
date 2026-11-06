@@ -21,13 +21,27 @@ import {
   workoutDraftFromServer,
   type WorkoutDraft,
 } from "../../src/features/workoutprogram";
+import { formatLongDate } from "../../src/features/home/mappers/homeLabels";
+
+const DATE_KEY = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Scheda del coach che parte più avanti: si guarda, la sessione si avvia da quel giorno. */
+const upcomingNote = (startsAt: string | undefined): string | undefined =>
+  startsAt && DATE_KEY.test(startsAt)
+    ? `Scheda del coach: sola lettura. La puoi usare dalla Home da ${formatLongDate(startsAt)}.`
+    : undefined;
 
 const isSelfProgram = (workout: WorkoutDetail, userId: number) =>
   workout.createdByUserId == null || workout.createdByUserId === userId;
 
 export default function EditWorkoutScreen() {
-  const { workoutId: rawId } = useLocalSearchParams<{ workoutId: string }>();
+  const {
+    workoutId: rawId,
+    startsAt,
+    dayId,
+  } = useLocalSearchParams<{ workoutId: string; startsAt?: string; dayId?: string }>();
   const workoutId = Number(rawId);
+  const initialDayId = dayId ? Number(dayId) : undefined;
   const { user } = useAuth();
 
   const [workout, setWorkout] = useState<WorkoutDetail | null>(null);
@@ -123,6 +137,8 @@ export default function EditWorkoutScreen() {
       initialDraft={draft}
       workoutId={workoutId}
       readOnly={readOnly}
+      readOnlyNote={upcomingNote(startsAt)}
+      initialDayId={initialDayId}
     />
   );
 }
