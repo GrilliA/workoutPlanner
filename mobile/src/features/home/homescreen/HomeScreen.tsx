@@ -44,6 +44,7 @@ import { mapHomeWeek } from "../mappers/mapWeekStrip";
 import { RecentRow } from "../recentrow";
 import { RestDayCard, TodayCard } from "../todaycard";
 import type { WeekStripDay, WorkoutSelection } from "../types";
+import { UpcomingProgramBanner, UpcomingProgramCard } from "../upcomingprogram";
 import { useHomeData } from "../useHomeData";
 import { WeekStrip } from "../weekstrip";
 
@@ -215,7 +216,27 @@ function HomeBody({
   onOpenSheet,
   onWeekDayPress,
 }: HomeBodyProps) {
+  const upcoming = home.upcomingProgram;
+  const openUpcoming = (workoutDayId: number | null) => {
+    if (!upcoming) {
+      return;
+    }
+    router.push({
+      pathname: "/workout/[workoutId]",
+      params: {
+        workoutId: String(upcoming.workoutId),
+        startsAt: upcoming.startsAt,
+        ...(workoutDayId === null ? {} : { dayId: String(workoutDayId) }),
+      },
+    });
+  };
+
   if (home.programs.length === 0) {
+    if (upcoming) {
+      return (
+        <UpcomingProgramCard program={upcoming} todayKey={todayKey} onOpen={openUpcoming} />
+      );
+    }
     // Motivo assente = caricamento fallito: lo dice già il banner d'errore.
     if (!home.noProgramReason) {
       return null;
@@ -249,6 +270,13 @@ function HomeBody({
 
   return (
     <>
+      {upcoming ? (
+        <UpcomingProgramBanner
+          program={upcoming}
+          todayKey={todayKey}
+          onOpen={() => openUpcoming(null)}
+        />
+      ) : null}
       <WeekStrip
         days={mapHomeWeek(home.week, todayKey)}
         selectedDateKey={selectedDateKey}

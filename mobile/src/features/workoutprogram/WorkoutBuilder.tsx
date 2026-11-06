@@ -62,6 +62,10 @@ type WorkoutBuilderProps = {
   initialDraft: WorkoutDraft;
   workoutId?: number;
   readOnly?: boolean;
+  /** Sostituisce la riga "sola lettura" (es. scheda che parte più avanti). */
+  readOnlyNote?: string;
+  /** Giorno da aprire subito (tap su un giorno dalla Home). */
+  initialDayId?: number;
 };
 
 function dayMeta(day: WorkoutDraftDay): string {
@@ -168,9 +172,16 @@ export function WorkoutBuilder({
   initialDraft,
   workoutId,
   readOnly = false,
+  readOnlyNote,
+  initialDayId,
 }: WorkoutBuilderProps) {
   const [draft, setDraft] = useState(initialDraft);
-  const [openDayKey, setOpenDayKey] = useState<string | null>(null);
+  const [openDayKey, setOpenDayKey] = useState<string | null>(
+    () =>
+      initialDayId === undefined
+        ? null
+        : (initialDraft.days.find((day) => day.id === initialDayId)?.key ?? null),
+  );
   const [sheet, setSheet] = useState<ExerciseSheetTarget | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -371,7 +382,7 @@ export function WorkoutBuilder({
           <Heading>{title}</Heading>
           {readOnly ? (
             <Body>
-              Scheda del coach: sola lettura. Puoi usarla dalla Home.
+              {readOnlyNote ?? "Scheda del coach: sola lettura. Puoi usarla dalla Home."}
             </Body>
           ) : null}
           {error ? <ErrorBanner message={error} /> : null}
