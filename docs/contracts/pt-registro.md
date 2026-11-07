@@ -196,7 +196,7 @@ Regole:
 4. Offerta archiviata usata in creazione o in un cambio offerta → 409.
 5. Date: `paidThrough >= startedOn`; `endedOn >= startedOn` (valutati sul risultato finale: body sopra i valori salvati).
 6. Il PUT è ammesso anche su abbonamento chiuso (serve a riprenderlo).
-7. Due PUT di creazione in parallelo: il secondo prende la unique violation (`23505`) e risponde 409, mai 500.
+7. Due PUT di creazione insieme non rispondono 500 e non creano due righe. Se le insert si accavallano, il secondo prende la unique violation (`23505`) e risponde 409. Se il primo commit è già visibile, il secondo modifica quella riga (200).
 
 Risposta: `SubscriptionDetail` (201 o 200).
 
@@ -215,7 +215,7 @@ Risposta: `SubscriptionDetail` (201 o 200).
 | 400 | `paidThrough cannot be changed after creation` | modifica con valore diverso dal salvato |
 | 404 | `Offer not found` | offerta inesistente o di un altro coach |
 | 409 | `Offer is archived` | regola 4 |
-| 409 | `Subscription already exists` | creazione concorrente |
+| 409 | `Subscription already exists` | le due insert di creazione si accavallano (regola 7) |
 
 ### Stato calcolato
 
