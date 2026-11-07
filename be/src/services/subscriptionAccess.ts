@@ -434,7 +434,9 @@ export const saveSubscription = async (
       return updateSubscription(tx, coachId, locked.value, input, today);
     });
   } catch (error) {
-    // Two creations at once: the lock finds no row to wait on, the unique pair stops the second.
+    // No row exists yet, so the lock cannot make the second creation wait. Overlapping
+    // inserts hit the unique pair and become 409. A creation that starts after the
+    // first commit finds the row and updates it (200).
     if (isUniqueViolation(error)) {
       return conflict("Subscription already exists");
     }

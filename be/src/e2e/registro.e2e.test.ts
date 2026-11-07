@@ -1732,8 +1732,25 @@ describe("PT payment register smoke", { concurrency: false }, () => {
     assert.equal((await storedSubscription(coachA, client))?.revision, 2);
   });
 
-  it("concurrency: two creations at once give one 201 and one 409, never 500", async () => {
+  it("concurrency: a creation that commits first is updated by the next PUT, same row", async () => {
     const { coachA, inviteCodeA, monthlyOfferId } = setup();
+    const client = await newClient("serial-create", inviteCodeA);
+    const body = { offerId: monthlyOfferId, startedOn: today };
+
+    const created = await putSubscription(coachA, client, body);
+    assertStatus(created, 201);
+    const updated = await putSubscription(coachA, client, body);
+    assertStatus(updated, 200);
+
+    const createdSubscriptionId = asObject(asObject(created.body).subscription).id;
+    assert.equal(asObject(asObject(updated.body).subscription).id, createdSubscriptionId);
+    const stored = await storedSubscription(coachA, client);
+    assert.equal(stored?.id, createdSubscriptionId);
+    assert.equal(stored?.startedOn, today);
+  });
+
+  it("concurrency: two creations at once leave one row and never answer 500", async () => {
+    const { coachA, inviteCodeA, monthlyOfferId, database, schema } = setup();
     const client = await newClient("parallel-create", inviteCodeA);
     const body = { offerId: monthlyOfferId, startedOn: today };
 
@@ -1742,9 +1759,38 @@ describe("PT payment register smoke", { concurrency: false }, () => {
       putSubscription(coachA, client, body),
     ]);
     const statuses = responses.map((response) => response.status).sort();
-    assert.deepEqual(statuses, [201, 409], responses.map(failMessage).join(" | "));
+    // Both PUTs are in flight, but 409 happens only when the second insert overlaps
+    // the first transaction. If that commit is already visible, the second updates
+    // the same row (200). The blocked-insert test below forces the 409 order.
+    const createdThenUpdated = statuses[0] === 200 && statuses[1] === 201;
+    const createdAndRejected = statuses[0] === 201 && statuses[1] === 409;
+    assert.ok(createdThenUpdated || createdAndRejected, responses.map(failMessage).join(" | "));
+
     const conflict = responses.find((response) => response.status === 409);
-    assert.deepEqual(conflict?.body, { error: "Subscription already exists" });
+    if (conflict) {
+      assert.deepEqual(conflict.body, { error: "Subscription already exists" });
+    }
+
+    const created = responses.find((response) => response.status === 201);
+    const createdSubscriptionId = asObject(asObject(created?.body).subscription).id;
+    const updated = responses.find((response) => response.status === 200);
+    if (updated) {
+      assert.equal(asObject(asObject(updated.body).subscription).id, createdSubscriptionId);
+    }
+
+    const rows = await database.db
+      .select({ id: schema.clientSubscriptions.id })
+      .from(schema.clientSubscriptions)
+      .where(
+        and(
+          eq(schema.clientSubscriptions.coachId, coachA.id),
+          eq(schema.clientSubscriptions.athleteId, client.id),
+        ),
+      );
+    assert.deepEqual(
+      rows.map((row) => row.id),
+      [createdSubscriptionId],
+    );
   });
 
   it("concurrency: a creation blocked behind another uncommitted creation gets 409", async () => {
