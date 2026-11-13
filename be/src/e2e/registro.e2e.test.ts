@@ -70,6 +70,8 @@ const PAYMENT_KEYS = [
   "periods",
 ];
 const PAUSE_KEYS = ["canRemove", "createdAt", "endsOn", "id", "startsOn"];
+// docs/contracts/pt-atleta.md: what the athlete sees, never a price, an offer or a payment.
+const ATHLETE_COACHING_KEYS = ["coachName", "daysLeft", "paidThrough", "pausedUntil", "status"];
 
 // Expected dates are computed here, by hand, not with the code under test.
 const toIsoDate = (date: Date): string => date.toISOString().slice(0, 10);
@@ -1701,6 +1703,143 @@ describe("PT payment register smoke", { concurrency: false }, () => {
   });
 
   // --- Concurrency --------------------------------------------------------------------------
+
+  // --- Athlete coaching status (R6, docs/contracts/pt-atleta.md) ----------------------------
+
+  /** `coaching` of both athlete routes: they must always agree. */
+  const readAthleteCoaching = async (athlete: Account): Promise<JsonObject | null> => {
+    const home = await api("GET", "/api/athlete/home", { token: athlete.token, mobile: true });
+    assertStatus(home, 200);
+    const coach = await api("GET", "/api/athlete/coach", { token: athlete.token, mobile: true });
+    assertStatus(coach, 200);
+    assertKeys(coach.body, ["coach", "coaching"]);
+
+    const homeCoaching = asObject(home.body).coaching;
+    const coachCoaching = asObject(coach.body).coaching;
+    assert.deepEqual(homeCoaching, coachCoaching, "home and coach routes agree");
+
+    if (homeCoaching === null) {
+      return null;
+    }
+
+    assertKeys(homeCoaching, ATHLETE_COACHING_KEYS);
+    return asObject(homeCoaching);
+  };
+
+  /** The athlete reads the same state the coach reads for the same pair on the same day. */
+  const assertSameStateAsCoach = async (coach: Account, athlete: Account): Promise<JsonObject> => {
+    const detail = await readDetail(coach, athlete);
+    const coaching = await readAthleteCoaching(athlete);
+    assert.ok(coaching, "the athlete sees a coaching state");
+    assert.deepEqual(
+      {
+        status: coaching.status,
+        paidThrough: coaching.paidThrough,
+        daysLeft: coaching.daysLeft,
+        pausedUntil: coaching.pausedUntil,
+      },
+      { ...asObject(detail.state), paidThrough: asObject(detail.subscription).paidThrough },
+    );
+    return coaching;
+  };
+
+  it("athlete coaching: null without a coach and without a subscription of the current coach", async () => {
+    const { coachA, inviteCodeA } = setup();
+    const athlete = await register("coaching-none", true);
+    assert.equal(await readAthleteCoaching(athlete), null, "no coach");
+
+    await linkToCoach(athlete, inviteCodeA);
+    assert.equal(await readAthleteCoaching(athlete), null, "linked coach, no subscription");
+    assert.deepEqual(await readDetail(coachA, athlete), {
+      subscription: null,
+      state: null,
+      activePause: null,
+    });
+  });
+
+  it("athlete coaching: active, expiring, expired and paused match the coach state, with no price", async () => {
+    const { coachA, inviteCodeA, monthlyOfferId } = setup();
+    const startedOn = addDays(today, -20);
+
+    const active = await newClient("coaching-active", inviteCodeA);
+    await createSubscription(coachA, active, {
+      offerId: monthlyOfferId,
+      startedOn,
+      paidThrough: addDays(today, 20),
+    });
+    const activeCoaching = await assertSameStateAsCoach(coachA, active);
+    assert.equal(activeCoaching.status, "active");
+    assert.equal(activeCoaching.daysLeft, 20);
+    const coachName = asObject(
+      asObject((await api("GET", "/api/athlete/coach", { token: active.token, mobile: true })).body).coach,
+    ).name;
+    assert.equal(activeCoaching.coachName, coachName);
+
+    const expiring = await newClient("coaching-expiring", inviteCodeA);
+    await createSubscription(coachA, expiring, {
+      offerId: monthlyOfferId,
+      startedOn,
+      paidThrough: addDays(today, 3),
+    });
+    assert.equal((await assertSameStateAsCoach(coachA, expiring)).status, "expiring");
+
+    const expired = await newClient("coaching-expired", inviteCodeA);
+    await createSubscription(coachA, expired, { offerId: monthlyOfferId, startedOn });
+    const expiredCoaching = await assertSameStateAsCoach(coachA, expired);
+    assert.equal(expiredCoaching.status, "expired");
+    assert.equal(expiredCoaching.daysLeft, -20);
+
+    const paused = await newClient("coaching-paused", inviteCodeA);
+    await createSubscription(coachA, paused, {
+      offerId: monthlyOfferId,
+      startedOn,
+      paidThrough: addDays(today, 10),
+    });
+    const pauseEnd = addDays(today, 4);
+    assertStatus(await postPause(coachA, paused, { startsOn: addDays(today, -2), endsOn: pauseEnd }), 201);
+    const pausedCoaching = await assertSameStateAsCoach(coachA, paused);
+    assert.equal(pausedCoaching.status, "paused");
+    assert.equal(pausedCoaching.pausedUntil, pauseEnd);
+  });
+
+  it("athlete coaching: an ended subscription with the coach still linked reads as ended", async () => {
+    const { coachA, inviteCodeA, monthlyOfferId } = setup();
+    const athlete = await newClient("coaching-ended", inviteCodeA);
+    await createSubscription(coachA, athlete, {
+      offerId: monthlyOfferId,
+      startedOn: addDays(today, -20),
+      paidThrough: addDays(today, 10),
+    });
+    assertStatus(await putSubscription(coachA, athlete, { endedOn: today }), 200);
+
+    assert.equal((await assertSameStateAsCoach(coachA, athlete)).status, "ended");
+  });
+
+  it("athlete coaching: after moving to a new coach the old subscription never shows", async () => {
+    const { coachA, coachB, inviteCodeA, inviteCodeB, monthlyOfferId, offerOfCoachBId } = setup();
+    const athlete = await newClient("coaching-moved", inviteCodeA);
+    await createSubscription(coachA, athlete, {
+      offerId: monthlyOfferId,
+      startedOn: addDays(today, -20),
+      paidThrough: addDays(today, 20),
+    });
+    assert.equal((await readAthleteCoaching(athlete))?.status, "active");
+
+    assertStatus(await api("DELETE", "/api/athlete/coach", { token: athlete.token, mobile: true }), 200);
+    assert.equal(await readAthleteCoaching(athlete), null, "no coach, the old row stays hidden");
+    assert.ok(await storedSubscription(coachA, athlete), "the ex coach still has the row");
+
+    await linkToCoach(athlete, inviteCodeB);
+    assert.equal(await readAthleteCoaching(athlete), null, "new coach without a subscription");
+
+    await createSubscription(coachB, athlete, {
+      offerId: offerOfCoachBId,
+      startedOn: addDays(today, -5),
+    });
+    const coaching = await assertSameStateAsCoach(coachB, athlete);
+    assert.equal(coaching.status, "expired");
+    assert.equal(coaching.paidThrough, addDays(today, -5));
+  });
 
   it("concurrency: two payments at once both count", async () => {
     const { coachA, inviteCodeA, monthlyOfferId } = setup();
