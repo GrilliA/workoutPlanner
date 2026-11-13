@@ -366,4 +366,51 @@ describe("PT business smoke (R8)", { concurrency: false }, () => {
     assert.deepEqual(businessB.renewals90Days, { due: 0, renewed: 0 });
     assert.equal(lostIn(businessB, currentMonth), 0);
   });
+
+  it("an ex client of A relinked to B: A keeps the old subscription and payment, B sees only its own", async () => {
+    const coachA = await newCoach("relink-a");
+    const coachB = await newCoach("relink-b");
+
+    // With A: paid until yesterday, renews today (a renewal in the window), then A unlinks.
+    const client = await newClient("relinked", coachA);
+    await createSubscription(coachA, client, {
+      offerId: coachA.monthlyOfferId,
+      startedOn: addDays(today, -30),
+      paidThrough: addDays(today, -1),
+    });
+    await recordPayment(coachA.coach, client, 8000);
+    assertStatus(await api("DELETE", `/api/coach/clients/${client.id}`, { token: coachA.coach.token }), 200);
+
+    // The same athlete links to B and starts again there.
+    const relinked = await api("POST", "/api/athlete/coach/link", {
+      token: client.token,
+      mobile: true,
+      body: { code: coachB.inviteCode },
+    });
+    assertStatus(relinked, 201);
+    await createSubscription(coachB, client, {
+      offerId: coachB.monthlyOfferId,
+      startedOn: today,
+      paidThrough: addDays(today, 30),
+      agreedPriceCents: 7000,
+    });
+    await recordPayment(coachB.coach, client, 7000);
+
+    const businessA = await readBusiness(coachA.coach);
+    assert.equal(businessA.subscriptionCount, 1);
+    assert.equal(businessA.monthlyRecurringCents, 0, "ended with A");
+    assert.equal(businessA.expectedNext30DaysCents, 0);
+    assert.equal(collectedIn(businessA, currentMonth), 8000, "A keeps its payment, not B's");
+    assert.equal(lostIn(businessA, currentMonth), 1);
+    // Renewed with A before leaving, and paid through a day after today: renewed, not missed.
+    assert.deepEqual(businessA.renewals90Days, { due: 1, renewed: 1 });
+
+    const businessB = await readBusiness(coachB.coach);
+    assert.equal(businessB.subscriptionCount, 1);
+    assert.equal(businessB.monthlyRecurringCents, 7000);
+    assert.equal(businessB.recurringClientCount, 1);
+    assert.equal(collectedIn(businessB, currentMonth), 7000, "B never sees A's payment");
+    assert.equal(lostIn(businessB, currentMonth), 0);
+    assert.deepEqual(businessB.renewals90Days, { due: 0, renewed: 0 });
+  });
 });
