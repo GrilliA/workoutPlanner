@@ -16,7 +16,8 @@ CREATE TABLE "meal_plan_meals" (
 	"position" integer NOT NULL,
 	"name" text NOT NULL,
 	"time_of_day" text,
-	"notes" text
+	"notes" text,
+	CONSTRAINT "meal_plan_meals_time_of_day_check" CHECK ("meal_plan_meals"."time_of_day" ~ '^([01][0-9]|2[0-3]):[0-5][0-9]$')
 );
 --> statement-breakpoint
 CREATE TABLE "meal_plan_items" (
