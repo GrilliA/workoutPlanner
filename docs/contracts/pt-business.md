@@ -158,7 +158,7 @@ Nessuna migrazione: un coach ha qualche decina di abbonamenti.
 | Pacchetto | Cambio |
 | --- | --- |
 | `be/` | `services/coachBusiness.ts` (+ test), `services/coachBusinessAccess.ts`, `routes/coachbusiness.ts` montata in `routes/coach.ts`, e2e `e2e/business.e2e.test.ts` |
-| `fe/` | `api/schemas/business.ts`, `api/business.ts`, pagina `pages/coach/business/`, route `/business`, voce "Business" in `AppShell`, copy dell'errore in `knownErrorMessages.ts` |
+| `fe/` | `api/schemas/business.ts`, `api/business.ts`, pagina `pages/coach/business/`, route `/business`, voce "Business" in `AppShell` (sesta voce anche nella barra in basso). Nessuna copy in `knownErrorMessages.ts`: il pannello manda solo `6m` o `12m` |
 | `mobile/` | nessuno |
 
 ## Retrocompatibilità e rilascio
