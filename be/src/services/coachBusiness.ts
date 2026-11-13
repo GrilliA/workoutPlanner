@@ -195,11 +195,15 @@ const isRenewalPayment = (payment: BusinessPayment, subscription: BusinessSubscr
   return paidUntilBefore > subscription.startedOn;
 };
 
+/** Paid through a day before today and not paused: the client is late. */
+const isExpiredToday = (subscription: BusinessSubscription, today: string): boolean =>
+  subscription.paidThrough < today && !isPausedToday(subscription, today);
+
 /**
- * Due dates of the last 90 days (today included) on recurring subscriptions: each renewal
- * payment that starts in the window is a renewed one; each subscription still unpaid since a
- * day in the window, before today, is a missed one. A running pause moves `paidThrough` past
- * its end, so a paused subscription is never missed.
+ * Recurring subscriptions with a due date in the last 90 days (today included), each counted
+ * once. Renewed: a renewal payment starts in the window and the client is not late today
+ * (paid through today or later, or paused). Missed: paid through a day in the window before
+ * today, ended ones included. Renewed and then late again is missed.
  */
 export const renewalsLast90Days = (
   subscriptions: BusinessSubscription[],
@@ -207,22 +211,24 @@ export const renewalsLast90Days = (
   today: string,
 ): { due: number; renewed: number } => {
   const windowStart = renewalWindowStart(today);
-  const recurringById = new Map(
-    subscriptions
-      .filter((subscription) => subscription.isRecurring)
-      .map((subscription) => [subscription.id, subscription]),
-  );
+  const isInWindow = (date: string): boolean => windowStart <= date && date <= today;
+  const recurring = subscriptions.filter((subscription) => subscription.isRecurring);
 
-  const renewed = payments.filter((payment) => {
-    const subscription = recurringById.get(payment.subscriptionId);
-    const startsInWindow = windowStart <= payment.coversFrom && payment.coversFrom <= today;
-    return subscription !== undefined && startsInWindow && isRenewalPayment(payment, subscription);
-  }).length;
+  const hasRenewalInWindow = (subscription: BusinessSubscription): boolean =>
+    payments.some(
+      (payment) =>
+        payment.subscriptionId === subscription.id &&
+        isInWindow(payment.coversFrom) &&
+        isRenewalPayment(payment, subscription),
+    );
 
-  const missed = [...recurringById.values()].filter((subscription) => {
-    const isLateSinceWindow = windowStart <= subscription.paidThrough && subscription.paidThrough < today;
-    return isLateSinceWindow && !isPausedToday(subscription, today);
-  }).length;
+  const missed = recurring.filter(
+    (subscription) => isInWindow(subscription.paidThrough) && isExpiredToday(subscription, today),
+  ).length;
+
+  const renewed = recurring.filter(
+    (subscription) => hasRenewalInWindow(subscription) && !isExpiredToday(subscription, today),
+  ).length;
 
   return { due: renewed + missed, renewed };
 };

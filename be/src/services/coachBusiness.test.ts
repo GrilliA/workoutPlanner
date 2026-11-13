@@ -109,6 +109,12 @@ describe("monthlyRecurring", () => {
     assert.deepEqual(monthlyRecurring([paused, ended, package_], today), { cents: 0, clientCount: 0 });
   });
 
+  it("a pause that starts today or ends today is running: it does not count", () => {
+    const startsToday = { ...monthly, id: 1, runningPause: { startsOn: today, endsOn: "2026-11-30" } };
+    const endsToday = { ...monthly, id: 2, runningPause: { startsOn: "2026-11-01", endsOn: today } };
+    assert.deepEqual(monthlyRecurring([startsToday, endsToday], today), { cents: 0, clientCount: 0 });
+  });
+
   it("a future end date or a pause that has not started still counts", () => {
     const endsLater = { ...monthly, id: 2, endedOn: "2026-12-31" };
     const pauseLater = { ...monthly, id: 3, runningPause: { startsOn: "2026-11-20", endsOn: "2026-11-30" } };
@@ -164,6 +170,18 @@ describe("expectedNext30DaysCents", () => {
     const weekly = { ...monthly, id: 4, agreedPriceCents: 2000, periodUnit: "week" as const, paidThrough: "2026-11-15" };
     // weekly: 15/11, 22/11, 29/11, 06/12 → 4 × 2000
     assert.equal(expectedNext30DaysCents([dueToday, dueOnLastDay, dueTooLate, weekly], today), 8000 + 8000 + 8000);
+  });
+
+  it("a weekly with a future end date stops before it", () => {
+    const leaving = {
+      ...monthly,
+      agreedPriceCents: 2000,
+      periodUnit: "week" as const,
+      paidThrough: "2026-11-15",
+      endedOn: "2026-11-29",
+    };
+    // 15/11 and 22/11 count; 29/11 is the end date.
+    assert.equal(expectedNext30DaysCents([leaving], today), 2 * 2000);
   });
 
   it("expired, paused, ended and non-recurring subscriptions are not expected", () => {
@@ -233,17 +251,18 @@ describe("renewalsLast90Days", () => {
       // First payment: nothing was paid before it.
       payment({ coversFrom: "2026-09-01", previousPaidThrough: "2026-01-06" }),
     ];
-    assert.deepEqual(renewalsLast90Days([monthly], payments, today), { due: 2, renewed: 2 });
+    // Two renewals of the same client in the window: one client renewed.
+    assert.deepEqual(renewalsLast90Days([monthly], payments, today), { due: 1, renewed: 1 });
+    assert.deepEqual(renewalsLast90Days([monthly], [payments[4]!], today), { due: 0, renewed: 0 });
   });
 
   it("a client back after a long break (paid_on start) is renewed; rows before 0015 use coversFrom", () => {
     const backAfterBreak = payment({ coversFrom: "2026-10-20", previousPaidThrough: "2026-08-01" });
     const oldRow = payment({ coversFrom: "2026-09-06", previousPaidThrough: null });
     const oldFirstRow = payment({ coversFrom: monthly.startedOn, previousPaidThrough: null, paidOn: "2026-09-01" });
-    assert.deepEqual(renewalsLast90Days([monthly], [backAfterBreak, oldRow, oldFirstRow], today), {
-      due: 2,
-      renewed: 2,
-    });
+    assert.deepEqual(renewalsLast90Days([monthly], [backAfterBreak], today), { due: 1, renewed: 1 });
+    assert.deepEqual(renewalsLast90Days([monthly], [oldRow], today), { due: 1, renewed: 1 });
+    assert.deepEqual(renewalsLast90Days([monthly], [oldFirstRow], today), { due: 0, renewed: 0 });
   });
 
   it("an unpaid due date in the window before today is missed, an ended client too; today is not late", () => {
@@ -267,6 +286,46 @@ describe("renewalsLast90Days", () => {
     // Dirty data: a running pause with paidThrough still in the past is still not missed.
     const pausedUnpaid = { ...paused, id: 2, paidThrough: "2026-10-30" };
     assert.deepEqual(renewalsLast90Days([paused, pausedUnpaid], [], today), { due: 0, renewed: 0 });
+  });
+
+  it("counts clients, not payments: a weekly paid 13 times and a weekly stopped 10 weeks ago are 1 of 2", () => {
+    const paying = { ...monthly, id: 1, periodUnit: "week" as const, billingDay: 13, paidThrough: "2026-11-20" };
+    const stopped = { ...paying, id: 2, paidThrough: "2026-09-04" };
+    // 13 weekly renewals: 21/08, 28/08 … 13/11.
+    const weeklyPayments = Array.from({ length: 13 }, (_, index) => {
+      const day = new Date(Date.UTC(2026, 7, 21 + index * 7)).toISOString().slice(0, 10);
+      return payment({ subscriptionId: paying.id, amountCents: 2000, coversFrom: day, previousPaidThrough: day });
+    });
+    assert.equal(weeklyPayments[12]?.coversFrom, today);
+    assert.deepEqual(renewalsLast90Days([paying, stopped], weeklyPayments, today), { due: 2, renewed: 1 });
+  });
+
+  it("a payment of several periods is one renewed client", () => {
+    // Paid on 6 October for three months: covered until 6 January.
+    const paidAhead = { ...monthly, paidThrough: "2027-01-06" };
+    const threeMonths = payment({ amountCents: 24000, coversFrom: "2026-10-06", previousPaidThrough: "2026-10-06" });
+    assert.deepEqual(renewalsLast90Days([paidAhead], [threeMonths], today), { due: 1, renewed: 1 });
+  });
+
+  it("renewed in the window and late again today is missed, once", () => {
+    const lateAgain = { ...monthly, paidThrough: "2026-10-06" };
+    const renewal = payment({ coversFrom: "2026-09-06", previousPaidThrough: "2026-09-06" });
+    assert.deepEqual(renewalsLast90Days([lateAgain], [renewal], today), { due: 1, renewed: 0 });
+  });
+
+  it("a monthly expired 60 days ago is missed", () => {
+    const expired = { ...monthly, paidThrough: "2026-09-14" };
+    assert.deepEqual(renewalsLast90Days([expired], [], today), { due: 1, renewed: 0 });
+  });
+
+  it("a paused client with a renewal in the window is renewed", () => {
+    const paused = {
+      ...monthly,
+      paidThrough: "2026-11-25",
+      runningPause: { startsOn: "2026-11-01", endsOn: "2026-11-20" },
+    };
+    const renewal = payment({ coversFrom: "2026-10-06", previousPaidThrough: "2026-10-06" });
+    assert.deepEqual(renewalsLast90Days([paused], [renewal], today), { due: 1, renewed: 1 });
   });
 
   it("payments of non-recurring subscriptions are not renewals", () => {
