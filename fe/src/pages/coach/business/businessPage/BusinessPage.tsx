@@ -1,4 +1,5 @@
 import { Link } from "wouter";
+import { BusyRegion } from "@components/busyRegion";
 import { PageHeader } from "@components/pageHeader";
 import { useCoachBusiness } from "../api/useCoachBusiness";
 import { BusinessSkeleton } from "../businessSkeleton";
@@ -11,7 +12,7 @@ import "../../style.css";
 import "./style.css";
 
 export function BusinessPage() {
-  const { view, isLoading, range, setRange } = useCoachBusiness();
+  const { view, range, isRefreshing, selectRange } = useCoachBusiness();
   const isEmpty = view !== undefined && view.isEmpty;
   const hasNumbers = view !== undefined && !view.isEmpty;
 
@@ -19,7 +20,7 @@ export function BusinessPage() {
     <div className="business-page coach-page page-container page-container--wide">
       <PageHeader title="Business" subtitle="Entrate, incassi e clienti dal registro pagamenti" />
 
-      {view === undefined && isLoading ? <BusinessSkeleton /> : null}
+      {view === undefined ? <BusinessSkeleton /> : null}
 
       {isEmpty ? (
         <section className="coach-dashboard__empty">
@@ -41,13 +42,15 @@ export function BusinessPage() {
 
       {hasNumbers ? (
         <>
-          <RangeFilter value={range} onChange={setRange} />
-          <KpiTiles items={view.kpis} />
-          <CollectedChart model={view.chart} />
-          <div className="cards">
-            <RenewalsCard summary={view.renewals} />
-            <LostCard summary={view.lost} />
-          </div>
+          <RangeFilter value={range} onChange={selectRange} />
+          <BusyRegion busy={isRefreshing} label="Aggiornamento…">
+            <KpiTiles items={view.kpis} />
+            <CollectedChart model={view.chart} />
+            <div className="cards">
+              <RenewalsCard summary={view.renewals} />
+              <LostCard summary={view.lost} />
+            </div>
+          </BusyRegion>
         </>
       ) : null}
     </div>
