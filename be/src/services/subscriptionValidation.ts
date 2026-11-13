@@ -79,7 +79,7 @@ export const isDatabaseId = (value: unknown): value is number =>
   isIntegerBetween(value, 1, MAX_DATABASE_ID);
 
 // Outside these years a date is a typo, and later arithmetic could leave the range Postgres accepts.
-const isCalendarDate = (value: unknown): value is string =>
+export const isCalendarDate = (value: unknown): value is string =>
   typeof value === "string" &&
   isValidIsoDate(value) &&
   value >= EARLIEST_DATE &&

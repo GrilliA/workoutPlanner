@@ -3,17 +3,6 @@ import { todayInRome } from "./assignmentStatus";
 import { addRomeDays } from "./stats";
 import { daysBetween } from "./subscription";
 
-// Safety caps, not product rules: a real day has a handful of meals with a few foods each.
-// They stop a broken or hostile client from storing plans the panel and the app cannot show.
-export const MAX_MEALS_PER_PLAN = 12;
-export const MAX_ITEMS_PER_MEAL = 30;
-export const MAX_MEAL_NAME_LENGTH = 60;
-export const MAX_FOOD_LENGTH = 120;
-export const MAX_QUANTITY_LENGTH = 60;
-export const MAX_MEAL_PLAN_NOTES_LENGTH = 1000;
-export const MAX_MEAL_NOTES_LENGTH = 500;
-export const MAX_MEAL_LOG_NOTE_LENGTH = 280;
-
 type OrderedMeal = {
   id: number;
   position: number;
