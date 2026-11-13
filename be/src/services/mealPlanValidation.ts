@@ -1,6 +1,5 @@
-import { isValidIsoDate } from "./assignmentStatus";
 import { daysBetween } from "./subscription";
-import { isDatabaseId } from "./subscriptionValidation";
+import { isCalendarDate, isDatabaseId } from "./subscriptionValidation";
 
 type Invalid = { ok: false; error: string };
 type Valid<T> = { ok: true; value: T };
@@ -16,8 +15,6 @@ const MAX_QUANTITY_LENGTH = 60;
 const MAX_MEAL_PLAN_NOTES_LENGTH = 1000;
 const MAX_MEAL_NOTES_LENGTH = 500;
 const MAX_MEAL_LOG_RANGE_DAYS = 31;
-const EARLIEST_DATE = "2000-01-01";
-const LATEST_DATE = "2099-12-31";
 const TIME_OF_DAY_PATTERN = /^([01][0-9]|2[0-3]):[0-5][0-9]$/;
 
 const INVALID_BODY: Invalid = { ok: false, error: "Invalid request body" };
@@ -57,12 +54,6 @@ export type SavedMealIds = {
 
 const isJsonObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
-
-const isCalendarDate = (value: unknown): value is string =>
-  typeof value === "string" &&
-  isValidIsoDate(value) &&
-  value >= EARLIEST_DATE &&
-  value <= LATEST_DATE;
 
 /** Postgres rejects U+0000 in text with a 500: refused, not stripped, as in the register. */
 const checkText = (field: string, text: string, maxLength: number): Invalid | null => {
