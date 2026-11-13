@@ -18,4 +18,8 @@ export * from "./clientsubscriptions";
 export * from "./subscriptionpayments";
 export * from "./subscriptionpauses";
 export * from "./coachinboxhandled";
+export * from "./mealplans";
+export * from "./mealplanmeals";
+export * from "./mealplanitems";
+export * from "./meallogs";
 export * from "../../waitlist/schema";
