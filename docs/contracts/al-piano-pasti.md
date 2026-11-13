@@ -144,8 +144,9 @@ Regole:
 - Tutta la scrittura avviene in una transazione: il collegamento `coach_athletes` della coppia si legge `FOR SHARE` (manca → 404 `"Client not found"`), poi il piano `FOR UPDATE`. Due primi PUT concorrenti: il secondo trova la unique `(coach_id, athlete_id)` → 409 `"Meal plan already exists"`; il client rilegge il piano.
 
 Errori di validazione (400), in quest'ordine di campo:
-- `"Invalid request body"` (body non oggetto); `"meals must be an array"`; `"meals must have at most 12 entries"`.
-- note del piano: `"notes must be a string or null"`, `"notes must be at most 1000 characters"`, `"notes must not contain a NUL character"`.
+- `"Invalid request body"` (body non oggetto).
+- note del piano: `"notes must be a string or null"`, `"notes must not contain a NUL character"`, `"notes must be at most 1000 characters"`.
+- `"meals must be an array"`, `"meals must have at most 12 entries"`.
 - per ogni pasto: `"Invalid request body"` (pasto non oggetto), `"Invalid meal id"` (non intero o `< 1`), `"meals.name is required"`, `"meals.name must be at most 60 characters"`, `"meals.timeOfDay must be HH:MM or null"`, `"meals.notes must be a string or null"`, `"meals.notes must be at most 500 characters"`, `"meals.items must be an array"`, `"meals.items must have at most 30 entries"`.
 - per ogni voce: `"Invalid request body"`, `"Invalid meal item id"`, `"meals.items.food is required"`, `"meals.items.food must be at most 120 characters"`, `"meals.items.quantity must be a string or null"`, `"meals.items.quantity must be at most 60 characters"`.
 - i campi di testo con U+0000: `"<campo> must not contain a NUL character"` con lo stesso nome di campo (`meals.name`, `meals.items.food`, …).
