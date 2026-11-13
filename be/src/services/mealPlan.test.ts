@@ -52,6 +52,29 @@ describe("nextMealId", () => {
     assert.equal(nextMealId({ meals: shuffled, logs, date: day }), lunch.id);
   });
 
+  it("breaks a tie on position with the lower id", () => {
+    const firstAdded = { id: 31, position: 0 };
+    const secondAdded = { id: 32, position: 0 };
+
+    assert.equal(nextMealId({ meals: [secondAdded, firstAdded], logs: [], date: day }), firstAdded.id);
+    assert.equal(
+      nextMealId({ meals: [secondAdded, firstAdded], logs: [{ mealId: firstAdded.id, date: day }], date: day }),
+      secondAdded.id,
+    );
+  });
+
+  it("treats a meal logged as other like a done meal", () => {
+    const logs = [{ mealId: breakfast.id, date: day, status: "other" as const }];
+
+    assert.equal(nextMealId({ meals, logs, date: day }), lunch.id);
+  });
+
+  it("ignores a log for a meal that is not in the plan", () => {
+    const logs = [{ mealId: 999, date: day }];
+
+    assert.equal(nextMealId({ meals, logs, date: day }), breakfast.id);
+  });
+
   it("does not reorder the meals it receives", () => {
     const shuffled = [dinner, breakfast];
 
