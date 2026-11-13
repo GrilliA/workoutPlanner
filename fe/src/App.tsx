@@ -9,6 +9,7 @@ import SettingsPage from "@pages/settings";
 import OffersSettingsPage from "@pages/settings/offers";
 import CoachTodayPage from "@pages/coach/today";
 import CoachAnalyticsPage from "@pages/coach/analytics";
+import CoachBusinessPage from "@pages/coach/business";
 import CoachClientsPage from "@pages/coach/clients";
 import NewClientPage from "@pages/coach/clients/new";
 import ClientDetailPage from "@pages/coach/clients/detail";
@@ -42,6 +43,7 @@ function AppRoutes() {
                   <Redirect to="/today" replace />
                 </Route>
                 <Route path="/analytics" component={CoachAnalyticsPage} />
+                <Route path="/business" component={CoachBusinessPage} />
                 <Route path="/clients/new" component={NewClientPage} />
                 <Route
                   path="/clients/:athleteId/programs/:workoutId/edit"

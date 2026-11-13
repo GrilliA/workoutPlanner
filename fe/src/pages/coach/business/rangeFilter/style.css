@@ -1,0 +1,39 @@
+/* Segmented "Sole": pill bianca, periodo attivo = pill ink. */
+.business-range {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-1);
+  max-width: 18rem;
+  margin-bottom: var(--space-5);
+  padding: var(--space-1);
+  border-radius: var(--radius-full);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+
+  & .chip {
+    border: 0;
+    border-radius: var(--radius-full);
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-size: var(--text-sm);
+    font-weight: 700;
+    padding: var(--space-2-5) var(--space-2);
+    cursor: pointer;
+    transition: background var(--duration-fast), color var(--duration-fast);
+
+    &:hover {
+      background: var(--hover-bg);
+    }
+
+    &:focus-visible {
+      outline: var(--focus-ring-width) solid var(--accent-text);
+      outline-offset: var(--focus-ring-offset);
+    }
+
+    &.active {
+      color: var(--on-ink);
+      background: var(--ink);
+    }
+  }
+}

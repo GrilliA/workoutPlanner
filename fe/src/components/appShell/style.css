@@ -148,15 +148,17 @@
     bottom: 0;
     z-index: var(--z-nav);
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: var(--space-1);
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    /* Six items at 360px: no gap and a thin edge leave room for "Template" and "Business"
+       inside the active pill; the item padding keeps the pill around the label. */
+    gap: 0;
     box-sizing: border-box;
     width: 100%;
     max-width: 100%;
     padding-top: var(--space-2);
-    padding-right: calc(var(--space-3) + var(--safe-right));
+    padding-right: calc(var(--space-1) + var(--safe-right));
     padding-bottom: calc(var(--space-2) + var(--safe-bottom));
-    padding-left: calc(var(--space-3) + var(--safe-left));
+    padding-left: calc(var(--space-1) + var(--safe-left));
     background: var(--bottom-nav-bg);
     border-top: 1px solid var(--border);
     backdrop-filter: blur(var(--blur));
