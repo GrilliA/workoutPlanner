@@ -1,5 +1,5 @@
 {
-  "id": "cb3d7101-05cb-43f2-9ac2-5c6604e88b5c",
+  "id": "6579d7f0-7348-4a31-8e5a-be5d9af7386f",
   "prevId": "a56dc919-8aba-44a6-a297-0f0bbc687050",
   "version": "7",
   "dialect": "postgresql",
@@ -2024,6 +2024,14 @@
             "coach_id",
             "athlete_id"
           ]
+        },
+        "meal_plans_id_athlete": {
+          "name": "meal_plans_id_athlete",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "athlete_id"
+          ]
         }
       },
       "policies": {},
@@ -2288,32 +2296,6 @@
         }
       },
       "foreignKeys": {
-        "meal_logs_athlete_id_users_id_fk": {
-          "name": "meal_logs_athlete_id_users_id_fk",
-          "tableFrom": "meal_logs",
-          "tableTo": "users",
-          "columnsFrom": [
-            "athlete_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "meal_logs_meal_plan_id_meal_plans_id_fk": {
-          "name": "meal_logs_meal_plan_id_meal_plans_id_fk",
-          "tableFrom": "meal_logs",
-          "tableTo": "meal_plans",
-          "columnsFrom": [
-            "meal_plan_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
         "meal_logs_meal_id_meal_plan_meals_id_fk": {
           "name": "meal_logs_meal_id_meal_plan_meals_id_fk",
           "tableFrom": "meal_logs",
@@ -2325,6 +2307,21 @@
             "id"
           ],
           "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "meal_logs_meal_plan_id_athlete_id_fk": {
+          "name": "meal_logs_meal_plan_id_athlete_id_fk",
+          "tableFrom": "meal_logs",
+          "tableTo": "meal_plans",
+          "columnsFrom": [
+            "meal_plan_id",
+            "athlete_id"
+          ],
+          "columnsTo": [
+            "id",
+            "athlete_id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },

@@ -1,6 +1,7 @@
 import {
   check,
   date,
+  foreignKey,
   index,
   integer,
   pgTable,
@@ -12,7 +13,6 @@ import {
 import { sqlInList } from "../sqlinlist";
 import { mealPlanMeals } from "./mealplanmeals";
 import { mealPlans } from "./mealplans";
-import { users } from "./users";
 
 export const MEAL_LOG_STATUSES = ["done", "other"] as const;
 export type MealLogStatus = (typeof MEAL_LOG_STATUSES)[number];
@@ -25,12 +25,8 @@ export const mealLogs = pgTable(
   "meal_logs",
   {
     id: serial("id").primaryKey(),
-    athleteId: integer("athlete_id")
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
-    mealPlanId: integer("meal_plan_id")
-      .notNull()
-      .references(() => mealPlans.id, { onDelete: "cascade" }),
+    athleteId: integer("athlete_id").notNull(),
+    mealPlanId: integer("meal_plan_id").notNull(),
     mealId: integer("meal_id").references(() => mealPlanMeals.id, { onDelete: "set null" }),
     mealName: text("meal_name").notNull(),
     date: date("date").notNull(),
@@ -49,6 +45,13 @@ export const mealLogs = pgTable(
     index("meal_logs_meal_plan_id_date_idx").on(table.mealPlanId, table.date),
     // Removing a meal sets meal_id to NULL on its logs: without an index that is a full scan.
     index("meal_logs_meal_id_idx").on(table.mealId),
+    // One FK on the pair instead of two single ones: the log's athlete must be the plan's
+    // athlete. Deleting the plan (unlinking, or deleting the user) clears its logs.
+    foreignKey({
+      name: "meal_logs_meal_plan_id_athlete_id_fk",
+      columns: [table.mealPlanId, table.athleteId],
+      foreignColumns: [mealPlans.id, mealPlans.athleteId],
+    }).onDelete("cascade"),
     check("meal_logs_status_check", sqlInList(table.status, MEAL_LOG_STATUSES)),
   ],
 );

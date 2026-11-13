@@ -28,6 +28,8 @@ export const mealPlans = pgTable(
   },
   (table) => [
     unique("meal_plans_coach_athlete").on(table.coachId, table.athleteId),
+    // Target of the meal_logs composite FK: a log can only point at a plan of its own athlete.
+    unique("meal_plans_id_athlete").on(table.id, table.athleteId),
     // The unique pair leads with coach_id; the athlete home looks up by athlete alone.
     index("meal_plans_athlete_id_idx").on(table.athleteId),
     // Points at the link, not at users: unlinking clears the plan and, through it, the logs.
