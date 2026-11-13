@@ -13,9 +13,10 @@ Lessico: nelle copy sempre "Alimentazione" o "Pasti", mai "Dieta". Gli identific
 - Un atleta ha al massimo un coach (`unique(athlete_id)` su `coach_athletes`): un coach che chiede il cliente di un altro coach riceve 404 `"Client not found"`, senza sapere se l'atleta esiste.
 - Body che non è un oggetto JSON (assente, `null`, array, primitivo) → 400 `"Invalid request body"`. I campi sconosciuti vengono ignorati. Il JSON malformato è tradotto in 400 `"Invalid request body"` dall'error handler globale, come nelle altre route.
 - Errori: sempre `{ "error": string }` in inglese, con testo fisso (senza indici di array), così il pannello li traduce con una tabella; la copy italiana sta nel client.
-- **Ordine dei controlli**: id 400 → `Client not found` 404 → body / query 400 → risorsa 404 (`Meal plan not found`, `Meal not found`, `Meal item not found`).
+- **Ordine dei controlli**: (body troppo grande 413, vedi sotto) → id 400 → `Client not found` 404 → body / query 400 → risorsa 404 (`Meal plan not found`, `Meal not found`, `Meal item not found`).
+- **Body troppo grande → 413 `"Request body too large"`**. Il limite è quello predefinito del parser JSON globale (`express.json()` in `be/src/app.ts`): 100 kB, cioè 102 400 byte di body UTF-8. Il parser gira prima di autenticazione e route, quindi il 413 arriva prima di ogni altro controllo (anche prima di 401 / 400 / 404); il testo viene da `CLIENT_ERROR_MESSAGES` in `be/src/middleware/errorResponse.ts`, sempre come `{ "error": string }`. Nulla viene salvato. Capita solo con il PUT del piano vicino ai tetti e con testo non ASCII: un piano con tutti i tetti pieni pesa circa 82 kB in ASCII e circa 155 kB con lettere accentate o emoji (ogni unità UTF-16 di questi caratteri costa 2 byte in UTF-8), quindi i tetti della tabella **Limiti** da soli non garantiscono di stare sotto il limite. Il pannello: non ritenta lo stesso body, tiene le modifiche locali e mostra un messaggio del tipo "Il piano è troppo lungo: accorcia note o voci e salva di nuovo". Il limite globale non cambia in AL2 (vale per tutte le route sotto `/api`, tranne `/api/waitlist` che ha un proprio parser da 2 kB).
 - Mai 500 per input: ogni valore che arriva al DB è già validato (id, lunghezze, formato dell'ora, date). Il testo con il carattere U+0000 è rifiutato (Postgres lo rifiuta con un 500): `"<campo> must not contain a NUL character"`.
-- **Testi**: si tolgono gli spazi iniziali e finali; un testo facoltativo vuoto dopo il taglio diventa `null`. Le lunghezze si contano dopo il taglio.
+- **Testi**: si tolgono gli spazi iniziali e finali; un testo facoltativo vuoto dopo il taglio diventa `null`. Le lunghezze si contano dopo il taglio, in **unità UTF-16** (`String.length` di JavaScript, come nel pannello): una lettera accentata vale 1, la maggior parte delle emoji vale 2. Un contatore del pannello che conta i caratteri visibili (grafemi) sottostima la lunghezza.
 - **Date**: stringhe `YYYY-MM-DD` di calendario valide tra `2000-01-01` e `2099-12-31`; "oggi" è `todayInRome()`.
 - **Additivo**: nessuna route esistente cambia forma in AL2. `GET /athlete/home` cambia (in modo additivo) solo in AL4.
 
@@ -90,7 +91,7 @@ Le colonne interne (`coach_id`, `meal_plan_id`, `created_at` dei pasti e dei log
 
 ## Limiti
 
-Tetti di sicurezza, non regole di prodotto (confermati dall'utente). Costanti in `mealPlanValidation.ts`.
+Tetti di sicurezza, non regole di prodotto (confermati dall'utente). Costanti in `mealPlanValidation.ts`; quella della nota di una registrazione (`MAX_MEAL_LOG_NOTE_LENGTH`) è già lì ma viene usata solo da AL4. Le lunghezze sono in unità UTF-16 (vedi **Testi**).
 
 | Limite | Valore | Errore 400 |
 | --- | --- | --- |
@@ -136,12 +137,12 @@ type MealPlanInput = {
 Regole:
 - **Primo PUT** (nessun piano per la coppia): crea il piano **attivo** → 201 `MealPlan`. In questo caso nessun `id` è ammesso (non esiste un pasto da aggiornare): un `id` → 404 `"Meal not found"`.
 - **PUT successivi**: aggiornano → 200 `MealPlan`. `isActive` non cambia (si cambia solo con PATCH).
-- Un `id` di pasto presente aggiorna quel pasto (nome, ora, note, posizione); deve essere un pasto **di questo piano**, altrimenti 404 `"Meal not found"`.
+- Un `id` di pasto presente aggiorna quel pasto (nome, ora, note, posizione); deve essere un pasto **di questo piano**, altrimenti 404 `"Meal not found"`. Rinominare un pasto tenendo il suo `id` mantiene le registrazioni dell'atleta su quel pasto (restano collegate per `mealId`; il loro `mealName` resta il nome copiato al momento della registrazione). Per "ricominciare da zero" un pasto il pannello lo invia senza `id`.
 - Un `id` di voce presente aggiorna quella voce; deve essere una voce **del pasto con cui viene inviata** (stesso piano, stesso pasto), altrimenti 404 `"Meal item not found"`. Una voce non si sposta da un pasto all'altro tenendo l'id: si toglie da uno e si crea nell'altro. Dentro un pasto nuovo (senza `id`) le voci non possono avere `id`.
 - Un pasto o una voce esistente il cui `id` non viene inviato è **rimosso**. Le registrazioni dell'atleta per un pasto rimosso restano, con `mealId: null` e il `mealName` copiato al momento della registrazione (FK `on delete set null`).
 - Lo stesso `id` ripetuto nel body → 400 `"Duplicate meal id"` / `"Duplicate meal item id"`.
 - Nessuna riga di un altro piano viene mai letta o scritta: gli `id` sono controllati sulle righe del piano della coppia, letto dentro la transazione, e ogni `UPDATE` / `DELETE` filtra anche per piano (o pasto).
-- Tutta la scrittura avviene in una transazione: il collegamento `coach_athletes` della coppia si legge `FOR SHARE` (manca → 404 `"Client not found"`), poi il piano `FOR UPDATE`. Due primi PUT concorrenti: il secondo trova la unique `(coach_id, athlete_id)` → 409 `"Meal plan already exists"`; il client rilegge il piano.
+- Tutta la scrittura avviene in una transazione: il collegamento `coach_athletes` della coppia si legge `FOR SHARE` (manca → 404 `"Client not found"`), poi il piano `FOR UPDATE`. Primi PUT concorrenti: uno solo crea il piano (201); un PUT che inserisce mentre il primo è ancora in corso trova la unique `(coach_id, athlete_id)` → 409 `"Meal plan already exists"`, uno che arriva dopo il commit del primo lo aggiorna (200). Un PUT in corsa con lo scollegamento del cliente risponde come se fosse arrivato prima (201 / 200, poi la cascata cancella il piano) o dopo (404 `"Client not found"`): in nessun caso resta un piano per un ex cliente.
 
 Errori di validazione (400), in quest'ordine di campo:
 - `"Invalid request body"` (body non oggetto).
@@ -152,7 +153,9 @@ Errori di validazione (400), in quest'ordine di campo:
 - i campi di testo con U+0000: `"<campo> must not contain a NUL character"` con lo stesso nome di campo (`meals.name`, `meals.items.food`, …).
 - `"Duplicate meal id"`, `"Duplicate meal item id"`.
 
-Poi: 404 `"Meal not found"`, 404 `"Meal item not found"`, 409 `"Meal plan already exists"`.
+Poi: 404 `"Meal not found"`, 404 `"Meal item not found"`, 409 `"Meal plan already exists"`. Prima di tutti, 413 `"Request body too large"` (vedi **Regole comuni**).
+
+**Dopo un 404 o un 409 sul PUT il pannello ricarica il piano** (`GET`) prima di permettere un nuovo salvataggio. Il caso tipico sono due schede aperte dello stesso coach: la scheda A toglie un pasto, la scheda B salva ancora il suo `id` e riceve 404 `"Meal not found"` / `"Meal item not found"`; oppure entrambe fanno il primo PUT e una riceve 409. Ritentare lo stesso body darebbe lo stesso errore. Vale anche per 404 `"Client not found"` (cliente scollegato nel frattempo): lì il pannello torna alla lista clienti.
 
 ### PATCH `/coach/clients/:athleteId/meal-plan`
 
