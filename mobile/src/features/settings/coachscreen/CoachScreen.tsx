@@ -58,6 +58,17 @@ export function CoachScreen() {
     };
   }, []);
 
+  // La risposta del collegamento contiene solo il coach: lo stato coaching arriva da GET /athlete/coach.
+  const reloadCoach = async () => {
+    try {
+      const response = await getAthleteCoach();
+      setCoach(response.coach);
+      setCoaching(response.coaching);
+    } catch {
+      // Il collegamento è già riuscito: la riga di stato comparirà alla prossima apertura.
+    }
+  };
+
   const onLink = async () => {
     setIsBusy(true);
     setError(null);
@@ -68,6 +79,7 @@ export function CoachScreen() {
       setCoach(response.coach);
       setInviteCode("");
       setMessage("Coach collegato");
+      await reloadCoach();
     } catch (err) {
       setError(ApiError.messageFrom(err, "Codice non valido"));
     } finally {
