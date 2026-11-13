@@ -5,6 +5,7 @@ import {
   buildCollectedChart,
   buildLostSummary,
   buildRenewalsSummary,
+  formatCompactEuros,
   formatLongMonth,
   formatShortMonth,
   mapCoachBusiness,
@@ -46,6 +47,17 @@ describe("month labels", () => {
   });
 });
 
+describe("formatCompactEuros", () => {
+  it("whole euros under 1000, thousands with one decimal and k", () => {
+    assert.equal(formatCompactEuros(0), `0${NBSP}€`);
+    assert.equal(formatCompactEuros(8050), `81${NBSP}€`);
+    assert.equal(formatCompactEuros(99949), `999${NBSP}€`);
+    assert.equal(formatCompactEuros(120000), `1,2k${NBSP}€`);
+    assert.equal(formatCompactEuros(1250000), `12,5k${NBSP}€`);
+    assert.equal(formatCompactEuros(1000000), `10k${NBSP}€`);
+  });
+});
+
 describe("buildCollectedChart", () => {
   it("heights against the best month, the current month marked, a zero month flat", () => {
     const chart = buildCollectedChart(business);
@@ -58,6 +70,8 @@ describe("buildCollectedChart", () => {
       [false, false, false, false, false, true],
     );
     assert.equal(chart.bars[5]?.accessibilityLabel, `novembre 2026: 80,50${NBSP}€`);
+    assert.equal(chart.bars[5]?.compactAmount, `81${NBSP}€`);
+    assert.equal(chart.bars[5]?.amount, `80,50${NBSP}€`);
     assert.equal(chart.summary, `360,50${NBSP}€ incassati negli ultimi 6 mesi.`);
   });
 

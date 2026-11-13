@@ -16,6 +16,10 @@ export type CollectedBar = {
   isCurrentMonth: boolean;
   /** Month and amount for screen readers and the tooltip. */
   accessibilityLabel: string;
+  /** Whole euros above the bar: "345 €", "1,2k €". */
+  compactAmount: string;
+  /** Exact amount for the list under the chart on narrow screens: "345,50 €". */
+  amount: string;
 };
 
 export type CollectedChartModel = {

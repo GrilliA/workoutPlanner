@@ -38,6 +38,22 @@ export const formatShortMonth = (month: string): string =>
 /** "2026-06" → "giugno 2026". */
 export const formatLongMonth = (month: string): string => longMonthFormat.format(firstDayOf(month));
 
+const NBSP = "\u00a0";
+const CENTS_PER_EURO = 100;
+const EUROS_PER_THOUSAND = 1000;
+const thousandsFormat = new Intl.NumberFormat("it-IT", { maximumFractionDigits: 1 });
+
+/** Whole euros, thousands as "k": 34550 → "346 €", 123000 → "1,2k €". Fits above a bar. */
+export const formatCompactEuros = (cents: number): string => {
+  const euros = Math.round(cents / CENTS_PER_EURO);
+
+  if (euros < EUROS_PER_THOUSAND) {
+    return `${euros}${NBSP}€`;
+  }
+
+  return `${thousandsFormat.format(euros / EUROS_PER_THOUSAND)}k${NBSP}€`;
+};
+
 const clientsLabel = (count: number): string => (count === 1 ? "1 cliente" : `${count} clienti`);
 
 export const buildCollectedChart = (business: CoachBusiness): CollectedChartModel => {
@@ -52,6 +68,8 @@ export const buildCollectedChart = (business: CoachBusiness): CollectedChartMode
       heightRatio,
       isCurrentMonth: entry.month === currentMonth,
       accessibilityLabel: `${formatLongMonth(entry.month)}: ${formatEuros(entry.amountCents)}`,
+      compactAmount: formatCompactEuros(entry.amountCents),
+      amount: formatEuros(entry.amountCents),
     };
   });
 

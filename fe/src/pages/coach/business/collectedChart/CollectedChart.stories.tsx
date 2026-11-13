@@ -12,6 +12,8 @@ const barsOf = (count: number): CollectedBar[] =>
     heightRatio: SHAPES[index] ?? 0,
     isCurrentMonth: index === count - 1,
     accessibilityLabel: `${label} [anno]: [importo]`,
+    compactAmount: "[€]",
+    amount: "[importo]",
   }));
 
 const meta = {
