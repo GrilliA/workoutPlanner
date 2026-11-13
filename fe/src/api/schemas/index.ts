@@ -136,3 +136,9 @@ export {
   type CoachAthleteAnalytics,
   type AthleteAnalytics,
 } from "./coachAnalytics";
+export {
+  businessRangeSchema,
+  coachBusinessSchema,
+  type BusinessRange,
+  type CoachBusiness,
+} from "./business";
