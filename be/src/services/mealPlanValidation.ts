@@ -14,6 +14,8 @@ const MAX_FOOD_LENGTH = 120;
 const MAX_QUANTITY_LENGTH = 60;
 const MAX_MEAL_PLAN_NOTES_LENGTH = 1000;
 const MAX_MEAL_NOTES_LENGTH = 500;
+// The athlete's note on a meal log: checked by the AL4 log body, written here with the other caps.
+const MAX_MEAL_LOG_NOTE_LENGTH = 280;
 const MAX_MEAL_LOG_RANGE_DAYS = 31;
 const TIME_OF_DAY_PATTERN = /^([01][0-9]|2[0-3]):[0-5][0-9]$/;
 
