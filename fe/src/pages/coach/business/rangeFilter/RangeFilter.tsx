@@ -9,7 +9,7 @@ type RangeFilterProps = {
 
 export function RangeFilter({ value, onChange }: RangeFilterProps) {
   return (
-    <div className="business-range" role="tablist" aria-label="Periodo">
+    <div className="business-range" role="group" aria-label="Periodo">
       {BUSINESS_RANGE_OPTIONS.map((option) => {
         const isSelected = option.range === value;
 
@@ -17,8 +17,7 @@ export function RangeFilter({ value, onChange }: RangeFilterProps) {
           <button
             key={option.range}
             type="button"
-            role="tab"
-            aria-selected={isSelected}
+            aria-pressed={isSelected}
             className={isSelected ? "chip active" : "chip"}
             onClick={() => onChange(option.range)}
           >
