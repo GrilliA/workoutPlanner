@@ -6,6 +6,7 @@ import {
   linkAthleteCoach,
   unlinkAthleteCoach,
   type AthleteCoach,
+  type AthleteCoaching,
 } from "../../../api";
 import { ApiError } from "../../../api/client";
 import {
@@ -19,11 +20,13 @@ import {
   PrimaryButton,
 } from "../../../components";
 import { colors, radii, shadows, spacing } from "../../../theme";
+import { CoachingStatusRow } from "../../home/coachingstatus";
 import { SettingsSubscreen } from "../subscreen";
 
 /** Account › Coach: collega con il codice invito o rimuovi il coach. */
 export function CoachScreen() {
   const [coach, setCoach] = useState<AthleteCoach | null>(null);
+  const [coaching, setCoaching] = useState<AthleteCoaching | null>(null);
   const [loading, setLoading] = useState(true);
   const [inviteCode, setInviteCode] = useState("");
   const [isBusy, setIsBusy] = useState(false);
@@ -37,6 +40,7 @@ export function CoachScreen() {
       .then((response) => {
         if (!cancelled) {
           setCoach(response.coach);
+          setCoaching(response.coaching);
         }
       })
       .catch((err: unknown) => {
@@ -54,6 +58,17 @@ export function CoachScreen() {
     };
   }, []);
 
+  // La risposta del collegamento contiene solo il coach: lo stato coaching arriva da GET /athlete/coach.
+  const reloadCoach = async () => {
+    try {
+      const response = await getAthleteCoach();
+      setCoach(response.coach);
+      setCoaching(response.coaching);
+    } catch {
+      // Il collegamento è già riuscito: la riga di stato comparirà alla prossima apertura.
+    }
+  };
+
   const onLink = async () => {
     setIsBusy(true);
     setError(null);
@@ -64,6 +79,7 @@ export function CoachScreen() {
       setCoach(response.coach);
       setInviteCode("");
       setMessage("Coach collegato");
+      await reloadCoach();
     } catch (err) {
       setError(ApiError.messageFrom(err, "Codice non valido"));
     } finally {
@@ -79,6 +95,7 @@ export function CoachScreen() {
       await unlinkAthleteCoach();
       clearApiCache();
       setCoach(null);
+      setCoaching(null);
       setIsConfirmingUnlink(false);
       setMessage("Coach rimosso");
     } catch (err) {
@@ -108,6 +125,9 @@ export function CoachScreen() {
             {coach.name?.trim() || coach.email}
           </AppText>
           {coach.name ? <Meta>{coach.email}</Meta> : null}
+          <View style={styles.coachingStatus}>
+            <CoachingStatusRow coaching={coaching} />
+          </View>
         </View>
       ) : (
         <>
@@ -164,6 +184,9 @@ const styles = StyleSheet.create({
     fontSize: 22,
     lineHeight: 28,
     fontWeight: "800",
+  },
+  coachingStatus: {
+    marginTop: spacing.sm,
   },
   confirm: {
     gap: spacing.xs,

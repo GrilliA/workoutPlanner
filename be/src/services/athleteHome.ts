@@ -1,6 +1,7 @@
 import { and, desc, eq, gte, inArray, isNotNull } from "drizzle-orm";
 import { db } from "../db";
 import { loggedSets, workoutDays, workoutSessions, workouts } from "../db/schema";
+import { athleteCoachingFrom, type AthleteCoaching } from "./athleteCoaching";
 import { getActiveAssignmentForAthlete } from "./coachDashboard";
 import { getAthleteCoach } from "./coachInvite";
 import {
@@ -9,6 +10,7 @@ import {
   groupLoggedSetsBySession,
   isWithinRollingWindow,
 } from "./stats";
+import { loadSubscriptionDetail } from "./subscriptionAccess";
 import {
   listEnrichedWorkoutDays,
   resolveWorkoutDayForDate,
@@ -78,6 +80,7 @@ export type AthleteHomeInput = {
   daysByWorkout: { workoutId: number; days: AthleteHomeDay[] }[];
   schedules: AthleteHomeSchedule[];
   completedSessions: AthleteHomeSession[];
+  coaching: AthleteCoaching | null;
 };
 
 export type AthleteHome = {
@@ -110,6 +113,7 @@ export type AthleteHome = {
     volumeKg: number;
   } | null;
   hasUnseenAssignment: boolean;
+  coaching: AthleteCoaching | null;
 };
 
 export const selectHomePrograms = <T extends AthleteHomeWorkout>(
@@ -234,7 +238,26 @@ export const buildAthleteHome = (input: AthleteHomeInput): AthleteHome => {
         }
       : null,
     hasUnseenAssignment: input.activeAssignment !== null && input.activeAssignment.seenAt === null,
+    coaching: input.coaching,
   };
+};
+
+/**
+ * Only the subscription of the pair (current coach, athlete): `client_subscriptions` is unique
+ * per pair, so an ex coach may still hold a row for this athlete. The coach route reads the
+ * same detail, so both see the same state on the same day.
+ */
+export const loadAthleteCoaching = async (
+  athleteId: number,
+  coach: { coachId: number; name: string | null } | null,
+  todayKey: string,
+): Promise<AthleteCoaching | null> => {
+  if (coach === null) {
+    return null;
+  }
+
+  const detail = await loadSubscriptionDetail(coach.coachId, athleteId, todayKey, false);
+  return athleteCoachingFrom(coach, detail);
 };
 
 const loadRecentCompletedSessions = async (
@@ -328,7 +351,7 @@ export const loadAthleteHome = async (
     userId,
   );
 
-  const [daysByWorkout, schedules] = await Promise.all([
+  const [daysByWorkout, schedules, coaching] = await Promise.all([
     Promise.all(
       programs.map(async (program) => ({
         workoutId: program.id,
@@ -346,6 +369,7 @@ export const loadAthleteHome = async (
         return { workoutId: program.id, today, week, nextDays };
       }),
     ),
+    loadAthleteCoaching(userId, coach, todayKey),
   ]);
 
   return buildAthleteHome({
@@ -359,5 +383,6 @@ export const loadAthleteHome = async (
     daysByWorkout,
     schedules,
     completedSessions,
+    coaching,
   });
 };
