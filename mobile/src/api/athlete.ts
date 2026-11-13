@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { apiRequest } from "./client";
 import { CACHE_SHORT } from "./responseCache";
-import { athleteHomeSchema } from "./schemas/athletehome";
+import { athleteHomeSchema, optionalAthleteCoachingSchema } from "./schemas/athletehome";
 
 export const athleteCoachSchema = z.object({
   coachId: z.number(),
@@ -12,6 +12,7 @@ export const athleteCoachSchema = z.object({
 
 export const athleteCoachResponseSchema = z.object({
   coach: athleteCoachSchema.nullable(),
+  coaching: optionalAthleteCoachingSchema,
 });
 
 export type AthleteCoach = z.infer<typeof athleteCoachSchema>;

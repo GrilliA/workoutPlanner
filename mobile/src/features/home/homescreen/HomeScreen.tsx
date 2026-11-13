@@ -26,6 +26,7 @@ import { colors, radii, spacing } from "../../../theme";
 import { formatInitials } from "../../../utils/initials";
 import { toRomeDateKey } from "../../../utils/romeCalendar";
 import { ChangeWorkoutSheet } from "../changeworkoutsheet";
+import { CoachingStatusRow } from "../coachingstatus";
 import {
   formatGreeting,
   formatLastSession,
@@ -169,6 +170,7 @@ export function HomeScreen({ offlineSessionBanner }: HomeScreenProps) {
         {error ? <ErrorBanner message={error} onRetry={retry} /> : null}
         {startError ? <ErrorBanner message={startError} /> : null}
         {offlineSessionBanner}
+        <CoachingStatusRow coaching={home?.coaching} />
 
         {home ? (
           <HomeBody

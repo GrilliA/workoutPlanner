@@ -118,4 +118,9 @@ export {
   type CatalogFacets,
   type CatalogSearchParams,
 } from "./catalog";
-export { athleteHomeSchema, type AthleteHome } from "./athletehome";
+export {
+  athleteHomeSchema,
+  type AthleteHome,
+  type AthleteCoaching,
+  type AthleteCoachingStatus,
+} from "./athletehome";

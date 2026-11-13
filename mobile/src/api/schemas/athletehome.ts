@@ -1,6 +1,20 @@
 import { z } from "zod";
 import { weekdaySchema } from "./workoutday";
 
+const athleteCoachingSchema = z.object({
+  coachName: z.string().nullable(),
+  status: z.enum(["active", "expiring", "expired", "paused", "ended"]),
+  paidThrough: z.string(),
+  daysLeft: z.number(),
+  pausedUntil: z.string().nullable(),
+});
+
+/**
+ * Uno stato nuovo del backend, un campo malformato o assente (backend prima di R6)
+ * diventa null: la riga di stato sparisce, il resto della Home si carica.
+ */
+export const optionalAthleteCoachingSchema = athleteCoachingSchema.nullable().catch(null);
+
 export const athleteHomeSchema = z.object({
   noProgramReason: z
     .enum(["no-coach", "coach-pending", "coach-program-inactive"])
@@ -53,6 +67,9 @@ export const athleteHomeSchema = z.object({
     })
     .nullable(),
   hasUnseenAssignment: z.boolean(),
+  coaching: optionalAthleteCoachingSchema,
 });
 
 export type AthleteHome = z.infer<typeof athleteHomeSchema>;
+export type AthleteCoaching = z.infer<typeof athleteCoachingSchema>;
+export type AthleteCoachingStatus = AthleteCoaching["status"];
