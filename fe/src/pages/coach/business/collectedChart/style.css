@@ -1,0 +1,53 @@
+.business-chart {
+  margin-bottom: var(--space-6);
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+
+  & h2 {
+    margin: 0 0 var(--space-3);
+    font-size: var(--text-lg);
+    font-weight: 800;
+    color: var(--text-h);
+  }
+
+  & .plot {
+    display: block;
+    width: 100%;
+    height: 10rem;
+  }
+
+  /* Dati in indaco, mese in corso in arancio. */
+  & .bar {
+    fill: var(--data);
+  }
+
+  & .bar.current {
+    fill: var(--accent);
+  }
+
+  & .months {
+    display: grid;
+    margin: var(--space-1) 0 0;
+    padding: 0;
+    list-style: none;
+
+    & li {
+      text-align: center;
+      font-size: var(--text-xs);
+      color: var(--text);
+    }
+
+    & li.current {
+      font-weight: 800;
+      color: var(--text-h);
+    }
+  }
+
+  & .summary {
+    margin: var(--space-3) 0 0;
+    font-size: var(--text-sm);
+    color: var(--text);
+  }
+}

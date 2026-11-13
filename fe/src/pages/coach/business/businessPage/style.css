@@ -1,0 +1,17 @@
+/* Rinnovi e persi uno sotto l'altro, affiancati quando la pagina è larga. */
+.business-page {
+  & .cards {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-3);
+    align-items: start;
+  }
+}
+
+@container page (width >= 48rem) {
+  .business-page {
+    & .cards {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+}
