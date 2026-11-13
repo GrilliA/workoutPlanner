@@ -126,44 +126,83 @@ describe("isLoggableDate", () => {
 });
 
 describe("dailyAdherence", () => {
+  const mealIds = meals.map((meal) => meal.id);
+
   it("returns one row per day with zero counts when nothing is logged", () => {
-    const days = dailyAdherence({ from: "2026-11-11", to: "2026-11-13", mealCount: 4, logs: [] });
+    const days = dailyAdherence({ from: "2026-11-11", to: "2026-11-13", mealIds, logs: [] });
 
     assert.deepEqual(days, [
-      { date: "2026-11-11", mealCount: 4, doneCount: 0, otherCount: 0 },
-      { date: "2026-11-12", mealCount: 4, doneCount: 0, otherCount: 0 },
-      { date: "2026-11-13", mealCount: 4, doneCount: 0, otherCount: 0 },
+      { date: "2026-11-11", mealCount: 4, doneCount: 0, otherCount: 0, removedCount: 0 },
+      { date: "2026-11-12", mealCount: 4, doneCount: 0, otherCount: 0, removedCount: 0 },
+      { date: "2026-11-13", mealCount: 4, doneCount: 0, otherCount: 0, removedCount: 0 },
     ]);
   });
 
   it("counts done and other on their own day", () => {
     const logs = [
-      { date: "2026-11-12", status: "done" as const },
-      { date: "2026-11-12", status: "other" as const },
-      { date: "2026-11-13", status: "done" as const },
-      { date: "2026-11-13", status: "done" as const },
-      { date: "2026-11-13", status: "done" as const },
-      { date: "2026-11-13", status: "done" as const },
+      { mealId: breakfast.id, date: "2026-11-12", status: "done" as const },
+      { mealId: lunch.id, date: "2026-11-12", status: "other" as const },
+      ...meals.map((meal) => ({ mealId: meal.id, date: "2026-11-13", status: "done" as const })),
     ];
 
-    const days = dailyAdherence({ from: "2026-11-12", to: "2026-11-13", mealCount: 4, logs });
+    const days = dailyAdherence({ from: "2026-11-12", to: "2026-11-13", mealIds, logs });
 
     assert.deepEqual(days, [
-      { date: "2026-11-12", mealCount: 4, doneCount: 1, otherCount: 1 },
-      { date: "2026-11-13", mealCount: 4, doneCount: 4, otherCount: 0 },
+      { date: "2026-11-12", mealCount: 4, doneCount: 1, otherCount: 1, removedCount: 0 },
+      { date: "2026-11-13", mealCount: 4, doneCount: 4, otherCount: 0, removedCount: 0 },
     ]);
   });
 
+  it("never goes past the plan when the coach swaps meals after they were logged", () => {
+    // Four meals logged, then the coach removes two (their logs lose meal_id) and adds two
+    // the athlete logs as well: six logs for a plan of four meals.
+    const brunch = { id: 21, position: 4 };
+    const supper = { id: 22, position: 5 };
+    const mealIdsNow = [breakfast.id, lunch.id, brunch.id, supper.id];
+    const logs = [
+      { mealId: breakfast.id, date: day, status: "done" as const },
+      { mealId: lunch.id, date: day, status: "done" as const },
+      { mealId: null, date: day, status: "done" as const },
+      { mealId: null, date: day, status: "done" as const },
+      { mealId: brunch.id, date: day, status: "done" as const },
+      { mealId: supper.id, date: day, status: "other" as const },
+    ];
+
+    const [today] = dailyAdherence({ from: day, to: day, mealIds: mealIdsNow, logs });
+
+    assert.deepEqual(today, { date: day, mealCount: 4, doneCount: 3, otherCount: 1, removedCount: 2 });
+  });
+
+  it("counts a log whose meal is not in the plan as removed", () => {
+    const logs = [{ mealId: 999, date: day, status: "other" as const }];
+
+    const [today] = dailyAdherence({ from: day, to: day, mealIds, logs });
+
+    assert.deepEqual(today, { date: day, mealCount: 4, doneCount: 0, otherCount: 0, removedCount: 1 });
+  });
+
+  it("counts a meal once even if the same meal arrives twice", () => {
+    const logs = [
+      { mealId: breakfast.id, date: day, status: "done" as const },
+      { mealId: breakfast.id, date: day, status: "other" as const },
+    ];
+
+    const [today] = dailyAdherence({ from: day, to: day, mealIds, logs });
+
+    assert.equal(today?.doneCount, 1);
+    assert.equal(today?.otherCount, 0);
+  });
+
   it("ignores logs outside the range", () => {
-    const logs = [{ date: "2026-11-10", status: "done" as const }];
+    const logs = [{ mealId: breakfast.id, date: "2026-11-10", status: "done" as const }];
 
-    const days = dailyAdherence({ from: "2026-11-13", to: "2026-11-13", mealCount: 3, logs });
+    const days = dailyAdherence({ from: day, to: day, mealIds, logs });
 
-    assert.deepEqual(days, [{ date: "2026-11-13", mealCount: 3, doneCount: 0, otherCount: 0 }]);
+    assert.deepEqual(days, [{ date: day, mealCount: 4, doneCount: 0, otherCount: 0, removedCount: 0 }]);
   });
 
   it("walks across the change of hour without skipping or repeating a day", () => {
-    const days = dailyAdherence({ from: "2026-10-24", to: "2026-10-26", mealCount: 1, logs: [] });
+    const days = dailyAdherence({ from: "2026-10-24", to: "2026-10-26", mealIds, logs: [] });
 
     assert.deepEqual(
       days.map((row) => row.date),
@@ -172,6 +211,6 @@ describe("dailyAdherence", () => {
   });
 
   it("is empty when the range is inverted", () => {
-    assert.deepEqual(dailyAdherence({ from: "2026-11-13", to: "2026-11-12", mealCount: 4, logs: [] }), []);
+    assert.deepEqual(dailyAdherence({ from: "2026-11-13", to: "2026-11-12", mealIds, logs: [] }), []);
   });
 });
