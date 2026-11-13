@@ -1,5 +1,5 @@
 {
-  "id": "289f3650-2f47-47bb-a71f-7be69d1e927e",
+  "id": "cb3d7101-05cb-43f2-9ac2-5c6604e88b5c",
   "prevId": "a56dc919-8aba-44a6-a297-0f0bbc687050",
   "version": "7",
   "dialect": "postgresql",
@@ -2249,7 +2249,44 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "meal_logs_meal_plan_id_date_idx": {
+          "name": "meal_logs_meal_plan_id_date_idx",
+          "columns": [
+            {
+              "expression": "meal_plan_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "date",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "meal_logs_meal_id_idx": {
+          "name": "meal_logs_meal_id_idx",
+          "columns": [
+            {
+              "expression": "meal_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "meal_logs_athlete_id_users_id_fk": {
           "name": "meal_logs_athlete_id_users_id_fk",
@@ -2293,13 +2330,13 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "meal_logs_athlete_meal_date": {
-          "name": "meal_logs_athlete_meal_date",
+        "meal_logs_athlete_date_meal": {
+          "name": "meal_logs_athlete_date_meal",
           "nullsNotDistinct": false,
           "columns": [
             "athlete_id",
-            "meal_id",
-            "date"
+            "date",
+            "meal_id"
           ]
         }
       },

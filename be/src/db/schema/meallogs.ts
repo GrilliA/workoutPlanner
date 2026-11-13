@@ -1,6 +1,7 @@
 import {
   check,
   date,
+  index,
   integer,
   pgTable,
   serial,
@@ -40,7 +41,14 @@ export const mealLogs = pgTable(
   },
   (table) => [
     // One log per meal and day, so writing the same log twice updates the row.
-    unique("meal_logs_athlete_meal_date").on(table.athleteId, table.mealId, table.date),
+    // A removed meal leaves its logs with meal_id NULL: NULLs are distinct here on purpose,
+    // so those orphan logs never clash with each other. Do not add NULLS NOT DISTINCT.
+    // Leads with (athlete_id, date): the athlete's day and range reads use that prefix.
+    unique("meal_logs_athlete_date_meal").on(table.athleteId, table.date, table.mealId),
+    // The coach reads a plan's logs by day range.
+    index("meal_logs_meal_plan_id_date_idx").on(table.mealPlanId, table.date),
+    // Removing a meal sets meal_id to NULL on its logs: without an index that is a full scan.
+    index("meal_logs_meal_id_idx").on(table.mealId),
     check("meal_logs_status_check", sqlInList(table.status, MEAL_LOG_STATUSES)),
   ],
 );
