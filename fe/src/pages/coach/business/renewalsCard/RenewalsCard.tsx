@@ -11,7 +11,10 @@ export function RenewalsCard({ summary }: RenewalsCardProps) {
       <h2 id="business-renewals-title">Rinnovi</h2>
       {summary.value === null ? null : <p className="value">{summary.value}</p>}
       <p className="hint">{summary.hint}</p>
-      <p className="note">Una scadenza conta come rinnovata quando segni il pagamento del periodo dopo.</p>
+      <p className="note">
+        Conta ogni cliente una volta: ha rinnovato se hai segnato un rinnovo negli ultimi 90 giorni e
+        oggi non è scaduto.
+      </p>
     </section>
   );
 }

@@ -65,15 +65,27 @@ export const buildCollectedChart = (business: CoachBusiness): CollectedChartMode
   };
 };
 
+const renewedClientsLabel = (renewed: number, due: number): string => {
+  if (renewed === 0) {
+    return `Nessun cliente su ${due} ha rinnovato`;
+  }
+
+  if (renewed === 1) {
+    return `1 cliente su ${due} ha rinnovato`;
+  }
+
+  return `${renewed} clienti su ${due} hanno rinnovato`;
+};
+
 export const buildRenewalsSummary = (renewals: CoachBusiness["renewals90Days"]): RenewalsSummary => {
   if (renewals.due === 0) {
-    return { value: null, hint: "Nessuna scadenza negli ultimi 90 giorni." };
+    return { value: null, hint: "Nessun cliente con una scadenza negli ultimi 90 giorni." };
   }
 
   const percent = Math.round((renewals.renewed / renewals.due) * 100);
   return {
-    value: `${renewals.renewed} su ${renewals.due}`,
-    hint: `${percent}% delle scadenze pagate negli ultimi 90 giorni`,
+    value: `${percent}%`,
+    hint: `${renewedClientsLabel(renewals.renewed, renewals.due)} negli ultimi 90 giorni`,
   };
 };
 

@@ -7,8 +7,8 @@ const meta = {
   tags: ["autodocs"],
   args: {
     summary: {
-      value: "[n] su [n]",
-      hint: "[percentuale] delle scadenze pagate negli ultimi 90 giorni",
+      value: "[percentuale]",
+      hint: "[n] clienti su [n] hanno rinnovato negli ultimi 90 giorni",
     },
   },
   decorators: [
@@ -28,6 +28,6 @@ export const Default: Story = {};
 
 export const NessunaScadenza: Story = {
   args: {
-    summary: { value: null, hint: "Nessuna scadenza negli ultimi 90 giorni." },
+    summary: { value: null, hint: "Nessun cliente con una scadenza negli ultimi 90 giorni." },
   },
 };

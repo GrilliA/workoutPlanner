@@ -70,17 +70,25 @@ describe("buildCollectedChart", () => {
 });
 
 describe("buildRenewalsSummary", () => {
-  it("renewed on due, with the rounded percentage", () => {
+  it("clients renewed on clients due, with the rounded percentage", () => {
     assert.deepEqual(buildRenewalsSummary({ due: 3, renewed: 2 }), {
-      value: "2 su 3",
-      hint: "67% delle scadenze pagate negli ultimi 90 giorni",
+      value: "67%",
+      hint: "2 clienti su 3 hanno rinnovato negli ultimi 90 giorni",
     });
   });
 
-  it("no due dates: no percentage", () => {
+  it("one client is singular; none says nobody", () => {
+    assert.equal(buildRenewalsSummary({ due: 2, renewed: 1 }).hint, "1 cliente su 2 ha rinnovato negli ultimi 90 giorni");
+    assert.deepEqual(buildRenewalsSummary({ due: 2, renewed: 0 }), {
+      value: "0%",
+      hint: "Nessun cliente su 2 ha rinnovato negli ultimi 90 giorni",
+    });
+  });
+
+  it("no clients due: no percentage", () => {
     assert.deepEqual(buildRenewalsSummary({ due: 0, renewed: 0 }), {
       value: null,
-      hint: "Nessuna scadenza negli ultimi 90 giorni.",
+      hint: "Nessun cliente con una scadenza negli ultimi 90 giorni.",
     });
   });
 });

@@ -24,7 +24,7 @@ export type CollectedChartModel = {
 };
 
 export type RenewalsSummary = {
-  /** "3 su 4", or null without due dates. */
+  /** "75%", or null without clients due in the window. */
   value: string | null;
   hint: string;
 };
