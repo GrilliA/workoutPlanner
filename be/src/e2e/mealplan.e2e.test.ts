@@ -4,8 +4,10 @@ import { once } from "node:events";
 import type { Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { after, before, describe, it } from "node:test";
-import { eq } from "drizzle-orm";
+import { setTimeout as sleep } from "node:timers/promises";
+import { and, eq } from "drizzle-orm";
 import { todayInRome } from "../services/assignmentStatus";
+import { validateMealPlanInput } from "../services/mealPlanValidation";
 
 type JsonObject = Record<string, unknown>;
 type ApiResponse = { status: number; body: unknown };
@@ -23,6 +25,9 @@ type Fixtures = {
 };
 
 const PASSWORD = "smoketest-password";
+
+// express.json() default limit ("100kb" in the bytes package): 102400 bytes of raw body.
+const JSON_BODY_LIMIT_BYTES = 100 * 1024;
 
 // Field lists of the contract (docs/contracts/al-piano-pasti.md): internal columns must not leak.
 const MEAL_PLAN_KEYS = ["athleteId", "createdAt", "id", "isActive", "meals", "notes", "updatedAt"];
@@ -93,6 +98,23 @@ const toApiResponse = async (response: Response): Promise<ApiResponse> => {
     return { status: response.status, body: text };
   }
 };
+
+/** A plan with every count and every text at its cap, each text one character repeated. */
+const planAtTheLimits = (char: string) => {
+  // Lengths are UTF-16 units: an emoji counts 2, so it is repeated half as many times.
+  const text = (units: number) => char.repeat(units / char.length);
+  return {
+    notes: text(1000),
+    meals: Array.from({ length: 12 }, () => ({
+      name: text(60),
+      timeOfDay: "12:00",
+      notes: text(500),
+      items: Array.from({ length: 30 }, () => ({ food: text(120), quantity: text(60) })),
+    })),
+  };
+};
+
+const bodyBytes = (body: unknown): number => Buffer.byteLength(JSON.stringify(body), "utf8");
 
 const mealsOf = (plan: unknown): JsonObject[] => asList(asObject(plan).meals);
 const itemsOf = (meal: JsonObject): JsonObject[] => asList(meal.items);
@@ -224,6 +246,18 @@ describe("Meal plan coach API smoke", { concurrency: false }, () => {
       .where(eq(schema.mealLogs.mealPlanId, planId));
   };
 
+  const storedPlanCount = async (coach: Account, athlete: Account): Promise<number> => {
+    const { database, schema } = setup();
+    const rows = await database.db
+      .select({ id: schema.mealPlans.id })
+      .from(schema.mealPlans)
+      .where(and(eq(schema.mealPlans.coachId, coach.id), eq(schema.mealPlans.athleteId, athlete.id)));
+    return rows.length;
+  };
+
+  const unlink = (coach: Account, athlete: Account) =>
+    api("DELETE", `/api/coach/clients/${athlete.id}`, { token: coach.token });
+
   before(async () => {
     requireScratchDatabase();
 
@@ -302,9 +336,16 @@ describe("Meal plan coach API smoke", { concurrency: false }, () => {
     assertStatus(read, 200);
     assert.deepEqual(asObject(read.body).mealPlan, created);
 
+    // Timestamps have millisecond precision: wait so a fast PUT cannot land in the same millisecond.
+    await sleep(5);
     const updated = await putPlan(coachA, client, { ...breakfastAndLunch, notes: null });
     assertStatus(updated, 200);
     assert.equal(asObject(updated.body).id, created.id);
+    assert.equal(asObject(updated.body).createdAt, created.createdAt);
+    assert.ok(
+      Date.parse(String(asObject(updated.body).updatedAt)) > Date.parse(String(created.updatedAt)),
+      "updatedAt moves on every PUT",
+    );
     assert.equal(asObject(updated.body).notes, null);
     assert.equal(asObject(updated.body).isActive, true);
   });
@@ -491,6 +532,10 @@ describe("Meal plan coach API smoke", { concurrency: false }, () => {
       [{ meals: [{ ...meal, timeOfDay: "25:00" }] }, "meals.timeOfDay must be HH:MM or null"],
       [{ meals: [{ ...meal, name: "a\u0000b" }] }, "meals.name must not contain a NUL character"],
       [{ meals: [meal, { ...meal }].map((entry) => ({ ...entry, id: 5 })) }, "Duplicate meal id"],
+      [
+        { meals: [{ name: "Pasto", items: [{ id: 7, food: "Cibo" }, { id: 7, food: "Altro" }] }] },
+        "Duplicate meal item id",
+      ],
       [[], "Invalid request body"],
     ];
 
@@ -552,10 +597,88 @@ describe("Meal plan coach API smoke", { concurrency: false }, () => {
     );
     assertError(await getLogs(coachA, client, `to=${today}`), 400, "from must be YYYY-MM-DD");
     assertError(await getLogs(coachA, client, `from=${today}&to=nope`), 400, "to must be YYYY-MM-DD");
+    // Right shape, impossible day: refused as a date, never sent to Postgres.
+    assertError(await getLogs(coachA, client, `from=2025-02-29&to=${today}`), 400, "from must be YYYY-MM-DD");
+    assertError(await getLogs(coachA, client, `from=2026-04-01&to=2026-04-31`), 400, "to must be YYYY-MM-DD");
     assertError(
       await getLogs(coachA, client, `from=${today}&to=${yesterday}`),
       400,
       "to must be on or after from",
     );
+  });
+
+  // Contract: 413 from the global JSON parser, before any route check.
+  it("a plan within every cap but over 100 kB of UTF-8 is refused with 413 and nothing is stored", async () => {
+    const { coachA, inviteCodeA } = setup();
+    const client = await newClient("too-large", inviteCodeA);
+
+    const ascii = planAtTheLimits("a");
+    assert.ok(bodyBytes(ascii) < JSON_BODY_LIMIT_BYTES, `ASCII plan is ${bodyBytes(ascii)} bytes`);
+    const asciiSaved = await putPlan(coachA, client, ascii);
+    assertStatus(asciiSaved, 201);
+
+    for (const char of ["à", "🍝"]) {
+      const body = planAtTheLimits(char);
+      assert.ok(validateMealPlanInput(body).ok, `the ${char} plan passes the validation`);
+      assert.ok(bodyBytes(body) > JSON_BODY_LIMIT_BYTES, `the ${char} plan is ${bodyBytes(body)} bytes`);
+      assertError(await putPlan(coachA, client, body), 413, "Request body too large");
+    }
+
+    const stored = asObject(asObject((await getPlan(coachA, client)).body).mealPlan);
+    assert.equal(stored.notes, ascii.notes, "the refused PUTs left the saved plan as it was");
+  });
+
+  // Contract: two first PUTs at once.
+  it("concurrent first PUTs create exactly one plan; the others get 409 or update it", async () => {
+    const { coachA, inviteCodeA } = setup();
+    const client = await newClient("race-create", inviteCodeA);
+
+    const responses = await Promise.all(
+      Array.from({ length: 4 }, () => putPlan(coachA, client, breakfastAndLunch)),
+    );
+
+    const created = responses.filter((response) => response.status === 201);
+    assert.equal(created.length, 1, responses.map(failMessage).join("; "));
+    for (const response of responses.filter((entry) => entry.status !== 201)) {
+      if (response.status === 409) {
+        assertError(response, 409, "Meal plan already exists");
+      } else {
+        assertStatus(response, 200);
+        assert.equal(asObject(response.body).id, asObject(created[0].body).id);
+      }
+    }
+
+    assert.equal(await storedPlanCount(coachA, client), 1);
+    const stored = asObject(asObject((await getPlan(coachA, client)).body).mealPlan);
+    assert.equal(stored.id, asObject(created[0].body).id);
+    assert.equal(mealsOf(stored).length, 2, "every winning PUT wrote the same two meals");
+  });
+
+  // Contract and H8: a save racing an unlink never leaves a plan for an ex client.
+  it("a PUT racing the unlink of the client never fails with 500 and leaves no plan behind", async () => {
+    const { coachA, inviteCodeA } = setup();
+
+    for (let round = 0; round < 6; round += 1) {
+      const client = await newClient(`race-unlink-${round}`, inviteCodeA);
+      // Odd rounds race an update of an existing plan, even rounds a first PUT.
+      const hasPlan = round % 2 === 1;
+
+      if (hasPlan) {
+        await createPlan(coachA, client, breakfastAndLunch);
+      }
+
+      const [saved, unlinked] = await Promise.all([
+        putPlan(coachA, client, breakfastAndLunch),
+        unlink(coachA, client),
+      ]);
+
+      assertStatus(unlinked, 200);
+      const savedStatuses = hasPlan ? [200, 404] : [201, 404];
+      assert.ok(savedStatuses.includes(saved.status), `round ${round}: ${failMessage(saved)}`);
+      if (saved.status === 404) {
+        assert.deepEqual(saved.body, { error: "Client not found" });
+      }
+      assert.equal(await storedPlanCount(coachA, client), 0, `round ${round}: no plan is left`);
+    }
   });
 });
