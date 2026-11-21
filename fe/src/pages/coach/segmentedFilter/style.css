@@ -13,7 +13,7 @@
 
   & button {
     /* min-block-size: the touch target is at least 44px and the label may still grow. */
-    min-block-size: 2.75rem;
+    min-block-size: var(--touch-target);
     border: 0;
     border-radius: var(--radius-full);
     background: transparent;
