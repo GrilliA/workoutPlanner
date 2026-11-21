@@ -69,6 +69,7 @@ const input = (overrides: Partial<AthleteHomeInput> = {}): AthleteHomeInput => (
   workouts: [],
   activeAssignment: null,
   hasLinkedCoach: false,
+  coaching: null,
   daysByWorkout: [],
   schedules: [],
   completedSessions: [],
@@ -373,5 +374,20 @@ describe("buildAthleteHome hasUnseenAssignment", () => {
 
   it("is false without an active assignment", () => {
     assert.equal(buildAthleteHome(input()).hasUnseenAssignment, false);
+  });
+});
+
+describe("buildAthleteHome coaching", () => {
+  it("passes the coaching state through, null included", () => {
+    const coaching = {
+      coachName: "Luca Rossi",
+      status: "expired" as const,
+      paidThrough: "2026-09-20",
+      daysLeft: -3,
+      pausedUntil: null,
+    };
+
+    assert.deepEqual(buildAthleteHome(input({ hasLinkedCoach: true, coaching })).coaching, coaching);
+    assert.equal(buildAthleteHome(input()).coaching, null);
   });
 });
