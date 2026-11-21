@@ -1,16 +1,16 @@
 import type { BusinessRange, CoachBusiness } from "@api";
 import { formatEuros } from "@utils/money";
+import type { SegmentedOption } from "@pages/coach/segmentedFilter";
 import type {
-  BusinessRangeOption,
   BusinessView,
   CollectedChartModel,
   LostSummary,
   RenewalsSummary,
 } from "../types";
 
-export const BUSINESS_RANGE_OPTIONS: BusinessRangeOption[] = [
-  { range: "6m", label: "6 mesi" },
-  { range: "12m", label: "12 mesi" },
+export const BUSINESS_RANGE_OPTIONS: SegmentedOption<BusinessRange>[] = [
+  { value: "6m", label: "6 mesi" },
+  { value: "12m", label: "12 mesi" },
 ];
 
 const PERIOD_LABELS: Record<BusinessRange, string> = {

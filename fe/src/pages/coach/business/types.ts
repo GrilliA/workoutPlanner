@@ -1,5 +1,3 @@
-import type { BusinessRange } from "@api";
-
 /** Strings only: the stories show placeholders in brackets, never invented numbers. */
 export type BusinessKpi = {
   id: string;
@@ -49,9 +47,4 @@ export type BusinessView = {
   chart: CollectedChartModel;
   renewals: RenewalsSummary;
   lost: LostSummary;
-};
-
-export type BusinessRangeOption = {
-  range: BusinessRange;
-  label: string;
 };

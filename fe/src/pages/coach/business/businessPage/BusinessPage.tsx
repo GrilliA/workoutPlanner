@@ -1,12 +1,13 @@
 import { Link } from "wouter";
 import { BusyRegion } from "@components/busyRegion";
 import { PageHeader } from "@components/pageHeader";
+import { SegmentedFilter } from "@pages/coach/segmentedFilter";
 import { useCoachBusiness } from "../api/useCoachBusiness";
+import { BUSINESS_RANGE_OPTIONS } from "../mappers/business";
 import { BusinessSkeleton } from "../businessSkeleton";
 import { CollectedChart } from "../collectedChart";
 import { KpiTiles } from "../kpiTiles";
 import { LostCard } from "../lostCard";
-import { RangeFilter } from "../rangeFilter";
 import { RenewalsCard } from "../renewalsCard";
 import "../../style.css";
 import "./style.css";
@@ -42,7 +43,12 @@ export function BusinessPage() {
 
       {hasNumbers ? (
         <>
-          <RangeFilter value={range} onChange={selectRange} />
+          <SegmentedFilter
+            label="Periodo"
+            options={BUSINESS_RANGE_OPTIONS}
+            value={range}
+            onChange={selectRange}
+          />
           <BusyRegion busy={isRefreshing} label="Aggiornamento…">
             <KpiTiles items={view.kpis} />
             <CollectedChart model={view.chart} />
