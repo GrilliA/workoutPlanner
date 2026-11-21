@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/requireAuth";
 import { requireRole } from "../middleware/requireRole";
-import { loadAthleteHome } from "../services/athleteHome";
+import { todayInRome } from "../services/assignmentStatus";
+import { loadAthleteCoaching, loadAthleteHome } from "../services/athleteHome";
 import {
   getAthleteCoach,
   linkAthleteToCoachByCode,
@@ -21,7 +22,8 @@ athleteRouter.get("/home", async (req, res) => {
 athleteRouter.get("/coach", async (req, res) => {
   const athlete = getAuthUser(req);
   const coach = await getAthleteCoach(athlete.id);
-  res.json({ coach });
+  const coaching = await loadAthleteCoaching(athlete.id, coach, todayInRome());
+  res.json({ coach, coaching });
 });
 
 athleteRouter.post("/coach/link", async (req, res) => {
