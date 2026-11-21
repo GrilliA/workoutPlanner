@@ -69,7 +69,7 @@ export type PaymentPreviewQuery = {
   periods: number;
 };
 
-const isJsonObject = (value: unknown): value is Record<string, unknown> =>
+export const isJsonObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
 const isIntegerBetween = (value: unknown, min: number, max: number): value is number =>
@@ -145,7 +145,7 @@ const optional =
  * Postgres rejects U+0000 in text with a 500. The stored text must be what the coach
  * wrote, so the character is refused instead of stripped.
  */
-const rejectNul = (field: string, value: string): Invalid | null => {
+export const rejectNul = (field: string, value: string): Invalid | null => {
   if (value.includes("\0")) {
     return { ok: false, error: `${field} must not contain a NUL character` };
   }

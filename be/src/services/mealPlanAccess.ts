@@ -8,6 +8,7 @@ import {
   type MealInput,
   type MealLogsQuery,
   type MealPlanInput,
+  sentIds,
   type SavedMealIds,
 } from "./mealPlanValidation";
 
@@ -50,7 +51,7 @@ const toMealPlan = (plan: MealPlanRow, meals: MealRow[], items: ItemRow[]) => ({
   updatedAt: plan.updatedAt,
 });
 
-export type MealPlanResponse = ReturnType<typeof toMealPlan>;
+type MealPlanResponse = ReturnType<typeof toMealPlan>;
 
 /** Meals and items in position order; the id breaks a tie, as `nextMealId` does. */
 const buildMealPlan = async (reader: Reader, plan: MealPlanRow): Promise<MealPlanResponse> => {
@@ -165,15 +166,12 @@ const writePlanRow = async (
   return updated;
 };
 
-const keptIds = (entries: { id: number | undefined }[]): number[] =>
-  entries.map((entry) => entry.id).filter((id): id is number => id !== undefined);
-
 /**
  * Meals and items of this plan whose id the body does not send. Removing a meal sets
  * meal_id to NULL on its logs, which keep the copied meal name.
  */
 const deleteUnsentRows = async (tx: Tx, planId: number, input: MealPlanInput) => {
-  const keptMealIds = keptIds(input.meals);
+  const keptMealIds = sentIds(input.meals);
   const isOfPlan = eq(mealPlanMeals.mealPlanId, planId);
   const unsentMeals =
     keptMealIds.length === 0 ? isOfPlan : and(isOfPlan, notInArray(mealPlanMeals.id, keptMealIds));
@@ -184,7 +182,7 @@ const deleteUnsentRows = async (tx: Tx, planId: number, input: MealPlanInput) =>
     return;
   }
 
-  const keptItemIds = input.meals.flatMap((meal) => keptIds(meal.items));
+  const keptItemIds = input.meals.flatMap((meal) => sentIds(meal.items));
   const isOfKeptMeal = inArray(mealPlanItems.mealId, keptMealIds);
   const unsentItems =
     keptItemIds.length === 0 ? isOfKeptMeal : and(isOfKeptMeal, notInArray(mealPlanItems.id, keptItemIds));

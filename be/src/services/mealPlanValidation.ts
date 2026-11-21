@@ -1,5 +1,5 @@
 import { daysBetween } from "./subscription";
-import { isCalendarDate, isDatabaseId } from "./subscriptionValidation";
+import { isCalendarDate, isDatabaseId, isJsonObject, rejectNul } from "./subscriptionValidation";
 
 type Invalid = { ok: false; error: string };
 type Valid<T> = { ok: true; value: T };
@@ -14,14 +14,12 @@ const MAX_FOOD_LENGTH = 120;
 const MAX_QUANTITY_LENGTH = 60;
 const MAX_MEAL_PLAN_NOTES_LENGTH = 1000;
 const MAX_MEAL_NOTES_LENGTH = 500;
-// The athlete's note on a meal log: checked by the AL4 log body, written here with the other caps.
-const MAX_MEAL_LOG_NOTE_LENGTH = 280;
 const MAX_MEAL_LOG_RANGE_DAYS = 31;
 const TIME_OF_DAY_PATTERN = /^([01][0-9]|2[0-3]):[0-5][0-9]$/;
 
 const INVALID_BODY: Invalid = { ok: false, error: "Invalid request body" };
 
-export type MealItemInput = {
+type MealItemInput = {
   /** Missing means a new item. */
   id: number | undefined;
   food: string;
@@ -54,13 +52,11 @@ export type SavedMealIds = {
   itemIds: number[];
 };
 
-const isJsonObject = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
-
-/** Postgres rejects U+0000 in text with a 500: refused, not stripped, as in the register. */
 const checkText = (field: string, text: string, maxLength: number): Invalid | null => {
-  if (text.includes("\0")) {
-    return { ok: false, error: `${field} must not contain a NUL character` };
+  const nulRejection = rejectNul(field, text);
+
+  if (nulRejection !== null) {
+    return nulRejection;
   }
 
   if (text.length > maxLength) {
@@ -255,7 +251,8 @@ const parseMeals = parseList("meals", MAX_MEALS_PER_PLAN, parseMeal);
 const hasDuplicate = (ids: number[]): boolean =>
   ids.some((id, index) => ids.indexOf(id) !== index);
 
-const sentIds = (entries: { id: number | undefined }[]): number[] =>
+/** The ids a body sends, in order: a missing id is a new row. */
+export const sentIds = (entries: { id: number | undefined }[]): number[] =>
   entries.map((entry) => entry.id).filter((id): id is number => id !== undefined);
 
 /** Shape, limits and repeated ids. Whether the ids belong to the plan waits for the stored rows. */
