@@ -15,6 +15,19 @@ const TONE_BY_STATUS: Record<AthleteCoachingStatus, CoachingStatusTone> = {
 export const coachingStatusTone = (status: AthleteCoachingStatus): CoachingStatusTone =>
   TONE_BY_STATUS[status];
 
+/** In italiano l'articolo si elide davanti a 1, 8 e 11: "all'11 dicembre", non "al 11". */
+const formatUntil = (dateKey: string): string => {
+  const day = Number(dateKey.slice(8, 10));
+  const article = day === 1 || day === 8 || day === 11 ? "all'" : "al ";
+  return `fino ${article}${formatDayMonth(dateKey)}`;
+};
+
+/** Titolo della riga e, se serve, un dettaglio che va sulla seconda riga. */
+export type CoachingStatusText = {
+  title: string;
+  detail?: string;
+};
+
 const formatExpiring = (daysLeft: number): string => {
   if (daysLeft <= 0) {
     return "Coaching in scadenza oggi";
@@ -25,25 +38,21 @@ const formatExpiring = (daysLeft: number): string => {
   return `Coaching in scadenza tra ${daysLeft} giorni`;
 };
 
-const formatPaused = (pausedUntil: string | null): string => {
-  if (pausedUntil === null) {
-    return "Coaching in pausa";
-  }
-  return `Coaching in pausa · fino al ${formatDayMonth(pausedUntil)}`;
-};
-
-/** Riga di stato del coaching. Solo testo: mai prezzi né inviti a pagare. */
-export const formatCoachingStatus = (coaching: AthleteCoaching): string => {
+/** Testo di stato del coaching. Solo testo: mai prezzi né inviti a pagare. */
+export const formatCoachingStatus = (coaching: AthleteCoaching): CoachingStatusText => {
   switch (coaching.status) {
     case "active":
-      return `Coaching attivo · fino al ${formatDayMonth(coaching.paidThrough)}`;
+      return { title: "Coaching attivo", detail: formatUntil(coaching.paidThrough) };
     case "expiring":
-      return formatExpiring(coaching.daysLeft);
+      return { title: formatExpiring(coaching.daysLeft) };
     case "expired":
-      return "Coaching da rinnovare · La scheda resta attiva";
+      return { title: "Coaching da rinnovare", detail: "La scheda resta attiva" };
     case "paused":
-      return formatPaused(coaching.pausedUntil);
+      return {
+        title: "Coaching in pausa",
+        detail: coaching.pausedUntil === null ? undefined : formatUntil(coaching.pausedUntil),
+      };
     case "ended":
-      return "Coaching concluso";
+      return { title: "Coaching concluso" };
   }
 };

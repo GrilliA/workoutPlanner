@@ -26,6 +26,7 @@ export function CoachingStatusRow({ coaching }: CoachingStatusRowProps) {
   }
 
   const toneColors = TONE_COLORS[coachingStatusTone(coaching.status)];
+  const { title, detail } = formatCoachingStatus(coaching);
 
   return (
     <View
@@ -35,9 +36,16 @@ export function CoachingStatusRow({ coaching }: CoachingStatusRowProps) {
       ]}
     >
       <View style={[styles.dot, { backgroundColor: toneColors.text }]} />
-      <AppText variant="label" style={[styles.label, { color: toneColors.text }]}>
-        {formatCoachingStatus(coaching)}
-      </AppText>
+      <View style={styles.texts}>
+        <AppText variant="label" style={{ color: toneColors.text }}>
+          {title}
+        </AppText>
+        {detail ? (
+          <AppText variant="meta" style={{ color: toneColors.text }}>
+            {detail}
+          </AppText>
+        ) : null}
+      </View>
     </View>
   );
 }
@@ -50,7 +58,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
-    borderRadius: radii.pill,
+    borderRadius: radii.lg,
     borderWidth: 1,
   },
   dot: {
@@ -58,7 +66,7 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: radii.pill,
   },
-  label: {
+  texts: {
     flexShrink: 1,
   },
 });
