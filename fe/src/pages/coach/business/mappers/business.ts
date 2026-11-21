@@ -1,5 +1,6 @@
 import type { BusinessRange, CoachBusiness } from "@api";
-import { formatEuros } from "@utils/money";
+import { formatCompactEuros, formatEuros } from "@utils/money";
+import { formatLongMonth, formatShortMonth } from "@utils/romeCalendar";
 import type { SegmentedOption } from "@pages/coach/segmentedFilter";
 import type {
   BusinessView,
@@ -16,42 +17,6 @@ export const BUSINESS_RANGE_OPTIONS: SegmentedOption<BusinessRange>[] = [
 const PERIOD_LABELS: Record<BusinessRange, string> = {
   "6m": "ultimi 6 mesi",
   "12m": "ultimi 12 mesi",
-};
-
-// A `YYYY-MM` key is a calendar month: read and formatted in UTC, so no time zone moves it.
-const firstDayOf = (month: string): Date => {
-  const [year, monthNumber] = month.split("-").map(Number);
-  return new Date(Date.UTC(year, monthNumber - 1, 1));
-};
-
-const shortMonthFormat = new Intl.DateTimeFormat("it-IT", { month: "short", timeZone: "UTC" });
-const longMonthFormat = new Intl.DateTimeFormat("it-IT", {
-  month: "long",
-  year: "numeric",
-  timeZone: "UTC",
-});
-
-/** "2026-06" → "giu". */
-export const formatShortMonth = (month: string): string =>
-  shortMonthFormat.format(firstDayOf(month)).replace(".", "");
-
-/** "2026-06" → "giugno 2026". */
-export const formatLongMonth = (month: string): string => longMonthFormat.format(firstDayOf(month));
-
-const NBSP = "\u00a0";
-const CENTS_PER_EURO = 100;
-const EUROS_PER_THOUSAND = 1000;
-const thousandsFormat = new Intl.NumberFormat("it-IT", { maximumFractionDigits: 1 });
-
-/** Whole euros, thousands as "k": 34550 → "346 €", 123000 → "1,2k €". Fits above a bar. */
-export const formatCompactEuros = (cents: number): string => {
-  const euros = Math.round(cents / CENTS_PER_EURO);
-
-  if (euros < EUROS_PER_THOUSAND) {
-    return `${euros}${NBSP}€`;
-  }
-
-  return `${thousandsFormat.format(euros / EUROS_PER_THOUSAND)}k${NBSP}€`;
 };
 
 const clientsLabel = (count: number): string => (count === 1 ? "1 cliente" : `${count} clienti`);

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { formatCentsAsInput, formatEuros, parseEurosToCents } from "./money.ts";
+import { formatCentsAsInput, formatCompactEuros, formatEuros, parseEurosToCents } from "./money.ts";
 
 describe("parseEurosToCents", () => {
   it("reads whole euros and up to two decimals with a comma or a point", () => {
@@ -90,5 +90,17 @@ describe("formatCentsAsInput", () => {
     assert.equal(formatCentsAsInput(0), "0");
     assert.deepEqual(parseEurosToCents(formatCentsAsInput(999_999)), { ok: true, cents: 999_999 });
     assert.deepEqual(parseEurosToCents(formatCentsAsInput(0)), { ok: true, cents: 0 });
+  });
+});
+
+describe("formatCompactEuros", () => {
+  it("whole euros under 1000, thousands with one decimal and k", () => {
+    const nbsp = "\u00a0";
+    assert.equal(formatCompactEuros(0), `0${nbsp}€`);
+    assert.equal(formatCompactEuros(8050), `81${nbsp}€`);
+    assert.equal(formatCompactEuros(99949), `999${nbsp}€`);
+    assert.equal(formatCompactEuros(120000), `1,2k${nbsp}€`);
+    assert.equal(formatCompactEuros(1250000), `12,5k${nbsp}€`);
+    assert.equal(formatCompactEuros(1000000), `10k${nbsp}€`);
   });
 });

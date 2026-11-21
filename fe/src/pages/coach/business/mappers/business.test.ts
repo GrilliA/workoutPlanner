@@ -5,9 +5,6 @@ import {
   buildCollectedChart,
   buildLostSummary,
   buildRenewalsSummary,
-  formatCompactEuros,
-  formatLongMonth,
-  formatShortMonth,
   mapCoachBusiness,
 } from "./business.ts";
 
@@ -38,25 +35,6 @@ const business: CoachBusiness = {
     { month: "2026-11", count: 0 },
   ],
 };
-
-describe("month labels", () => {
-  it("short and long Italian names, never moved by the time zone", () => {
-    assert.equal(formatShortMonth("2026-06"), "giu");
-    assert.equal(formatShortMonth("2027-01"), "gen");
-    assert.equal(formatLongMonth("2026-06"), "giugno 2026");
-  });
-});
-
-describe("formatCompactEuros", () => {
-  it("whole euros under 1000, thousands with one decimal and k", () => {
-    assert.equal(formatCompactEuros(0), `0${NBSP}€`);
-    assert.equal(formatCompactEuros(8050), `81${NBSP}€`);
-    assert.equal(formatCompactEuros(99949), `999${NBSP}€`);
-    assert.equal(formatCompactEuros(120000), `1,2k${NBSP}€`);
-    assert.equal(formatCompactEuros(1250000), `12,5k${NBSP}€`);
-    assert.equal(formatCompactEuros(1000000), `10k${NBSP}€`);
-  });
-});
 
 describe("buildCollectedChart", () => {
   it("heights against the best month, the current month marked, a zero month flat", () => {
