@@ -20,43 +20,23 @@ H1 modulo attivo = il cliente ha un piano pasti attivo · H2 un solo piano giorn
 - Il pannello e il mobile validano gli enum con `z.enum` chiuso: gli enum di AL vanno letti con una via di fuga.
 - Il mobile ha già `expo-secure-store` ed `expo-file-system`; nessun AsyncStorage.
 
-## 4. Modello dati (proposta, una sola migrazione AL)
-Nomi principali (alt. 1: `nutrition_plans` / `nutrition_meals` / `nutrition_meal_items` / `nutrition_meal_logs`; alt. 2: `client_meal_plans` / …). Default:
-| Tabella | Campi | Note |
-|---|---|---|
-| `meal_plans` | `id`, `coach_id`, `athlete_id`, `is_active bool`, `notes text NULL`, `created_at`, `updated_at` | unique `(coach_id, athlete_id)` (H2: un piano per coppia); FK composta su `coach_athletes(coach_id, athlete_id)` on delete cascade come `coach_inbox_handled` (H8); indice su `athlete_id` |
-| `meal_plan_meals` | `id`, `meal_plan_id` FK cascade, `position int`, `name text`, `time_of_day text NULL` (`HH:MM`), `notes text NULL` | ordine per `position` |
-| `meal_plan_items` | `id`, `meal_id` FK cascade, `position`, `food text`, `quantity text NULL` | H3 (alt.: un solo campo testo `description` sul pasto) |
-| `meal_logs` | `id`, `athlete_id` FK users cascade, `meal_plan_id` FK cascade, `meal_id` FK **set null**, `meal_name text` (copia), `date date`, `status text` check in (`done`, `other`), `note text NULL`, `created_at`, `updated_at` | unique `(athlete_id, meal_id, date)` → scrittura idempotente. La copia del nome e il `set null` evitano il problema P2: modificare il piano non cancella lo storico |
-Migrazione proposta: `00NN_al_meal_plans` (il numero lo dà Drizzle dopo l'ultimo di `main`, sezione 9). Limiti (numero di pasti, voci per pasto, lunghezze dei testi): da fissare in T2 dell'AL2, come tetti di sicurezza (vedi `fix/session-set-limits`).
+## 4. Modello dati (implementato in AL1; fonte unica: lo schema)
+Fonte di verità: `be/src/db/schema/meallogs.ts`, `mealplans.ts`, `mealplanmeals.ts`, `mealplanitems.ts` e la migrazione AL (una sola, sezione 9). Qui solo le scelte che spiegano la forma; i dettagli non si ricopiano.
+| Tabella | Scelte |
+|---|---|
+| `meal_plans` | un piano per coppia (unique `(coach_id, athlete_id)`, H2); FK composta su `coach_athletes(coach_id, athlete_id)` on delete cascade (H8), come `coach_inbox_handled`; unique `(id, athlete_id)` come bersaglio della FK composta di `meal_logs`; indice su `athlete_id` |
+| `meal_plan_meals` | ordine per `position`; `time_of_day` testo `HH:MM` con CHECK sul formato; indice su `meal_plan_id` |
+| `meal_plan_items` | `food` + `quantity` testo libero (H3); indice su `meal_id` |
+| `meal_logs` | FK composta `(meal_plan_id, athlete_id)` → `meal_plans(id, athlete_id)` on delete cascade: l'atleta del log è per forza quello del piano, e **nessuna FK verso `users`**; `meal_id` FK **set null** e `meal_name` copiato, così modificare il piano non cancella lo storico (P2); unique `(athlete_id, date, meal_id)` → scrittura idempotente (i `meal_id` NULL dei pasti tolti non si scontrano); indici su `(meal_plan_id, date)` e su `meal_id`; CHECK su `status` (`done`, `other`) |
+Migrazione: `00NN_al_meal_plans`, dove NN è il numero successivo all'ultima migrazione di `main` (sezione 9). I limiti (12 pasti, 30 voci per pasto, 60 / 120 / 60 caratteri per nome del pasto, alimento, quantità, 1000 / 500 per note del piano e del pasto, 280 per la nota di una registrazione, intervallo di 31 giorni) sono tetti di sicurezza fissati in AL2: la tabella **Limiti** del contratto è l'unica fonte.
 
-## 5. Contratto (proposta) — nuovo `docs/contracts/al-piano-pasti.md` (alt.: `nutrition.md`, `meal-plan.md`)
-```ts
-type MealItem = { id: number; food: string; quantity: string | null; position: number };
-type Meal = { id: number; name: string; timeOfDay: string | null; notes: string | null; position: number; items: MealItem[] };
-type MealPlan = { id: number; athleteId: number; isActive: boolean; notes: string | null; meals: Meal[]; createdAt: string; updatedAt: string };
-type MealLogStatus = "done" | "other";
-type MealLog = { mealId: number | null; mealName: string; date: string; status: MealLogStatus; note: string | null; updatedAt: string };
-
-// Coach (requireRole("coach"), coppia (coach, atleta) collegata altrimenti 404 "Client not found")
-GET   /coach/clients/:athleteId/meal-plan        → { mealPlan: MealPlan | null }
-PUT   /coach/clients/:athleteId/meal-plan        body { notes?: string|null; meals: { id?: number; name: string; timeOfDay?: string|null; notes?: string|null;
-                                                         items: { id?: number; food: string; quantity?: string|null }[] }[] }
-                                                 → 201 (creato, attivo) | 200 (aggiornato) + MealPlan
-                                                 regola: un id presente = aggiorna, assente = crea, un id non inviato = rimosso (i log tengono meal_name)
-PATCH /coach/clients/:athleteId/meal-plan        body { isActive: boolean } → MealPlan
-GET   /coach/clients/:athleteId/meal-logs?from=YYYY-MM-DD&to=YYYY-MM-DD   (max 31 giorni)
-                                                 → { days: { date: string; mealCount: number; doneCount: number; otherCount: number }[] }
-
-// Atleta (requireRole("athlete"))
-GET    /athlete/home        additivo → nutrition: { mealPlanId: number; updatedAt: string } | null   (null = switch nascosto)
-GET    /athlete/meal-plan/today → { date: string; mealPlan: (MealPlan & { meals: (Meal & { log: MealLog | null })[] }) | null; nextMealId: number | null }
-PUT    /athlete/meal-logs    body { mealId: number; date: string; status: MealLogStatus; note?: string|null } → 200 MealLog   (idempotente)
-DELETE /athlete/meal-logs?mealId=&date=  → 204 (idempotente)
-GET    /athlete/meal-logs?from=&to=      → { logs: MealLog[] }   (max 31 giorni, per Progressi)
-```
-Errori proposti: `400 "Invalid request body"`, `400 "date must be today or yesterday"` (H7), `400 "Invalid meal id"`, `404 "Meal plan not found"`, `404 "Meal not found"` (pasto non del piano attivo dell'atleta), `404 "Client not found"`, più i 400 sui limiti. `nextMealId` = primo pasto in ordine senza registrazione per `date`. Tutti i cambi a `/athlete/home` sono additivi; nel mobile `status` va letto con una via di fuga per i valori nuovi.
-Nomi delle route (alt.: `/nutrition`, `/meals`). Il pannello usa `/clients/:id/nutrition` come deciso, anche se l'API usa `meal-plan`: da confermare.
+## 5. Contratto (implementato in AL2 per il coach; fonte unica: `docs/contracts/al-piano-pasti.md`)
+Il contratto contiene tipi, errori, ordine dei controlli, regole del PUT, 413 sui body oltre 100 kB (limite del parser JSON globale) e la parte atleta marcata AL4. Qui la mappa delle route e le scelte che il contratto non spiega:
+- **Coach** (`requireRole("coach")`; coppia non collegata → 404 `"Client not found"` via `findClientAthleteId`): `GET | PUT | PATCH /coach/clients/:athleteId/meal-plan`; `GET /coach/clients/:athleteId/meal-logs?from=&to=` (max 31 giorni), che per ogni giorno dà `mealCount`, `doneCount`, `otherCount` e `removedCount` (registrazioni di pasti non più nel piano).
+- **Atleta** (AL4, `requireRole("athlete")`; si riscrive al Contract Gate di AL4): `GET /athlete/home` additivo con `nutrition` (`null` = switch nascosto); `GET /athlete/meal-plan/today` (con `nextMealId`: primo pasto in ordine senza registrazione per la data); `PUT` e `DELETE /athlete/meal-logs` (idempotenti, data oggi o ieri, H7); `GET /athlete/meal-logs?from=&to=` per Progressi.
+- Il PUT sostituisce l'intero piano: id presente = aggiorna, assente = crea, id non inviato = rimosso (i log tengono `meal_name`).
+- Tutti i cambi a `/athlete/home` sono additivi; nel mobile `status` e gli enum si leggono con una via di fuga per i valori nuovi.
+- Nomi delle route (alt.: `/nutrition`, `/meals`). Il pannello usa `/clients/:id/nutrition` come deciso, anche se l'API usa `meal-plan`: da confermare.
 
 ## 6. PR (in ordine)
 | PR | Branch proposto | Base → PR | Contenuto | Dipende | Livello |
@@ -75,11 +55,11 @@ In parallelo: AL3 ∥ AL4 dopo AL2 (cartelle disgiunte `fe/` vs `be/`); AL5 può
 ### AL1 — Schema e logica pura
 File: *nuovi* `be/src/db/schema/mealplans.ts`, `mealplanmeals.ts`, `mealplanitems.ts`, `meallogs.ts` (stile dei nomi esistenti, es. `clientsubscriptions.ts`), `be/src/db/schema/index.ts`, `be/drizzle/00NN_*.sql` + snapshot + `_journal.json`, *nuovo* `be/src/services/mealPlan.ts` + `mealPlan.test.ts` (alt.: `nutrition.ts`).
 Task: T1 product-analyst (AC, casi limite: pasto rimosso dopo essere stato segnato, piano disattivato a metà giornata) → T2 software-architect (modello, nomi) → Gate → T3 database-engineer (migrazione additiva, rollback provato, da zero su `smoke_test`) → T4 backend-engineer (logica pura) → T6 qa → T7 review.
-AC: 1) migrazione da zero su `smoke_test` ricreato + `drizzle-kit check` verdi; 2) unique `(coach_id, athlete_id)` sul piano; 3) unique `(athlete_id, meal_id, date)` sui log; 4) cancellare un pasto lascia i log con `meal_id` null e `meal_name`; 5) scollegare la coppia cancella piano e log (H8); 6) `nextMealId` corretto con 0, alcuni o tutti i pasti segnati; 7) giorno ammesso = oggi o ieri di Roma, anche a cavallo della mezzanotte e del cambio d'ora.
+AC: 1) migrazione da zero su `smoke_test` ricreato + `drizzle-kit check` verdi; 2) unique `(coach_id, athlete_id)` sul piano; 3) unique `(athlete_id, date, meal_id)` sui log; 4) cancellare un pasto lascia i log con `meal_id` null e `meal_name`; 5) scollegare la coppia cancella piano e log (H8); 6) `nextMealId` corretto con 0, alcuni o tutti i pasti segnati; 7) giorno ammesso = oggi o ieri di Roma, anche a cavallo della mezzanotte e del cambio d'ora.
 Check Deep: be `tsc`, `npm test`, migrazioni da zero, `drizzle-kit check`, security-engineer sulle FK.
 
 ### AL2 — API coach
-File: *nuovi* `be/src/routes/coachmealplan.ts`, `be/src/services/mealPlanValidation.ts` (+ test), `be/src/services/mealPlanAccess.ts`, `be/src/routes/coach.ts` (mount), `be/src/e2e/mealplan.e2e.test.ts`, `docs/contracts/al-piano-pasti.md`. Riusa `findCoachAthleteLink` da `be/src/services/coachAthleteAccess.ts`.
+File: *nuovi* `be/src/routes/coachmealplan.ts`, `be/src/services/mealPlanValidation.ts` (+ test), `be/src/services/mealPlanAccess.ts`, `be/src/routes/coach.ts` (mount), `be/src/e2e/mealplan.e2e.test.ts`, `docs/contracts/al-piano-pasti.md`. Riusa `findClientAthleteId` da `be/src/routes/coachsubscriptions.ts` (id valido + coppia collegata, altrimenti 400 / 404).
 Task: T2 architect (contratto completo, errori, limiti) → **Contract Gate con approvazione utente** → T4 backend → T6 qa + security → T7 review.
 AC: 1) GET senza piano → `{ mealPlan: null }`; 2) il primo PUT crea (201, attivo), i successivi aggiornano (200); 3) gli id inviati si conservano, quelli non inviati si rimuovono; 4) un id di pasto di un altro piano → 404; 5) PATCH `isActive` funziona ed è idempotente; 6) un atleta non collegato → 404 `"Client not found"`; 7) superare i limiti → 400; 8) meal-logs oltre 31 giorni → 400; 9) un coach non vede i piani di un altro coach.
 Check Deep + e2e su `smoke_test`.
@@ -132,15 +112,17 @@ Quando: dopo ogni PR coach confluita in `main` e prima di aprire una PR AL che t
 1. `git fetch origin`
 2. `git switch main-diet` (working tree pulito; niente stash senza approvazione)
 3. `git merge --no-ff origin/main` (**merge, non rebase**: `main-diet` è condiviso)
-4. Se `main` ha portato una migrazione nuova e su `main-diet` c'è già quella AL:
-   - nel merge si prende la versione di `main` per `be/drizzle/meta/_journal.json` e per gli snapshot di `main` (`git checkout origin/main -- be/drizzle/meta/_journal.json`);
-   - si tolgono SQL e snapshot AL (`git rm be/drizzle/00NN_al_*.sql be/drizzle/meta/00NN_snapshot.json`);
-   - si chiude il merge, poi `cd be && npm run db:generate -- --name al_meal_plans`: la migrazione AL rinasce con il numero successivo, un `when` nuovo e il `prevId` dell'ultimo snapshot di `main`;
-   - commit separato `chore(be): rigenera la migrazione AL dopo 00XX`.
+4. Se `main` ha portato una migrazione nuova e su `main-diet` c'è già quella AL (NN = numero dell'ultima migrazione di `main`, per esempio `0017` per R7), il merge dà un conflitto add/add su `be/drizzle/meta/NN_snapshot.json` (e su `_journal.json`). **Non si cancella lo snapshot NN**: è quello di `main` (con le sue tabelle) e serve a Drizzle come base del `prevId`; toglierlo fa ricreare alla migrazione rigenerata le tabelle di `main`, che applicata da zero fallisce mentre `drizzle-kit check` dice "Everything's fine". Procedura (provata da un revisore in un clone):
+   ```
+   git checkout origin/main -- be/drizzle/meta/_journal.json be/drizzle/meta/NN_snapshot.json
+   git rm be/drizzle/NN_al_meal_plans.sql
+   cd be && npm run db:generate -- --name al_meal_plans
+   ```
+   Risultato atteso: nasce `(NN+1)_al_meal_plans` con lo stesso SQL, `prevId` uguale all'id dello snapshot NN di `main` e `when` più recente. Poi si chiude il merge e si fa un commit separato `chore(be): rigenera la migrazione AL dopo NN`. Verifica: migrazioni applicate da zero su un database vuoto + `drizzle-kit check`.
 5. Altri conflitti: `athleteHome.ts` e `HomeScreen.tsx` dovrebbero averne pochi o nessuno (sezione Coerenza); in caso di dubbio si tiene `main` e si riapplica la riga AL.
 6. Check: be `tsc --noEmit` + `npm test`; migrazioni da zero su `smoke_test` ricreato + `drizzle-kit check`; fe `lint` + `tsc -b`; mobile `typecheck`.
 7. `git push origin main-diet`; i branch AL aperti si aggiornano con un merge da `main-diet`.
-8. DB locali che avevano la vecchia migrazione AL: ricrearli (`smoke_test` si ricrea già nel gate Deep).
+8. Database locali che avevano la vecchia migrazione AL: ricrearli (`smoke_test` si ricrea già nel gate Deep).
 
 ## 10. Coerenza con il filone COACH (R6–R8)
 - Migrazioni: R7 prende `0017` su `main`; quella AL si rigenera dopo ogni allineamento (sezione 9). Motivo: il migratore Drizzle salta senza avvisi le migrazioni con `when` più vecchio dell'ultima applicata (verificato in drizzle-orm 0.45).
