@@ -1,7 +1,7 @@
 # Contratto AL — Piano pasti (coach AL2, atleta AL4)
 
 Stato: **proposta per il Contract Gate di AL2**, da approvare. La parte coach è implementata in AL2; la parte atleta è scritta qui perché il contratto sia uno solo, ed è marcata **AL4, non implementata**.
-Piano: `claude/AL-alimentazione.md` (sezioni 4, 5, AL2, AL4). Schema AL1: `be/src/db/schema/{mealplans,mealplanmeals,mealplanitems,meallogs}.ts`. Logica pura: `be/src/services/mealPlan.ts`. Validazione: `be/src/services/mealPlanValidation.ts`. Accesso al DB: `be/src/services/mealPlanAccess.ts`. Route coach: `be/src/routes/coachmealplan.ts`.
+Piano: `docs/plans/AL-alimentazione.md` (sezioni 4, 5, AL2, AL4). Schema AL1: `be/src/db/schema/{mealplans,mealplanmeals,mealplanitems,meallogs}.ts`. Logica pura: `be/src/services/mealPlan.ts`. Validazione: `be/src/services/mealPlanValidation.ts`. Accesso al DB: `be/src/services/mealPlanAccess.ts`. Route coach: `be/src/routes/coachmealplan.ts`.
 
 Lessico: nelle copy sempre "Alimentazione" o "Pasti", mai "Dieta". Gli identificatori dell'API sono in inglese (`meal-plan`, `meal-logs`).
 
@@ -91,7 +91,7 @@ Le colonne interne (`coach_id`, `meal_plan_id`, `created_at` dei pasti e dei log
 
 ## Limiti
 
-Tetti di sicurezza, non regole di prodotto (confermati dall'utente). Costanti in `mealPlanValidation.ts`; quella della nota di una registrazione (`MAX_MEAL_LOG_NOTE_LENGTH`) è già lì ma viene usata solo da AL4. Le lunghezze sono in unità UTF-16 (vedi **Testi**).
+Tetti di sicurezza, non regole di prodotto (confermati dall'utente). Costanti in `mealPlanValidation.ts`, tranne il 280 della nota di una registrazione, valore previsto per AL4: arriverà con la sua validazione e oggi non è nel codice. Le lunghezze sono in unità UTF-16 (vedi **Testi**).
 
 | Limite | Valore | Errore 400 |
 | --- | --- | --- |
