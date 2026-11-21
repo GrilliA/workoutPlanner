@@ -80,7 +80,8 @@ export function AppShell({ children, hideBottomNav = false }: AppShellProps) {
             <Link
               key={item.label}
               href={item.href}
-              className={isSectionActive(location, item.href) ? "item active" : "item"}
+              className="item"
+              aria-current={isSectionActive(location, item.href) ? "page" : undefined}
             >
               <NavIcon name={item.icon} />
               <span>{item.label}</span>
@@ -104,7 +105,8 @@ export function AppShell({ children, hideBottomNav = false }: AppShellProps) {
           <Link
             key={item.label}
             href={item.href}
-            className={isSectionActive(location, item.href) ? "item active" : "item"}
+            className="item"
+            aria-current={isSectionActive(location, item.href) ? "page" : undefined}
           >
             <NavIcon name={item.icon} />
             <span className="label">{item.label}</span>
