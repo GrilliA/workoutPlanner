@@ -70,3 +70,11 @@ export const dateFromRomeDateKey = (dateKey: string): Date => {
 
 export const formatRomeLongDateKey = (dateKey: string): string =>
   formatRomeLongDate(dateFromRomeDateKey(dateKey));
+
+/** "15 ottobre" da una data YYYY-MM-DD di Roma. */
+export const formatDayMonth = (dateKey: string): string =>
+  dateFromRomeDateKey(dateKey).toLocaleDateString("it-IT", {
+    day: "numeric",
+    month: "long",
+    timeZone: "UTC",
+  });
