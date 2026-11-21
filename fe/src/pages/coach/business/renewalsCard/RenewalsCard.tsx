@@ -13,7 +13,7 @@ export function RenewalsCard({ summary }: RenewalsCardProps) {
       <p className="hint">{summary.hint}</p>
       <p className="note">
         Conta ogni cliente una volta: ha rinnovato se hai segnato un rinnovo negli ultimi 90 giorni e
-        oggi non è scaduto.
+        oggi non è scaduto. Chi ha concluso l'abbonamento conta tra chi non ha rinnovato.
       </p>
     </section>
   );

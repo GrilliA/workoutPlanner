@@ -402,8 +402,8 @@ describe("PT business smoke (R8)", { concurrency: false }, () => {
     assert.equal(businessA.expectedNext30DaysCents, 0);
     assert.equal(collectedIn(businessA, currentMonth), 8000, "A keeps its payment, not B's");
     assert.equal(lostIn(businessA, currentMonth), 1);
-    // Renewed with A before leaving, and paid through a day after today: renewed, not missed.
-    assert.deepEqual(businessA.renewals90Days, { due: 1, renewed: 1 });
+    // Renewed with A before leaving: a client who left counts as missed, never renewed.
+    assert.deepEqual(businessA.renewals90Days, { due: 1, renewed: 0 });
 
     const businessB = await readBusiness(coachB.coach);
     assert.equal(businessB.subscriptionCount, 1);

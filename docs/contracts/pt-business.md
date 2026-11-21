@@ -1,6 +1,6 @@
 # Contratto R8 — Pagina Business
 
-Stato: **proposta** del 2026-11-13, da approvare (Contract Gate di R8). La definizione dei rinnovi a 90 giorni (per abbonamento, rivista dopo la review) è **da confermare con l'utente** (vedi [Domande aperte](#domande-aperte)).
+Stato: **proposta** del 2026-11-13, da approvare (Contract Gate di R8). La definizione dei rinnovi a 90 giorni (per abbonamento; chi ha concluso conta come mancato) è **decisa dall'utente il 2026-11-21**.
 Piano: [`docs/plans/PT-registro.md`](../plans/PT-registro.md), logica pura 5 "Numeri business", R8. Contratti di riferimento: [`pt-registro.md`](pt-registro.md) (abbonamento, pagamenti, pausa, scollegamento), [`pt-oggi.md`](pt-oggi.md) (regole comuni).
 
 Identificatori, route ed errori in inglese; le spiegazioni sono scritte per il PT, in italiano. Nessuna migrazione: i dati vengono da `client_subscriptions`, `subscription_payments` e `subscription_pauses`.
@@ -115,14 +115,15 @@ Per ogni abbonamento le date di rinnovo sono `paidThrough`, poi `paidThrough` + 
 
 Somma di `subscription_payments.amountCents` per mese di `paidOn`. Un elemento per **ogni** mese del range, anche a 0, dal più vecchio al **mese in corso compreso** (l'ultimo elemento). Un pagamento annullato (DELETE) non esiste più e non conta. Contano anche i pagamenti degli ex clienti e degli abbonamenti conclusi.
 
-### Rinnovi negli ultimi 90 giorni — `renewals90Days` (da confermare)
+### Rinnovi negli ultimi 90 giorni — `renewals90Days`
 
 > Dei clienti con una scadenza negli ultimi 90 giorni, quanti hanno rinnovato.
 
-Si conta **per abbonamento**, non per pagamento: ogni abbonamento conta **una volta**. Finestra: da oggi − 89 a oggi (90 giorni, oggi compreso). Solo abbonamenti **ricorrenti** (tipo attuale). Definizione scelta dall'orchestratore dopo la review, **da confermare con l'utente**.
+Si conta **per abbonamento**, non per pagamento: ogni abbonamento conta **una volta**. Finestra: da oggi − 89 a oggi (90 giorni, oggi compreso). Solo abbonamenti **ricorrenti** (tipo attuale). Definizione decisa dall'utente il 2026-11-21.
 
-- **Rinnovato** (`renewed`): l'abbonamento ha almeno un pagamento di rinnovo con inizio copertura `coversFrom` nella finestra **e** oggi non è scaduto (`paidThrough >= oggi`, oppure è in pausa). Pagamento di rinnovo = non il primo dell'abbonamento, cioè arrivato quando c'era già un periodo pagato (`previousPaidThrough > startedOn`; sulle righe senza `previousPaidThrough`, scritte prima di `0015`, vale `coversFrom > startedOn`). Un settimanale che paga 13 volte nella finestra conta 1; un pagamento di più periodi conta 1.
-- **Mancato**: `paidThrough` nella finestra ma **prima di oggi** e non in pausa, cioè scaduto e non ancora ripagato. Chi scade oggi non è ancora in ritardo. Conta anche chi ha smesso (concluso) senza rinnovare.
+- **Rinnovato** (`renewed`): l'abbonamento ha almeno un pagamento di rinnovo con inizio copertura `coversFrom` nella finestra **e** oggi non è scaduto (`paidThrough >= oggi`, oppure è in pausa) **e** non è concluso. Pagamento di rinnovo = non il primo dell'abbonamento, cioè arrivato quando c'era già un periodo pagato (`previousPaidThrough > startedOn`; sulle righe senza `previousPaidThrough`, scritte prima di `0015`, vale `coversFrom > startedOn`). Un settimanale che paga 13 volte nella finestra conta 1; un pagamento di più periodi conta 1.
+- **Mancato**: `paidThrough` nella finestra ma **prima di oggi** e non in pausa, cioè scaduto e non ancora ripagato. Chi scade oggi non è ancora in ritardo.
+- **Concluso** (`endedOn` impostato e non dopo oggi) con `paidThrough` o un pagamento di rinnovo nella finestra: è **sempre mancato**, mai rinnovato, anche se ha rinnovato prima di smettere o ha ancora un periodo pagato. Così un cliente non compare insieme tra i rinnovati e tra i persi. Un `endedOn` futuro non è ancora una conclusione.
 - Rinnovato nella finestra e **di nuovo scaduto** oggi: conta come mancato (le due condizioni si escludono, perché "rinnovato" richiede di non essere scaduto oggi).
 - `due = renewed + mancati`. Il client mostra "N clienti su M hanno rinnovato" (e la percentuale); con `due = 0` nessuna percentuale.
 
@@ -135,7 +136,8 @@ Esempi (oggi = `2026-11-13`, finestra `2026-08-16 … 2026-11-13`):
 | rinnovato il 06/09, di nuovo scaduto il 06/10 | 0 su 1 (mancato) |
 | mensile scaduto da 60 giorni (14/09) | 0 su 1 |
 | mensile scaduto il 15/08 (fuori finestra), senza pagamenti | non conta |
-| rinnovato il 12/11 e poi scollegato oggi (pagato fino al 12/12, concluso) | 1 su 1 |
+| rinnovato il 12/11 e poi scollegato oggi (pagato fino al 12/12, concluso) | 0 su 1 (mancato) |
+| rinnovato il 12/11, `endedOn` il 12/12 (futuro) | 1 su 1 |
 
 Le pause: una pausa in corso sposta `paidThrough` oltre la fine della pausa, quindi l'abbonamento in pausa non è mai "mancato"; è "rinnovato" se ha un rinnovo nella finestra, altrimenti non conta.
 
@@ -187,5 +189,4 @@ Route nuova, nessun campo cambiato altrove. Rilascio: BE → pannello. Rollback:
 
 ## Domande aperte
 
-1. **Rinnovi a 90 giorni**: confermare la definizione per abbonamento sopra (scelta dopo la review: la prima versione contava ogni pagamento come rinnovato e ogni abbonamento scaduto come mancato, unità diverse che gonfiavano la percentuale con i settimanali). Da decidere in particolare: un cliente che ha rinnovato e poi si è scollegato con un periodo ancora pagato conta come rinnovato.
-2. **Finestra dell'atteso**: il piano diceva `paidThrough` in (oggi, oggi + 30]; qui è [oggi, oggi + 29] perché chi scade oggi deve ancora pagare e altrimenti non comparirebbe da nessuna parte.
+1. **Finestra dell'atteso**: il piano diceva `paidThrough` in (oggi, oggi + 30]; qui è [oggi, oggi + 29] perché chi scade oggi deve ancora pagare e altrimenti non comparirebbe da nessuna parte.

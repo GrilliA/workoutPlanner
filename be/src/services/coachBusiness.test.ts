@@ -328,6 +328,25 @@ describe("renewalsLast90Days", () => {
     assert.deepEqual(renewalsLast90Days([paused], [renewal], today), { due: 1, renewed: 1 });
   });
 
+  it("an ended client is missed, never renewed, even with a renewal paid in the window", () => {
+    const renewal = payment({ coversFrom: "2026-11-12", previousPaidThrough: "2026-11-12" });
+    // Renewed on 12/11, then the coach closed it today: still paid through 12/12.
+    const leftAfterRenewing = { ...monthly, paidThrough: "2026-12-12", endedOn: today };
+    assert.deepEqual(renewalsLast90Days([leftAfterRenewing], [renewal], today), { due: 1, renewed: 0 });
+    // Unlinked today on the day it was due, without paying: not late yet, but it left.
+    const unlinkedOnDueDay = { ...monthly, paidThrough: today, endedOn: today };
+    assert.deepEqual(renewalsLast90Days([unlinkedOnDueDay], [], today), { due: 1, renewed: 0 });
+    // Ended with nothing due and no renewal in the window: it does not count.
+    const endedPaidAhead = { ...monthly, paidThrough: "2026-11-20", endedOn: today };
+    assert.deepEqual(renewalsLast90Days([endedPaidAhead], [], today), { due: 0, renewed: 0 });
+  });
+
+  it("an end date after today is not an end yet: the client still counts as renewed", () => {
+    const renewal = payment({ coversFrom: "2026-11-12", previousPaidThrough: "2026-11-12" });
+    const endingLater = { ...monthly, paidThrough: "2026-12-12", endedOn: "2026-12-12" };
+    assert.deepEqual(renewalsLast90Days([endingLater], [renewal], today), { due: 1, renewed: 1 });
+  });
+
   it("payments of non-recurring subscriptions are not renewals", () => {
     const package_ = { ...monthly, isRecurring: false };
     const renewal = payment({ coversFrom: "2026-10-06", previousPaidThrough: "2026-10-06" });
