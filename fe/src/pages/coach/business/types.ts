@@ -31,7 +31,7 @@ export type RenewalsSummary = {
   hint: string;
 };
 
-export type LostMonth = {
+type LostMonth = {
   label: string;
   count: string;
 };

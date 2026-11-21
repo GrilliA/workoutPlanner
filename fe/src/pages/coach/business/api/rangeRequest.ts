@@ -3,7 +3,7 @@ import type { BusinessRange } from "@api";
 /** One read of the page: the id tells two reads of the same range apart. */
 export type RangeRequest = { range: BusinessRange; id: number };
 
-export type RangeFilterState = {
+type RangeFilterState = {
   /** The range the filter shows as selected. */
   selectedRange: BusinessRange;
   /** A read for another range is on its way; the numbers on screen are the old ones. */
