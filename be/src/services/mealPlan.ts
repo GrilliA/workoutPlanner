@@ -19,7 +19,7 @@ type DatedLog = {
   status: MealLogStatus;
 };
 
-export type MealDayAdherence = {
+type MealDayAdherence = {
   date: string;
   mealCount: number;
   doneCount: number;
