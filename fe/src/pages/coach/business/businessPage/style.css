@@ -1,0 +1,28 @@
+.business-page {
+  /* Empty state: its two actions are touch targets. `.coach-link` and `.coach-btn-link` are shared
+     with other pages, so the minimum height is set here and not on the shared classes. */
+  & .coach-dashboard__actions > * {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-block-size: var(--touch-target);
+  }
+
+  /* Rinnovi e persi uno sotto l'altro, affiancati quando la pagina è larga. */
+  & .cards {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-3);
+    align-items: start;
+  }
+}
+
+/* The page container is narrower than the viewport (sidebar, page padding): at 1024px it is
+   between 44rem and 48rem, so 48rem kept the cards stacked with room for two columns. */
+@container page (width >= 44rem) {
+  .business-page {
+    & .cards {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+}

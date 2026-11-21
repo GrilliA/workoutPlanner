@@ -123,6 +123,8 @@ export {
   updateCoachClientProgram,
 } from "./coach";
 export { getCoachAnalyticsOverview, getCoachAthleteAnalytics } from "./coachAnalytics";
+export { getCoachBusiness } from "./business";
+export type { BusinessRange, CoachBusiness } from "./schemas/business";
 export {
   getCoachOffers,
   createCoachOffer,

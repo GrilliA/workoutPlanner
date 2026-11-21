@@ -13,13 +13,14 @@ type AppShellProps = {
 type SidebarLink = {
   label: string;
   href: string;
-  icon: "home" | "clients" | "analytics" | "template" | "assignments" | "settings";
+  icon: "home" | "clients" | "analytics" | "business" | "template" | "assignments" | "settings";
 };
 
 const sidebarLinks: SidebarLink[] = [
   { label: "Oggi", href: "/today", icon: "home" },
   { label: "Clienti", href: "/clients", icon: "clients" },
   { label: "Analisi", href: "/analytics", icon: "analytics" },
+  { label: "Business", href: "/business", icon: "business" },
   { label: "Template", href: "/templates", icon: "template" },
   { label: "Schede assegnate", href: "/assignments", icon: "assignments" },
   { label: "Impostazioni", href: "/settings", icon: "settings" },
@@ -29,6 +30,7 @@ const bottomNavItems = [
   { label: "Oggi", href: "/today", icon: "home" as const },
   { label: "Clienti", href: "/clients", icon: "clients" as const },
   { label: "Analisi", href: "/analytics", icon: "analytics" as const },
+  { label: "Business", href: "/business", icon: "business" as const },
   { label: "Template", href: "/templates", icon: "template" as const },
   { label: "Schede", href: "/assignments", icon: "assignments" as const },
 ];
@@ -78,7 +80,8 @@ export function AppShell({ children, hideBottomNav = false }: AppShellProps) {
             <Link
               key={item.label}
               href={item.href}
-              className={isSectionActive(location, item.href) ? "item active" : "item"}
+              className="item"
+              aria-current={isSectionActive(location, item.href) ? "page" : undefined}
             >
               <NavIcon name={item.icon} />
               <span>{item.label}</span>
@@ -102,7 +105,8 @@ export function AppShell({ children, hideBottomNav = false }: AppShellProps) {
           <Link
             key={item.label}
             href={item.href}
-            className={isSectionActive(location, item.href) ? "item active" : "item"}
+            className="item"
+            aria-current={isSectionActive(location, item.href) ? "page" : undefined}
           >
             <NavIcon name={item.icon} />
             <span className="label">{item.label}</span>
@@ -139,6 +143,27 @@ function NavIcon({ name }: { name: string }) {
           strokeWidth="1.8"
           strokeLinecap="round"
         />
+      ) : null}
+      {name === "business" ? (
+        <>
+          <rect
+            x="4"
+            y="7"
+            width="16"
+            height="12"
+            rx="2"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+          />
+          <path
+            d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7M4 12h16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+          />
+        </>
       ) : null}
       {name === "template" ? (
         <>

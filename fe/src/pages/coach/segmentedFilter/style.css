@@ -1,0 +1,57 @@
+/* Segmented "Sole": white pill, selected option = ink pill (drawn from aria-pressed). */
+.segmented-filter {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: var(--space-1);
+  max-inline-size: 18rem;
+  margin-block-end: var(--space-5);
+  padding: var(--space-1);
+  border-radius: var(--radius-full);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+
+  & button {
+    /* min-block-size: the touch target is at least 44px and the label may still grow. */
+    min-block-size: var(--touch-target);
+    border: 0;
+    border-radius: var(--radius-full);
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-size: var(--text-sm);
+    font-weight: 700;
+    padding: var(--space-2-5) var(--space-2);
+    cursor: pointer;
+
+    @media (hover: hover) {
+      &:hover {
+        background: var(--hover-bg);
+      }
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      transition:
+        background var(--duration-fast),
+        color var(--duration-fast);
+    }
+
+    &:focus-visible {
+      outline: var(--focus-ring-width) solid var(--accent-text);
+      outline-offset: var(--focus-ring-offset);
+    }
+
+    &[aria-pressed="true"] {
+      color: var(--on-ink);
+      background: var(--ink);
+    }
+
+    @media (forced-colors: active) {
+      &[aria-pressed="true"] {
+        color: HighlightText;
+        background: Highlight;
+        forced-color-adjust: none;
+      }
+    }
+  }
+}
