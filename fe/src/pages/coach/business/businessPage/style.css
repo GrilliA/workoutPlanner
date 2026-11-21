@@ -17,7 +17,9 @@
   }
 }
 
-@container page (width >= 48rem) {
+/* The page container is narrower than the viewport (sidebar, page padding): at 1024px it is
+   between 44rem and 48rem, so 48rem kept the cards stacked with room for two columns. */
+@container page (width >= 44rem) {
   .business-page {
     & .cards {
       grid-template-columns: repeat(2, minmax(0, 1fr));
