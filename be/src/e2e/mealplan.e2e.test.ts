@@ -817,6 +817,71 @@ describe("Meal plan coach API smoke", { concurrency: false }, () => {
     assertError(await postTag(coach, { name: "Uno di troppo" }), 409, "Too many meal tags");
   });
 
+  // Two writers locking the same tag rows in different orders deadlock: Postgres kills one with a 500.
+  it("saving plans and templates while the tags are moved never fails with 500 and keeps positions contiguous", async () => {
+    const { coach, inviteCode } = await newCoach("tag-race");
+
+    for (const name of ["Pre-allenamento", "Post-allenamento", "Pre-nanna"]) {
+      assertStatus(await postTag(coach, { name }), 201);
+    }
+    const tags = await tagsOf(coach);
+    const tagIds = tags.map((tag) => Number(tag.id));
+    const clients = await Promise.all(["a", "b", "c", "d"].map((label) => newClient(`tag-race-${label}`, inviteCode)));
+    // Every body uses every tag, in a new order each time: the plan and template lock all of them.
+    const planBody = () => ({ meals: shuffled(tagIds).map((tagId) => ({ tagId, items: [] })) });
+    const templateBody = (name: string) => ({
+      name,
+      meals: shuffled(tagIds).map((tagId) => ({ tagId })),
+    });
+
+    for (const client of clients) {
+      await createPlan(coach, client, planBody());
+    }
+    const templateIds: number[] = [];
+    for (const label of ["uno", "due"]) {
+      const created = await postTemplate(coach, templateBody(`Base ${label}`));
+      assertStatus(created, 201);
+      templateIds.push(Number(asObject(created.body).id));
+    }
+
+    for (let round = 0; round < 20; round += 1) {
+      const [planSaves, templateCreates, templateReplaces, moves] = await Promise.all([
+        Promise.all(clients.map((client) => putPlan(coach, client, planBody()))),
+        Promise.all([0, 1].map((index) => postTemplate(coach, templateBody(`Giro ${round}-${index}`)))),
+        Promise.all(templateIds.map((id) => putTemplate(coach, id, templateBody(`Base ${round}`)))),
+        Promise.all(
+          shuffled(tagIds)
+            .slice(0, 4)
+            .map((tagId) => patchTag(coach, tagId, { position: Math.floor(Math.random() * tagIds.length) })),
+        ),
+      ]);
+
+      const requests: [string, ApiResponse[], number][] = [
+        ["PUT plan", planSaves, 200],
+        ["POST template", templateCreates, 201],
+        ["PUT template", templateReplaces, 200],
+        ["PATCH tag", moves, 200],
+      ];
+      for (const [label, responses, status] of requests) {
+        for (const response of responses) {
+          assert.equal(response.status, status, `round ${round}, ${label}: ${failMessage(response)}`);
+        }
+      }
+
+      const positions = (await tagsOf(coach)).map((tag) => tag.position);
+      assert.deepEqual(
+        positions,
+        tagIds.map((_, position) => position),
+        `round ${round}: positions are 0..n-1`,
+      );
+
+      // Keeps the coach under the cap of 20 templates.
+      for (const created of templateCreates) {
+        assertStatus(await deleteTemplate(coach, asObject(created.body).id), 204);
+      }
+    }
+  });
+
   // Decision 3: a rename shows in the plan, not in the athlete's log.
   it("renaming a tag renames the meal in the plan but not the meal name of a written log", async () => {
     const { coach, inviteCode } = await newCoach("rename");

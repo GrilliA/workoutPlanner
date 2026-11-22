@@ -61,16 +61,23 @@ export const listMealTags = async (coachId: number): Promise<MealTag[]> => {
 /**
  * Locks every tag of the coach, then reads the live ones in a second statement: a tag a
  * concurrent write added while this one waited is seen, so the count and the order are true.
- * After `ensureStarterMealTags` the coach always has a row to lock.
+ * After `ensureStarterMealTags` the coach always has a row to lock. Rows are locked in id
+ * order, here and in `readMealTagsOfCoach`: two writers never wait on each other in a cycle.
  */
-const lockLiveMealTags = async (tx: Tx, coachId: number): Promise<MealTag[]> => {
-  await tx.select({ id: mealTags.id }).from(mealTags).where(eq(mealTags.coachId, coachId)).for("update");
-
-  return tx
+const lockMealTags = async (tx: Tx, coachId: number) => {
+  const lockedTags = await tx
+    .select({ id: mealTags.id })
+    .from(mealTags)
+    .where(eq(mealTags.coachId, coachId))
+    .orderBy(asc(mealTags.id))
+    .for("update");
+  const liveTags: MealTag[] = await tx
     .select(mealTagColumns)
     .from(mealTags)
     .where(isLiveTagOf(coachId))
     .orderBy(asc(mealTags.position), asc(mealTags.id));
+
+  return { liveTags, storedCount: lockedTags.length };
 };
 
 /** A new tag goes last. Same name as a live tag, ignoring case → 409. */
@@ -82,7 +89,7 @@ export const createMealTag = async (
 
   try {
     return await db.transaction(async (tx): Promise<Result<MealTag>> => {
-      const liveTags = await lockLiveMealTags(tx, coachId);
+      const { liveTags } = await lockMealTags(tx, coachId);
 
       if (liveTags.length >= MAX_MEAL_TAGS_PER_COACH) {
         return { ok: false, status: 409, error: "Too many meal tags" };
@@ -138,7 +145,7 @@ export const updateMealTag = async (
 ): Promise<Result<MealTag>> => {
   try {
     return await db.transaction(async (tx): Promise<Result<MealTag>> => {
-      const liveTags = await lockLiveMealTags(tx, coachId);
+      const { liveTags } = await lockMealTags(tx, coachId);
       const tag = liveTags.find((liveTag) => liveTag.id === tagId);
 
       if (tag === undefined) {
@@ -172,6 +179,7 @@ export const updateMealTag = async (
 /**
  * The coach's tags among `tagIds`, archived or not; another coach's tags are simply missing.
  * FOR SHARE: an archive running at the same time waits for the save that checked the tag.
+ * In id order, like `lockMealTags`.
  */
 export const readMealTagsOfCoach = async (tx: Tx, coachId: number, tagIds: number[]) => {
   if (tagIds.length === 0) {
@@ -182,6 +190,7 @@ export const readMealTagsOfCoach = async (tx: Tx, coachId: number, tagIds: numbe
     .select({ id: mealTags.id, archivedAt: mealTags.archivedAt })
     .from(mealTags)
     .where(and(eq(mealTags.coachId, coachId), inArray(mealTags.id, tagIds)))
+    .orderBy(asc(mealTags.id))
     .for("share");
 
   return tags.map((tag) => ({ id: tag.id, isArchived: tag.archivedAt !== null }));
