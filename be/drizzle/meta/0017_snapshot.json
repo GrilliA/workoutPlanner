@@ -1,5 +1,5 @@
 {
-  "id": "80b3052d-f35a-43a0-ac3f-3e6de50f440e",
+  "id": "5847332a-d52c-4eb4-b753-3e1a384c3b19",
   "prevId": "a56dc919-8aba-44a6-a297-0f0bbc687050",
   "version": "7",
   "dialect": "postgresql",
@@ -1931,6 +1931,124 @@
       },
       "isRLSEnabled": false
     },
+    "public.meal_tags": {
+      "name": "meal_tags",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "coach_id": {
+          "name": "coach_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "archived_at": {
+          "name": "archived_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "meal_tags_coach_id_name_unique": {
+          "name": "meal_tags_coach_id_name_unique",
+          "columns": [
+            {
+              "expression": "coach_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "lower(\"name\")",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"meal_tags\".\"archived_at\" is null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "meal_tags_coach_id_idx": {
+          "name": "meal_tags_coach_id_idx",
+          "columns": [
+            {
+              "expression": "coach_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "meal_tags_coach_id_users_id_fk": {
+          "name": "meal_tags_coach_id_users_id_fk",
+          "tableFrom": "meal_tags",
+          "tableTo": "users",
+          "columnsFrom": [
+            "coach_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "meal_tags_id_coach": {
+          "name": "meal_tags_id_coach",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "coach_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.meal_plans": {
       "name": "meal_plans",
       "schema": "",
@@ -2032,6 +2150,14 @@
             "id",
             "athlete_id"
           ]
+        },
+        "meal_plans_id_coach": {
+          "name": "meal_plans_id_coach",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "coach_id"
+          ]
         }
       },
       "policies": {},
@@ -2054,15 +2180,21 @@
           "primaryKey": false,
           "notNull": true
         },
+        "coach_id": {
+          "name": "coach_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
         "position": {
           "name": "position",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
-        "name": {
-          "name": "name",
-          "type": "text",
+        "tag_id": {
+          "name": "tag_id",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
@@ -2094,20 +2226,65 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "meal_plan_meals_tag_id_idx": {
+          "name": "meal_plan_meals_tag_id_idx",
+          "columns": [
+            {
+              "expression": "tag_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
-        "meal_plan_meals_meal_plan_id_meal_plans_id_fk": {
-          "name": "meal_plan_meals_meal_plan_id_meal_plans_id_fk",
+        "meal_plan_meals_coach_id_users_id_fk": {
+          "name": "meal_plan_meals_coach_id_users_id_fk",
           "tableFrom": "meal_plan_meals",
-          "tableTo": "meal_plans",
+          "tableTo": "users",
           "columnsFrom": [
-            "meal_plan_id"
+            "coach_id"
           ],
           "columnsTo": [
             "id"
           ],
           "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "meal_plan_meals_meal_plan_id_coach_id_fk": {
+          "name": "meal_plan_meals_meal_plan_id_coach_id_fk",
+          "tableFrom": "meal_plan_meals",
+          "tableTo": "meal_plans",
+          "columnsFrom": [
+            "meal_plan_id",
+            "coach_id"
+          ],
+          "columnsTo": [
+            "id",
+            "coach_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "meal_plan_meals_tag_id_coach_id_fk": {
+          "name": "meal_plan_meals_tag_id_coach_id_fk",
+          "tableFrom": "meal_plan_meals",
+          "tableTo": "meal_tags",
+          "columnsFrom": [
+            "tag_id",
+            "coach_id"
+          ],
+          "columnsTo": [
+            "id",
+            "coach_id"
+          ],
+          "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
@@ -2347,6 +2524,219 @@
         "meal_logs_status_check": {
           "name": "meal_logs_status_check",
           "value": "\"meal_logs\".\"status\" IN ('done', 'other')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.meal_plan_templates": {
+      "name": "meal_plan_templates",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "coach_id": {
+          "name": "coach_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "meal_plan_templates_coach_id_idx": {
+          "name": "meal_plan_templates_coach_id_idx",
+          "columns": [
+            {
+              "expression": "coach_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "meal_plan_templates_coach_id_users_id_fk": {
+          "name": "meal_plan_templates_coach_id_users_id_fk",
+          "tableFrom": "meal_plan_templates",
+          "tableTo": "users",
+          "columnsFrom": [
+            "coach_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "meal_plan_templates_id_coach": {
+          "name": "meal_plan_templates_id_coach",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "coach_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.meal_plan_template_meals": {
+      "name": "meal_plan_template_meals",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "template_id": {
+          "name": "template_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "coach_id": {
+          "name": "coach_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tag_id": {
+          "name": "tag_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "time_of_day": {
+          "name": "time_of_day",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "meal_plan_template_meals_template_id_idx": {
+          "name": "meal_plan_template_meals_template_id_idx",
+          "columns": [
+            {
+              "expression": "template_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "meal_plan_template_meals_tag_id_idx": {
+          "name": "meal_plan_template_meals_tag_id_idx",
+          "columns": [
+            {
+              "expression": "tag_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "meal_plan_template_meals_coach_id_users_id_fk": {
+          "name": "meal_plan_template_meals_coach_id_users_id_fk",
+          "tableFrom": "meal_plan_template_meals",
+          "tableTo": "users",
+          "columnsFrom": [
+            "coach_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "meal_plan_template_meals_template_id_coach_id_fk": {
+          "name": "meal_plan_template_meals_template_id_coach_id_fk",
+          "tableFrom": "meal_plan_template_meals",
+          "tableTo": "meal_plan_templates",
+          "columnsFrom": [
+            "template_id",
+            "coach_id"
+          ],
+          "columnsTo": [
+            "id",
+            "coach_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "meal_plan_template_meals_tag_id_coach_id_fk": {
+          "name": "meal_plan_template_meals_tag_id_coach_id_fk",
+          "tableFrom": "meal_plan_template_meals",
+          "tableTo": "meal_tags",
+          "columnsFrom": [
+            "tag_id",
+            "coach_id"
+          ],
+          "columnsTo": [
+            "id",
+            "coach_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "meal_plan_template_meals_time_of_day_check": {
+          "name": "meal_plan_template_meals_time_of_day_check",
+          "value": "\"meal_plan_template_meals\".\"time_of_day\" ~ '^([01][0-9]|2[0-3]):[0-5][0-9]$'"
         }
       },
       "isRLSEnabled": false
