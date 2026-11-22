@@ -121,7 +121,7 @@ Le colonne interne (`coach_id`, `meal_plan_id`, `template_id`, `created_at` dei 
 
 ## Limiti
 
-Tetti di sicurezza, non regole di prodotto (confermati dall'utente; quelli di tag e template proposti il 2026-11-22, da confermare). Il minimo di 1 pasto invece è una regola di prodotto (decisione 2026-11-22). I due tetti per coach dipendono da quello che il coach ha già salvato, quindi rispondono 409 e non 400. Costanti in `mealPlanValidation.ts`, tranne il 280 della nota di una registrazione, valore previsto per AL4: arriverà con la sua validazione e oggi non è nel codice. Le lunghezze sono in unità UTF-16 (vedi **Testi**).
+Tetti di sicurezza, non regole di prodotto (confermati dall'utente; quelli di tag e template proposti il 2026-11-22, da confermare). Il minimo di 1 pasto invece è una regola di prodotto (decisione 2026-11-22). I tetti per coach (tag, righe di tag, template) dipendono da quello che il coach ha già salvato, quindi rispondono 409 e non 400. Costanti in `mealPlanValidation.ts`, tranne il 280 della nota di una registrazione, valore previsto per AL4: arriverà con la sua validazione e oggi non è nel codice. Le lunghezze sono in unità UTF-16 (vedi **Testi**).
 
 | Limite | Valore | Errore 400 |
 | --- | --- | --- |
@@ -129,6 +129,7 @@ Tetti di sicurezza, non regole di prodotto (confermati dall'utente; quelli di ta
 | voci per pasto | 30 | `"meals.items must have at most 30 entries"` |
 | nome del tag | 60 | `"name must be at most 60 characters"` |
 | tag per coach (non archiviati) | 30 | 409 `"Too many meal tags"` |
+| righe di tag per coach, archiviati compresi | 200 | 409 `"Too many meal tags"` |
 | template per coach | 20 | 409 `"Too many meal plan templates"` |
 | nome del template | 60 | `"name must be at most 60 characters"` |
 | pasti per template | da 1 a 12 | `"meals must have at least 1 entry"`, `"meals must have at most 12 entries"` |
@@ -147,7 +148,7 @@ Ogni coach ha una lista di tag (Colazione, Pranzo, …). Un pasto del piano o di
 
 **Tag iniziali.** Un coach che non ha mai avuto tag riceve, alla prima `GET /coach/meal-tags` (o al primo `POST`), Colazione, Spuntino, Pranzo, Merenda, Cena, in quest'ordine. La creazione è idempotente: due letture insieme creano i cinque tag una volta sola (lo garantisce l'indice unico sul nome). I tag archiviati contano: un coach che li ha archiviati tutti non li riceve di nuovo. Registrazione e auth non cambiano.
 
-**Archiviazione.** Un tag non si cancella: si archivia (`archived: true`). Sparisce dalla lista e non si può più modificare (PATCH → 404), ma i piani e i template che lo usano restano validi e continuano a mostrarlo. Un salvataggio (PUT del piano o del template) può tenere un tag archiviato al massimo tante volte quante lo usa la versione salvata: i pasti che lo hanno già restano, nessun pasto nuovo lo prende (404 `"Meal tag not found"`, la stessa risposta del tag inesistente: nella lista che il pannello offre non c'è). Il pannello riconosce un tag archiviato perché il `tagId` di un pasto non è nella lista. Un tag archiviato non torna attivo in v1; il suo nome torna libero per un tag nuovo. La cancellazione vera di un tag mai usato non è offerta (decisione 2026-11-22: solo archiviazione, più semplice). Nel DB un tag usato non si può cancellare (FK), e cancellare il coach cancella tag, piani e template.
+**Archiviazione.** Un tag non si cancella: si archivia (`archived: true`). Sparisce dalla lista e non si può più modificare (PATCH → 404), ma i piani e i template che lo usano restano validi e continuano a mostrarlo. Un salvataggio (PUT del piano o del template) può contenere un tag archiviato al massimo tante volte quante compare nella versione salvata: se nel salvato compare 2 volte, il body può averlo 2 volte, non 3. Quindi un pasto nuovo può prenderlo solo se un pasto esistente lo lascia (cambia tag o viene tolto nello stesso salvataggio); oltre il conteggio → 404 `"Meal tag not found"`, la stessa risposta del tag inesistente: nella lista che il pannello offre non c'è. Il pannello riconosce un tag archiviato perché il `tagId` di un pasto non è nella lista. Un tag archiviato non torna attivo in v1; il suo nome torna libero per un tag nuovo. La cancellazione vera di un tag mai usato non è offerta (decisione 2026-11-22: solo archiviazione, più semplice). Nel DB un tag usato non si può cancellare (FK), e cancellare il coach cancella tag, piani e template.
 
 #### GET `/coach/meal-tags`
 
@@ -157,7 +158,7 @@ Ogni coach ha una lista di tag (Colazione, Pranzo, …). Un pasto del piano o di
 
 Body `{ name: string }` → 201 `MealTag`, in fondo alla lista.
 
-Errori: 400 `"Invalid request body"`, `"name is required"`, `"name must not contain a NUL character"`, `"name must be at most 60 characters"`; 409 `"Meal tag already exists"` (stesso nome di un tag non archiviato del coach, senza distinzione di maiuscole: "pranzo" = "Pranzo"); 409 `"Too many meal tags"` (già 30 tag non archiviati).
+Errori: 400 `"Invalid request body"`, `"name is required"`, `"name must not contain a NUL character"`, `"name must be at most 60 characters"`; 409 `"Meal tag already exists"` (stesso nome di un tag non archiviato del coach, senza distinzione di maiuscole: "pranzo" = "Pranzo"); 409 `"Too many meal tags"` (già 30 tag non archiviati, oppure già 200 tag in tutto contando gli archiviati: archiviare libera un posto tra i 30 ma non una riga).
 
 #### PATCH `/coach/meal-tags/:id`
 
@@ -177,7 +178,7 @@ Errori: 400 `"Invalid meal tag id"` (`:id` non intero o `< 1`); 400 `"Invalid re
 
 ### Template di giornata
 
-Un template ha un nome e la sequenza ordinata dei pasti: solo tag e orario facoltativo, niente alimenti né note. Il pannello lo **applica** da solo: legge il template, riempie l'editor del piano con un pasto per ogni pasto del template (tag + orario, senza voci) e salva con il normale `PUT /coach/clients/:athleteId/meal-plan`. Il piano non ricorda da quale template è nato; modificare o cancellare il template non tocca i piani.
+Un template ha un nome e la sequenza ordinata dei pasti: solo tag e orario facoltativo, niente alimenti né note. Il pannello lo **applica** da solo: legge il template, riempie l'editor del piano con un pasto per ogni pasto del template (tag + orario, senza voci) e salva con il normale `PUT /coach/clients/:athleteId/meal-plan`. Se un tag del template è stato archiviato nel frattempo, non è più nella lista dei tag: il pannello **salta** i pasti del template con quel tag e **avvisa il coach** di quanti ne ha saltati (lo farà AL3). Il pannello non deve inviarli lo stesso: un PUT del piano con quel tag per un pasto nuovo risponderebbe 404 `"Meal tag not found"`. Il piano non ricorda da quale template è nato; modificare o cancellare il template non tocca i piani.
 
 #### GET `/coach/meal-plan-templates`
 
@@ -289,4 +290,4 @@ Decise dall'utente il 2026-11-22; sostituiscono le "Decisioni aperte".
 5. Tag dei pasti al posto del nome libero, con i tag iniziali, rinomina che vale ovunque tranne nei log, archiviazione al posto della cancellazione (sezione **Tag dei pasti**).
 6. Template di giornata con solo tag e orario; "applica" è lato pannello con il normale PUT (sezione **Template di giornata**).
 
-Da confermare: i tetti di tag e template (30 / 20 per coach, 12 pasti per template, 60 caratteri per i nomi) e la forma del riordino (`position` nel PATCH, un tag alla volta).
+Da confermare: i tetti di tag e template (30 tag non archiviati e 200 righe di tag / 20 template per coach, 12 pasti per template, 60 caratteri per i nomi) e la forma del riordino (`position` nel PATCH, un tag alla volta).
