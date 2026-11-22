@@ -9,6 +9,7 @@ import {
   mealPlans,
   mealTags,
 } from "../db/schema";
+import type { Failure, Reader, Result } from "./accessResult";
 import { dailyAdherence } from "./mealPlan";
 import {
   findForeignMealPlanId,
@@ -20,11 +21,6 @@ import {
   usesUnavailableMealTag,
 } from "./mealPlanValidation";
 import { MEAL_TAG_NOT_FOUND, readMealTagsOfCoach } from "./mealTagAccess";
-
-type Reader = Pick<typeof db, "select">;
-
-type Failure = { ok: false; status: 404 | 409; error: string };
-type Result<T> = { ok: true; value: T } | Failure;
 
 type MealPlanRow = typeof mealPlans.$inferSelect;
 /** A stored meal with the name of its tag: the meal has no name of its own. */

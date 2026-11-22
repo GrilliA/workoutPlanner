@@ -2,14 +2,12 @@ import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 import { db, type Tx } from "../db";
 import { isUniqueViolation } from "../db/errors";
 import { mealTags } from "../db/schema";
+import type { Failure, Result } from "./accessResult";
 import {
   MAX_MEAL_TAGS_PER_COACH,
   type MealTagInput,
   type MealTagPatch,
 } from "./mealPlanValidation";
-
-type Failure = { ok: false; status: 404 | 409; error: string };
-type Result<T> = { ok: true; value: T } | Failure;
 
 // Every coach starts with these, in this order (decision of 2026-11-22).
 const STARTER_MEAL_TAG_NAMES = ["Colazione", "Spuntino", "Pranzo", "Merenda", "Cena"];

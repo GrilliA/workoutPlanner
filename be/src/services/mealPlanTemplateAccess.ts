@@ -6,12 +6,8 @@ import {
   type MealPlanTemplateInput,
   usesUnavailableMealTag,
 } from "./mealPlanValidation";
+import type { Failure, Reader, Result } from "./accessResult";
 import { MEAL_TAG_NOT_FOUND, readMealTagsOfCoach } from "./mealTagAccess";
-
-type Reader = Pick<typeof db, "select">;
-
-type Failure = { ok: false; status: 404 | 409; error: string };
-type Result<T> = { ok: true; value: T } | Failure;
 
 type TemplateRow = typeof mealPlanTemplates.$inferSelect;
 

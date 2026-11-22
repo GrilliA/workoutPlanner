@@ -124,6 +124,17 @@ const planAtTheLimits = (char: string, tagId: number) => {
 
 const bodyBytes = (body: unknown): number => Buffer.byteLength(JSON.stringify(body), "utf8");
 
+const shuffled = <T>(values: T[]): T[] => {
+  const copy = [...values];
+
+  for (let index = copy.length - 1; index > 0; index -= 1) {
+    const other = Math.floor(Math.random() * (index + 1));
+    [copy[index], copy[other]] = [copy[other], copy[index]];
+  }
+
+  return copy;
+};
+
 const mealsOf = (plan: unknown): JsonObject[] => asList(asObject(plan).meals);
 const itemsOf = (meal: JsonObject): JsonObject[] => asList(meal.items);
 
