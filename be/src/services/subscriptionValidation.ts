@@ -69,7 +69,7 @@ export type PaymentPreviewQuery = {
   periods: number;
 };
 
-const isJsonObject = (value: unknown): value is Record<string, unknown> =>
+export const isJsonObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
 const isIntegerBetween = (value: unknown, min: number, max: number): value is number =>
@@ -79,7 +79,7 @@ export const isDatabaseId = (value: unknown): value is number =>
   isIntegerBetween(value, 1, MAX_DATABASE_ID);
 
 // Outside these years a date is a typo, and later arithmetic could leave the range Postgres accepts.
-const isCalendarDate = (value: unknown): value is string =>
+export const isCalendarDate = (value: unknown): value is string =>
   typeof value === "string" &&
   isValidIsoDate(value) &&
   value >= EARLIEST_DATE &&
@@ -131,7 +131,7 @@ const calendarDate =
   };
 
 /** An absent field stays `undefined`; a present one must pass `parse`. */
-const optional =
+export const optional =
   <T>(parse: Parse<T>): Parse<T | undefined> =>
   (value) => {
     if (value === undefined) {
@@ -145,7 +145,7 @@ const optional =
  * Postgres rejects U+0000 in text with a 500. The stored text must be what the coach
  * wrote, so the character is refused instead of stripped.
  */
-const rejectNul = (field: string, value: string): Invalid | null => {
+export const rejectNul = (field: string, value: string): Invalid | null => {
   if (value.includes("\0")) {
     return { ok: false, error: `${field} must not contain a NUL character` };
   }
