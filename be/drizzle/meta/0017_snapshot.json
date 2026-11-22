@@ -1,5 +1,5 @@
 {
-  "id": "5847332a-d52c-4eb4-b753-3e1a384c3b19",
+  "id": "b340c000-181d-46f7-914c-cd87be94b418",
   "prevId": "a56dc919-8aba-44a6-a297-0f0bbc687050",
   "version": "7",
   "dialect": "postgresql",
@@ -2241,6 +2241,21 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "meal_plan_meals_coach_id_idx": {
+          "name": "meal_plan_meals_coach_id_idx",
+          "columns": [
+            {
+              "expression": "coach_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
@@ -2284,7 +2299,7 @@
             "id",
             "coach_id"
           ],
-          "onDelete": "no action",
+          "onDelete": "restrict",
           "onUpdate": "no action"
         }
       },
@@ -2683,6 +2698,21 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "meal_plan_template_meals_coach_id_idx": {
+          "name": "meal_plan_template_meals_coach_id_idx",
+          "columns": [
+            {
+              "expression": "coach_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
@@ -2726,7 +2756,7 @@
             "id",
             "coach_id"
           ],
-          "onDelete": "no action",
+          "onDelete": "restrict",
           "onUpdate": "no action"
         }
       },

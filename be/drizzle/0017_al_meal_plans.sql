@@ -79,22 +79,24 @@ ALTER TABLE "meal_tags" ADD CONSTRAINT "meal_tags_coach_id_users_id_fk" FOREIGN 
 ALTER TABLE "meal_plans" ADD CONSTRAINT "meal_plans_coach_id_athlete_id_fk" FOREIGN KEY ("coach_id","athlete_id") REFERENCES "public"."coach_athletes"("coach_id","athlete_id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "meal_plan_meals" ADD CONSTRAINT "meal_plan_meals_coach_id_users_id_fk" FOREIGN KEY ("coach_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "meal_plan_meals" ADD CONSTRAINT "meal_plan_meals_meal_plan_id_coach_id_fk" FOREIGN KEY ("meal_plan_id","coach_id") REFERENCES "public"."meal_plans"("id","coach_id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "meal_plan_meals" ADD CONSTRAINT "meal_plan_meals_tag_id_coach_id_fk" FOREIGN KEY ("tag_id","coach_id") REFERENCES "public"."meal_tags"("id","coach_id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "meal_plan_meals" ADD CONSTRAINT "meal_plan_meals_tag_id_coach_id_fk" FOREIGN KEY ("tag_id","coach_id") REFERENCES "public"."meal_tags"("id","coach_id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "meal_plan_items" ADD CONSTRAINT "meal_plan_items_meal_id_meal_plan_meals_id_fk" FOREIGN KEY ("meal_id") REFERENCES "public"."meal_plan_meals"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "meal_logs" ADD CONSTRAINT "meal_logs_meal_id_meal_plan_meals_id_fk" FOREIGN KEY ("meal_id") REFERENCES "public"."meal_plan_meals"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "meal_logs" ADD CONSTRAINT "meal_logs_meal_plan_id_athlete_id_fk" FOREIGN KEY ("meal_plan_id","athlete_id") REFERENCES "public"."meal_plans"("id","athlete_id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "meal_plan_templates" ADD CONSTRAINT "meal_plan_templates_coach_id_users_id_fk" FOREIGN KEY ("coach_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "meal_plan_template_meals" ADD CONSTRAINT "meal_plan_template_meals_coach_id_users_id_fk" FOREIGN KEY ("coach_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "meal_plan_template_meals" ADD CONSTRAINT "meal_plan_template_meals_template_id_coach_id_fk" FOREIGN KEY ("template_id","coach_id") REFERENCES "public"."meal_plan_templates"("id","coach_id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "meal_plan_template_meals" ADD CONSTRAINT "meal_plan_template_meals_tag_id_coach_id_fk" FOREIGN KEY ("tag_id","coach_id") REFERENCES "public"."meal_tags"("id","coach_id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "meal_plan_template_meals" ADD CONSTRAINT "meal_plan_template_meals_tag_id_coach_id_fk" FOREIGN KEY ("tag_id","coach_id") REFERENCES "public"."meal_tags"("id","coach_id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 CREATE UNIQUE INDEX "meal_tags_coach_id_name_unique" ON "meal_tags" USING btree ("coach_id",lower("name")) WHERE "meal_tags"."archived_at" is null;--> statement-breakpoint
 CREATE INDEX "meal_tags_coach_id_idx" ON "meal_tags" USING btree ("coach_id");--> statement-breakpoint
 CREATE INDEX "meal_plans_athlete_id_idx" ON "meal_plans" USING btree ("athlete_id");--> statement-breakpoint
 CREATE INDEX "meal_plan_meals_meal_plan_id_idx" ON "meal_plan_meals" USING btree ("meal_plan_id");--> statement-breakpoint
 CREATE INDEX "meal_plan_meals_tag_id_idx" ON "meal_plan_meals" USING btree ("tag_id");--> statement-breakpoint
+CREATE INDEX "meal_plan_meals_coach_id_idx" ON "meal_plan_meals" USING btree ("coach_id");--> statement-breakpoint
 CREATE INDEX "meal_plan_items_meal_id_idx" ON "meal_plan_items" USING btree ("meal_id");--> statement-breakpoint
 CREATE INDEX "meal_logs_meal_plan_id_date_idx" ON "meal_logs" USING btree ("meal_plan_id","date");--> statement-breakpoint
 CREATE INDEX "meal_logs_meal_id_idx" ON "meal_logs" USING btree ("meal_id");--> statement-breakpoint
 CREATE INDEX "meal_plan_templates_coach_id_idx" ON "meal_plan_templates" USING btree ("coach_id");--> statement-breakpoint
 CREATE INDEX "meal_plan_template_meals_template_id_idx" ON "meal_plan_template_meals" USING btree ("template_id");--> statement-breakpoint
-CREATE INDEX "meal_plan_template_meals_tag_id_idx" ON "meal_plan_template_meals" USING btree ("tag_id");
+CREATE INDEX "meal_plan_template_meals_tag_id_idx" ON "meal_plan_template_meals" USING btree ("tag_id");--> statement-breakpoint
+CREATE INDEX "meal_plan_template_meals_coach_id_idx" ON "meal_plan_template_meals" USING btree ("coach_id");
