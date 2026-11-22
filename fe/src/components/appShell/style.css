@@ -102,7 +102,7 @@
         background: var(--hover-bg);
       }
 
-      &.active {
+      &[aria-current="page"] {
         color: var(--on-ink);
         background: var(--ink);
         border-color: var(--ink);
@@ -119,7 +119,7 @@
           filter: brightness(0.95);
         }
 
-        &.active {
+        &[aria-current="page"] {
           color: var(--on-accent);
           background: var(--accent);
         }
@@ -148,15 +148,17 @@
     bottom: 0;
     z-index: var(--z-nav);
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: var(--space-1);
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    /* Six items at 360px: no gap and a thin edge leave room for "Template" and "Business"
+       inside the active pill; the item padding keeps the pill around the label. */
+    gap: 0;
     box-sizing: border-box;
     width: 100%;
     max-width: 100%;
     padding-top: var(--space-2);
-    padding-right: calc(var(--space-3) + var(--safe-right));
+    padding-right: calc(var(--space-1) + var(--safe-right));
     padding-bottom: calc(var(--space-2) + var(--safe-bottom));
-    padding-left: calc(var(--space-3) + var(--safe-left));
+    padding-left: calc(var(--space-1) + var(--safe-left));
     background: var(--bottom-nav-bg);
     border-top: 1px solid var(--border);
     backdrop-filter: blur(var(--blur));
@@ -173,6 +175,7 @@
       font-size: 0.75rem;
       font-weight: 600;
       min-height: 2.75rem;
+      min-inline-size: 0;
       justify-content: center;
       -webkit-tap-highlight-color: transparent;
 
@@ -181,7 +184,16 @@
         height: var(--space-5);
       }
 
-      &.active {
+      /* The label wraps inside its item instead of spilling out of it: a long word or larger text
+         makes the item taller, never wider than its grid column. */
+      & .label {
+        max-inline-size: 100%;
+        line-height: 1.15;
+        text-align: center;
+        overflow-wrap: anywhere;
+      }
+
+      &[aria-current="page"] {
         color: var(--on-ink);
         background: var(--ink);
       }

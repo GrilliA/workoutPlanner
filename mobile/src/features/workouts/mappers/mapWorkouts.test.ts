@@ -25,6 +25,7 @@ const makeHome = (programs: AthleteHome["programs"]): AthleteHome => ({
   sessionsLast7Days: 0,
   lastSession: null,
   hasUnseenAssignment: false,
+  coaching: null,
 });
 
 const coachProgram: AthleteHome["programs"][number] = {
