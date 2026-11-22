@@ -131,7 +131,7 @@ const calendarDate =
   };
 
 /** An absent field stays `undefined`; a present one must pass `parse`. */
-const optional =
+export const optional =
   <T>(parse: Parse<T>): Parse<T | undefined> =>
   (value) => {
     if (value === undefined) {

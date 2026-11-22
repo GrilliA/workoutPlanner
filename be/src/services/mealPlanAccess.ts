@@ -1,7 +1,14 @@
 import { and, asc, between, eq, inArray, notInArray } from "drizzle-orm";
 import { db, type Tx } from "../db";
 import { isUniqueViolation } from "../db/errors";
-import { coachAthletes, mealLogs, mealPlanItems, mealPlanMeals, mealPlans } from "../db/schema";
+import {
+  coachAthletes,
+  mealLogs,
+  mealPlanItems,
+  mealPlanMeals,
+  mealPlans,
+  mealTags,
+} from "../db/schema";
 import { dailyAdherence } from "./mealPlan";
 import {
   findForeignMealPlanId,
@@ -10,7 +17,9 @@ import {
   type MealPlanInput,
   sentIds,
   type SavedMealIds,
+  usesUnavailableMealTag,
 } from "./mealPlanValidation";
+import { MEAL_TAG_NOT_FOUND, readMealTagsOfCoach } from "./mealTagAccess";
 
 type Reader = Pick<typeof db, "select">;
 
@@ -18,7 +27,15 @@ type Failure = { ok: false; status: 404 | 409; error: string };
 type Result<T> = { ok: true; value: T } | Failure;
 
 type MealPlanRow = typeof mealPlans.$inferSelect;
-type MealRow = typeof mealPlanMeals.$inferSelect;
+/** A stored meal with the name of its tag: the meal has no name of its own. */
+type MealRow = {
+  id: number;
+  tagId: number;
+  name: string;
+  timeOfDay: string | null;
+  notes: string | null;
+  position: number;
+};
 type ItemRow = typeof mealPlanItems.$inferSelect;
 
 const CLIENT_NOT_FOUND: Failure = { ok: false, status: 404, error: "Client not found" };
@@ -34,6 +51,7 @@ const toMealPlan = (plan: MealPlanRow, meals: MealRow[], items: ItemRow[]) => ({
   notes: plan.notes,
   meals: meals.map((meal) => ({
     id: meal.id,
+    tagId: meal.tagId,
     name: meal.name,
     timeOfDay: meal.timeOfDay,
     notes: meal.notes,
@@ -56,8 +74,16 @@ type MealPlanResponse = ReturnType<typeof toMealPlan>;
 /** Meals and items in position order; the id breaks a tie, as `nextMealId` does. */
 const buildMealPlan = async (reader: Reader, plan: MealPlanRow): Promise<MealPlanResponse> => {
   const meals = await reader
-    .select()
+    .select({
+      id: mealPlanMeals.id,
+      tagId: mealPlanMeals.tagId,
+      name: mealTags.name,
+      timeOfDay: mealPlanMeals.timeOfDay,
+      notes: mealPlanMeals.notes,
+      position: mealPlanMeals.position,
+    })
     .from(mealPlanMeals)
+    .innerJoin(mealTags, eq(mealTags.id, mealPlanMeals.tagId))
     .where(eq(mealPlanMeals.mealPlanId, plan.id))
     .orderBy(asc(mealPlanMeals.position), asc(mealPlanMeals.id));
   const mealIds = meals.map((meal) => meal.id);
@@ -123,7 +149,7 @@ const listSavedMealIds = async (tx: Tx, plan: MealPlanRow | null): Promise<Saved
   }
 
   const meals = await tx
-    .select({ id: mealPlanMeals.id })
+    .select({ id: mealPlanMeals.id, tagId: mealPlanMeals.tagId })
     .from(mealPlanMeals)
     .where(eq(mealPlanMeals.mealPlanId, plan.id));
   const mealIds = meals.map((meal) => meal.id);
@@ -137,9 +163,10 @@ const listSavedMealIds = async (tx: Tx, plan: MealPlanRow | null): Promise<Saved
     .from(mealPlanItems)
     .where(inArray(mealPlanItems.mealId, mealIds));
 
-  return mealIds.map((mealId) => ({
-    id: mealId,
-    itemIds: items.filter((item) => item.mealId === mealId).map((item) => item.id),
+  return meals.map((meal) => ({
+    id: meal.id,
+    tagId: meal.tagId,
+    itemIds: items.filter((item) => item.mealId === meal.id).map((item) => item.id),
   }));
 };
 
@@ -193,16 +220,17 @@ const deleteUnsentRows = async (tx: Tx, planId: number, input: MealPlanInput) =>
 /** Updates filter on the plan too: an id is never written outside the plan it was checked in. */
 const writeMealRow = async (
   tx: Tx,
-  planId: number,
+  plan: MealPlanRow,
   meal: MealInput,
   position: number,
 ): Promise<number> => {
-  const fields = { name: meal.name, timeOfDay: meal.timeOfDay, notes: meal.notes, position };
+  const planId = plan.id;
+  const fields = { tagId: meal.tagId, timeOfDay: meal.timeOfDay, notes: meal.notes, position };
 
   if (meal.id === undefined) {
     const [created] = await tx
       .insert(mealPlanMeals)
-      .values({ mealPlanId: planId, ...fields })
+      .values({ mealPlanId: planId, coachId: plan.coachId, ...fields })
       .returning({ id: mealPlanMeals.id });
     return created.id;
   }
@@ -242,7 +270,8 @@ type SavedMealPlan = { isCreated: boolean; mealPlan: MealPlanResponse };
 
 /**
  * Replaces the plan with the body in one transaction: a sent id updates its row, a missing id
- * creates one, a stored id not sent is removed. Ids are checked against the locked plan first.
+ * creates one, a stored id not sent is removed. Ids are checked against the locked plan first,
+ * then the tags: each must be the coach's, and an archived one only where the plan had it.
  */
 export const saveMealPlan = async (
   coachId: number,
@@ -264,11 +293,19 @@ export const saveMealPlan = async (
         return { ok: false, status: 404, error: foreignIdError };
       }
 
+      const sentTagIds = input.meals.map((meal) => meal.tagId);
+      const coachTags = await readMealTagsOfCoach(tx, coachId, sentTagIds);
+      const storedTagIds = savedMealIds.map((meal) => meal.tagId);
+
+      if (usesUnavailableMealTag({ sentTagIds, storedTagIds, coachTags })) {
+        return MEAL_TAG_NOT_FOUND;
+      }
+
       const plan = await writePlanRow(tx, coachId, athleteId, locked.value, input.notes);
       await deleteUnsentRows(tx, plan.id, input);
 
       for (const [position, meal] of input.meals.entries()) {
-        const mealId = await writeMealRow(tx, plan.id, meal, position);
+        const mealId = await writeMealRow(tx, plan, meal, position);
         await writeItemRows(tx, mealId, meal);
       }
 

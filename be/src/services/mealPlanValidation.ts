@@ -1,5 +1,11 @@
 import { daysBetween } from "./subscription";
-import { isCalendarDate, isDatabaseId, isJsonObject, rejectNul } from "./subscriptionValidation";
+import {
+  isCalendarDate,
+  isDatabaseId,
+  isJsonObject,
+  optional,
+  rejectNul,
+} from "./subscriptionValidation";
 
 type Invalid = { ok: false; error: string };
 type Valid<T> = { ok: true; value: T };
@@ -7,9 +13,13 @@ type Parse<T> = (value: unknown) => Valid<T> | Invalid;
 
 // Safety caps, not product rules: a real day has a handful of meals with a few foods each.
 // They stop a broken or hostile client from storing plans the panel and the app cannot show.
+// A template holds the same day as a plan: same cap on its meals.
 const MAX_MEALS_PER_PLAN = 12;
 const MAX_ITEMS_PER_MEAL = 30;
-const MAX_MEAL_NAME_LENGTH = 60;
+const MAX_MEAL_TAG_NAME_LENGTH = 60;
+const MAX_MEAL_PLAN_TEMPLATE_NAME_LENGTH = 60;
+export const MAX_MEAL_TAGS_PER_COACH = 30;
+export const MAX_MEAL_PLAN_TEMPLATES_PER_COACH = 20;
 const MAX_FOOD_LENGTH = 120;
 const MAX_QUANTITY_LENGTH = 60;
 const MAX_MEAL_PLAN_NOTES_LENGTH = 1000;
@@ -18,6 +28,7 @@ const MAX_MEAL_LOG_RANGE_DAYS = 31;
 const TIME_OF_DAY_PATTERN = /^([01][0-9]|2[0-3]):[0-5][0-9]$/;
 
 const INVALID_BODY: Invalid = { ok: false, error: "Invalid request body" };
+const NO_FIELDS: Invalid = { ok: false, error: "At least one field is required" };
 
 type MealItemInput = {
   /** Missing means a new item. */
@@ -29,7 +40,7 @@ type MealItemInput = {
 export type MealInput = {
   /** Missing means a new meal. */
   id: number | undefined;
-  name: string;
+  tagId: number;
   timeOfDay: string | null;
   notes: string | null;
   items: MealItemInput[];
@@ -46,10 +57,39 @@ export type MealLogsQuery = {
   to: string;
 };
 
-/** The meals stored in the plan, with the ids of their items. */
+/** The meals stored in the plan, with their tag and the ids of their items. */
 export type SavedMealIds = {
   id: number;
+  tagId: number;
   itemIds: number[];
+};
+
+export type MealTagInput = {
+  name: string;
+};
+
+/** `position` is the tag's new index among the live tags; archived tags cannot come back. */
+export type MealTagPatch = {
+  name: string | undefined;
+  position: number | undefined;
+  archived: true | undefined;
+};
+
+type TemplateMealInput = {
+  tagId: number;
+  timeOfDay: string | null;
+};
+
+/** The whole template as it must be after the save: array order is the meal order. */
+export type MealPlanTemplateInput = {
+  name: string;
+  meals: TemplateMealInput[];
+};
+
+/** A tag of the coach, among the ones a body sends. */
+type CoachMealTag = {
+  id: number;
+  isArchived: boolean;
 };
 
 const checkText = (field: string, text: string, maxLength: number): Invalid | null => {
@@ -125,6 +165,18 @@ const optionalId =
     return { ok: true, value };
   };
 
+const parseTagId: Parse<number> = (value) => {
+  if (value === undefined || value === null) {
+    return { ok: false, error: "meals.tagId is required" };
+  }
+
+  if (!isDatabaseId(value)) {
+    return { ok: false, error: "Invalid meal tag id" };
+  }
+
+  return { ok: true, value };
+};
+
 const parseTimeOfDay: Parse<string | null> = (value) => {
   if (value === undefined || value === null) {
     return { ok: true, value: null };
@@ -139,10 +191,14 @@ const parseTimeOfDay: Parse<string | null> = (value) => {
 
 /** Parses every entry and stops at the first error, in array order. */
 const parseList =
-  <T>(field: string, maxEntries: number, parseEntry: Parse<T>): Parse<T[]> =>
+  <T>(field: string, minEntries: 0 | 1, maxEntries: number, parseEntry: Parse<T>): Parse<T[]> =>
   (value) => {
     if (!Array.isArray(value)) {
       return { ok: false, error: `${field} must be an array` };
+    }
+
+    if (value.length < minEntries) {
+      return { ok: false, error: `${field} must have at least 1 entry` };
     }
 
     if (value.length > maxEntries) {
@@ -194,9 +250,8 @@ const parseItem: Parse<MealItemInput> = (value) => {
 };
 
 const parseMealId = optionalId("Invalid meal id");
-const parseMealName = requiredText("meals.name", MAX_MEAL_NAME_LENGTH);
 const parseMealNotes = optionalText("meals.notes", MAX_MEAL_NOTES_LENGTH);
-const parseItems = parseList("meals.items", MAX_ITEMS_PER_MEAL, parseItem);
+const parseItems = parseList("meals.items", 0, MAX_ITEMS_PER_MEAL, parseItem);
 
 const parseMeal: Parse<MealInput> = (value) => {
   if (!isJsonObject(value)) {
@@ -209,10 +264,10 @@ const parseMeal: Parse<MealInput> = (value) => {
     return id;
   }
 
-  const name = parseMealName(value.name);
+  const tagId = parseTagId(value.tagId);
 
-  if (!name.ok) {
-    return name;
+  if (!tagId.ok) {
+    return tagId;
   }
 
   const timeOfDay = parseTimeOfDay(value.timeOfDay);
@@ -237,7 +292,7 @@ const parseMeal: Parse<MealInput> = (value) => {
     ok: true,
     value: {
       id: id.value,
-      name: name.value,
+      tagId: tagId.value,
       timeOfDay: timeOfDay.value,
       notes: notes.value,
       items: items.value,
@@ -246,7 +301,8 @@ const parseMeal: Parse<MealInput> = (value) => {
 };
 
 const parsePlanNotes = optionalText("notes", MAX_MEAL_PLAN_NOTES_LENGTH);
-const parseMeals = parseList("meals", MAX_MEALS_PER_PLAN, parseMeal);
+// At least one meal (decision of 2026-11-22): an empty plan has nothing to follow.
+const parseMeals = parseList("meals", 1, MAX_MEALS_PER_PLAN, parseMeal);
 
 const hasDuplicate = (ids: number[]): boolean =>
   ids.some((id, index) => ids.indexOf(id) !== index);
@@ -351,4 +407,147 @@ export const findForeignMealPlanId = (
   }
 
   return null;
+};
+
+/**
+ * True when a body uses a tag the coach cannot pick: not one of theirs (another coach's or
+ * missing, the same answer for both), or archived and used more often than the stored plan
+ * or template uses it. So a save keeps the meals that already show an archived tag, but no
+ * new meal can take it.
+ */
+export const usesUnavailableMealTag = (input: {
+  sentTagIds: number[];
+  storedTagIds: number[];
+  coachTags: CoachMealTag[];
+}): boolean => {
+  const timesUsed = (tagIds: number[], tagId: number) =>
+    tagIds.filter((usedTagId) => usedTagId === tagId).length;
+
+  return input.sentTagIds.some((tagId) => {
+    const tag = input.coachTags.find((coachTag) => coachTag.id === tagId);
+
+    if (tag === undefined) {
+      return true;
+    }
+
+    const isUsedMoreThanStored =
+      timesUsed(input.sentTagIds, tagId) > timesUsed(input.storedTagIds, tagId);
+
+    return tag.isArchived && isUsedMoreThanStored;
+  });
+};
+
+const parseTagName = requiredText("name", MAX_MEAL_TAG_NAME_LENGTH);
+
+export const validateMealTagInput = (body: unknown): Valid<MealTagInput> | Invalid => {
+  if (!isJsonObject(body)) {
+    return INVALID_BODY;
+  }
+
+  const name = parseTagName(body.name);
+
+  if (!name.ok) {
+    return name;
+  }
+
+  return { ok: true, value: { name: name.value } };
+};
+
+const parseTagPosition: Parse<number> = (value) => {
+  const isPosition =
+    Number.isInteger(value) && Number(value) >= 0 && Number(value) < MAX_MEAL_TAGS_PER_COACH;
+
+  if (!isPosition) {
+    const lastPosition = MAX_MEAL_TAGS_PER_COACH - 1;
+    return { ok: false, error: `position must be an integer from 0 to ${lastPosition}` };
+  }
+
+  return { ok: true, value: Number(value) };
+};
+
+const parseArchived: Parse<true> = (value) => {
+  if (value !== true) {
+    return { ok: false, error: "archived must be true" };
+  }
+
+  return { ok: true, value };
+};
+
+export const validateMealTagPatch = (body: unknown): Valid<MealTagPatch> | Invalid => {
+  if (!isJsonObject(body)) {
+    return INVALID_BODY;
+  }
+
+  const name = optional(parseTagName)(body.name);
+
+  if (!name.ok) {
+    return name;
+  }
+
+  const position = optional(parseTagPosition)(body.position);
+
+  if (!position.ok) {
+    return position;
+  }
+
+  const archived = optional(parseArchived)(body.archived);
+
+  if (!archived.ok) {
+    return archived;
+  }
+
+  const patch = { name: name.value, position: position.value, archived: archived.value };
+  const hasAnyField = Object.values(patch).some((field) => field !== undefined);
+
+  if (!hasAnyField) {
+    return NO_FIELDS;
+  }
+
+  return { ok: true, value: patch };
+};
+
+const parseTemplateName = requiredText("name", MAX_MEAL_PLAN_TEMPLATE_NAME_LENGTH);
+
+const parseTemplateMeal: Parse<TemplateMealInput> = (value) => {
+  if (!isJsonObject(value)) {
+    return INVALID_BODY;
+  }
+
+  const tagId = parseTagId(value.tagId);
+
+  if (!tagId.ok) {
+    return tagId;
+  }
+
+  const timeOfDay = parseTimeOfDay(value.timeOfDay);
+
+  if (!timeOfDay.ok) {
+    return timeOfDay;
+  }
+
+  return { ok: true, value: { tagId: tagId.value, timeOfDay: timeOfDay.value } };
+};
+
+const parseTemplateMeals = parseList("meals", 1, MAX_MEALS_PER_PLAN, parseTemplateMeal);
+
+export const validateMealPlanTemplateInput = (
+  body: unknown,
+): Valid<MealPlanTemplateInput> | Invalid => {
+  if (!isJsonObject(body)) {
+    return INVALID_BODY;
+  }
+
+  const name = parseTemplateName(body.name);
+
+  if (!name.ok) {
+    return name;
+  }
+
+  const meals = parseTemplateMeals(body.meals);
+
+  if (!meals.ok) {
+    return meals;
+  }
+
+  return { ok: true, value: { name: name.value, meals: meals.value } };
 };

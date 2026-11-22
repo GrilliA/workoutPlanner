@@ -12,6 +12,8 @@ import { validateMealPlanInput } from "../services/mealPlanValidation";
 type JsonObject = Record<string, unknown>;
 type ApiResponse = { status: number; body: unknown };
 type Account = { id: number; token: string };
+/** A coach's live tag ids by name, as `GET /coach/meal-tags` lists them. */
+type TagIds = Record<string, number>;
 type DatabaseModule = typeof import("../db");
 type SchemaModule = typeof import("../db/schema");
 
@@ -22,6 +24,8 @@ type Fixtures = {
   coachB: Account;
   inviteCodeA: string;
   inviteCodeB: string;
+  tagsA: TagIds;
+  tagsB: TagIds;
 };
 
 const PASSWORD = "smoketest-password";
@@ -31,7 +35,11 @@ const JSON_BODY_LIMIT_BYTES = 100 * 1024;
 
 // Field lists of the contract (docs/contracts/al-piano-pasti.md): internal columns must not leak.
 const MEAL_PLAN_KEYS = ["athleteId", "createdAt", "id", "isActive", "meals", "notes", "updatedAt"];
-const MEAL_KEYS = ["id", "items", "name", "notes", "position", "timeOfDay"];
+const MEAL_KEYS = ["id", "items", "name", "notes", "position", "tagId", "timeOfDay"];
+const TAG_KEYS = ["archivedAt", "id", "name", "position"];
+const TEMPLATE_KEYS = ["createdAt", "id", "meals", "name", "updatedAt"];
+const TEMPLATE_MEAL_KEYS = ["name", "tagId", "timeOfDay"];
+const STARTER_TAG_NAMES = ["Colazione", "Spuntino", "Pranzo", "Merenda", "Cena"];
 const ITEM_KEYS = ["food", "id", "position", "quantity"];
 const DAY_KEYS = ["date", "doneCount", "mealCount", "otherCount", "removedCount"];
 
@@ -100,13 +108,13 @@ const toApiResponse = async (response: Response): Promise<ApiResponse> => {
 };
 
 /** A plan with every count and every text at its cap, each text one character repeated. */
-const planAtTheLimits = (char: string) => {
+const planAtTheLimits = (char: string, tagId: number) => {
   // Lengths are UTF-16 units: an emoji counts 2, so it is repeated half as many times.
   const text = (units: number) => char.repeat(units / char.length);
   return {
     notes: text(1000),
     meals: Array.from({ length: 12 }, () => ({
-      name: text(60),
+      tagId,
       timeOfDay: "12:00",
       notes: text(500),
       items: Array.from({ length: 30 }, () => ({ food: text(120), quantity: text(60) })),
@@ -119,20 +127,20 @@ const bodyBytes = (body: unknown): number => Buffer.byteLength(JSON.stringify(bo
 const mealsOf = (plan: unknown): JsonObject[] => asList(asObject(plan).meals);
 const itemsOf = (meal: JsonObject): JsonObject[] => asList(meal.items);
 
-const breakfastAndLunch = {
+const breakfastAndLunch = (tags: TagIds) => ({
   notes: "Bevi due litri d'acqua",
   meals: [
     {
-      name: "Colazione",
+      tagId: tags.Colazione,
       timeOfDay: "07:30",
       items: [
         { food: "Avena", quantity: "80 g" },
         { food: "Latte", quantity: "200 ml" },
       ],
     },
-    { name: "Pranzo", timeOfDay: "13:00", notes: "Verdure a volontà", items: [{ food: "Riso" }] },
+    { tagId: tags.Pranzo, timeOfDay: "13:00", notes: "Verdure a volontà", items: [{ food: "Riso" }] },
   ],
-};
+});
 
 describe("Meal plan coach API smoke", { concurrency: false }, () => {
   let server: Server | undefined;
@@ -258,6 +266,39 @@ describe("Meal plan coach API smoke", { concurrency: false }, () => {
   const unlink = (coach: Account, athlete: Account) =>
     api("DELETE", `/api/coach/clients/${athlete.id}`, { token: coach.token });
 
+  const getTags = (coach: Account) => api("GET", "/api/coach/meal-tags", { token: coach.token });
+  const postTag = (coach: Account, body: unknown) => api("POST", "/api/coach/meal-tags", { token: coach.token, body });
+  const patchTag = (coach: Account, tagId: number | string, body: unknown) =>
+    api("PATCH", `/api/coach/meal-tags/${tagId}`, { token: coach.token, body });
+
+  const tagsOf = async (coach: Account): Promise<JsonObject[]> => {
+    const listed = await getTags(coach);
+    assertStatus(listed, 200);
+    return asList(asObject(listed.body).mealTags);
+  };
+
+  const tagIdsOf = async (coach: Account): Promise<TagIds> => {
+    const tags = await tagsOf(coach);
+    return Object.fromEntries(tags.map((tag) => [String(tag.name), Number(tag.id)]));
+  };
+
+  const templatesPath = "/api/coach/meal-plan-templates";
+  const getTemplates = (coach: Account) => api("GET", templatesPath, { token: coach.token });
+  const postTemplate = (coach: Account, body: unknown) => api("POST", templatesPath, { token: coach.token, body });
+  const putTemplate = (coach: Account, templateId: unknown, body: unknown) =>
+    api("PUT", `${templatesPath}/${templateId}`, { token: coach.token, body });
+  const deleteTemplate = (coach: Account, templateId: unknown) =>
+    api("DELETE", `${templatesPath}/${templateId}`, { token: coach.token });
+
+  const storedTagCount = async (coach: Account): Promise<number> => {
+    const { database, schema } = setup();
+    const rows = await database.db
+      .select({ id: schema.mealTags.id })
+      .from(schema.mealTags)
+      .where(eq(schema.mealTags.coachId, coach.id));
+    return rows.length;
+  };
+
   before(async () => {
     requireScratchDatabase();
 
@@ -275,6 +316,7 @@ describe("Meal plan coach API smoke", { concurrency: false }, () => {
     const coachA = await register("coach-a", false);
     const coachB = await register("coach-b", false);
 
+    // Fixtures is set before the tags are read: tagIdsOf goes through setup().
     fixtures = {
       database,
       schema,
@@ -282,7 +324,11 @@ describe("Meal plan coach API smoke", { concurrency: false }, () => {
       coachB,
       inviteCodeA: await inviteCodeOf(coachA),
       inviteCodeB: await inviteCodeOf(coachB),
+      tagsA: {},
+      tagsB: {},
     };
+    fixtures.tagsA = await tagIdsOf(coachA);
+    fixtures.tagsB = await tagIdsOf(coachB);
   });
 
   after(async () => {
@@ -301,14 +347,14 @@ describe("Meal plan coach API smoke", { concurrency: false }, () => {
 
   // AC1, AC2
   it("GET is null before the first PUT; the first PUT creates an active plan, the next ones update", async () => {
-    const { coachA, inviteCodeA } = setup();
+    const { coachA, inviteCodeA, tagsA } = setup();
     const client = await newClient("create", inviteCodeA);
 
     const empty = await getPlan(coachA, client);
     assertStatus(empty, 200);
     assert.deepEqual(empty.body, { mealPlan: null });
 
-    const created = await createPlan(coachA, client, breakfastAndLunch);
+    const created = await createPlan(coachA, client, breakfastAndLunch(tagsA));
     assertKeys(created, MEAL_PLAN_KEYS);
     assert.equal(created.athleteId, client.id);
     assert.equal(created.isActive, true);
@@ -338,7 +384,7 @@ describe("Meal plan coach API smoke", { concurrency: false }, () => {
 
     // Timestamps have millisecond precision: wait so a fast PUT cannot land in the same millisecond.
     await sleep(5);
-    const updated = await putPlan(coachA, client, { ...breakfastAndLunch, notes: null });
+    const updated = await putPlan(coachA, client, { ...breakfastAndLunch(tagsA), notes: null });
     assertStatus(updated, 200);
     assert.equal(asObject(updated.body).id, created.id);
     assert.equal(asObject(updated.body).createdAt, created.createdAt);
@@ -352,9 +398,9 @@ describe("Meal plan coach API smoke", { concurrency: false }, () => {
 
   // AC3
   it("PUT keeps the ids it receives, removes the ones it does not, and logs keep the meal name", async () => {
-    const { coachA, inviteCodeA } = setup();
+    const { coachA, inviteCodeA, tagsA } = setup();
     const client = await newClient("ids", inviteCodeA);
-    const created = await createPlan(coachA, client, breakfastAndLunch);
+    const created = await createPlan(coachA, client, breakfastAndLunch(tagsA));
     const planId = Number(created.id);
     const [breakfast, lunch] = mealsOf(created);
     const [oats, milk] = itemsOf(breakfast);
@@ -363,10 +409,10 @@ describe("Meal plan coach API smoke", { concurrency: false }, () => {
 
     const saved = await putPlan(coachA, client, {
       meals: [
-        { name: "Cena", items: [{ food: "Pesce", quantity: "150 g" }] },
+        { tagId: tagsA.Cena, items: [{ food: "Pesce", quantity: "150 g" }] },
         {
           id: breakfast.id,
-          name: "Colazione grande",
+          tagId: tagsA.Merenda,
           timeOfDay: null,
           items: [{ id: milk.id, food: "Latte di avena", quantity: "250 ml" }, { food: "Banana" }],
         },
@@ -376,9 +422,10 @@ describe("Meal plan coach API smoke", { concurrency: false }, () => {
     assertStatus(saved, 200);
     const [dinner, breakfastAfter] = mealsOf(saved.body);
     assert.equal(dinner.name, "Cena");
+    assert.equal(dinner.tagId, tagsA.Cena);
     assert.equal(dinner.position, 0);
     assert.equal(breakfastAfter.id, breakfast.id);
-    assert.equal(breakfastAfter.name, "Colazione grande");
+    assert.equal(breakfastAfter.name, "Merenda", "a kept meal can change tag");
     assert.equal(breakfastAfter.timeOfDay, null);
     assert.equal(breakfastAfter.position, 1);
     const itemsAfter = itemsOf(breakfastAfter);
@@ -397,42 +444,41 @@ describe("Meal plan coach API smoke", { concurrency: false }, () => {
       ].sort(),
     );
 
-    const cleared = await putPlan(coachA, client, { meals: [] });
-    assertStatus(cleared, 200);
-    assert.deepEqual(mealsOf(cleared.body), []);
-    assert.equal((await storedLogs(planId)).length, 2, "removing every meal keeps the logs");
+    // A plan keeps at least one meal (decision of 2026-11-22).
+    assertError(await putPlan(coachA, client, { meals: [] }), 400, "meals must have at least 1 entry");
+    assert.deepEqual(asObject((await getPlan(coachA, client)).body).mealPlan, saved.body, "the refused PUT changed nothing");
   });
 
   // AC4, AC9
   it("refuses ids of another plan with 404 and never touches the other plan", async () => {
-    const { coachA, coachB, inviteCodeA, inviteCodeB } = setup();
+    const { coachA, coachB, inviteCodeA, inviteCodeB, tagsA, tagsB } = setup();
     const clientOfA = await newClient("own-a", inviteCodeA);
     const otherClientOfA = await newClient("other-a", inviteCodeA);
     const clientOfB = await newClient("own-b", inviteCodeB);
-    const planOfA = await createPlan(coachA, clientOfA, breakfastAndLunch);
-    const planOfB = await createPlan(coachB, clientOfB, breakfastAndLunch);
+    const planOfA = await createPlan(coachA, clientOfA, breakfastAndLunch(tagsA));
+    const planOfB = await createPlan(coachB, clientOfB, breakfastAndLunch(tagsB));
     const [mealOfB] = mealsOf(planOfB);
     const [itemOfB] = itemsOf(mealOfB);
     const [mealOfA, secondMealOfA] = mealsOf(planOfA);
 
     const otherCoachMeal = await putPlan(coachA, clientOfA, {
-      meals: [{ id: mealOfB.id, name: "Rubato", items: [] }],
+      meals: [{ id: mealOfB.id, tagId: tagsA.Pranzo, items: [] }],
     });
     assertError(otherCoachMeal, 404, "Meal not found");
 
     const otherCoachItem = await putPlan(coachA, clientOfA, {
-      meals: [{ id: mealOfA.id, name: "Colazione", items: [{ id: itemOfB.id, food: "Rubato" }] }],
+      meals: [{ id: mealOfA.id, tagId: tagsA.Colazione, items: [{ id: itemOfB.id, food: "Rubato" }] }],
     });
     assertError(otherCoachItem, 404, "Meal item not found");
 
     const itemOfOtherMeal = await putPlan(coachA, clientOfA, {
-      meals: [{ id: secondMealOfA.id, name: "Pranzo", items: [{ id: itemsOf(mealOfA)[0].id, food: "Avena" }] }],
+      meals: [{ id: secondMealOfA.id, tagId: tagsA.Pranzo, items: [{ id: itemsOf(mealOfA)[0].id, food: "Avena" }] }],
     });
     assertError(itemOfOtherMeal, 404, "Meal item not found");
 
     // Same coach, another client's plan: still a foreign id. The first PUT has no ids to update.
     const firstPutWithIds = await putPlan(coachA, otherClientOfA, {
-      meals: [{ id: mealOfA.id, name: "Colazione", items: [] }],
+      meals: [{ id: mealOfA.id, tagId: tagsA.Colazione, items: [] }],
     });
     assertError(firstPutWithIds, 404, "Meal not found");
     assert.deepEqual((await getPlan(coachA, otherClientOfA)).body, { mealPlan: null });
@@ -452,12 +498,12 @@ describe("Meal plan coach API smoke", { concurrency: false }, () => {
 
   // AC5
   it("PATCH turns the plan off and on, idempotently, without touching the meals", async () => {
-    const { coachA, inviteCodeA } = setup();
+    const { coachA, inviteCodeA, tagsA } = setup();
     const client = await newClient("patch", inviteCodeA);
 
     assertError(await patchPlan(coachA, client, { isActive: false }), 404, "Meal plan not found");
 
-    const created = await createPlan(coachA, client, breakfastAndLunch);
+    const created = await createPlan(coachA, client, breakfastAndLunch(tagsA));
 
     const turnedOff = await patchPlan(coachA, client, { isActive: false });
     assertStatus(turnedOff, 200);
@@ -472,7 +518,7 @@ describe("Meal plan coach API smoke", { concurrency: false }, () => {
     const readOff = await getPlan(coachA, client);
     assert.equal(asObject(asObject(readOff.body).mealPlan).isActive, false);
 
-    const updatedWhileOff = await putPlan(coachA, client, breakfastAndLunch);
+    const updatedWhileOff = await putPlan(coachA, client, breakfastAndLunch(tagsA));
     assertStatus(updatedWhileOff, 200);
     assert.equal(asObject(updatedWhileOff.body).isActive, false, "PUT does not change isActive");
 
@@ -486,11 +532,11 @@ describe("Meal plan coach API smoke", { concurrency: false }, () => {
 
   // AC6
   it("answers 404 Client not found for an athlete not linked to the coach, and after unlinking", async () => {
-    const { coachA, inviteCodeA } = setup();
+    const { coachA, inviteCodeA, tagsA } = setup();
     const stranger = await register("stranger", true);
 
     assertError(await getPlan(coachA, stranger), 404, "Client not found");
-    assertError(await putPlan(coachA, stranger, breakfastAndLunch), 404, "Client not found");
+    assertError(await putPlan(coachA, stranger, breakfastAndLunch(tagsA)), 404, "Client not found");
     assertError(await patchPlan(coachA, stranger, { isActive: true }), 404, "Client not found");
     assertError(await getLogs(coachA, stranger, `from=${today}&to=${today}`), 404, "Client not found");
     assertError(await api("GET", planPath("abc"), { token: coachA.token }), 400, "Invalid athlete id");
@@ -502,7 +548,7 @@ describe("Meal plan coach API smoke", { concurrency: false }, () => {
 
     // Unlinking deletes the plan and its logs (H8).
     const leaving = await newClient("leaving", inviteCodeA);
-    const created = await createPlan(coachA, leaving, breakfastAndLunch);
+    const created = await createPlan(coachA, leaving, breakfastAndLunch(tagsA));
     await insertLog(leaving, Number(created.id), mealsOf(created)[0], today, "done");
     const unlinked = await api("DELETE", `/api/coach/clients/${leaving.id}`, { token: coachA.token });
     assertStatus(unlinked, 200);
@@ -512,28 +558,30 @@ describe("Meal plan coach API smoke", { concurrency: false }, () => {
 
   // AC7
   it("refuses bodies past the limits with 400", async () => {
-    const { coachA, inviteCodeA } = setup();
+    const { coachA, inviteCodeA, tagsA } = setup();
     const client = await newClient("limits", inviteCodeA);
-    const meal = { name: "Pasto", items: [{ food: "Cibo" }] };
+    const meal = { tagId: tagsA.Pranzo, items: [{ food: "Cibo" }] };
     const thirteenMeals = Array.from({ length: 13 }, () => meal);
     const thirtyOneItems = Array.from({ length: 31 }, () => ({ food: "Cibo" }));
 
     const cases: [unknown, string][] = [
       [{ meals: thirteenMeals }, "meals must have at most 12 entries"],
-      [{ meals: [{ name: "Pasto", items: thirtyOneItems }] }, "meals.items must have at most 30 entries"],
-      [{ meals: [{ ...meal, name: "a".repeat(61) }] }, "meals.name must be at most 60 characters"],
-      [{ meals: [{ name: "Pasto", items: [{ food: "a".repeat(121) }] }] }, "meals.items.food must be at most 120 characters"],
+      [{ meals: [] }, "meals must have at least 1 entry"],
+      [{ meals: [{ items: [] }] }, "meals.tagId is required"],
+      [{ meals: [{ ...meal, tagId: "Pranzo" }] }, "Invalid meal tag id"],
+      [{ meals: [{ ...meal, items: thirtyOneItems }] }, "meals.items must have at most 30 entries"],
+      [{ meals: [{ ...meal, items: [{ food: "a".repeat(121) }] }] }, "meals.items.food must be at most 120 characters"],
       [
-        { meals: [{ name: "Pasto", items: [{ food: "Cibo", quantity: "a".repeat(61) }] }] },
+        { meals: [{ ...meal, items: [{ food: "Cibo", quantity: "a".repeat(61) }] }] },
         "meals.items.quantity must be at most 60 characters",
       ],
       [{ notes: "a".repeat(1001), meals: [] }, "notes must be at most 1000 characters"],
       [{ meals: [{ ...meal, notes: "a".repeat(501) }] }, "meals.notes must be at most 500 characters"],
       [{ meals: [{ ...meal, timeOfDay: "25:00" }] }, "meals.timeOfDay must be HH:MM or null"],
-      [{ meals: [{ ...meal, name: "a\u0000b" }] }, "meals.name must not contain a NUL character"],
+      [{ meals: [{ ...meal, notes: "a\u0000b" }] }, "meals.notes must not contain a NUL character"],
       [{ meals: [meal, { ...meal }].map((entry) => ({ ...entry, id: 5 })) }, "Duplicate meal id"],
       [
-        { meals: [{ name: "Pasto", items: [{ id: 7, food: "Cibo" }, { id: 7, food: "Altro" }] }] },
+        { meals: [{ ...meal, items: [{ id: 7, food: "Cibo" }, { id: 7, food: "Altro" }] }] },
         "Duplicate meal item id",
       ],
       [[], "Invalid request body"],
@@ -552,7 +600,7 @@ describe("Meal plan coach API smoke", { concurrency: false }, () => {
 
   // AC8
   it("meal-logs returns one row per day, refuses more than 31 days and bad ranges", async () => {
-    const { coachA, inviteCodeA } = setup();
+    const { coachA, inviteCodeA, tagsA } = setup();
     const client = await newClient("logs", inviteCodeA);
     const yesterday = addDays(today, -1);
 
@@ -565,14 +613,14 @@ describe("Meal plan coach API smoke", { concurrency: false }, () => {
       ],
     });
 
-    const created = await createPlan(coachA, client, breakfastAndLunch);
+    const created = await createPlan(coachA, client, breakfastAndLunch(tagsA));
     const [breakfast, lunch] = mealsOf(created);
     await insertLog(client, Number(created.id), breakfast, yesterday, "done");
     await insertLog(client, Number(created.id), lunch, yesterday, "other");
     await insertLog(client, Number(created.id), breakfast, today, "done");
     // The coach removes lunch: yesterday's log of it moves to removedCount.
     const withoutLunch = await putPlan(coachA, client, {
-      meals: [{ id: breakfast.id, name: "Colazione", items: [] }, { name: "Cena", items: [] }],
+      meals: [{ id: breakfast.id, tagId: tagsA.Colazione, items: [] }, { tagId: tagsA.Cena, items: [] }],
     });
     assertStatus(withoutLunch, 200);
 
@@ -609,16 +657,16 @@ describe("Meal plan coach API smoke", { concurrency: false }, () => {
 
   // Contract: 413 from the global JSON parser, before any route check.
   it("a plan within every cap but over 100 kB of UTF-8 is refused with 413 and nothing is stored", async () => {
-    const { coachA, inviteCodeA } = setup();
+    const { coachA, inviteCodeA, tagsA } = setup();
     const client = await newClient("too-large", inviteCodeA);
 
-    const ascii = planAtTheLimits("a");
+    const ascii = planAtTheLimits("a", tagsA.Pranzo);
     assert.ok(bodyBytes(ascii) < JSON_BODY_LIMIT_BYTES, `ASCII plan is ${bodyBytes(ascii)} bytes`);
     const asciiSaved = await putPlan(coachA, client, ascii);
     assertStatus(asciiSaved, 201);
 
     for (const char of ["à", "🍝"]) {
-      const body = planAtTheLimits(char);
+      const body = planAtTheLimits(char, tagsA.Pranzo);
       assert.ok(validateMealPlanInput(body).ok, `the ${char} plan passes the validation`);
       assert.ok(bodyBytes(body) > JSON_BODY_LIMIT_BYTES, `the ${char} plan is ${bodyBytes(body)} bytes`);
       assertError(await putPlan(coachA, client, body), 413, "Request body too large");
@@ -630,11 +678,11 @@ describe("Meal plan coach API smoke", { concurrency: false }, () => {
 
   // Contract: two first PUTs at once.
   it("concurrent first PUTs create exactly one plan; the others get 409 or update it", async () => {
-    const { coachA, inviteCodeA } = setup();
+    const { coachA, inviteCodeA, tagsA } = setup();
     const client = await newClient("race-create", inviteCodeA);
 
     const responses = await Promise.all(
-      Array.from({ length: 4 }, () => putPlan(coachA, client, breakfastAndLunch)),
+      Array.from({ length: 4 }, () => putPlan(coachA, client, breakfastAndLunch(tagsA))),
     );
 
     const created = responses.filter((response) => response.status === 201);
@@ -656,7 +704,7 @@ describe("Meal plan coach API smoke", { concurrency: false }, () => {
 
   // Contract and H8: a save racing an unlink never leaves a plan for an ex client.
   it("a PUT racing the unlink of the client never fails with 500 and leaves no plan behind", async () => {
-    const { coachA, inviteCodeA } = setup();
+    const { coachA, inviteCodeA, tagsA } = setup();
 
     for (let round = 0; round < 6; round += 1) {
       const client = await newClient(`race-unlink-${round}`, inviteCodeA);
@@ -664,11 +712,11 @@ describe("Meal plan coach API smoke", { concurrency: false }, () => {
       const hasPlan = round % 2 === 1;
 
       if (hasPlan) {
-        await createPlan(coachA, client, breakfastAndLunch);
+        await createPlan(coachA, client, breakfastAndLunch(tagsA));
       }
 
       const [saved, unlinked] = await Promise.all([
-        putPlan(coachA, client, breakfastAndLunch),
+        putPlan(coachA, client, breakfastAndLunch(tagsA)),
         unlink(coachA, client),
       ]);
 
@@ -680,5 +728,283 @@ describe("Meal plan coach API smoke", { concurrency: false }, () => {
       }
       assert.equal(await storedPlanCount(coachA, client), 0, `round ${round}: no plan is left`);
     }
+  });
+
+  /** A coach of its own, for tests that rename, move or archive tags. */
+  const newCoach = async (label: string) => {
+    const coach = await register(label, false);
+    const inviteCode = await inviteCodeOf(coach);
+    return { coach, inviteCode };
+  };
+
+  // Decision 2: starter tags, created lazily and once.
+  it("creates the starter tags once on the first read, also with reads at the same time", async () => {
+    for (let round = 0; round < 3; round += 1) {
+      const { coach } = await newCoach(`starter-${round}`);
+      assert.equal(await storedTagCount(coach), 0, "registering creates no tags");
+
+      const reads = await Promise.all(Array.from({ length: 3 }, () => getTags(coach)));
+
+      for (const read of reads) {
+        assertStatus(read, 200);
+        const tags = asList(asObject(read.body).mealTags);
+        tags.forEach((tag) => assertKeys(tag, TAG_KEYS));
+        assert.deepEqual(tags.map((tag) => tag.name), STARTER_TAG_NAMES, `round ${round}`);
+        assert.deepEqual(tags.map((tag) => tag.archivedAt), [null, null, null, null, null]);
+      }
+      assert.equal(await storedTagCount(coach), 5, `round ${round}: five rows, not ten or fifteen`);
+    }
+
+    const { coach } = await newCoach("starter-archived");
+    const [breakfast] = await tagsOf(coach);
+    assertStatus(await patchTag(coach, Number(breakfast.id), { archived: true }), 200);
+    assert.deepEqual((await tagsOf(coach)).map((tag) => tag.name), STARTER_TAG_NAMES.slice(1), "archived starters stay away");
+  });
+
+  it("adds, renames and moves tags; names are unique per coach ignoring case", async () => {
+    const { coach } = await newCoach("tags");
+    const other = await newCoach("tags-other");
+    const tags = await tagIdsOf(coach);
+
+    const added = await postTag(coach, { name: "  Pre-nanna " });
+    assertStatus(added, 201);
+    assertKeys(added.body, TAG_KEYS);
+    assert.equal(asObject(added.body).name, "Pre-nanna");
+    assert.deepEqual((await tagsOf(coach)).map((tag) => tag.name), [...STARTER_TAG_NAMES, "Pre-nanna"]);
+
+    assertError(await postTag(coach, { name: "PRANZO" }), 409, "Meal tag already exists");
+    assertError(await patchTag(coach, tags.Cena, { name: "colazione" }), 409, "Meal tag already exists");
+    assertStatus(await postTag(other.coach, { name: "Pre-nanna" }), 201);
+
+    const renamed = await patchTag(coach, tags.Spuntino, { name: "Spuntino di metà mattina" });
+    assertStatus(renamed, 200);
+    assert.equal(asObject(renamed.body).name, "Spuntino di metà mattina");
+    assertStatus(await patchTag(coach, tags.Cena, { name: "cena" }), 200);
+
+    assertStatus(await patchTag(coach, Number(asObject(added.body).id), { position: 0 }), 200);
+    assertStatus(await patchTag(coach, tags.Colazione, { position: 29 }), 200);
+    const reordered = await tagsOf(coach);
+    assert.deepEqual(
+      reordered.map((tag) => tag.name),
+      ["Pre-nanna", "Spuntino di metà mattina", "Pranzo", "Merenda", "cena", "Colazione"],
+    );
+    assert.deepEqual(reordered.map((tag) => tag.position), [0, 1, 2, 3, 4, 5]);
+
+    assertError(await patchTag(other.coach, tags.Pranzo, { name: "Mio" }), 404, "Meal tag not found");
+    assertError(await patchTag(coach, 2_147_483_647, { name: "Nessuno" }), 404, "Meal tag not found");
+    assertError(await patchTag(coach, "abc", { name: "X" }), 400, "Invalid meal tag id");
+    assertError(await patchTag(coach, tags.Pranzo, {}), 400, "At least one field is required");
+    assertError(await patchTag(coach, tags.Pranzo, { archived: false }), 400, "archived must be true");
+    assertError(await patchTag(coach, tags.Pranzo, { position: 30 }), 400, "position must be an integer from 0 to 29");
+    assertError(await postTag(coach, { name: "a".repeat(61) }), 400, "name must be at most 60 characters");
+    assertError(await postTag(coach, { name: " " }), 400, "name is required");
+
+    const liveCount = (await tagsOf(coach)).length;
+    for (let index = liveCount; index < 30; index += 1) {
+      assertStatus(await postTag(coach, { name: `Tag ${index}` }), 201);
+    }
+    assertError(await postTag(coach, { name: "Uno di troppo" }), 409, "Too many meal tags");
+  });
+
+  // Decision 3: a rename shows in the plan, not in the athlete's log.
+  it("renaming a tag renames the meal in the plan but not the meal name of a written log", async () => {
+    const { coach, inviteCode } = await newCoach("rename");
+    const tags = await tagIdsOf(coach);
+    const client = await newClient("rename-client", inviteCode);
+    const created = await createPlan(coach, client, breakfastAndLunch(tags));
+    const [breakfast] = mealsOf(created);
+    await insertLog(client, Number(created.id), breakfast, today, "done");
+
+    assertStatus(await patchTag(coach, tags.Colazione, { name: "Prima colazione" }), 200);
+
+    const read = asObject(asObject((await getPlan(coach, client)).body).mealPlan);
+    assert.deepEqual(mealsOf(read).map((meal) => [meal.id, meal.tagId, meal.name]), [
+      [breakfast.id, tags.Colazione, "Prima colazione"],
+      [mealsOf(created)[1].id, tags.Pranzo, "Pranzo"],
+    ]);
+    assert.deepEqual(await storedLogs(Number(created.id)), [{ mealId: Number(breakfast.id), mealName: "Colazione" }]);
+  });
+
+  // Decision 4: an archived tag stays where it is used, but is no longer offered.
+  it("archiving a used tag hides it from the list, keeps it in the plan and refuses it for a new meal", async () => {
+    const { coach, inviteCode } = await newCoach("archive");
+    const tags = await tagIdsOf(coach);
+    const client = await newClient("archive-client", inviteCode);
+    const otherClient = await newClient("archive-other", inviteCode);
+    const created = await createPlan(coach, client, breakfastAndLunch(tags));
+    const [breakfast, lunch] = mealsOf(created);
+
+    const archived = await patchTag(coach, tags.Pranzo, { archived: true });
+    assertStatus(archived, 200);
+    assert.ok(asObject(archived.body).archivedAt !== null);
+    assert.ok(!(await tagsOf(coach)).some((tag) => tag.id === tags.Pranzo), "gone from the list");
+    assertError(await patchTag(coach, tags.Pranzo, { name: "Pranzo leggero" }), 404, "Meal tag not found");
+
+    const read = asObject(asObject((await getPlan(coach, client)).body).mealPlan);
+    assert.deepEqual(mealsOf(read).map((meal) => meal.name), ["Colazione", "Pranzo"], "the plan still shows it");
+
+    const keepMeals = (plan: JsonObject) =>
+      mealsOf(plan).map((meal) => ({ id: meal.id, tagId: meal.tagId, items: [] }));
+    const kept = await putPlan(coach, client, { meals: keepMeals(read) });
+    assertStatus(kept, 200);
+    assert.deepEqual(mealsOf(kept.body).map((meal) => meal.name), ["Colazione", "Pranzo"]);
+
+    const addedAgain = await putPlan(coach, client, {
+      meals: [...keepMeals(read), { tagId: tags.Pranzo, items: [] }],
+    });
+    assertError(addedAgain, 404, "Meal tag not found");
+    const movedToBreakfast = await putPlan(coach, client, {
+      meals: [{ id: breakfast.id, tagId: tags.Pranzo, items: [] }, { id: lunch.id, tagId: tags.Cena, items: [] }],
+    });
+    assertStatus(movedToBreakfast, 200);
+    assertError(
+      await putPlan(coach, otherClient, { meals: [{ tagId: tags.Pranzo, items: [] }] }),
+      404,
+      "Meal tag not found",
+    );
+
+    // The name is free again for a new live tag.
+    assertStatus(await postTag(coach, { name: "Pranzo" }), 201);
+  });
+
+  it("refuses a tag of another coach or a missing tag with the same 404, and the DB refuses it too", async () => {
+    const { coachA, coachB, inviteCodeA, tagsA, tagsB } = setup();
+    const client = await newClient("foreign-tag", inviteCodeA);
+
+    for (const tagId of [tagsB.Pranzo, 2_147_483_647]) {
+      assertError(await putPlan(coachA, client, { meals: [{ tagId, items: [] }] }), 404, "Meal tag not found");
+    }
+    assert.deepEqual((await getPlan(coachA, client)).body, { mealPlan: null });
+
+    const created = await createPlan(coachA, client, breakfastAndLunch(tagsA));
+    const [breakfast] = mealsOf(created);
+    const swapped = await putPlan(coachA, client, { meals: [{ id: breakfast.id, tagId: tagsB.Colazione, items: [] }] });
+    assertError(swapped, 404, "Meal tag not found");
+
+    // Below the API: the composite FK (tag_id, coach_id) refuses a meal with coach B's tag.
+    const { database, schema } = setup();
+    await assert.rejects(
+      database.db
+        .insert(schema.mealPlanMeals)
+        .values({ mealPlanId: Number(created.id), coachId: coachA.id, position: 9, tagId: tagsB.Cena }),
+    );
+    await assert.rejects(
+      database.db
+        .insert(schema.mealPlanMeals)
+        .values({ mealPlanId: Number(created.id), coachId: coachB.id, position: 9, tagId: tagsB.Cena }),
+    );
+  });
+
+  // Decision 5: day templates, whole replace, no "apply" endpoint.
+  it("creates, lists, replaces and deletes templates, each coach seeing only their own", async () => {
+    const { coach } = await newCoach("templates");
+    const other = await newCoach("templates-other");
+    const tags = await tagIdsOf(coach);
+    const otherTags = await tagIdsOf(other.coach);
+
+    const standardDay = {
+      name: " Giornata standard ",
+      meals: [
+        { tagId: tags.Colazione, timeOfDay: "07:30" },
+        { tagId: tags.Pranzo, timeOfDay: "13:00" },
+        { tagId: tags.Cena },
+      ],
+    };
+    const created = await postTemplate(coach, standardDay);
+    assertStatus(created, 201);
+    assertKeys(created.body, TEMPLATE_KEYS);
+    const template = asObject(created.body);
+    asList(template.meals).forEach((meal) => assertKeys(meal, TEMPLATE_MEAL_KEYS));
+    assert.equal(template.name, "Giornata standard");
+    assert.deepEqual(asList(template.meals), [
+      { tagId: tags.Colazione, name: "Colazione", timeOfDay: "07:30" },
+      { tagId: tags.Pranzo, name: "Pranzo", timeOfDay: "13:00" },
+      { tagId: tags.Cena, name: "Cena", timeOfDay: null },
+    ]);
+
+    const listed = await getTemplates(coach);
+    assertStatus(listed, 200);
+    assert.deepEqual(asObject(listed.body).mealPlanTemplates, [template]);
+    assert.deepEqual((await getTemplates(other.coach)).body, { mealPlanTemplates: [] });
+
+    await sleep(5);
+    const replaced = await putTemplate(coach, template.id, {
+      name: "Giornata di gara",
+      meals: [{ tagId: tags.Merenda, timeOfDay: "16:00" }, { tagId: tags.Colazione }],
+    });
+    assertStatus(replaced, 200);
+    assert.equal(asObject(replaced.body).id, template.id);
+    assert.equal(asObject(replaced.body).createdAt, template.createdAt);
+    assert.ok(Date.parse(String(asObject(replaced.body).updatedAt)) > Date.parse(String(template.updatedAt)));
+    assert.deepEqual(asList(asObject(replaced.body).meals).map((meal) => meal.name), ["Merenda", "Colazione"]);
+
+    // A rename shows in the template too.
+    assertStatus(await patchTag(coach, tags.Merenda, { name: "Merenda pre-gara" }), 200);
+    const afterRename = asList(asObject((await getTemplates(coach)).body).mealPlanTemplates);
+    assert.deepEqual(asList(afterRename[0].meals).map((meal) => meal.name), ["Merenda pre-gara", "Colazione"]);
+
+    // An archived tag stays where the template has it, but cannot be added.
+    assertStatus(await patchTag(coach, tags.Colazione, { archived: true }), 200);
+    const keepsArchived = await putTemplate(coach, template.id, {
+      name: "Giornata di gara",
+      meals: [{ tagId: tags.Colazione }, { tagId: tags.Merenda }],
+    });
+    assertStatus(keepsArchived, 200);
+    const addsArchived = await putTemplate(coach, template.id, {
+      name: "Giornata di gara",
+      meals: [{ tagId: tags.Colazione }, { tagId: tags.Colazione }],
+    });
+    assertError(addsArchived, 404, "Meal tag not found");
+    assertError(await postTemplate(coach, { name: "Nuova", meals: [{ tagId: tags.Colazione }] }), 404, "Meal tag not found");
+
+    // Another coach: no access to the template, and no use of its tags.
+    const body = { name: "Rubata", meals: [{ tagId: otherTags.Pranzo }] };
+    assertError(await putTemplate(other.coach, template.id, body), 404, "Meal plan template not found");
+    assertError(await deleteTemplate(other.coach, template.id), 404, "Meal plan template not found");
+    assertError(await postTemplate(other.coach, { name: "Rubata", meals: [{ tagId: tags.Pranzo }] }), 404, "Meal tag not found");
+    assertError(await putTemplate(coach, template.id, body), 404, "Meal tag not found");
+
+    assertError(await postTemplate(coach, { name: "Vuota", meals: [] }), 400, "meals must have at least 1 entry");
+    assertError(await postTemplate(coach, { meals: [{ tagId: tags.Pranzo }] }), 400, "name is required");
+    assertError(await putTemplate(coach, "abc", standardDay), 400, "Invalid meal plan template id");
+    assertError(await deleteTemplate(coach, 0), 400, "Invalid meal plan template id");
+
+    const deleted = await deleteTemplate(coach, template.id);
+    assertStatus(deleted, 204);
+    assertError(await deleteTemplate(coach, template.id), 404, "Meal plan template not found");
+    assertError(await putTemplate(coach, template.id, { name: "X", meals: [{ tagId: tags.Pranzo }] }), 404, "Meal plan template not found");
+    assert.deepEqual((await getTemplates(coach)).body, { mealPlanTemplates: [] });
+
+    for (let index = 0; index < 20; index += 1) {
+      assertStatus(await postTemplate(coach, { name: `Giornata ${index}`, meals: [{ tagId: tags.Pranzo }] }), 201);
+    }
+    assertError(await postTemplate(coach, { name: "Di troppo", meals: [{ tagId: tags.Pranzo }] }), 409, "Too many meal plan templates");
+  });
+
+  // Schema: a used tag cannot be deleted, but deleting the coach removes everything.
+  it("deleting a coach removes their tags, templates and plans; a used tag alone cannot be deleted", async () => {
+    const { coach, inviteCode } = await newCoach("deleted");
+    const tags = await tagIdsOf(coach);
+    const client = await newClient("deleted-client", inviteCode);
+    const created = await createPlan(coach, client, breakfastAndLunch(tags));
+    assertStatus(await postTemplate(coach, { name: "Standard", meals: [{ tagId: tags.Cena }] }), 201);
+    const { database, schema } = setup();
+
+    await assert.rejects(database.db.delete(schema.mealTags).where(eq(schema.mealTags.id, tags.Colazione)));
+    await assert.rejects(database.db.delete(schema.mealTags).where(eq(schema.mealTags.id, tags.Cena)));
+
+    await database.db.delete(schema.users).where(eq(schema.users.id, coach.id));
+
+    assert.equal(await storedTagCount(coach), 0);
+    const templates = await database.db
+      .select({ id: schema.mealPlanTemplates.id })
+      .from(schema.mealPlanTemplates)
+      .where(eq(schema.mealPlanTemplates.coachId, coach.id));
+    assert.equal(templates.length, 0);
+    const meals = await database.db
+      .select({ id: schema.mealPlanMeals.id })
+      .from(schema.mealPlanMeals)
+      .where(eq(schema.mealPlanMeals.mealPlanId, Number(created.id)));
+    assert.equal(meals.length, 0);
   });
 });
