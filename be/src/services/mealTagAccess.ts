@@ -4,6 +4,7 @@ import { isUniqueViolation } from "../db/errors";
 import { mealTags } from "../db/schema";
 import type { Failure, Result } from "./accessResult";
 import {
+  MAX_MEAL_TAG_ROWS_PER_COACH,
   MAX_MEAL_TAGS_PER_COACH,
   type MealTagInput,
   type MealTagPatch,
@@ -89,9 +90,10 @@ export const createMealTag = async (
 
   try {
     return await db.transaction(async (tx): Promise<Result<MealTag>> => {
-      const { liveTags } = await lockMealTags(tx, coachId);
+      const { liveTags, storedCount } = await lockMealTags(tx, coachId);
 
-      if (liveTags.length >= MAX_MEAL_TAGS_PER_COACH) {
+      // Archived tags stay in the table: the second cap stops create-and-archive from growing it.
+      if (liveTags.length >= MAX_MEAL_TAGS_PER_COACH || storedCount >= MAX_MEAL_TAG_ROWS_PER_COACH) {
         return { ok: false, status: 409, error: "Too many meal tags" };
       }
 

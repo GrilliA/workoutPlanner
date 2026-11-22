@@ -19,6 +19,8 @@ const MAX_ITEMS_PER_MEAL = 30;
 const MAX_MEAL_TAG_NAME_LENGTH = 60;
 const MAX_MEAL_PLAN_TEMPLATE_NAME_LENGTH = 60;
 export const MAX_MEAL_TAGS_PER_COACH = 30;
+// Every row of the coach, archived ones too: archiving frees a live slot but not a row.
+export const MAX_MEAL_TAG_ROWS_PER_COACH = 200;
 export const MAX_MEAL_PLAN_TEMPLATES_PER_COACH = 20;
 const MAX_FOOD_LENGTH = 120;
 const MAX_QUANTITY_LENGTH = 60;

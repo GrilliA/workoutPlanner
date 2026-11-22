@@ -943,6 +943,112 @@ describe("Meal plan coach API smoke", { concurrency: false }, () => {
     assertStatus(await postTag(coach, { name: "Pranzo" }), 201);
   });
 
+  // Contract, Archiviazione: the archived tag may appear as often as in the saved version, no more.
+  it("an archived tag appears at most as often as in the saved plan or template: a new meal takes it only where an existing one lets it go", async () => {
+    const { coach, inviteCode } = await newCoach("archive-count");
+    const tags = await tagIdsOf(coach);
+    const client = await newClient("archive-count-client", inviteCode);
+    const lunch = (id?: number) => ({ id, tagId: tags.Pranzo, items: [] });
+    const created = await createPlan(coach, client, {
+      meals: [lunch(), lunch(), { tagId: tags.Colazione, items: [] }],
+    });
+    const [first, second] = mealsOf(created);
+    assertStatus(await patchTag(coach, tags.Pranzo, { archived: true }), 200);
+    const lunchCount = async (): Promise<number> =>
+      mealsOf(asObject((await getPlan(coach, client)).body).mealPlan).filter((meal) => meal.tagId === tags.Pranzo).length;
+
+    assertError(
+      await putPlan(coach, client, { meals: [lunch(Number(first.id)), lunch(Number(second.id)), lunch()] }),
+      404,
+      "Meal tag not found",
+    );
+    assert.equal(await lunchCount(), 2, "the refused save changed nothing");
+
+    // The second meal lets the tag go, a new meal takes it: still two.
+    const swapped = await putPlan(coach, client, {
+      meals: [lunch(Number(first.id)), { id: second.id, tagId: tags.Colazione, items: [] }, lunch()],
+    });
+    assertStatus(swapped, 200);
+    assert.equal(await lunchCount(), 2);
+
+    assertError(await putPlan(coach, client, { meals: [lunch(), lunch(), lunch()] }), 404, "Meal tag not found");
+
+    // Down to one meal: a second one with the tag is now more than the saved version has.
+    assertStatus(await putPlan(coach, client, { meals: [lunch(Number(mealsOf(swapped.body)[0].id))] }), 200);
+    assertError(await putPlan(coach, client, { meals: [lunch(), lunch()] }), 404, "Meal tag not found");
+
+    // Templates have no meal ids: the same count rule.
+    const other = await newCoach("archive-count-template");
+    const otherTags = await tagIdsOf(other.coach);
+    const template = await postTemplate(other.coach, {
+      name: "Con pranzo",
+      meals: [{ tagId: otherTags.Pranzo }, { tagId: otherTags.Cena }],
+    });
+    assertStatus(template, 201);
+    const templateId = asObject(template.body).id;
+    assertStatus(await patchTag(other.coach, otherTags.Pranzo, { archived: true }), 200);
+    const withLunches = (count: number) => ({
+      name: "Con pranzo",
+      meals: Array.from({ length: count }, () => ({ tagId: otherTags.Pranzo })),
+    });
+    assertError(await putTemplate(other.coach, templateId, withLunches(2)), 404, "Meal tag not found");
+    assertStatus(await putTemplate(other.coach, templateId, withLunches(1)), 200);
+    assertError(await postTemplate(other.coach, withLunches(1)), 404, "Meal tag not found");
+  });
+
+  it("archiving together with a rename or a position: the rename applies, the position does not", async () => {
+    const { coach, inviteCode } = await newCoach("archive-combined");
+    const tags = await tagIdsOf(coach);
+    const client = await newClient("archive-combined-client", inviteCode);
+    await createPlan(coach, client, breakfastAndLunch(tags));
+
+    // Another live tag has this name: the archived tag leaves the unique index, so no 409.
+    const renamed = await patchTag(coach, tags.Pranzo, { name: "Cena", archived: true });
+    assertStatus(renamed, 200);
+    assert.equal(asObject(renamed.body).name, "Cena");
+    assert.ok(asObject(renamed.body).archivedAt !== null);
+    const plan = asObject(asObject((await getPlan(coach, client)).body).mealPlan);
+    assert.deepEqual(mealsOf(plan).map((meal) => meal.name), ["Colazione", "Cena"], "the plan shows the new name");
+
+    const before = await tagsOf(coach);
+    const moved = await patchTag(coach, tags.Merenda, { position: 0, archived: true });
+    assertStatus(moved, 200);
+    assert.ok(asObject(moved.body).archivedAt !== null);
+    assert.equal(asObject(moved.body).position, before.find((tag) => tag.id === tags.Merenda)?.position, "position untouched");
+    const after = await tagsOf(coach);
+    assert.deepEqual(
+      after.map((tag) => [tag.id, tag.position]),
+      before.filter((tag) => tag.id !== tags.Merenda).map((tag) => [tag.id, tag.position]),
+      "the others keep their order and positions",
+    );
+  });
+
+  it("counts archived tags in the cap on the coach's tag rows", async () => {
+    const { coach } = await newCoach("tag-rows");
+    const { database, schema } = setup();
+    await tagsOf(coach);
+    assert.equal(await storedTagCount(coach), 5);
+
+    // Create-and-archive keeps the live count at five; the rows are filled straight, up to 199.
+    const created = await postTag(coach, { name: "Passeggero" });
+    assertStatus(created, 201);
+    assertStatus(await patchTag(coach, Number(asObject(created.body).id), { archived: true }), 200);
+    const archivedRows = Array.from({ length: 199 - 6 }, (_, index) => ({
+      coachId: coach.id,
+      name: `Vecchio ${index}`,
+      position: 0,
+      archivedAt: new Date(),
+    }));
+    await database.db.insert(schema.mealTags).values(archivedRows);
+    assert.equal(await storedTagCount(coach), 199);
+    assert.equal((await tagsOf(coach)).length, 5, "well under the 30 live tags");
+
+    assertStatus(await postTag(coach, { name: "Il duecentesimo" }), 201);
+    assert.equal(await storedTagCount(coach), 200);
+    assertError(await postTag(coach, { name: "Il duecentounesimo" }), 409, "Too many meal tags");
+    assert.equal(await storedTagCount(coach), 200);
+  });
+
   it("refuses a tag of another coach or a missing tag with the same 404, and the DB refuses it too", async () => {
     const { coachA, coachB, inviteCodeA, tagsA, tagsB } = setup();
     const client = await newClient("foreign-tag", inviteCodeA);
