@@ -10,6 +10,7 @@ import {
 } from "../db/schema";
 import { requireAuth } from "../middleware/requireAuth";
 import { requireRole } from "../middleware/requireRole";
+import { coachBusinessRouter } from "./coachbusiness";
 import { coachMealPlanRouter } from "./coachmealplan";
 import { coachSubscriptionsRouter } from "./coachsubscriptions";
 import { coachTodayRouter } from "./coachtoday";
@@ -61,6 +62,7 @@ export const coachRouter = Router();
 coachRouter.use(requireAuth, requireRole("coach"));
 coachRouter.use(coachSubscriptionsRouter);
 coachRouter.use(coachTodayRouter);
+coachRouter.use(coachBusinessRouter);
 coachRouter.use(coachMealPlanRouter);
 
 const templateColumns = {

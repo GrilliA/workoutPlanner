@@ -74,6 +74,9 @@
   --duration-spin: 0.6s;
   --duration-pulse: 1.4s;
 
+  /* Touch target: at least 44px, i.e. 2.95rem because the app root font size is 15px. */
+  --touch-target: 2.95rem;
+
   /* Focus ring */
   --focus-ring-width: 2px;
   --focus-ring-offset: 2px;

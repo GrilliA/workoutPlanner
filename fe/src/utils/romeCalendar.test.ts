@@ -4,7 +4,9 @@ import {
   addRomeDays,
   daysBetweenDateKeys,
   formatLongDate,
+  formatLongMonth,
   formatShortDate,
+  formatShortMonth,
   isNumberSpokenWithVowel,
   isValidDateKey,
   toRomeDateKey,
@@ -152,5 +154,13 @@ describe("isNumberSpokenWithVowel", () => {
     assert.equal(isNumberSpokenWithVowel(18), false);
     assert.equal(isNumberSpokenWithVowel(28), false);
     assert.equal(isNumberSpokenWithVowel(100), false);
+  });
+});
+
+describe("month labels", () => {
+  it("short and long Italian names, never moved by the time zone", () => {
+    assert.equal(formatShortMonth("2026-06"), "giu");
+    assert.equal(formatShortMonth("2027-01"), "gen");
+    assert.equal(formatLongMonth("2026-06"), "giugno 2026");
   });
 });

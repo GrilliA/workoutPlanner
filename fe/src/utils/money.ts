@@ -59,3 +59,17 @@ export function formatEuros(cents: number): string {
 export function formatCentsAsInput(cents: number): string {
   return formatEuroNumber(cents, false);
 }
+
+const EUROS_PER_THOUSAND = 1000;
+const thousandsFormatter = new Intl.NumberFormat("it-IT", { maximumFractionDigits: 1 });
+
+/** Whole euros, thousands as "k": 34550 → "346 €", 123000 → "1,2k €". Short enough to sit above a bar. */
+export function formatCompactEuros(cents: number): string {
+  const euros = Math.round(cents / CENTS_PER_EURO);
+
+  if (euros < EUROS_PER_THOUSAND) {
+    return `${euros}${NON_BREAKING_SPACE}€`;
+  }
+
+  return `${thousandsFormatter.format(euros / EUROS_PER_THOUSAND)}k${NON_BREAKING_SPACE}€`;
+}

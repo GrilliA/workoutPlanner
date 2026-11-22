@@ -1,5 +1,5 @@
 import type { AthleteHome, Workout } from "../../../api";
-import { dateFromRomeDateKey } from "../../../utils/romeCalendar";
+import { formatDayMonth } from "../../../utils/romeCalendar";
 import type {
   ActiveProgramModel,
   MyWorkoutRow,
@@ -10,14 +10,6 @@ import type {
 const WEEKDAY_LABELS = ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"] as const;
 
 type HomeProgram = AthleteHome["programs"][number];
-
-/** "15 ottobre" da una data YYYY-MM-DD di Roma. */
-export const formatDayMonth = (dateKey: string): string =>
-  dateFromRomeDateKey(dateKey).toLocaleDateString("it-IT", {
-    day: "numeric",
-    month: "long",
-    timeZone: "UTC",
-  });
 
 const formatWeekdays = (weekdays: number[]): string =>
   weekdays.map((weekday) => WEEKDAY_LABELS[weekday]).join(", ");

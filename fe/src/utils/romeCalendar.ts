@@ -108,6 +108,25 @@ export const formatShortDate = (dateKey: string, today: string): string => {
   return formatter.format(dateKeyToUtc(dateKey));
 };
 
+const shortMonthFormatter = new Intl.DateTimeFormat("it-IT", { month: "short", timeZone: "UTC" });
+
+const longMonthWithYearFormatter = new Intl.DateTimeFormat("it-IT", {
+  month: "long",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
+// A `YYYY-MM` key is a calendar month: the first of the month, read and formatted in UTC.
+const monthKeyToUtc = (monthKey: string): Date => dateKeyToUtc(`${monthKey}-01`);
+
+/** "2026-06" → "giu". */
+export const formatShortMonth = (monthKey: string): string =>
+  shortMonthFormatter.format(monthKeyToUtc(monthKey)).replace(".", "");
+
+/** "2026-06" → "giugno 2026". */
+export const formatLongMonth = (monthKey: string): string =>
+  longMonthWithYearFormatter.format(monthKeyToUtc(monthKey));
+
 /**
  * Whether the Italian word for a number starts with a vowel: "uno", "otto", "undici",
  * "ottanta…", "ottocento…". Articles and prepositions elide before it ("l'8", "gli 11").
