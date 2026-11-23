@@ -279,7 +279,7 @@ Piano: [`docs/plans/AL-alimentazione.md`](docs/plans/AL-alimentazione.md). Ramo 
 - [ ] AL0 CI su `main-diet` e voce di decisione (supera il non-goal "nutrition")
 - [ ] AL1 Schema + migrazione + logica pura (prossimo pasto, giorno ammesso oggi o ieri, aderenza per giorno)
 - [ ] AL2 API coach del piano pasti + contratto + e2e
-- [ ] AL3 Pannello: tab Alimentazione (`/clients/:id/nutrition`), editor dei pasti, attiva/disattiva, ultimi 7 giorni
+- [x] AL3 Pannello: tab Alimentazione (`/clients/:id/nutrition`), editor dei pasti, attiva/disattiva, ultimi 7 giorni; pagine Template pasti e Tag pasti, menu "Altro" nella barra in basso
 - [ ] AL4 API atleta + `nutrition` in `/athlete/home` (dopo R6)
 - [ ] AL5 Mobile: switch Allenamento / Alimentazione e tab bar per modalità
 - [ ] AL6 Mobile: Oggi ("Adesso tocca a") e Piano pasti
