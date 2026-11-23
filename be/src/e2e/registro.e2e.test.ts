@@ -1871,19 +1871,51 @@ describe("PT payment register smoke", { concurrency: false }, () => {
     assert.equal((await storedSubscription(coachA, client))?.revision, 2);
   });
 
-  it("concurrency: two creations at once give one 201 and one 409, never 500", async () => {
-    const { coachA, inviteCodeA, monthlyOfferId } = setup();
+  it("concurrency: two creations at once give one 201 and one 409 or 200, never 500", async () => {
+    const { coachA, inviteCodeA, monthlyOfferId, database, schema } = setup();
     const client = await newClient("parallel-create", inviteCodeA);
-    const body = { offerId: monthlyOfferId, startedOn: today };
+    const prices = [7000, 7500];
+    const bodies = prices.map((agreedPriceCents) => ({
+      offerId: monthlyOfferId,
+      startedOn: today,
+      agreedPriceCents,
+    }));
 
-    const responses = await Promise.all([
-      putSubscription(coachA, client, body),
-      putSubscription(coachA, client, body),
-    ]);
-    const statuses = responses.map((response) => response.status).sort();
-    assert.deepEqual(statuses, [201, 409], responses.map(failMessage).join(" | "));
-    const conflict = responses.find((response) => response.status === 409);
-    assert.deepEqual(conflict?.body, { error: "Subscription already exists" });
+    const responses = await Promise.all(bodies.map((body) => putSubscription(coachA, client, body)));
+    const created = responses.filter((response) => response.status === 201);
+    const others = responses.filter((response) => response.status !== 201);
+    assert.equal(created.length, 1, responses.map(failMessage).join(" | "));
+    assert.equal(others.length, 1, responses.map(failMessage).join(" | "));
+
+    // Contract: both at the unique index -> 409. A request that lands after the other one's
+    // commit finds the row and updates it -> 200, equally legitimate.
+    const [other] = others;
+    assert.ok([409, 200].includes(other.status), responses.map(failMessage).join(" | "));
+
+    if (other.status === 409) {
+      assert.deepEqual(other.body, { error: "Subscription already exists" });
+    }
+
+    const rows = await database.db
+      .select()
+      .from(schema.clientSubscriptions)
+      .where(
+        and(
+          eq(schema.clientSubscriptions.coachId, coachA.id),
+          eq(schema.clientSubscriptions.athleteId, client.id),
+        ),
+      );
+    assert.equal(rows.length, 1);
+
+    // The stored data come from one of the two requests: the creator's if the other got 409,
+    // the later updater's if it got 200 (it ran second, on the created row).
+    const winner = other.status === 200 ? other : created[0];
+    const winnerPrice = prices[responses.indexOf(winner)];
+    assert.equal(rows[0].agreedPriceCents, winnerPrice);
+    assert.equal(rows[0].offerId, monthlyOfferId);
+    assert.equal(rows[0].startedOn, today);
+    assert.equal(rows[0].revision, 0);
+    assert.equal(asObject(asObject(winner.body).subscription).agreedPriceCents, winnerPrice);
   });
 
   it("concurrency: a creation blocked behind another uncommitted creation gets 409", async () => {
