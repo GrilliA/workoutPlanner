@@ -33,7 +33,10 @@ const RACE_ROUNDS = 8;
 
 /**
  * Runs two requests at once; on odd rounds the second one starts first and the first one a
- * moment later, so the rounds cover both orders and not only the one the event loop favours.
+ * moment later, to try both orders and not only the one the event loop favours. Which order
+ * the database sees is still up to timing: the race tests guarantee "never a 500 and a
+ * consistent final state" for whichever branch comes out, and cover both branches only on
+ * a best-effort basis (they do not assert that both appear, which would make them flaky).
  */
 const raceInBothOrders = async (
   round: number,
@@ -64,9 +67,14 @@ const addDays = (isoDate: string, days: number): string => {
   return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10);
 };
 
-const today = todayInRome();
-const yesterday = addDays(today, -1);
-const dayBeforeYesterday = addDays(today, -2);
+/**
+ * Read inside each test, not once at import: a suite that starts before midnight in Rome and
+ * runs past it would otherwise send yesterday's date as today.
+ */
+const romeDays = () => {
+  const today = todayInRome();
+  return { today, yesterday: addDays(today, -1), dayBeforeYesterday: addDays(today, -2) };
+};
 
 const requireScratchDatabase = (): void => {
   const databaseUrl = process.env.DATABASE_URL ?? "";
@@ -266,7 +274,7 @@ describe("Meal plan athlete API smoke", { concurrency: false }, () => {
     athlete: Account,
     mealId: unknown,
     status: "done" | "other" = "done",
-    date = today,
+    date = romeDays().today,
   ): Promise<JsonObject> => {
     const saved = await putLog(athlete, { mealId, date, status });
     assertStatus(saved, 200);
@@ -338,6 +346,7 @@ describe("Meal plan athlete API smoke", { concurrency: false }, () => {
   });
 
   it("nutrition is null without a coach, without a plan, with a plan turned off or with no meals", async () => {
+    const { today } = romeDays();
     const { coachA, inviteCodeA, tagsA, database, schema } = setup();
 
     const loner = await register("no-coach", true);
@@ -364,6 +373,7 @@ describe("Meal plan athlete API smoke", { concurrency: false }, () => {
   });
 
   it("nutrition sums up today for the home and follows the logs", async () => {
+    const { yesterday } = romeDays();
     const { coachA, inviteCodeA, tagsA } = setup();
     const client = await newClient("home-summary", inviteCodeA);
     const plan = await savePlan(coachA, client, threeMeals(tagsA));
@@ -396,6 +406,7 @@ describe("Meal plan athlete API smoke", { concurrency: false }, () => {
   });
 
   it("today gives the plan in order with names, items, notes, each meal's log and the next meal", async () => {
+    const { today, yesterday } = romeDays();
     const { coachA, inviteCodeA, tagsA } = setup();
     const client = await newClient("today", inviteCodeA);
     const plan = await savePlan(coachA, client, threeMeals(tagsA));
@@ -450,6 +461,7 @@ describe("Meal plan athlete API smoke", { concurrency: false }, () => {
   });
 
   it("logs today and yesterday, never the day before yesterday or tomorrow", async () => {
+    const { today, yesterday, dayBeforeYesterday } = romeDays();
     const { coachA, inviteCodeA, tagsA } = setup();
     const client = await newClient("days", inviteCodeA);
     const [breakfast] = mealsOf(await savePlan(coachA, client, threeMeals(tagsA)));
@@ -476,6 +488,7 @@ describe("Meal plan athlete API smoke", { concurrency: false }, () => {
   });
 
   it("refuses invalid bodies and queries with the contract errors", async () => {
+    const { today } = romeDays();
     const { coachA, inviteCodeA, tagsA } = setup();
     const client = await newClient("errors", inviteCodeA);
     const [breakfast] = mealsOf(await savePlan(coachA, client, threeMeals(tagsA)));
@@ -497,6 +510,7 @@ describe("Meal plan athlete API smoke", { concurrency: false }, () => {
   });
 
   it("PUT and DELETE are idempotent: one row per meal and day", async () => {
+    const { today } = romeDays();
     const { coachA, inviteCodeA, tagsA } = setup();
     const client = await newClient("idempotent", inviteCodeA);
     const [breakfast] = mealsOf(await savePlan(coachA, client, threeMeals(tagsA)));
@@ -552,9 +566,18 @@ describe("Meal plan athlete API smoke", { concurrency: false }, () => {
       (await storedLogs(client)).map((log) => log.mealName),
       [tag.name],
     );
+
+    // Writing again copies the name the athlete sees now, on the same row.
+    const rewritten = await logMeal(client, brunch.id, "other");
+    assert.equal(rewritten.mealName, newName);
+    assert.deepEqual(
+      (await storedLogs(client)).map((log) => log.mealName),
+      [newName],
+    );
   });
 
   it("a meal of another plan, of another coach's client or missing gets the same 404", async () => {
+    const { today } = romeDays();
     const { coachA, coachB, inviteCodeA, inviteCodeB, tagsA, tagsB } = setup();
     const client = await newClient("isolation", inviteCodeA);
     const sameCoachClient = await newClient("isolation-same", inviteCodeA);
@@ -587,6 +610,7 @@ describe("Meal plan athlete API smoke", { concurrency: false }, () => {
   });
 
   it("a plan turned off cannot be logged or undone until it is turned back on", async () => {
+    const { today } = romeDays();
     const { coachA, inviteCodeA, tagsA } = setup();
     const client = await newClient("inactive", inviteCodeA);
     const [breakfast, lunch] = mealsOf(await savePlan(coachA, client, threeMeals(tagsA)));
@@ -603,6 +627,7 @@ describe("Meal plan athlete API smoke", { concurrency: false }, () => {
   });
 
   it("after unlinking nothing is left to log; a new coach shows only their plan", async () => {
+    const { today } = romeDays();
     const { coachA, coachB, inviteCodeA, inviteCodeB, tagsA, tagsB } = setup();
     const client = await newClient("unlink", inviteCodeA);
     const [oldBreakfast] = mealsOf(await savePlan(coachA, client, threeMeals(tagsA)));
@@ -634,6 +659,7 @@ describe("Meal plan athlete API smoke", { concurrency: false }, () => {
   });
 
   it("two identical PUTs at once leave one row, never a 500", async () => {
+    const { today, yesterday } = romeDays();
     const { coachA, inviteCodeA, tagsA } = setup();
     const client = await newClient("race-put", inviteCodeA);
     const meals = mealsOf(await savePlan(coachA, client, threeMeals(tagsA)));
@@ -655,9 +681,9 @@ describe("Meal plan athlete API smoke", { concurrency: false }, () => {
   });
 
   it("a PUT racing the coach's save that removes the meal: 200 then an orphan log, or 404; never a 500", async () => {
+    const { today } = romeDays();
     const { coachA, inviteCodeA, tagsA, database, schema } = setup();
     const client = await newClient("race-save", inviteCodeA);
-    const outcomes: number[] = [];
 
     for (const round of Array.from({ length: RACE_ROUNDS }, (_, index) => index)) {
       // Each round starts with a fresh breakfast and a lunch that stays.
@@ -677,7 +703,6 @@ describe("Meal plan athlete API smoke", { concurrency: false }, () => {
       );
       assertStatus(saved, 200);
       assert.ok(logged.status === 200 || logged.status === 404, `round ${round}: ${failMessage(logged)}`);
-      outcomes.push(logged.status);
 
       const rows = await storedLogs(client);
 
@@ -689,14 +714,12 @@ describe("Meal plan athlete API smoke", { concurrency: false }, () => {
         assert.deepEqual(rows, [], `round ${round}`);
       }
     }
-
-    console.log(`race-save outcomes: ${outcomes.join(",")}`);
   });
 
   it("a PUT racing an unlink: 200 then the cascade, or 404; never a log left for an ex coach", async () => {
+    const { today } = romeDays();
     const { coachA, inviteCodeA, tagsA, database, schema } = setup();
     const client = await newClient("race-unlink", inviteCodeA);
-    const outcomes: number[] = [];
 
     for (const round of Array.from({ length: RACE_ROUNDS }, (_, index) => index)) {
       const [breakfast] = mealsOf(await savePlan(coachA, client, threeMeals(tagsA)));
@@ -708,7 +731,6 @@ describe("Meal plan athlete API smoke", { concurrency: false }, () => {
       );
       assertStatus(unlinked, 200);
       assert.ok(logged.status === 200 || logged.status === 404, `round ${round}: ${failMessage(logged)}`);
-      outcomes.push(logged.status);
       assert.equal((await storedLogs(client)).length, 0, `round ${round}`);
 
       const plans = await database.db
@@ -719,11 +741,10 @@ describe("Meal plan athlete API smoke", { concurrency: false }, () => {
 
       await linkTo(client, inviteCodeA);
     }
-
-    console.log(`race-unlink outcomes: ${outcomes.join(",")}`);
   });
 
   it("meal-logs gives the athlete's days like the coach's view, up to 31 days", async () => {
+    const { today, yesterday } = romeDays();
     const { coachA, inviteCodeA, tagsA } = setup();
     const client = await newClient("range", inviteCodeA);
     const [breakfast, lunch] = mealsOf(await savePlan(coachA, client, threeMeals(tagsA)));
