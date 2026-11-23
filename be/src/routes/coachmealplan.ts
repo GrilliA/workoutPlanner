@@ -32,8 +32,8 @@ export const coachMealPlanRouter = Router();
 
 coachMealPlanRouter.get("/meal-tags", async (req, res) => {
   const coach = getAuthUser(req);
-  const mealTags = await listMealTags(coach.id);
-  res.json({ mealTags });
+  const tagLists = await listMealTags(coach.id);
+  res.json(tagLists);
 });
 
 coachMealPlanRouter.post("/meal-tags", async (req, res) => {
