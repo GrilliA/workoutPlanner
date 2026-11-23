@@ -69,6 +69,7 @@
     & > .input {
       grid-area: tag;
       justify-self: start;
+      min-inline-size: 0;
       max-inline-size: 100%;
     }
 
@@ -94,7 +95,7 @@
 
   & .tag-select {
     inline-size: auto;
-    min-inline-size: 8rem;
+    min-inline-size: min(8rem, 100%);
 
     & .select-base__trigger {
       min-block-size: var(--touch-target);
@@ -103,6 +104,13 @@
       background: var(--accent-bg);
       color: var(--accent-text);
       font-weight: 800;
+    }
+
+    /* The tag is the meal's name: it wraps instead of ending in an ellipsis. */
+    & .select-base__value {
+      overflow-wrap: anywhere;
+      text-overflow: clip;
+      white-space: normal;
     }
   }
 
@@ -114,6 +122,9 @@
 
   & .time {
     inline-size: auto;
+    min-inline-size: 0;
+    max-inline-size: 100%;
+    justify-self: start;
     min-block-size: var(--touch-target);
     padding-block: 0;
   }
@@ -175,6 +186,18 @@
 
   & .button-base:not(.button-base--icon) {
     min-block-size: var(--touch-target);
+  }
+}
+
+/* Very narrow list (a phone with enlarged text): the tag gets the whole row, the handle and the
+   remove button share the one under the time. */
+@container template-meals (width < 14rem) {
+  .template-editor .meal-row {
+    grid-template-areas:
+      "tag tag tag"
+      "time time time"
+      "handle . remove"
+      "note note note";
   }
 }
 

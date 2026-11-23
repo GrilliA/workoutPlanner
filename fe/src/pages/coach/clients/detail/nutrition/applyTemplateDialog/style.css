@@ -1,6 +1,6 @@
 .apply-template-dialog {
   box-sizing: border-box;
-  inline-size: min(39rem, calc(100vw - 2rem));
+  inline-size: min(39rem, calc(100vw - min(2rem, 6vw)));
   max-block-size: calc(100dvh - 2rem);
   padding: 0;
   border: 0;
@@ -26,7 +26,7 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-4);
-    padding: var(--space-5);
+    padding: min(var(--space-5), 5vw);
   }
 
   & .header {
@@ -36,8 +36,13 @@
     gap: var(--space-3);
   }
 
+  & .header > :first-child {
+    min-inline-size: 0;
+  }
+
   & .title {
     margin: 0;
+    overflow-wrap: anywhere;
     color: var(--text-h);
     font-size: 1.5rem;
     font-weight: 800;
@@ -134,10 +139,13 @@
 
   & .chip {
     display: inline-flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: var(--space-1-5);
+    gap: 0 var(--space-1-5);
+    max-inline-size: 100%;
     min-block-size: 1.9rem;
-    padding: 0 var(--space-3);
+    padding: var(--space-1) var(--space-3);
+    overflow-wrap: anywhere;
     border-radius: var(--radius-full);
     background: var(--accent-bg);
     color: var(--accent-text);
