@@ -1,0 +1,129 @@
+/* Shared by the reorderable lists of the coach panel: meal plan, meal templates, meal tags. */
+.reorder-handle {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+
+  & .reorder-handle__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: var(--touch-target);
+    block-size: var(--touch-target);
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-full);
+    background: transparent;
+    color: var(--text);
+    cursor: grab;
+    /* Only on the handle: the rest of the item and the page keep scrolling by touch. */
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+
+    & svg {
+      inline-size: var(--space-5);
+      block-size: var(--space-5);
+      fill: currentColor;
+    }
+
+    &:is(:hover, :focus-visible):not(:disabled) {
+      background: var(--accent-bg);
+      color: var(--accent-text);
+    }
+
+    &:focus-visible {
+      outline: var(--focus-ring-width) solid var(--accent-text);
+      outline-offset: var(--focus-ring-offset);
+    }
+
+    &[aria-pressed="true"] {
+      background: var(--ink);
+      color: var(--on-ink);
+    }
+
+    &:disabled {
+      cursor: default;
+      opacity: 0.4;
+    }
+  }
+
+  /* Read by screen readers through aria-describedby; shown while an item is picked up. */
+  & .reorder-handle__hint {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  &:has([aria-pressed="true"]) .reorder-handle__hint {
+    inset-block-start: calc(100% + var(--space-1));
+    inset-inline-start: 0;
+    z-index: var(--z-nav);
+    inline-size: max-content;
+    max-inline-size: 15rem;
+    block-size: auto;
+    padding: var(--space-1-5) var(--space-3);
+    overflow: visible;
+    clip-path: none;
+    border-radius: var(--radius-md);
+    background: var(--ink);
+    color: var(--on-ink);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    white-space: normal;
+  }
+}
+
+/* Layout midpoints are read against the list (offsetTop), so it is the offset parent. */
+[data-reorder-list] {
+  position: relative;
+}
+
+[data-reorder-item] {
+  position: relative;
+  scroll-margin: var(--space-4);
+}
+
+[data-reorder-item]:has(.reorder-handle__button[aria-pressed="true"]),
+[data-reorder-item][data-reorder-dragging] {
+  z-index: var(--z-overlay);
+  box-shadow: var(--shadow-strong);
+}
+
+[data-reorder-item][data-reorder-dragging] {
+  pointer-events: none;
+  opacity: 0.92;
+}
+
+/* The drop marker: a line in the gap above (or below the last) item. */
+[data-reorder-item][data-reorder-drop]::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  block-size: var(--space-1);
+  border-radius: var(--radius-full);
+  background: var(--accent-text);
+  pointer-events: none;
+}
+
+[data-reorder-item][data-reorder-drop="before"]::before {
+  inset-block-start: calc(var(--space-1) * -1.5);
+}
+
+[data-reorder-item][data-reorder-drop="after"]::before {
+  inset-block-end: calc(var(--space-1) * -1.5);
+}
+
+@media (forced-colors: active) {
+  [data-reorder-item][data-reorder-drop]::before {
+    background: Highlight;
+  }
+}
+
+.is-reordering,
+.is-reordering * {
+  cursor: grabbing;
+}
