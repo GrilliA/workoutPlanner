@@ -1,6 +1,6 @@
 # Contratto AL — Piano pasti (coach AL2, atleta AL4)
 
-Stato: **proposta per il Contract Gate di AL2**, da approvare. La parte coach è implementata in AL2; la parte atleta è implementata in AL4 (sezione **Atleta (AL4)**), nello stesso contratto perché resti uno solo.
+Stato (2026-11-23): **implementato** per il coach (AL2, con le aggiunte di AL3) e per l'atleta (AL4, sezione **Atleta (AL4)**), in un solo contratto. Nato come proposta per il Contract Gate di AL2.
 Piano: `docs/plans/AL-alimentazione.md` (sezioni 4, 5, AL2, AL4). Schema AL1: `be/src/db/schema/{mealtags,mealplans,mealplanmeals,mealplanitems,meallogs,mealplantemplates,mealplantemplatemeals}.ts`. Logica pura: `be/src/services/mealPlan.ts`. Validazione: `be/src/services/mealPlanValidation.ts`. Accesso al DB: `be/src/services/mealPlanAccess.ts` (piano), `mealTagAccess.ts` (tag), `mealPlanTemplateAccess.ts` (template). Route coach: `be/src/routes/coachmealplan.ts`; route atleta: `be/src/routes/athletemealplan.ts`, logica pura dell'atleta `be/src/services/athleteNutrition.ts`.
 Aggiornato il 2026-11-22 con le decisioni dell'utente: tag dei pasti, template di giornata, piano con almeno un pasto (sezione **Decisioni**). Aggiornato il 2026-11-23 per AL3 (additivo): `GET /coach/meal-tags` dà anche i tag archiviati e, per ogni tag, quanti piani attivi e template lo usano.
 
@@ -143,9 +143,8 @@ Tetti di sicurezza, non regole di prodotto (confermati dall'utente; quelli di ta
 | quantità | 60 | `"meals.items.quantity must be at most 60 characters"` |
 | note del piano | 1000 | `"notes must be at most 1000 characters"` |
 | note del pasto | 500 | `"meals.notes must be at most 500 characters"` |
-| intervallo di `meal-logs` | 31 giorni (estremi inclusi) | `"Range must be at most 31 days"` |
+| intervallo di `meal-logs` (coach e atleta) | 31 giorni (estremi inclusi) | `"Range must be at most 31 days"` |
 | nota di una registrazione (AL4) | 280 | `"note must be at most 280 characters"` |
-| intervallo di `meal-logs` dell'atleta (AL4) | 31 giorni (estremi inclusi) | `"Range must be at most 31 days"` |
 
 ## Coach (AL2)
 
@@ -318,11 +317,13 @@ type MealPlanToday = {
 3. il piano è disattivato (H1);
 4. il piano non ha pasti (il PUT del coach lo rifiuta, ma un piano più vecchio potrebbe non averne).
 
-Il mobile già pubblicato ignora il campo (`z.object` scarta le chiavi sconosciute). Il mobile di AL5 lo legge con una via di fuga (`.catch(null)`): un `nutrition` malformato o assente (backend precedente ad AL4) diventa `null` e lo switch resta nascosto. `coaching` e `nutrition` sono letti in modo indipendente (`loadAthleteCoaching` / `loadAthleteNutrition` in `athleteHome.ts`) e non si toccano.
+Il mobile già pubblicato ignora il campo (`z.object` scarta le chiavi sconosciute). Il mobile di AL5 lo legge con una via di fuga (`.catch(null)`): un `nutrition` malformato o assente (backend precedente ad AL4) diventa `null` e lo switch resta nascosto. `coaching` e `nutrition` sono letti in modo indipendente (`loadAthleteCoaching` / `loadAthleteNutrition` in `athleteHome.ts`) e non si toccano. Per la Home la lettura è leggera (`loadActiveMealPlanSummary`: piano, id / tag / ora dei pasti, registrazioni di oggi, senza le voci) ed esce subito senza piano attivo. Un errore del database in questa lettura fa fallire la Home (500), come per gli altri campi.
 
 ### GET `/athlete/meal-plan/today`
 
-200 `MealPlanToday`. Pasti in ordine di `position` (a parità, di `id`), con il nome del tag, l'orario, le voci in ordine e le note del piano e del pasto; per ogni pasto la registrazione di oggi (`log`), o `null`. Senza piano attivo (nessun coach, nessun piano, piano disattivato): `{ date, mealPlan: null, nextMealId: null }`, non un 404, così l'app ha una sola forma da leggere. Nessun errore oltre a 401 / 403.
+200 `MealPlanToday`. Pasti in ordine di `position` (a parità, di `id`), con il nome del tag, l'orario, le voci in ordine e le note del piano e del pasto; per ogni pasto la registrazione di oggi (`log`), o `null`. Senza piano attivo (nessun coach, nessun piano, piano disattivato): `{ date, mealPlan: null, nextMealId: null }`, non un 404, così l'app ha una sola forma da leggere. Nessun errore oltre a 401 / 403. Lettura completa: `loadActiveMealPlanDay`.
+
+**Letture senza snapshot.** `today` e `nutrition` leggono piano, pasti e registrazioni con query separate, fuori da una transazione. Se il coach salva il piano proprio in mezzo, la risposta può avere un `updatedAt` più vecchio dei pasti che mostra: è innocuo, perché alla prossima lettura il client vede un `updatedAt` diverso e rilegge.
 
 ### PUT `/athlete/meal-logs`
 
