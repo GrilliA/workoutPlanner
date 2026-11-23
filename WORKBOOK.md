@@ -276,9 +276,9 @@ Piano: [`docs/plans/PT-registro.md`](docs/plans/PT-registro.md). Telefono e nomi
 
 Piano: [`docs/plans/AL-alimentazione.md`](docs/plans/AL-alimentazione.md). Ramo di integrazione `main-diet`, poi una PR finale `main-diet` → `main`. Mai "Dieta" nelle copy.
 
-- [ ] AL0 CI su `main-diet` e voce di decisione (supera il non-goal "nutrition")
-- [ ] AL1 Schema + migrazione + logica pura (prossimo pasto, giorno ammesso oggi o ieri, aderenza per giorno)
-- [ ] AL2 API coach del piano pasti + contratto + e2e
+- [x] AL0 CI su `main-diet` e voce di decisione (supera il non-goal "nutrition"). Confluita in `main` con #100
+- [x] AL1 Schema + migrazione + logica pura (prossimo pasto, giorno ammesso oggi o ieri, aderenza per giorno). Confluita in `main-diet` con #102
+- [x] AL2 API coach del piano pasti + contratto + e2e. Confluita in `main-diet` con #103
 - [x] AL3 Pannello: tab Alimentazione (`/clients/:id/nutrition`), editor dei pasti, attiva/disattiva, ultimi 7 giorni; pagine Template pasti e Tag pasti, menu "Altro" nella barra in basso
 - [ ] AL4 API atleta + `nutrition` in `/athlete/home` (dopo R6)
 - [ ] AL5 Mobile: switch Allenamento / Alimentazione e tab bar per modalità
