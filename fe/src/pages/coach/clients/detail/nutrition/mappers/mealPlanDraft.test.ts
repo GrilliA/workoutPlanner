@@ -178,6 +178,16 @@ describe("applyTemplate", () => {
     });
   });
 
+  it("makes new meals: no id of a replaced meal comes back, so its client marks are not kept", () => {
+    const saved = draftFromPlan(savedPlan, keyMaker());
+    const applied = applyTemplate(saved, template, [1, 3], keyMaker());
+
+    assert.deepEqual(
+      applied.draft.meals.map((meal) => meal.id),
+      [undefined, undefined],
+    );
+  });
+
   it("skips nothing when every tag is live", () => {
     const applied = applyTemplate(draftFromPlan(null, keyMaker()), template, [1, 3, 4], keyMaker());
 

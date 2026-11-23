@@ -25,6 +25,16 @@ const skippedNote = (names: string[]): string => {
     : `I pasti ${quoted} verranno saltati: i tag sono archiviati.`;
 };
 
+/** The replaced meals are new ones: the marks the client made on them leave the percentage. */
+const replaceWarning = (mealCount: number): string => {
+  const replaced =
+    mealCount === 1
+      ? "Il piano ha già 1 pasto: viene sostituito"
+      : `Il piano ha già ${mealCount} pasti: vengono sostituiti`;
+
+  return `${replaced}. Gli alimenti scritti si perdono e i segni del cliente su questi pasti non contano più nell'aderenza: finiscono tra i segni su pasti non più nel piano.`;
+};
+
 /** Mounted only while open: every opening reads the templates again. */
 export function ApplyTemplateDialog({
   clientName,
@@ -171,11 +181,7 @@ export function ApplyTemplateDialog({
         ) : null}
 
         {isReplacing && chosen !== null ? (
-          <p className="replace-warning">
-            {mealCount === 1
-              ? "Il piano ha già 1 pasto: viene sostituito e gli alimenti scritti si perdono."
-              : `Il piano ha già ${mealCount} pasti: vengono sostituiti e gli alimenti scritti si perdono.`}
-          </p>
+          <p className="replace-warning">{replaceWarning(mealCount)}</p>
         ) : null}
 
         <div className="footer">
