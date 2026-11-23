@@ -4,6 +4,7 @@ import { Button, ButtonIcon } from "@components/button";
 import { Input } from "@components/input";
 import { Select } from "@components/select";
 import { ReorderHandle } from "@pages/coach/reorderHandle";
+import { tagOptionsFor } from "@pages/coach/mealtags/tagLabels";
 import { cx } from "@utils/cx";
 import {
   MAX_TEMPLATE_MEALS,
@@ -41,7 +42,6 @@ export function TemplateEditor({
 }: TemplateEditorProps) {
   const titleId = useId();
   const liveTagIds = liveTags.map((tag) => tag.id);
-  const liveOptions = liveTags.map((tag) => ({ value: String(tag.id), label: tag.name }));
   const isFull = draft.meals.length >= MAX_TEMPLATE_MEALS;
 
   const handleSubmit = (event: FormEvent) => {
@@ -82,8 +82,6 @@ export function TemplateEditor({
           {draft.meals.map((meal, index) => {
             const name = tagNameOf(meal.tagId);
             const isArchived = !liveTagIds.includes(meal.tagId);
-            const archivedOption = { value: String(meal.tagId), label: `${name} · archiviato` };
-            const options = isArchived ? [...liveOptions, archivedOption] : liveOptions;
             const noteId = `${titleId}-archived-${index}`;
 
             return (
@@ -105,7 +103,7 @@ export function TemplateEditor({
                   aria-label={`Tag del pasto ${index + 1}`}
                   aria-describedby={isArchived ? noteId : undefined}
                   value={String(meal.tagId)}
-                  options={options}
+                  options={tagOptionsFor(liveTags, meal.tagId, name)}
                   onChange={(value) =>
                     onDraftChange((current) =>
                       changeTemplateMeal(current, meal.key, { tagId: Number(value) }),

@@ -14,6 +14,7 @@ import { Button } from "@components/button";
 import { ConfirmDialog } from "@components/confirmDialog";
 import { PageHeader } from "@components/pageHeader";
 import { toast } from "@components/toast";
+import { tagNameOf, tagOptionsFor } from "@pages/coach/mealtags/tagLabels";
 import { useUnsavedChangesGuard } from "@utils/useUnsavedChangesGuard";
 import { ClientTabs } from "../../clientTabs";
 import { ApplyTemplateDialog } from "../applyTemplateDialog";
@@ -102,11 +103,8 @@ export function MealPlanEditor({
   const archivedTags = tagLists.archivedMealTags;
   const isFull = draft.meals.length >= MAX_MEALS;
 
-  const tagNameOf = (tagId: number): string => {
-    const knownTag = [...liveTags, ...archivedTags].find((tag) => tag.id === tagId);
-    const savedMeal = plan?.meals.find((meal) => meal.tagId === tagId);
-    return knownTag?.name ?? savedMeal?.name ?? "Pasto";
-  };
+  const knownTags = [...liveTags, ...archivedTags];
+  const savedMeals = plan?.meals ?? [];
 
   const save = useMutation({
     mutationFn: (input: MealPlanInput) => saveCoachClientMealPlan(athleteId, input),
@@ -215,10 +213,7 @@ export function MealPlanEditor({
           <div className="meals" data-reorder-list>
             {draft.meals.map((meal, index) => {
               const isTagArchived = !liveTagIds.includes(meal.tagId);
-              const name = tagNameOf(meal.tagId);
-              const liveOptions = liveTags.map((tag) => ({ value: String(tag.id), label: tag.name }));
-              const archivedOption = { value: String(meal.tagId), label: `${name} · archiviato` };
-              const tagOptions = isTagArchived ? [...liveOptions, archivedOption] : liveOptions;
+              const name = tagNameOf(meal.tagId, knownTags, savedMeals);
 
               return (
                 <MealCard
@@ -228,7 +223,7 @@ export function MealPlanEditor({
                   count={draft.meals.length}
                   name={name}
                   isTagArchived={isTagArchived}
-                  tagOptions={tagOptions}
+                  tagOptions={tagOptionsFor(liveTags, meal.tagId, name)}
                   onDraftChange={changeDraft}
                   onMove={(fromIndex, toIndex) =>
                     changeDraft((current) => moveMeal(current, fromIndex, toIndex))

@@ -4,6 +4,7 @@ import { ApiError, getCoachMealPlanTemplates, useQuery, type MealPlanTemplate } 
 import { Button, ButtonIcon } from "@components/button";
 import { Skeleton } from "@components/skeleton";
 import { toast } from "@components/toast";
+import { archivedTagLabel, skippedTagsOf } from "@pages/coach/mealtags/tagLabels";
 import { cx } from "@utils/cx";
 import "./style.css";
 
@@ -137,10 +138,7 @@ export function ApplyTemplateDialog({
             <legend className="sr-only">Template</legend>
             {list.map((template) => {
               const isChosen = template.id === chosen?.id;
-              const skippedNames = template.meals
-                .filter((meal) => !liveTagIds.includes(meal.tagId))
-                .map((meal) => meal.name)
-                .filter((name, index, names) => names.indexOf(name) === index);
+              const { skippedTagNames } = skippedTagsOf(template.meals, liveTagIds);
 
               return (
                 <label key={template.id} className={cx("template", isChosen && "template--chosen")}>
@@ -162,7 +160,7 @@ export function ApplyTemplateDialog({
                             key={index}
                             className={cx("chip", isArchived && "chip--archived")}
                           >
-                            {isArchived ? `${meal.name} · archiviato` : meal.name}
+                            {isArchived ? archivedTagLabel(meal.name) : meal.name}
                             {meal.timeOfDay !== null && !isArchived ? (
                               <span className="chip__time">{meal.timeOfDay}</span>
                             ) : null}
@@ -170,8 +168,8 @@ export function ApplyTemplateDialog({
                         );
                       })}
                     </span>
-                    {skippedNames.length > 0 ? (
-                      <span className="template__skipped">{skippedNote(skippedNames)}</span>
+                    {skippedTagNames.length > 0 ? (
+                      <span className="template__skipped">{skippedNote(skippedTagNames)}</span>
                     ) : null}
                   </span>
                 </label>

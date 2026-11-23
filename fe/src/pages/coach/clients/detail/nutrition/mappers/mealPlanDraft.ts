@@ -1,4 +1,5 @@
 import type { MealPlan, MealPlanInput, MealPlanTemplate } from "@api";
+import { skippedTagsOf } from "@pages/coach/mealtags/tagLabels";
 import { moveItemTo } from "@utils/moveItemTo";
 
 // Limits from the contract (docs/contracts/al-piano-pasti.md, Limiti).
@@ -166,7 +167,8 @@ export type AppliedTemplate = {
 /**
  * Replaces the meals with the template's (tag and time, no foods), keeping the plan notes.
  * Meals whose tag is archived (not among `liveTagIds`) are skipped: the API would refuse
- * them on a new meal (contract, Template di giornata).
+ * them on a new meal (contract, Template di giornata). The new meals have no id: the
+ * replaced ones, and the client's marks on them, are not kept.
  */
 export function applyTemplate(
   draft: MealPlanDraft,
@@ -174,12 +176,7 @@ export function applyTemplate(
   liveTagIds: number[],
   createKey: CreateKey,
 ): AppliedTemplate {
-  const isLive = (tagId: number) => liveTagIds.includes(tagId);
-  const keptMeals = template.meals.filter((meal) => isLive(meal.tagId));
-  const skippedMeals = template.meals.filter((meal) => !isLive(meal.tagId));
-  const skippedTagNames = skippedMeals
-    .map((meal) => meal.name)
-    .filter((name, index, names) => names.indexOf(name) === index);
+  const keptMeals = template.meals.filter((meal) => liveTagIds.includes(meal.tagId));
 
   const meals: DraftMeal[] = keptMeals.map((meal) => ({
     key: createKey(),
@@ -189,9 +186,5 @@ export function applyTemplate(
     items: [],
   }));
 
-  return {
-    draft: { ...draft, meals },
-    skippedCount: skippedMeals.length,
-    skippedTagNames,
-  };
+  return { draft: { ...draft, meals }, ...skippedTagsOf(template.meals, liveTagIds) };
 }

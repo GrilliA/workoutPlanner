@@ -18,7 +18,7 @@ export function NutritionEmpty({ clientName, onCreate, onApplyTemplate }: Nutrit
       </p>
       <div className="actions">
         <Button variant="primary" onClick={onCreate}>
-          Crea il piano
+          Crea piano pasti
         </Button>
         <Button variant="secondary" onClick={onApplyTemplate}>
           Applica un template

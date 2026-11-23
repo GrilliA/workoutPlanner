@@ -2,7 +2,7 @@ import { useId, useState, type FormEvent } from "react";
 import type { ListedMealTag } from "@api";
 import { Button } from "@components/button";
 import { ReorderHandle } from "@pages/coach/reorderHandle";
-import { MAX_TAG_NAME_LENGTH, planUsage, renameNote } from "../usage";
+import { MAX_TAG_NAME_LENGTH, renameNote, tagUsage } from "../usage";
 import "./style.css";
 
 type MealTagRowProps = {
@@ -66,7 +66,7 @@ export function MealTagRow({
         </form>
         {isChanged ? null : (
           <>
-            <span className="usage">{planUsage(tag.planCount)}</span>
+            <span className="usage">{tagUsage(tag.planCount, tag.templateCount)}</span>
             <Button variant="secondary" size="sm" className="archive" onClick={onArchive}>
               Archivia
             </Button>
@@ -75,7 +75,7 @@ export function MealTagRow({
       </div>
       {isChanged ? (
         <p id={noteId} className="note">
-          {renameNote(tag.planCount)}
+          {renameNote(tag.planCount, tag.templateCount)}
         </p>
       ) : null}
     </li>

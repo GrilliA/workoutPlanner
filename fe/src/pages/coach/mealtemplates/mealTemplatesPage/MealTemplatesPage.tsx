@@ -15,6 +15,7 @@ import { ConfirmDialog } from "@components/confirmDialog";
 import { PageHeader } from "@components/pageHeader";
 import { Skeleton } from "@components/skeleton";
 import { toast } from "@components/toast";
+import { tagNameOf } from "@pages/coach/mealtags/tagLabels";
 import { cx } from "@utils/cx";
 import { useUnsavedChangesGuard } from "@utils/useUnsavedChangesGuard";
 import {
@@ -73,11 +74,8 @@ export function MealTemplatesPage() {
   const hasUnsavedChanges = isTemplateDraftChanged(draft, savedDraft);
   const isNew = effectiveId === "new";
 
-  const tagNameOf = (tagId: number): string => {
-    const tag = [...liveTags, ...archivedTags].find((knownTag) => knownTag.id === tagId);
-    const templateMeal = selectedTemplate?.meals.find((meal) => meal.tagId === tagId);
-    return tag?.name ?? templateMeal?.name ?? "Pasto";
-  };
+  const knownTags = [...liveTags, ...archivedTags];
+  const savedMeals = selectedTemplate?.meals ?? [];
 
   const startOver = () => {
     setSelectedId(undefined);
@@ -238,7 +236,7 @@ export function MealTemplatesPage() {
               draft={draft}
               isNew={isNew}
               liveTags={liveTags}
-              tagNameOf={tagNameOf}
+              tagNameOf={(tagId) => tagNameOf(tagId, knownTags, savedMeals)}
               formError={formError}
               isSaving={save.isPending}
               onDraftChange={changeDraft}
