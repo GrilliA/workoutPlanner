@@ -1,10 +1,15 @@
 // Italian copy for the API `error` strings the coach can trigger. The contract keeps errors
 // in English; the strings come from be/src/services/subscriptionValidation.ts,
-// subscriptionAccess.ts, exerciseSetValidation.ts and routes/coachsubscriptions.ts.
+// subscriptionAccess.ts, exerciseSetValidation.ts, routes/coachsubscriptions.ts and, for the
+// meal plan (AL), mealPlanValidation.ts, mealTagAccess.ts, mealPlanTemplateAccess.ts and
+// mealPlanAccess.ts (docs/contracts/al-piano-pasti.md).
 
 const AMOUNT_RANGE = "L'importo deve essere tra 0 e 10.000 €.";
 const PERIOD_RANGE = "La durata deve essere da 1 a 52 mesi o settimane.";
 const INVALID_TEXT = "Il testo contiene un carattere non valido.";
+// After a 404 or 409 on the meal plan save the page reloads the saved plan (contract).
+const MEAL_PLAN_CHANGED_ELSEWHERE =
+  "Il piano è cambiato in un'altra scheda: ecco la versione salvata. Rifai le modifiche e salva.";
 
 const KNOWN_API_ERROR_MESSAGES: Record<string, string> = {
   "name is required": "Inserisci il nome.",
@@ -51,6 +56,30 @@ const KNOWN_API_ERROR_MESSAGES: Record<string, string> = {
   "No active pause": "Nessuna pausa attiva.",
   "Client not found": "Questo cliente non è più collegato a te.",
   "setPrescriptions must have at most 30 sets": "Un esercizio può avere al massimo 30 serie.",
+  "name must be at most 60 characters": "Il nome può avere al massimo 60 caratteri.",
+  "Meal tag already exists": "C'è già un tag con questo nome.",
+  "Too many meal tags": "Hai raggiunto il numero massimo di tag.",
+  "Meal tag not found": "Questo tag non è più disponibile: elenco dei tag aggiornato.",
+  "Too many meal plan templates": "Hai già 20 template: eliminane uno per crearne un altro.",
+  "Meal plan template not found": "Questo template non c'è più: elenco aggiornato.",
+  "meals must have at least 1 entry": "Aggiungi almeno un pasto.",
+  "meals must have at most 12 entries": "Al massimo 12 pasti.",
+  "meals.items must have at most 30 entries": "Un pasto può avere al massimo 30 alimenti.",
+  "meals.items.food is required": "Scrivi il nome di ogni alimento.",
+  "meals.items.food must be at most 120 characters":
+    "Il nome di un alimento può avere al massimo 120 caratteri.",
+  "meals.items.quantity must be at most 60 characters":
+    "La quantità può avere al massimo 60 caratteri.",
+  "notes must be at most 1000 characters": "Le note possono avere al massimo 1000 caratteri.",
+  "meals.notes must be at most 500 characters":
+    "Le note di un pasto possono avere al massimo 500 caratteri.",
+  "meals.timeOfDay must be HH:MM or null": "Scrivi l'orario come 07:30, oppure lascialo vuoto.",
+  "Meal not found": MEAL_PLAN_CHANGED_ELSEWHERE,
+  "Meal item not found": MEAL_PLAN_CHANGED_ELSEWHERE,
+  "Meal plan already exists": MEAL_PLAN_CHANGED_ELSEWHERE,
+  "Meal plan not found": "Il piano non c'è più: pagina aggiornata.",
+  "Request body too large":
+    "Il piano è troppo lungo: accorcia note o alimenti e salva di nuovo.",
 };
 
 // These messages carry a field name or a list of values, so they match by pattern.
@@ -60,6 +89,7 @@ const KNOWN_API_ERROR_PATTERNS: { pattern: RegExp; message: string }[] = [
     message: "Data non valida (tra il 2000 e il 2099).",
   },
   { pattern: /^method must be one of /, message: "Scegli il metodo di pagamento." },
+  { pattern: /^(notes|meals\.notes|meals\.items\.(food|quantity)) must not contain a NUL character$/, message: INVALID_TEXT },
 ];
 
 /** The Italian copy for an API error string, or null when the string is not known. */

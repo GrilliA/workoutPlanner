@@ -191,3 +191,25 @@ export {
   setScheduleOverride,
   deleteScheduleOverride,
 } from "./workoutdays";
+export {
+  getCoachMealTags,
+  createCoachMealTag,
+  updateCoachMealTag,
+  getCoachMealPlanTemplates,
+  createCoachMealPlanTemplate,
+  replaceCoachMealPlanTemplate,
+  deleteCoachMealPlanTemplate,
+  getCoachClientMealPlan,
+  saveCoachClientMealPlan,
+  setCoachClientMealPlanActive,
+  getCoachClientMealLogs,
+} from "./mealPlan";
+export type {
+  ListedMealTag,
+  MealTagLists,
+  MealPlan,
+  MealPlanTemplate,
+  MealDayAdherence,
+  MealPlanInput,
+  MealPlanTemplateInput,
+} from "./schemas/mealPlan";
