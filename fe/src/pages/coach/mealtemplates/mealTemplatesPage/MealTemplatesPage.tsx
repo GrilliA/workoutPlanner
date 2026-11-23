@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   ApiError,
   createCoachMealPlanTemplate,
@@ -49,6 +49,10 @@ export function MealTemplatesPage() {
   const [pendingSelection, setPendingSelection] = useState<number | "new" | null>(null);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  // The editor starts over when another template is chosen, not when a new one is first
+  // saved: its id changes then, but the coach is still in the same form with the focus on it.
+  const [editorSession, setEditorSession] = useState(0);
+  const titleRef = useRef<HTMLHeadingElement>(null);
 
   const library = useQuery({
     queryKey: [reloadCount],
@@ -78,6 +82,7 @@ export function MealTemplatesPage() {
   const savedMeals = selectedTemplate?.meals ?? [];
 
   const startOver = () => {
+    setEditorSession((session) => session + 1);
     setSelectedId(undefined);
     setEditing(null);
     setReloadCount((count) => count + 1);
@@ -113,6 +118,8 @@ export function MealTemplatesPage() {
     fallback: DELETE_ERROR,
     onSuccess: () => {
       toast.success("Template eliminato");
+      // The editor of the deleted template goes away with its button: the title keeps the focus.
+      titleRef.current?.focus();
       startOver();
     },
     onError: (error) => reportWriteError(error, DELETE_ERROR),
@@ -128,6 +135,7 @@ export function MealTemplatesPage() {
   };
 
   const select = (templateId: number | "new") => {
+    setEditorSession((session) => session + 1);
     setFormError(null);
     setEditing(null);
     setSelectedId(templateId);
@@ -174,7 +182,11 @@ export function MealTemplatesPage() {
 
   return (
     <div className="meal-templates-page coach-page page-container page-container--wide">
-      <PageHeader title="Template pasti" subtitle="Giornate tipo da applicare al piano di un cliente." />
+      <PageHeader
+        title="Template pasti"
+        subtitle="Giornate tipo da applicare al piano di un cliente."
+        titleRef={titleRef}
+      />
 
       {library.data === undefined ? (
         <div className="loading" role="status">
@@ -232,7 +244,7 @@ export function MealTemplatesPage() {
 
           <section className="editor-card" aria-label="Modifica template">
             <TemplateEditor
-              key={effectiveId}
+              key={editorSession}
               draft={draft}
               isNew={isNew}
               liveTags={liveTags}

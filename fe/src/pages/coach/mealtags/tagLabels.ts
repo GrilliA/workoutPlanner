@@ -53,3 +53,6 @@ export function skippedTagsOf(meals: NamedTagMeal[], liveTagIds: number[]): Skip
 
   return { skippedCount: skippedMeals.length, skippedTagNames };
 }
+
+/** The id of a tag's name field, so the page can move the focus to a row after another one went away. */
+export const tagNameFieldId = (tagId: number): string => `meal-tag-name-${tagId}`;

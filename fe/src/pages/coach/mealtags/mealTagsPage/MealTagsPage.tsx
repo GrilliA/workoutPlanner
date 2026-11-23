@@ -1,4 +1,4 @@
-import { useId, useState, type FormEvent } from "react";
+import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import {
   ApiError,
   createCoachMealTag,
@@ -17,6 +17,7 @@ import { toast } from "@components/toast";
 import { createSerialQueue } from "@utils/createSerialQueue";
 import { moveItemTo } from "@utils/moveItemTo";
 import { MealTagRow } from "../mealTagRow";
+import { tagNameFieldId } from "../tagLabels";
 import { MAX_LIVE_TAGS, MAX_TAG_NAME_LENGTH, archivedUsage, usageList } from "../usage";
 import "../../style.css";
 import "./style.css";
@@ -59,6 +60,12 @@ export function MealTagsPage() {
   // The list is read again once, when the last one is done.
   const [writeQueue] = useState(() => createSerialQueue(reload));
 
+  // After an archiving the row goes away with its button: the focus goes to the next row (or
+  // the previous one), and to the new tag field when no tag is left.
+  const focusAfterArchiveRef = useRef<{ archivedTagId: number; nextTagId: number | null } | null>(
+    null,
+  );
+
   const reportWriteError = (error: ApiError) => {
     toast.error(ApiError.messageFrom(error, WRITE_ERROR));
 
@@ -88,7 +95,10 @@ export function MealTagsPage() {
     },
     // The read after the last write also puts back an order that moved before the answer, and
     // shows what changed in another tab.
-    onError: (error) => toast.error(ApiError.messageFrom(error, WRITE_ERROR)),
+    onError: (error) => {
+      toast.error(ApiError.messageFrom(error, WRITE_ERROR));
+      focusAfterArchiveRef.current = null;
+    },
   });
 
   const sendWrite = (tagWrite: TagWrite) => writeQueue.add(() => write.mutateAsync(tagWrite));
@@ -127,8 +137,28 @@ export function MealTagsPage() {
     }
   };
 
+  useEffect(() => {
+    const pendingFocus = focusAfterArchiveRef.current;
+    const stillLiveTags = lists?.mealTags ?? [];
+
+    if (pendingFocus === null || stillLiveTags.some((tag) => tag.id === pendingFocus.archivedTagId)) {
+      return;
+    }
+
+    focusAfterArchiveRef.current = null;
+    const nextFieldId =
+      pendingFocus.nextTagId === null ? newTagId : tagNameFieldId(pendingFocus.nextTagId);
+    document.getElementById(nextFieldId)?.focus();
+  }, [lists, newTagId]);
+
   const confirmArchive = () => {
     if (archiving !== null) {
+      const archivedIndex = liveTags.findIndex((tag) => tag.id === archiving.id);
+      const neighbour = liveTags[archivedIndex + 1] ?? liveTags[archivedIndex - 1] ?? null;
+      focusAfterArchiveRef.current = {
+        archivedTagId: archiving.id,
+        nextTagId: neighbour === null ? null : neighbour.id,
+      };
       sendWrite({ kind: "archive", tagId: archiving.id });
     }
     setArchiving(null);
@@ -168,8 +198,7 @@ export function MealTagsPage() {
               <ol className="tags" data-reorder-list>
                 {liveTags.map((tag, index) => (
                   <MealTagRow
-                    // A rename remounts the row, so its field starts from the new name.
-                    key={`${tag.id}-${tag.name}`}
+                    key={tag.id}
                     tag={tag}
                     index={index}
                     count={liveTags.length}

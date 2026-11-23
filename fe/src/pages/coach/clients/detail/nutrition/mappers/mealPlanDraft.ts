@@ -58,6 +58,38 @@ export function draftFromPlan(plan: MealPlan | null, createKey: CreateKey): Meal
   };
 }
 
+/**
+ * The draft after a save: the saved plan, with the keys of the meals and foods that were
+ * sent. The server gave the new ones their ids; the same keys keep the rows on screen, with
+ * their focus, instead of rebuilding the page. The answer lists meals and foods in the order sent.
+ */
+export function draftAfterSave(
+  sent: MealPlanDraft,
+  savedPlan: MealPlan,
+  createKey: CreateKey,
+): MealPlanDraft {
+  return {
+    notes: savedPlan.notes ?? "",
+    meals: savedPlan.meals.map((meal, mealIndex) => {
+      const sentMeal = sent.meals.at(mealIndex);
+
+      return {
+        key: sentMeal?.key ?? createKey(),
+        id: meal.id,
+        tagId: meal.tagId,
+        timeOfDay: meal.timeOfDay ?? "",
+        notes: meal.notes,
+        items: meal.items.map((item, itemIndex) => ({
+          key: sentMeal?.items.at(itemIndex)?.key ?? createKey(),
+          id: item.id,
+          food: item.food,
+          quantity: item.quantity ?? "",
+        })),
+      };
+    }),
+  };
+}
+
 const textOrNull = (text: string): string | null => {
   const trimmed = text.trim();
   return trimmed === "" ? null : trimmed;

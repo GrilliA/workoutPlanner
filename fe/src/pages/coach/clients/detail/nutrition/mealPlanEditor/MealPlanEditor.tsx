@@ -1,4 +1,4 @@
-import { useId, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { Link } from "wouter";
 import {
   ApiError,
@@ -15,6 +15,7 @@ import { ConfirmDialog } from "@components/confirmDialog";
 import { PageHeader } from "@components/pageHeader";
 import { toast } from "@components/toast";
 import { tagNameOf, tagOptionsFor } from "@pages/coach/mealtags/tagLabels";
+import { useFocusBackAfterPending } from "@utils/useFocusBackAfterPending";
 import { useUnsavedChangesGuard } from "@utils/useUnsavedChangesGuard";
 import { ClientTabs } from "../../clientTabs";
 import { ApplyTemplateDialog } from "../applyTemplateDialog";
@@ -24,6 +25,7 @@ import {
   MAX_PLAN_NOTES_LENGTH,
   addMeal,
   applyTemplate,
+  draftAfterSave,
   draftFromPlan,
   isDraftChanged,
   mealPlanInputFrom,
@@ -46,6 +48,8 @@ type MealPlanEditorProps = {
   tagLists: MealTagLists;
   /** The coach chose "Applica un template" in the empty state. */
   opensWithTemplates: boolean;
+  /** The editor replaces a screen whose button or content had the focus: start on the title. */
+  focusTitleOnMount: boolean;
   adherence: ReactNode;
   onSaved: (plan: MealPlan) => void;
   onActiveChanged: (plan: MealPlan) => void;
@@ -84,6 +88,7 @@ export function MealPlanEditor({
   plan,
   tagLists,
   opensWithTemplates,
+  focusTitleOnMount,
   adherence,
   onSaved,
   onActiveChanged,
@@ -92,7 +97,11 @@ export function MealPlanEditor({
 }: MealPlanEditorProps) {
   const formId = useId();
   const notesId = useId();
-  const [savedDraft] = useState(() => draftFromPlan(plan, () => crypto.randomUUID()));
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const applyButtonRef = useRef<HTMLButtonElement>(null);
+  const saveButtonRef = useRef<HTMLButtonElement>(null);
+  const switchButtonRef = useRef<HTMLButtonElement>(null);
+  const [savedDraft, setSavedDraft] = useState(() => draftFromPlan(plan, () => crypto.randomUUID()));
   const [draft, setDraft] = useState<MealPlanDraft>(savedDraft);
   const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(opensWithTemplates);
   const [appliedNotice, setAppliedNotice] = useState<string | null>(null);
@@ -111,6 +120,11 @@ export function MealPlanEditor({
     fallback: SAVE_ERROR,
     onSuccess: (savedPlan) => {
       toast.success("Piano salvato");
+      // The new meals and foods have their ids now: the draft is the answer, row for row, so
+      // the page is not rebuilt and the focus stays where it is.
+      const draftAfterThisSave = draftAfterSave(draft, savedPlan, () => crypto.randomUUID());
+      setSavedDraft(draftAfterThisSave);
+      setDraft(draftAfterThisSave);
       onSaved(savedPlan);
     },
     onError: (error) => {
@@ -143,6 +157,15 @@ export function MealPlanEditor({
       }
     },
   });
+
+  useEffect(() => {
+    if (focusTitleOnMount) {
+      titleRef.current?.focus();
+    }
+  }, [focusTitleOnMount]);
+
+  useFocusBackAfterPending(saveButtonRef, save.isPending);
+  useFocusBackAfterPending(switchButtonRef, switchActive.isPending);
 
   const hasUnsavedChanges = isDraftChanged(draft, savedDraft);
   const { isLeaveDialogOpen, leavePage, stayOnPage } = useUnsavedChangesGuard(
@@ -177,10 +200,20 @@ export function MealPlanEditor({
 
   const headerActions = (
     <div className="header-actions">
-      <Button variant="secondary" onClick={() => setIsTemplateDialogOpen(true)}>
+      <Button
+        ref={applyButtonRef}
+        variant="secondary"
+        onClick={() => setIsTemplateDialogOpen(true)}
+      >
         Applica un template
       </Button>
-      <Button variant="primary" type="submit" form={formId} loading={save.isPending}>
+      <Button
+        ref={saveButtonRef}
+        variant="primary"
+        type="submit"
+        form={formId}
+        loading={save.isPending}
+      >
         Salva piano
       </Button>
     </div>
@@ -188,7 +221,12 @@ export function MealPlanEditor({
 
   return (
     <div className="meal-plan-editor coach-page page-container page-container--wide">
-      <PageHeader title={clientName} subtitle={clientEmail} action={headerActions} />
+      <PageHeader
+        title={clientName}
+        subtitle={clientEmail}
+        action={headerActions}
+        titleRef={titleRef}
+      />
 
       <ClientTabs athleteId={athleteId} activeTab="nutrition" />
 
@@ -296,6 +334,7 @@ export function MealPlanEditor({
                   : "Pasti e registrazioni restano: riattivalo quando serve."}
               </p>
               <Button
+                ref={switchButtonRef}
                 variant="secondary"
                 size="sm"
                 loading={switchActive.isPending}
@@ -317,6 +356,7 @@ export function MealPlanEditor({
           clientName={clientName}
           mealCount={draft.meals.length}
           liveTagIds={liveTagIds}
+          returnFocusRef={applyButtonRef}
           onApply={handleApplyTemplate}
           onClose={() => setIsTemplateDialogOpen(false)}
         />

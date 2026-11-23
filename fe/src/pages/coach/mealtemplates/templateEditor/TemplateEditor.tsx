@@ -1,4 +1,4 @@
-import { useId, type FormEvent } from "react";
+import { useId, useRef, type FormEvent } from "react";
 import type { ListedMealTag } from "@api";
 import { Button, ButtonIcon } from "@components/button";
 import { Input } from "@components/input";
@@ -6,6 +6,7 @@ import { Select } from "@components/select";
 import { ReorderHandle } from "@pages/coach/reorderHandle";
 import { tagOptionsFor } from "@pages/coach/mealtags/tagLabels";
 import { cx } from "@utils/cx";
+import { useFocusBackAfterPending } from "@utils/useFocusBackAfterPending";
 import {
   MAX_TEMPLATE_MEALS,
   MAX_TEMPLATE_NAME_LENGTH,
@@ -41,8 +42,11 @@ export function TemplateEditor({
   onDelete,
 }: TemplateEditorProps) {
   const titleId = useId();
+  const saveButtonRef = useRef<HTMLButtonElement>(null);
   const liveTagIds = liveTags.map((tag) => tag.id);
   const isFull = draft.meals.length >= MAX_TEMPLATE_MEALS;
+
+  useFocusBackAfterPending(saveButtonRef, isSaving);
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
@@ -172,7 +176,7 @@ export function TemplateEditor({
             Elimina template
           </Button>
         )}
-        <Button variant="primary" type="submit" loading={isSaving}>
+        <Button ref={saveButtonRef} variant="primary" type="submit" loading={isSaving}>
           Salva template
         </Button>
       </div>

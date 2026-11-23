@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import type { MealPlan } from "@api";
 import { PageHeader } from "@components/pageHeader";
 import { Skeleton } from "@components/skeleton";
 import { todayInRome } from "@utils/romeCalendar";
@@ -28,8 +27,6 @@ export function NutritionTab({ athleteId }: NutritionTabProps) {
     today,
   );
   const [planStart, setPlanStart] = useState<PlanStart>("none");
-  // A save gives the new meals and foods their ids: the editor starts again from the answer.
-  const [saveCount, setSaveCount] = useState(0);
 
   const client = clientDetail?.client ?? null;
   const clientName = client?.name ?? client?.email ?? "Cliente";
@@ -40,23 +37,20 @@ export function NutritionTab({ athleteId }: NutritionTabProps) {
   const isEditorShown = !isLoading && !isNotFound && tagLists !== null;
   const hasNoPlan = isEditorShown && mealPlan === null && planStart === "none";
 
-  const handleSaved = (savedPlan: MealPlan) => {
-    showSavedPlan(savedPlan);
-    setSaveCount((count) => count + 1);
-  };
-
   if (isEditorShown && !hasNoPlan) {
     return (
       <MealPlanEditor
-        key={`${editorVersion}-${saveCount}`}
+        key={editorVersion}
         athleteId={athleteId}
         clientName={clientName}
         clientEmail={client?.email}
         plan={mealPlan}
         tagLists={tagLists}
         opensWithTemplates={mealPlan === null && planStart === "template"}
+        // After a reload (404 or 409) or from the empty state, the old focus is gone.
+        focusTitleOnMount={editorVersion > 0 || planStart === "blank"}
         adherence={<AdherenceCard days={logs} isPending={isLogsPending} today={today} />}
-        onSaved={handleSaved}
+        onSaved={showSavedPlan}
         onActiveChanged={showSavedPlan}
         onStale={reload}
         onClientGone={() => setLocation("/clients")}

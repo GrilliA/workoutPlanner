@@ -1,4 +1,12 @@
-import { useId, useLayoutEffect, useRef, useState, type FormEvent, type SyntheticEvent } from "react";
+import {
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type RefObject,
+  type SyntheticEvent,
+} from "react";
 import { Link } from "wouter";
 import { ApiError, getCoachMealPlanTemplates, useQuery, type MealPlanTemplate } from "@api";
 import { Button, ButtonIcon } from "@components/button";
@@ -15,6 +23,11 @@ type ApplyTemplateDialogProps = {
   /** Meals already in the editor: applying replaces them. */
   mealCount: number;
   liveTagIds: number[];
+  /**
+   * Where the focus goes on close when the button that opened the dialog is gone (it was
+   * opened from the empty state, which the editor replaced).
+   */
+  returnFocusRef: RefObject<HTMLElement | null>;
   onApply: (template: MealPlanTemplate) => void;
   onClose: () => void;
 };
@@ -41,6 +54,7 @@ export function ApplyTemplateDialog({
   clientName,
   mealCount,
   liveTagIds,
+  returnFocusRef,
   onApply,
   onClose,
 }: ApplyTemplateDialogProps) {
@@ -53,6 +67,7 @@ export function ApplyTemplateDialog({
   // closing it on unmount gives the focus back to the button that opened it.
   useLayoutEffect(() => {
     const dialog = dialogRef.current;
+    const returnFocusElement = returnFocusRef.current;
 
     if (dialog !== null && !dialog.open) {
       dialog.showModal();
@@ -62,8 +77,12 @@ export function ApplyTemplateDialog({
       if (dialog !== null && dialog.open) {
         dialog.close();
       }
+
+      if (document.activeElement === document.body) {
+        returnFocusElement?.focus();
+      }
     };
-  }, []);
+  }, [returnFocusRef]);
 
   const templates = useQuery({
     queryFn: async ({ signal }) => {

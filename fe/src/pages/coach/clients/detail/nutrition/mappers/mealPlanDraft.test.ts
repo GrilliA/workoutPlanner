@@ -6,6 +6,7 @@ import {
   addMeal,
   applyTemplate,
   changeItem,
+  draftAfterSave,
   draftFromPlan,
   isDraftChanged,
   mealPlanInputFrom,
@@ -100,6 +101,53 @@ describe("isDraftChanged", () => {
   it("sees a removed meal", () => {
     const saved = draftFromPlan(savedPlan, keyMaker());
     assert.equal(isDraftChanged(removeMeal(saved, saved.meals[0].key), saved), true);
+  });
+});
+
+describe("draftAfterSave", () => {
+  it("gives the new meals and foods their ids and keeps the keys of the rows on screen", () => {
+    const createKey = keyMaker();
+    const withMeal = addMeal(draftFromPlan(null, createKey), 1, createKey);
+    const sent = addItem(withMeal, withMeal.meals[0].key, createKey);
+    const sentItemKey = sent.meals[0].items[0].key;
+    const answer: MealPlan = {
+      ...savedPlan,
+      meals: [
+        {
+          id: 31,
+          tagId: 1,
+          name: "Colazione",
+          timeOfDay: null,
+          notes: null,
+          position: 0,
+          items: [{ id: 301, food: "Yogurt", quantity: "150 g", position: 0 }],
+        },
+      ],
+    };
+    const after = draftAfterSave(sent, answer, createKey);
+
+    assert.equal(after.meals[0].key, sent.meals[0].key);
+    assert.equal(after.meals[0].id, 31);
+    assert.equal(after.meals[0].items[0].key, sentItemKey);
+    assert.equal(after.meals[0].items[0].id, 301);
+    assert.equal(after.meals[0].items[0].quantity, "150 g");
+  });
+
+  it("is what a save would send again: the same meals, now with their ids", () => {
+    const createKey = keyMaker();
+    const sent = draftFromPlan(savedPlan, createKey);
+    const after = draftAfterSave(sent, savedPlan, createKey);
+
+    assert.deepEqual(mealPlanInputFrom(after), mealPlanInputFrom(sent));
+    assert.equal(isDraftChanged(after, sent), false);
+  });
+
+  it("makes a key for a row the answer has and the sent draft did not", () => {
+    const createKey = keyMaker();
+    const after = draftAfterSave({ notes: "", meals: [] }, savedPlan, createKey);
+
+    assert.equal(after.meals.length, 2);
+    assert.notEqual(after.meals[0].key, after.meals[1].key);
   });
 });
 
