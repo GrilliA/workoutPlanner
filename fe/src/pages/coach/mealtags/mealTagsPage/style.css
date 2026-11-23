@@ -75,6 +75,10 @@
     }
   }
 
+  & .new-tag-error {
+    flex-basis: 100%;
+  }
+
   & .full {
     flex-basis: 100%;
     margin: 0;

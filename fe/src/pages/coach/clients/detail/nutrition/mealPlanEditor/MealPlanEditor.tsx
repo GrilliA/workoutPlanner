@@ -15,6 +15,7 @@ import { ConfirmDialog } from "@components/confirmDialog";
 import { PageHeader } from "@components/pageHeader";
 import { toast } from "@components/toast";
 import { tagNameOf, tagOptionsFor } from "@pages/coach/mealtags/tagLabels";
+import { focusFirstInvalid } from "@utils/focusFirstInvalid";
 import { useFocusBackAfterPending } from "@utils/useFocusBackAfterPending";
 import { useUnsavedChangesGuard } from "@utils/useUnsavedChangesGuard";
 import { ClientTabs } from "../../clientTabs";
@@ -27,9 +28,11 @@ import {
   applyTemplate,
   draftAfterSave,
   draftFromPlan,
+  findDraftProblem,
   isDraftChanged,
   mealPlanInputFrom,
   moveMeal,
+  type DraftProblem,
   type MealPlanDraft,
 } from "../mappers/mealPlanDraft";
 import "./style.css";
@@ -105,7 +108,9 @@ export function MealPlanEditor({
   const [draft, setDraft] = useState<MealPlanDraft>(savedDraft);
   const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(opensWithTemplates);
   const [appliedNotice, setAppliedNotice] = useState<string | null>(null);
-  const [formError, setFormError] = useState<string | null>(null);
+  // What stopped the last save, until the coach changes something.
+  const [problem, setProblem] = useState<DraftProblem | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   const liveTags = tagLists.mealTags;
   const liveTagIds = liveTags.map((tag) => tag.id);
@@ -164,6 +169,12 @@ export function MealPlanEditor({
     }
   }, [focusTitleOnMount]);
 
+  useEffect(() => {
+    if (problem !== null) {
+      focusFirstInvalid(formRef.current);
+    }
+  }, [problem]);
+
   useFocusBackAfterPending(saveButtonRef, save.isPending);
   useFocusBackAfterPending(switchButtonRef, switchActive.isPending);
 
@@ -173,14 +184,14 @@ export function MealPlanEditor({
   );
 
   const changeDraft = (change: (current: MealPlanDraft) => MealPlanDraft) => {
-    setFormError(null);
+    setProblem(null);
     setDraft(change);
   };
 
   const handleApplyTemplate = (template: MealPlanTemplate) => {
     const applied = applyTemplate(draft, template, liveTagIds, () => crypto.randomUUID());
     setDraft(applied.draft);
-    setFormError(null);
+    setProblem(null);
     setIsTemplateDialogOpen(false);
     setAppliedNotice(
       appliedTemplateNotice(template.name, applied.skippedCount, applied.skippedTagNames),
@@ -190,8 +201,10 @@ export function MealPlanEditor({
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
 
-    if (draft.meals.length === 0) {
-      setFormError("Aggiungi almeno un pasto prima di salvare.");
+    const draftProblem = findDraftProblem(draft);
+
+    if (draftProblem !== null) {
+      setProblem(draftProblem);
       return;
     }
 
@@ -241,10 +254,17 @@ export function MealPlanEditor({
       ) : null}
 
       <div className="layout">
-        <form id={formId} className="meals-form" aria-label="Pasti del piano" onSubmit={handleSubmit}>
-          {formError !== null ? (
-            <p className="form-error" role="alert">
-              {formError}
+        <form
+          ref={formRef}
+          id={formId}
+          className="meals-form"
+          aria-label="Pasti del piano"
+          noValidate
+          onSubmit={handleSubmit}
+        >
+          {problem?.kind === "no-meals" ? (
+            <p className="form-error" role="alert" tabIndex={-1} data-form-error>
+              Aggiungi almeno un pasto prima di salvare.
             </p>
           ) : null}
 
@@ -262,6 +282,7 @@ export function MealPlanEditor({
                   name={name}
                   isTagArchived={isTagArchived}
                   tagOptions={tagOptionsFor(liveTags, meal.tagId, name)}
+                  invalidItemKey={problem?.kind === "empty-food" ? problem.itemKey : null}
                   onDraftChange={changeDraft}
                   onMove={(fromIndex, toIndex) =>
                     changeDraft((current) => moveMeal(current, fromIndex, toIndex))

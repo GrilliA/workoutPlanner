@@ -45,6 +45,18 @@ export function templateInputFrom(draft: TemplateDraft): MealPlanTemplateInput {
   };
 }
 
+/** Why a template is not saved: it has no name, or no meal. */
+export type TemplateProblem = { kind: "no-name" } | { kind: "no-meals" };
+
+/** The first thing to fix before the template can be saved, or null. A new object each time. */
+export function findTemplateProblem(draft: TemplateDraft): TemplateProblem | null {
+  if (draft.name.trim() === "") {
+    return { kind: "no-name" };
+  }
+
+  return draft.meals.length === 0 ? { kind: "no-meals" } : null;
+}
+
 export function isTemplateDraftChanged(draft: TemplateDraft, saved: TemplateDraft): boolean {
   return JSON.stringify(templateInputFrom(draft)) !== JSON.stringify(templateInputFrom(saved));
 }

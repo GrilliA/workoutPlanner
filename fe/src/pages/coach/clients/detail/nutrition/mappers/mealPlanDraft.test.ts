@@ -8,6 +8,7 @@ import {
   changeItem,
   draftAfterSave,
   draftFromPlan,
+  findDraftProblem,
   isDraftChanged,
   mealPlanInputFrom,
   moveItem,
@@ -101,6 +102,35 @@ describe("isDraftChanged", () => {
   it("sees a removed meal", () => {
     const saved = draftFromPlan(savedPlan, keyMaker());
     assert.equal(isDraftChanged(removeMeal(saved, saved.meals[0].key), saved), true);
+  });
+});
+
+describe("findDraftProblem", () => {
+  const meal = (items: { key: string; food: string }[]) => ({
+    key: "meal",
+    tagId: 1,
+    timeOfDay: "",
+    notes: null,
+    items: items.map((item) => ({ ...item, quantity: "" })),
+  });
+
+  it("asks for a meal first", () => {
+    assert.deepEqual(findDraftProblem({ notes: "", meals: [] }), { kind: "no-meals" });
+  });
+
+  it("finds the first food without a name, blank ones included", () => {
+    const draft = {
+      notes: "",
+      meals: [meal([{ key: "a", food: "Riso" }]), meal([{ key: "b", food: "  " }, { key: "c", food: "" }])],
+    };
+
+    assert.deepEqual(findDraftProblem(draft), { kind: "empty-food", itemKey: "b" });
+  });
+
+  it("finds nothing in a plan that can be saved, meals without foods included", () => {
+    const draft = { notes: "", meals: [meal([{ key: "a", food: "Riso" }]), meal([])] };
+
+    assert.equal(findDraftProblem(draft), null);
   });
 });
 

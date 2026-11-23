@@ -1,4 +1,4 @@
-import { useId, useRef, type FormEvent } from "react";
+import { useEffect, useId, useRef, type FormEvent } from "react";
 import type { ListedMealTag } from "@api";
 import { Button, ButtonIcon } from "@components/button";
 import { Input } from "@components/input";
@@ -6,6 +6,7 @@ import { Select } from "@components/select";
 import { ReorderHandle } from "@pages/coach/reorderHandle";
 import { tagOptionsFor } from "@pages/coach/mealtags/tagLabels";
 import { cx } from "@utils/cx";
+import { focusFirstInvalid } from "@utils/focusFirstInvalid";
 import { useFocusBackAfterPending } from "@utils/useFocusBackAfterPending";
 import {
   MAX_TEMPLATE_MEALS,
@@ -15,6 +16,7 @@ import {
   moveTemplateMeal,
   removeTemplateMeal,
   type TemplateDraft,
+  type TemplateProblem,
 } from "../mappers/templateDraft";
 import "./style.css";
 
@@ -23,7 +25,8 @@ type TemplateEditorProps = {
   isNew: boolean;
   liveTags: ListedMealTag[];
   tagNameOf: (tagId: number) => string;
-  formError: string | null;
+  /** What stopped the last save, until the coach changes something. */
+  problem: TemplateProblem | null;
   isSaving: boolean;
   onDraftChange: (change: (draft: TemplateDraft) => TemplateDraft) => void;
   onSave: () => void;
@@ -35,7 +38,7 @@ export function TemplateEditor({
   isNew,
   liveTags,
   tagNameOf,
-  formError,
+  problem,
   isSaving,
   onDraftChange,
   onSave,
@@ -43,8 +46,15 @@ export function TemplateEditor({
 }: TemplateEditorProps) {
   const titleId = useId();
   const saveButtonRef = useRef<HTMLButtonElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
   const liveTagIds = liveTags.map((tag) => tag.id);
   const isFull = draft.meals.length >= MAX_TEMPLATE_MEALS;
+
+  useEffect(() => {
+    if (problem !== null) {
+      focusFirstInvalid(formRef.current);
+    }
+  }, [problem]);
 
   useFocusBackAfterPending(saveButtonRef, isSaving);
 
@@ -54,7 +64,13 @@ export function TemplateEditor({
   };
 
   return (
-    <form className="template-editor" aria-labelledby={titleId} onSubmit={handleSubmit}>
+    <form
+      ref={formRef}
+      className="template-editor"
+      aria-labelledby={titleId}
+      noValidate
+      onSubmit={handleSubmit}
+    >
       <h2 id={titleId} className="sr-only">
         {isNew ? "Nuovo template" : `Modifica ${draft.name}`}
       </h2>
@@ -64,6 +80,7 @@ export function TemplateEditor({
         required
         maxLength={MAX_TEMPLATE_NAME_LENGTH}
         placeholder="Es. Giornata standard"
+        error={problem?.kind === "no-name" ? "Dai un nome al template." : undefined}
         value={draft.name}
         onChange={(event) => {
           const name = event.target.value;
@@ -75,9 +92,9 @@ export function TemplateEditor({
         cliente.
       </p>
 
-      {formError !== null ? (
-        <p className="form-error" role="alert">
-          {formError}
+      {problem?.kind === "no-meals" ? (
+        <p className="form-error" role="alert" tabIndex={-1} data-form-error>
+          Aggiungi almeno un pasto prima di salvare.
         </p>
       ) : null}
 

@@ -130,13 +130,21 @@
       grid-area: quantity;
     }
 
+    & .food-error {
+      grid-area: error;
+    }
+
     & .remove-item {
       grid-area: remove;
     }
   }
 
-  & .input-base:user-invalid {
-    border-color: var(--error);
+  /* A row stopped on a missing food: its text sits under the field, not only a red border. */
+  & .item--invalid {
+    grid-template-areas:
+      "handle food remove"
+      ". error ."
+      ". quantity .";
   }
 
   & .foot {
@@ -161,6 +169,12 @@
   .meal-card .item {
     grid-template-columns: var(--touch-target) minmax(0, 1fr) minmax(0, 9rem) var(--touch-target);
     grid-template-areas: "handle food quantity remove";
+  }
+
+  .meal-card .item--invalid {
+    grid-template-areas:
+      "handle food quantity remove"
+      ". error error .";
   }
 }
 

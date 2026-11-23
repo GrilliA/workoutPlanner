@@ -16,6 +16,7 @@ import { Skeleton } from "@components/skeleton";
 import { toast } from "@components/toast";
 import { createSerialQueue } from "@utils/createSerialQueue";
 import { moveItemTo } from "@utils/moveItemTo";
+import { useFocusBackAfterPending } from "@utils/useFocusBackAfterPending";
 import { MealTagRow } from "../mealTagRow";
 import { tagNameFieldId } from "../tagLabels";
 import { MAX_LIVE_TAGS, MAX_TAG_NAME_LENGTH, archivedUsage, usageList } from "../usage";
@@ -44,6 +45,9 @@ export function MealTagsPage() {
   const newTagId = useId();
   const [reloadCount, setReloadCount] = useState(0);
   const [newName, setNewName] = useState("");
+  // Aggiungi tag was pressed with no name: told in words, until the name changes.
+  const [hasNewNameError, setHasNewNameError] = useState(false);
+  const addButtonRef = useRef<HTMLButtonElement>(null);
   const [archiving, setArchiving] = useState<ListedMealTag | null>(null);
 
   const tags = useQuery({
@@ -113,10 +117,14 @@ export function MealTagsPage() {
     onError: reportWriteError,
   });
 
+  useFocusBackAfterPending(addButtonRef, create.isPending);
+
   const lists = tags.data;
   const liveTags = lists?.mealTags ?? [];
   const archivedTags = lists?.archivedMealTags ?? [];
   const isFull = liveTags.length >= MAX_LIVE_TAGS;
+  const newTagNoteId = hasNewNameError ? `${newTagId}-error` : `${newTagId}-full`;
+  const describedByOfNewTag = hasNewNameError || isFull ? newTagNoteId : undefined;
 
   // The move shows at once; the server rewrites the positions and the reload confirms them.
   const handleMove = (fromIndex: number, toIndex: number) => {
@@ -132,9 +140,17 @@ export function MealTagsPage() {
     event.preventDefault();
     const name = newName.trim();
 
-    if (name !== "" && !isFull) {
-      create.mutate(name);
+    if (isFull) {
+      return;
     }
+
+    if (name === "") {
+      setHasNewNameError(true);
+      document.getElementById(newTagId)?.focus();
+      return;
+    }
+
+    create.mutate(name);
   };
 
   useEffect(() => {
@@ -211,7 +227,7 @@ export function MealTagsPage() {
               </ol>
             )}
 
-            <form className="add" onSubmit={handleCreate}>
+            <form className="add" noValidate onSubmit={handleCreate}>
               <label htmlFor={newTagId} className="sr-only">
                 Nuovo tag
               </label>
@@ -222,13 +238,28 @@ export function MealTagsPage() {
                 required
                 maxLength={MAX_TAG_NAME_LENGTH}
                 disabled={isFull}
-                aria-describedby={isFull ? `${newTagId}-full` : undefined}
+                aria-describedby={describedByOfNewTag}
+                aria-invalid={hasNewNameError ? "true" : undefined}
                 value={newName}
-                onChange={(event) => setNewName(event.target.value)}
+                onChange={(event) => {
+                  setNewName(event.target.value);
+                  setHasNewNameError(false);
+                }}
               />
-              <Button variant="primary" type="submit" disabled={isFull} loading={create.isPending}>
+              <Button
+                ref={addButtonRef}
+                variant="primary"
+                type="submit"
+                disabled={isFull}
+                loading={create.isPending}
+              >
                 Aggiungi tag
               </Button>
+              {hasNewNameError ? (
+                <p id={`${newTagId}-error`} className="input-error new-tag-error">
+                  Scrivi il nome del nuovo tag.
+                </p>
+              ) : null}
               {isFull ? (
                 <p id={`${newTagId}-full`} className="full">
                   Hai {MAX_LIVE_TAGS} tag, il massimo: archiviane uno per aggiungerne un altro.

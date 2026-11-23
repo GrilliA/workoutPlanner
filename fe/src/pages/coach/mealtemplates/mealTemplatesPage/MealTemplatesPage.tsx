@@ -20,10 +20,12 @@ import { cx } from "@utils/cx";
 import { useUnsavedChangesGuard } from "@utils/useUnsavedChangesGuard";
 import {
   MAX_TEMPLATES,
+  findTemplateProblem,
   isTemplateDraftChanged,
   templateDraftFrom,
   templateInputFrom,
   type TemplateDraft,
+  type TemplateProblem,
 } from "../mappers/templateDraft";
 import { TemplateEditor } from "../templateEditor";
 import "../../style.css";
@@ -48,7 +50,7 @@ export function MealTemplatesPage() {
   const [editing, setEditing] = useState<Editing | null>(null);
   const [pendingSelection, setPendingSelection] = useState<number | "new" | null>(null);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
+  const [problem, setProblem] = useState<TemplateProblem | null>(null);
   // The editor starts over when another template is chosen, not when a new one is first
   // saved: its id changes then, but the coach is still in the same form with the focus on it.
   const [editorSession, setEditorSession] = useState(0);
@@ -130,13 +132,13 @@ export function MealTemplatesPage() {
   );
 
   const changeDraft = (change: (current: TemplateDraft) => TemplateDraft) => {
-    setFormError(null);
+    setProblem(null);
     setEditing({ templateId: effectiveId, saved: savedDraft, current: change(draft) });
   };
 
   const select = (templateId: number | "new") => {
     setEditorSession((session) => session + 1);
-    setFormError(null);
+    setProblem(null);
     setEditing(null);
     setSelectedId(templateId);
   };
@@ -162,8 +164,10 @@ export function MealTemplatesPage() {
   };
 
   const handleSave = () => {
-    if (draft.meals.length === 0) {
-      setFormError("Aggiungi almeno un pasto prima di salvare.");
+    const templateProblem = findTemplateProblem(draft);
+
+    if (templateProblem !== null) {
+      setProblem(templateProblem);
       return;
     }
 
@@ -249,7 +253,7 @@ export function MealTemplatesPage() {
               isNew={isNew}
               liveTags={liveTags}
               tagNameOf={(tagId) => tagNameOf(tagId, knownTags, savedMeals)}
-              formError={formError}
+              problem={problem}
               isSaving={save.isPending}
               onDraftChange={changeDraft}
               onSave={handleSave}

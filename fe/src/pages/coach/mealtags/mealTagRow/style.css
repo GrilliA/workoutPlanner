@@ -75,6 +75,15 @@
     background: var(--surface);
   }
 
+  & .name[aria-invalid="true"] {
+    border-color: var(--error);
+    background: var(--surface);
+  }
+
+  & .name-error {
+    flex-basis: 100%;
+  }
+
   & .rename-actions {
     display: flex;
     gap: var(--space-2);

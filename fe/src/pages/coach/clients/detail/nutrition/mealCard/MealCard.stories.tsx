@@ -48,6 +48,7 @@ const meta = {
     name: "Colazione",
     isTagArchived: false,
     tagOptions,
+    invalidItemKey: null,
     onDraftChange: () => undefined,
     onMove: () => undefined,
   },
@@ -73,5 +74,15 @@ export const TagArchiviato: Story = {
     name: "Merenda",
     isTagArchived: true,
     tagOptions: [...tagOptions, { value: "4", label: "Merenda · archiviato" }],
+  },
+};
+
+export const AlimentoSenzaNome: Story = {
+  args: {
+    meal: {
+      ...breakfast,
+      items: [...breakfast.items, { key: "vuoto", food: "", quantity: "" }],
+    },
+    invalidItemKey: "vuoto",
   },
 };

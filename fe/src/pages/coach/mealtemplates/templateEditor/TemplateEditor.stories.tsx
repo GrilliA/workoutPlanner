@@ -45,7 +45,7 @@ const meta = {
     isNew: false,
     liveTags,
     tagNameOf: (tagId: number) => names[tagId] ?? "Pasto",
-    formError: null,
+    problem: null,
     isSaving: false,
     onDraftChange: () => undefined,
     onSave: () => undefined,
@@ -62,4 +62,12 @@ export const ConTagArchiviato: Story = {};
 
 export const Nuovo: Story = {
   args: { draft: { name: "", meals: [] }, isNew: true },
+};
+
+export const NomeMancante: Story = {
+  args: { problem: { kind: "no-name" } },
+};
+
+export const SenzaPasti: Story = {
+  args: { draft: { name: "Weekend", meals: [] }, problem: { kind: "no-meals" } },
 };

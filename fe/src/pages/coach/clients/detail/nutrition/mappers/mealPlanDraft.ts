@@ -113,6 +113,21 @@ export function mealPlanInputFrom(draft: MealPlanDraft): MealPlanInput {
   };
 }
 
+/** Why a save is not sent: no meal at all, or a food row without a name (the API refuses it). */
+export type DraftProblem = { kind: "no-meals" } | { kind: "empty-food"; itemKey: string };
+
+/** The first thing to fix before the plan can be saved, or null. A new object each time. */
+export function findDraftProblem(draft: MealPlanDraft): DraftProblem | null {
+  if (draft.meals.length === 0) {
+    return { kind: "no-meals" };
+  }
+
+  const items = draft.meals.flatMap((meal) => meal.items);
+  const itemWithoutFood = items.find((item) => item.food.trim() === "");
+
+  return itemWithoutFood === undefined ? null : { kind: "empty-food", itemKey: itemWithoutFood.key };
+}
+
 /** Compares what a save would send, so typing and undoing a change is not "unsaved". */
 export function isDraftChanged(draft: MealPlanDraft, saved: MealPlanDraft): boolean {
   return JSON.stringify(mealPlanInputFrom(draft)) !== JSON.stringify(mealPlanInputFrom(saved));

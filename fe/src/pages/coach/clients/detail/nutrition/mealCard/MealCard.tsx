@@ -28,6 +28,8 @@ type MealCardProps = {
   isTagArchived: boolean;
   /** The live tags, plus this meal's own tag when it is archived. */
   tagOptions: SelectOption[];
+  /** The food row a save was stopped on, because it has no name. */
+  invalidItemKey: string | null;
   onDraftChange: (change: (draft: MealPlanDraft) => MealPlanDraft) => void;
   onMove: (fromIndex: number, toIndex: number) => void;
 };
@@ -39,6 +41,7 @@ export function MealCard({
   name,
   isTagArchived,
   tagOptions,
+  invalidItemKey,
   onDraftChange,
   onMove,
 }: MealCardProps) {
@@ -112,9 +115,15 @@ export function MealCard({
           <ul className="items" aria-label={`Alimenti di ${name}`} data-reorder-list>
             {meal.items.map((item, itemIndex) => {
               const foodLabel = item.food.trim() === "" ? `alimento ${itemIndex + 1}` : item.food;
+              const isFoodInvalid = item.key === invalidItemKey;
+              const foodErrorId = `${titleId}-food-error`;
 
               return (
-                <li key={item.key} className="item" data-reorder-item>
+                <li
+                  key={item.key}
+                  className={cx("item", isFoodInvalid && "item--invalid")}
+                  data-reorder-item
+                >
                   <ReorderHandle
                     label={foodLabel}
                     index={itemIndex}
@@ -127,7 +136,9 @@ export function MealCard({
                     className="input-base food"
                     aria-label={`Alimento ${itemIndex + 1}`}
                     placeholder="Alimento"
-                    required
+                    aria-required="true"
+                    aria-invalid={isFoodInvalid ? "true" : undefined}
+                    aria-describedby={isFoodInvalid ? foodErrorId : undefined}
                     maxLength={MAX_FOOD_LENGTH}
                     value={item.food}
                     autoFocus={item.key === addedItemKey}
@@ -137,6 +148,11 @@ export function MealCard({
                       )
                     }
                   />
+                  {isFoodInvalid ? (
+                    <p id={foodErrorId} className="input-error food-error">
+                      Scrivi l&apos;alimento, oppure togli la riga.
+                    </p>
+                  ) : null}
                   <input
                     className="input-base quantity"
                     aria-label={`Quantità di ${foodLabel}`}

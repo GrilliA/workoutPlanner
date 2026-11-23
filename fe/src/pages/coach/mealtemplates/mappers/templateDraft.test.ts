@@ -4,6 +4,7 @@ import type { MealPlanTemplate } from "@api";
 import {
   addTemplateMeal,
   changeTemplateMeal,
+  findTemplateProblem,
   isTemplateDraftChanged,
   moveTemplateMeal,
   removeTemplateMeal,
@@ -59,5 +60,22 @@ describe("template draft edits", () => {
     assert.equal(saved.meals.length, 2);
     assert.equal(isTemplateDraftChanged(moved, saved), true);
     assert.equal(isTemplateDraftChanged(removeTemplateMeal(added, "new-1"), saved), false);
+  });
+});
+
+describe("findTemplateProblem", () => {
+  const meals = [{ key: "a", tagId: 1, timeOfDay: "" }];
+
+  it("asks for a name first, a blank one included", () => {
+    assert.deepEqual(findTemplateProblem({ name: "  ", meals }), { kind: "no-name" });
+    assert.deepEqual(findTemplateProblem({ name: "", meals: [] }), { kind: "no-name" });
+  });
+
+  it("then for a meal", () => {
+    assert.deepEqual(findTemplateProblem({ name: "Weekend", meals: [] }), { kind: "no-meals" });
+  });
+
+  it("finds nothing in a template that can be saved", () => {
+    assert.equal(findTemplateProblem({ name: "Weekend", meals }), null);
   });
 });
