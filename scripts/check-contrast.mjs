@@ -63,6 +63,8 @@ const WEB_PAIRS = [
   { text: "accent-text", background: "bg" },
   { text: "accent-text", background: "surface" },
   { text: "accent-text", background: "accent-bg" },
+  // The "altro" hatch of the adherence bars lies on the day track.
+  { text: "accent-text", background: "data-bg" },
   { text: "on-ink", background: "ink" },
   { text: "data", background: "surface" },
   { text: "data", background: "data-bg" },

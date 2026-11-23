@@ -13,6 +13,23 @@ const emptyWeek = week.map((date) => ({
   removedCount: 0,
 }));
 
+// Valori di forma, non dati reali: servono solo a far vedere le barre con "fatto" e "altro".
+// Ogni giorno ha 4 pasti nel piano; la percentuale nel testo segue questi valori.
+const shapeWeek = [
+  { doneCount: 4, otherCount: 0 },
+  { doneCount: 2, otherCount: 1 },
+  { doneCount: 0, otherCount: 3 },
+  { doneCount: 3, otherCount: 1 },
+  { doneCount: 1, otherCount: 0 },
+  { doneCount: 0, otherCount: 0 },
+  { doneCount: 2, otherCount: 2 },
+].map((counts, index) => ({
+  date: week[index],
+  mealCount: 4,
+  removedCount: 0,
+  ...counts,
+}));
+
 const meta = {
   title: "Coach/Alimentazione/AdherenceCard",
   component: AdherenceCard,
@@ -32,6 +49,20 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const SettimanaVuota: Story = {};
+
+export const ConFattiEAltro: Story = {
+  args: { days: shapeWeek },
+  decorators: [
+    (Story) => (
+      <>
+        <p style={{ margin: "0 0 0.75rem", fontSize: "0.8125rem" }}>
+          [Valori di forma, non dati reali: servono a mostrare le barre]
+        </p>
+        <Story />
+      </>
+    ),
+  ],
+};
 
 export const Caricamento: Story = {
   args: { days: undefined, isPending: true },

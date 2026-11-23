@@ -7,8 +7,10 @@ type AdherenceDay = {
   date: string;
   weekdayLabel: string;
   isToday: boolean;
-  /** Share of the plan's meals marked done, 0..100: the height of the bar. */
+  /** Share of the plan's meals marked done, 0..100: the height of the lower segment. */
   donePercent: number;
+  /** Share marked "altro", stacked on the done one: done and other never pass 100 together. */
+  otherPercent: number;
   /** What the bar says, for screen readers. */
   description: string;
 };
@@ -36,6 +38,9 @@ const describeDay = (day: MealDayAdherence, weekdayLabel: string, isToday: boole
   return `${dayName}: fatti ${day.doneCount}, altro ${day.otherCount}, pasti nel piano ${day.mealCount}`;
 };
 
+const shareOfMeals = (count: number, mealCount: number): number =>
+  mealCount === 0 ? 0 : percentOf(count, mealCount);
+
 export function adherenceView(days: MealDayAdherence[], today: string): AdherenceView {
   const plannedCount = days.reduce((total, day) => total + day.mealCount, 0);
   const doneCount = days.reduce((total, day) => total + day.doneCount, 0);
@@ -47,12 +52,16 @@ export function adherenceView(days: MealDayAdherence[], today: string): Adherenc
     days: days.map((day) => {
       const weekdayLabel = weekdayLabelOf(day.date);
       const isToday = day.date === today;
+      const donePercent = shareOfMeals(day.doneCount, day.mealCount);
+      const otherPercent = shareOfMeals(day.otherCount, day.mealCount);
 
       return {
         date: day.date,
         weekdayLabel,
         isToday,
-        donePercent: day.mealCount === 0 ? 0 : percentOf(day.doneCount, day.mealCount),
+        donePercent,
+        // Two rounded shares can add up to 101.
+        otherPercent: Math.min(otherPercent, 100 - donePercent),
         description: describeDay(day, weekdayLabel, isToday),
       };
     }),

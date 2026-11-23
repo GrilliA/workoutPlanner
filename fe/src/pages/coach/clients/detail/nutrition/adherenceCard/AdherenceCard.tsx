@@ -53,8 +53,16 @@ export function AdherenceCard({ days, isPending, today }: AdherenceCardProps) {
                 <span
                   className="bar"
                   aria-hidden="true"
-                  style={{ "--done": `${day.donePercent}%` } as CSSProperties}
-                />
+                  style={
+                    {
+                      "--done": `${day.donePercent}%`,
+                      "--other": `${day.otherPercent}%`,
+                    } as CSSProperties
+                  }
+                >
+                  {day.donePercent > 0 ? <span className="segment segment--done" /> : null}
+                  {day.otherPercent > 0 ? <span className="segment segment--other" /> : null}
+                </span>
                 <span className="weekday" aria-hidden="true">
                   {day.weekdayLabel}
                 </span>
@@ -62,6 +70,16 @@ export function AdherenceCard({ days, isPending, today }: AdherenceCardProps) {
               </li>
             ))}
           </ol>
+          <ul className="legend">
+            <li className="legend__item">
+              <span className="swatch segment--done" aria-hidden="true" />
+              Fatto
+            </li>
+            <li className="legend__item">
+              <span className="swatch segment--other" aria-hidden="true" />
+              Altro
+            </li>
+          </ul>
           {view.removedCount > 0 ? <p className="removed">{removedNote(view.removedCount)}</p> : null}
         </>
       ) : null}
