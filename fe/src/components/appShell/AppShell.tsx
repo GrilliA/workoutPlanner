@@ -1,4 +1,4 @@
-import { useId, type ReactNode } from "react";
+import { useEffect, useId, useRef, type ReactNode } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@auth";
 import { BrandLogo } from "@components/brandLogo";
@@ -76,7 +76,16 @@ export function AppShell({ children, hideBottomNav = false }: AppShellProps) {
   const initials = getAvatarInitial(displayName);
   const nutritionGroupId = useId();
   const moreMenuId = useId();
+  const moreMenuRef = useRef<HTMLDivElement>(null);
   const isMoreActive = moreLinks.some((item) => isSectionActive(location, item.href));
+
+  // Hiding the popover gives the focus back to the "Altro" button that opened it, so a
+  // followed link does not leave it on the page body.
+  const closeMoreMenu = () => moreMenuRef.current?.hidePopover();
+
+  // A link to the page you are already on changes no location: it closes the menu on click.
+  // Back and forward change the location without a click.
+  useEffect(closeMoreMenu, [location]);
 
   const sidebarLink = (item: NavLink) => (
     <Link
@@ -152,13 +161,13 @@ export function AppShell({ children, hideBottomNav = false }: AppShellProps) {
           type="button"
           className={`item more ${isMoreActive ? "item--active" : ""}`}
           popoverTarget={moreMenuId}
+          aria-controls={moreMenuId}
         >
           <NavIcon name="more" />
           <span className="label">Altro</span>
           {isMoreActive ? <span className="sr-only">, contiene la pagina attuale</span> : null}
         </button>
-        {/* A new location remounts the menu, so it is closed after a link was followed. */}
-        <div key={location} id={moreMenuId} popover="auto" className="more-menu">
+        <div ref={moreMenuRef} id={moreMenuId} popover="auto" className="more-menu">
           <ul>
             {moreLinks.map((item) => (
               <li key={item.label}>
@@ -166,6 +175,7 @@ export function AppShell({ children, hideBottomNav = false }: AppShellProps) {
                   href={item.href}
                   className="more-link"
                   aria-current={isSectionActive(location, item.href) ? "page" : undefined}
+                  onClick={closeMoreMenu}
                 >
                   <NavIcon name={item.icon} />
                   <span>{item.label}</span>
