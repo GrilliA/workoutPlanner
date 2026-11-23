@@ -11,6 +11,7 @@ import {
   changeItem,
   changeMealTag,
   changeMealTime,
+  moveItem,
   removeItem,
   removeMeal,
   type DraftMeal,
@@ -108,12 +109,20 @@ export function MealCard({
             Nessun alimento. Aggiungine almeno uno o lascia il pasto vuoto come promemoria.
           </p>
         ) : (
-          <ul className="items" aria-label={`Alimenti di ${name}`}>
+          <ul className="items" aria-label={`Alimenti di ${name}`} data-reorder-list>
             {meal.items.map((item, itemIndex) => {
               const foodLabel = item.food.trim() === "" ? `alimento ${itemIndex + 1}` : item.food;
 
               return (
-                <li key={item.key} className="item">
+                <li key={item.key} className="item" data-reorder-item>
+                  <ReorderHandle
+                    label={foodLabel}
+                    index={itemIndex}
+                    count={meal.items.length}
+                    onMove={(fromIndex, toIndex) =>
+                      onDraftChange((draft) => moveItem(draft, meal.key, fromIndex, toIndex))
+                    }
+                  />
                   <input
                     className="input-base food"
                     aria-label={`Alimento ${itemIndex + 1}`}

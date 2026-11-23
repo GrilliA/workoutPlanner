@@ -103,19 +103,23 @@
     list-style: none;
   }
 
-  /* Narrow card: food and remove on one line, the quantity under the food. */
+  /* Narrow card: handle, food and remove on one line, the quantity under the food. */
   & .item {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) var(--touch-target);
+    grid-template-columns: var(--touch-target) minmax(0, 1fr) var(--touch-target);
     grid-template-areas:
-      "food remove"
-      "quantity .";
+      "handle food remove"
+      ". quantity .";
     gap: var(--space-1-5) var(--space-2);
     align-items: center;
 
     & .input-base {
       min-block-size: var(--touch-target);
       padding-block: 0;
+    }
+
+    & .reorder-handle {
+      grid-area: handle;
     }
 
     & .food {
@@ -155,8 +159,8 @@
 
 @container meal-card (width >= 28rem) {
   .meal-card .item {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 9rem) var(--touch-target);
-    grid-template-areas: "food quantity remove";
+    grid-template-columns: var(--touch-target) minmax(0, 1fr) minmax(0, 9rem) var(--touch-target);
+    grid-template-areas: "handle food quantity remove";
   }
 }
 

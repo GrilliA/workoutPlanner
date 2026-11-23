@@ -131,6 +131,19 @@ export function removeItem(draft: MealPlanDraft, mealKey: string, itemKey: strin
   }));
 }
 
+/** Moves a food inside its meal; the position sent on save is the place in this list. */
+export function moveItem(
+  draft: MealPlanDraft,
+  mealKey: string,
+  fromIndex: number,
+  toIndex: number,
+): MealPlanDraft {
+  return updateMeal(draft, mealKey, (meal) => ({
+    ...meal,
+    items: moveItemTo(meal.items, fromIndex, toIndex),
+  }));
+}
+
 export function changeItem(
   draft: MealPlanDraft,
   mealKey: string,

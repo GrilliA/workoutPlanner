@@ -126,6 +126,19 @@ export function ReorderHandle({ label, index, count, onMove }: ReorderHandleProp
     return () => window.clearTimeout(timer);
   }, [index, count, label]);
 
+  // The item shows it is picked up. A list inside an item (foods in a meal) has its own
+  // handles, so the item is marked by its own handle and not found by `:has()`.
+  useEffect(() => {
+    const item = buttonRef.current?.closest<HTMLElement>("[data-reorder-item]");
+
+    if (!isGrabbed || !item) {
+      return;
+    }
+
+    item.setAttribute("data-reorder-grabbed", "");
+    return () => item.removeAttribute("data-reorder-grabbed");
+  }, [isGrabbed]);
+
   // Unmounted mid-drag (the list reloaded): stop the scroll loop and the Esc listener.
   useEffect(
     () => () => {

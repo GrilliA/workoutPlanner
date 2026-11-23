@@ -9,8 +9,10 @@ import {
   draftFromPlan,
   isDraftChanged,
   mealPlanInputFrom,
+  moveItem,
   moveMeal,
   removeMeal,
+  type MealPlanDraft,
 } from "./mealPlanDraft.ts";
 
 const keyMaker = () => {
@@ -98,6 +100,52 @@ describe("isDraftChanged", () => {
   it("sees a removed meal", () => {
     const saved = draftFromPlan(savedPlan, keyMaker());
     assert.equal(isDraftChanged(removeMeal(saved, saved.meals[0].key), saved), true);
+  });
+});
+
+describe("moveItem", () => {
+  const withThreeFoods = () => {
+    const mealKey = "meal-1";
+    const items = ["Riso", "Pollo", "Insalata"].map((food, index) => ({
+      key: `item-${index}`,
+      food,
+      quantity: "",
+    }));
+    const draft: MealPlanDraft = {
+      notes: "",
+      meals: [{ key: mealKey, tagId: 1, timeOfDay: "", notes: null, items }],
+    };
+
+    return { draft, mealKey };
+  };
+
+  const foodsOf = (draft: MealPlanDraft) =>
+    draft.meals[0].items.map((item) => item.food);
+
+  it("moves a food inside its meal and the save sends them in that order", () => {
+    const { draft, mealKey } = withThreeFoods();
+    const moved = moveItem(draft, mealKey, 2, 0);
+
+    assert.deepEqual(foodsOf(moved), ["Insalata", "Riso", "Pollo"]);
+    assert.deepEqual(
+      mealPlanInputFrom(moved).meals[0].items.map((item) => item.food),
+      ["Insalata", "Riso", "Pollo"],
+    );
+  });
+
+  it("keeps the keys, so the rows are reordered and not recreated", () => {
+    const { draft, mealKey } = withThreeFoods();
+    const moved = moveItem(draft, mealKey, 0, 1);
+    const keysBefore = draft.meals[0].items.map((item) => item.key);
+
+    assert.deepEqual(moved.meals[0].items.map((item) => item.key), [keysBefore[1], keysBefore[0], keysBefore[2]]);
+  });
+
+  it("leaves the draft alone for a position out of range or an unknown meal", () => {
+    const { draft, mealKey } = withThreeFoods();
+
+    assert.deepEqual(foodsOf(moveItem(draft, mealKey, 0, 3)), ["Riso", "Pollo", "Insalata"]);
+    assert.deepEqual(foodsOf(moveItem(draft, "other-meal", 0, 1)), ["Riso", "Pollo", "Insalata"]);
   });
 });
 

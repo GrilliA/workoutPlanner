@@ -87,7 +87,7 @@
   scroll-margin: var(--space-4);
 }
 
-[data-reorder-item]:has(.reorder-handle__button[aria-pressed="true"]),
+[data-reorder-item][data-reorder-grabbed],
 [data-reorder-item][data-reorder-dragging] {
   z-index: var(--z-overlay);
   box-shadow: var(--shadow-strong);
