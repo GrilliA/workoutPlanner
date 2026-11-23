@@ -72,9 +72,9 @@ const toMealPlan = (plan: MealPlanRow, meals: MealRow[], items: ItemRow[]) => ({
 
 type MealPlanResponse = ReturnType<typeof toMealPlan>;
 
-/** Meals and items in position order; the id breaks a tie, as `nextMealId` does. */
-const buildMealPlan = async (reader: Reader, plan: MealPlanRow): Promise<MealPlanResponse> => {
-  const meals = await reader
+/** The plan's meals with their tag names, in position order; the id breaks a tie, as `nextMealId` does. */
+const readMealsOfPlan = (reader: Reader, planId: number): Promise<MealRow[]> =>
+  reader
     .select({
       id: mealPlanMeals.id,
       tagId: mealPlanMeals.tagId,
@@ -85,8 +85,12 @@ const buildMealPlan = async (reader: Reader, plan: MealPlanRow): Promise<MealPla
     })
     .from(mealPlanMeals)
     .innerJoin(mealTags, eq(mealTags.id, mealPlanMeals.tagId))
-    .where(eq(mealPlanMeals.mealPlanId, plan.id))
+    .where(eq(mealPlanMeals.mealPlanId, planId))
     .orderBy(asc(mealPlanMeals.position), asc(mealPlanMeals.id));
+
+/** Meals and items in position order. */
+const buildMealPlan = async (reader: Reader, plan: MealPlanRow): Promise<MealPlanResponse> => {
+  const meals = await readMealsOfPlan(reader, plan.id);
   const mealIds = meals.map((meal) => meal.id);
 
   if (mealIds.length === 0) {
@@ -387,39 +391,63 @@ const toMealLog = (log: MealLogRow) => ({
 
 type MealLogResponse = ReturnType<typeof toMealLog>;
 
-/** The plan the athlete follows on `date`, with what they logged that day. */
-type MealPlanDay = { mealPlan: MealPlanResponse; logs: MealLogResponse[] };
-
 /**
- * The plan of the pair (coach linked now, athlete), active or not, with the athlete's logs
- * of `date`; null when the pair has no plan. The caller decides what an inactive plan shows.
+ * The pair's plan when it is active, else null: the athlete only follows an active plan.
+ * The reads after this one take no snapshot with it; if the coach saves in between, the
+ * answer mixes an older `updatedAt` with newer meals, and the client reads again next time.
  */
-export const loadMealPlanDay = async (
-  coachId: number,
-  athleteId: number,
-  date: string,
-): Promise<MealPlanDay | null> => {
+const findActiveMealPlan = async (coachId: number, athleteId: number): Promise<MealPlanRow | null> => {
   const [plan] = await db.select().from(mealPlans).where(isOfCoachAndAthlete(coachId, athleteId));
 
-  if (!plan) {
+  if (!plan || !plan.isActive) {
     return null;
   }
 
-  const [mealPlan, logs] = await Promise.all([
-    buildMealPlan(db, plan),
-    db
-      .select()
-      .from(mealLogs)
-      .where(
-        and(
-          eq(mealLogs.mealPlanId, plan.id),
-          eq(mealLogs.athleteId, athleteId),
-          eq(mealLogs.date, date),
-        ),
-      ),
-  ]);
+  return plan;
+};
 
-  return { mealPlan, logs: logs.map(toMealLog) };
+const readLogsOfDay = async (plan: MealPlanRow, date: string): Promise<MealLogResponse[]> => {
+  const logs = await db
+    .select()
+    .from(mealLogs)
+    .where(
+      and(
+        eq(mealLogs.mealPlanId, plan.id),
+        eq(mealLogs.athleteId, plan.athleteId),
+        eq(mealLogs.date, date),
+      ),
+    );
+
+  return logs.map(toMealLog);
+};
+
+/** The whole active plan of the pair (items too) with the athlete's logs of `date`, for the today screen. */
+export const loadActiveMealPlanDay = async (coachId: number, athleteId: number, date: string) => {
+  const plan = await findActiveMealPlan(coachId, athleteId);
+
+  if (plan === null) {
+    return null;
+  }
+
+  const [mealPlan, logs] = await Promise.all([buildMealPlan(db, plan), readLogsOfDay(plan, date)]);
+
+  return { mealPlan, logs };
+};
+
+/**
+ * The same day as `loadActiveMealPlanDay` without the items: the home reads it on every open
+ * and only needs the meals' order, names and times.
+ */
+export const loadActiveMealPlanSummary = async (coachId: number, athleteId: number, date: string) => {
+  const plan = await findActiveMealPlan(coachId, athleteId);
+
+  if (plan === null) {
+    return null;
+  }
+
+  const [meals, logs] = await Promise.all([readMealsOfPlan(db, plan.id), readLogsOfDay(plan, date)]);
+
+  return { mealPlan: { id: plan.id, updatedAt: plan.updatedAt, meals }, logs };
 };
 
 /**

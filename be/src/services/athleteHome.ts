@@ -11,7 +11,7 @@ import {
   groupLoggedSetsBySession,
   isWithinRollingWindow,
 } from "./stats";
-import { loadMealPlanDay } from "./mealPlanAccess";
+import { loadActiveMealPlanSummary } from "./mealPlanAccess";
 import { loadSubscriptionDetail } from "./subscriptionAccess";
 import {
   listEnrichedWorkoutDays,
@@ -278,7 +278,7 @@ const loadAthleteNutrition = async (
     return null;
   }
 
-  const day = await loadMealPlanDay(coach.coachId, athleteId, todayKey);
+  const day = await loadActiveMealPlanSummary(coach.coachId, athleteId, todayKey);
   return athleteNutritionFrom(day, todayKey);
 };
 

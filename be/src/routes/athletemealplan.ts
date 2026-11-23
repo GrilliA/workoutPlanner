@@ -1,12 +1,12 @@
 import { Router } from "express";
 import { todayInRome } from "../services/assignmentStatus";
 import { mealPlanTodayFrom } from "../services/athleteNutrition";
-import { getAthleteCoach } from "../services/coachInvite";
+import { findLinkedCoachId } from "../services/coachInvite";
 import { dailyAdherence } from "../services/mealPlan";
 import {
   deleteMealLog,
+  loadActiveMealPlanDay,
   loadMealDayAdherence,
-  loadMealPlanDay,
   saveMealLog,
 } from "../services/mealPlanAccess";
 import {
@@ -25,8 +25,8 @@ export const athleteMealPlanRouter = Router();
 athleteMealPlanRouter.get("/meal-plan/today", async (req, res) => {
   const athlete = getAuthUser(req);
   const today = todayInRome();
-  const coach = await getAthleteCoach(athlete.id);
-  const day = coach === null ? null : await loadMealPlanDay(coach.coachId, athlete.id, today);
+  const coachId = await findLinkedCoachId(athlete.id);
+  const day = coachId === null ? null : await loadActiveMealPlanDay(coachId, athlete.id, today);
   res.json(mealPlanTodayFrom(day, today));
 });
 
@@ -78,14 +78,14 @@ athleteMealPlanRouter.get("/meal-logs", async (req, res) => {
   }
 
   const athlete = getAuthUser(req);
-  const coach = await getAthleteCoach(athlete.id);
+  const coachId = await findLinkedCoachId(athlete.id);
 
-  if (coach === null) {
+  if (coachId === null) {
     const days = dailyAdherence({ from: parsed.value.from, to: parsed.value.to, mealIds: [], logs: [] });
     res.json({ days });
     return;
   }
 
-  const days = await loadMealDayAdherence(coach.coachId, athlete.id, parsed.value);
+  const days = await loadMealDayAdherence(coachId, athlete.id, parsed.value);
   res.json({ days });
 });

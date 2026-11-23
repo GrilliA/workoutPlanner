@@ -3,38 +3,27 @@ import { describe, it } from "node:test";
 import { athleteNutritionFrom, mealPlanTodayFrom } from "./athleteNutrition";
 
 const today = "2026-11-13";
-const yesterday = "2026-11-12";
 const updatedAt = new Date("2026-11-10T08:00:00.000Z");
 
-const breakfast = { id: 11, name: "Colazione", timeOfDay: "07:30", position: 0 };
-const lunch = { id: 12, name: "Pranzo", timeOfDay: "13:00", position: 1 };
-const dinner = { id: 13, name: "Cena", timeOfDay: null, position: 2 };
+type Meal = { id: number; name: string; timeOfDay: string | null; position: number };
 
-const planWith = (fields: { isActive?: boolean; meals?: (typeof breakfast)[] } = {}) => ({
-  id: 7,
-  isActive: fields.isActive ?? true,
-  updatedAt,
-  meals: fields.meals ?? [breakfast, lunch, dinner],
-});
+const breakfast: Meal = { id: 11, name: "Colazione", timeOfDay: "07:30", position: 0 };
+const lunch: Meal = { id: 12, name: "Pranzo", timeOfDay: "13:00", position: 1 };
+const dinner: Meal = { id: 13, name: "Cena", timeOfDay: null, position: 2 };
 
-const log = (mealId: number | null, status: "done" | "other", date = today) => ({
-  mealId,
-  date,
-  status,
-  note: null,
-});
+const planWith = (meals: Meal[] = [breakfast, lunch, dinner]) => ({ id: 7, updatedAt, meals });
+
+// The loaders read the logs of one day: every log here is of `today`.
+const log = (mealId: number | null, status: "done" | "other") => ({ mealId, date: today, status, note: null });
 
 describe("athleteNutritionFrom", () => {
-  it("is null without a plan, with a plan turned off, or with a plan without meals", () => {
+  it("is null without an active plan or with a plan without meals", () => {
     assert.equal(athleteNutritionFrom(null, today), null);
-    assert.equal(athleteNutritionFrom({ mealPlan: planWith({ isActive: false }), logs: [] }, today), null);
-    assert.equal(athleteNutritionFrom({ mealPlan: planWith({ meals: [] }), logs: [] }, today), null);
+    assert.equal(athleteNutritionFrom({ mealPlan: planWith([]), logs: [] }, today), null);
   });
 
   it("gives the first meal when nothing is logged today", () => {
-    const logs = [log(breakfast.id, "done", yesterday)];
-
-    assert.deepEqual(athleteNutritionFrom({ mealPlan: planWith(), logs }, today), {
+    assert.deepEqual(athleteNutritionFrom({ mealPlan: planWith(), logs: [] }, today), {
       mealPlanId: 7,
       updatedAt,
       mealCount: 3,
@@ -61,17 +50,13 @@ describe("athleteNutritionFrom", () => {
 });
 
 describe("mealPlanTodayFrom", () => {
-  it("shows no plan without a plan or with a plan turned off", () => {
-    const empty = { date: today, mealPlan: null, nextMealId: null };
-
-    assert.deepEqual(mealPlanTodayFrom(null, today), empty);
-    assert.deepEqual(mealPlanTodayFrom({ mealPlan: planWith({ isActive: false }), logs: [] }, today), empty);
+  it("shows no plan without an active plan", () => {
+    assert.deepEqual(mealPlanTodayFrom(null, today), { date: today, mealPlan: null, nextMealId: null });
   });
 
-  it("puts today's log on each meal and gives the first meal still to log", () => {
+  it("puts the log on each meal, keeps the plan's fields and gives the first meal still to log", () => {
     const breakfastLog = log(breakfast.id, "other");
-    const logs = [breakfastLog, log(lunch.id, "done", yesterday)];
-    const result = mealPlanTodayFrom({ mealPlan: planWith(), logs }, today);
+    const result = mealPlanTodayFrom({ mealPlan: planWith(), logs: [breakfastLog] }, today);
 
     assert.equal(result.date, today);
     assert.equal(result.nextMealId, lunch.id);
