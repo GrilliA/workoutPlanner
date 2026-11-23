@@ -14,6 +14,7 @@ import { ConfirmDialog } from "@components/confirmDialog";
 import { PageHeader } from "@components/pageHeader";
 import { Skeleton } from "@components/skeleton";
 import { toast } from "@components/toast";
+import { createSerialQueue } from "@utils/createSerialQueue";
 import { moveItemTo } from "@utils/moveItemTo";
 import { MealTagRow } from "../mealTagRow";
 import { MAX_LIVE_TAGS, MAX_TAG_NAME_LENGTH, archivedUsage, usageList } from "../usage";
@@ -53,6 +54,11 @@ export function MealTagsPage() {
 
   const reload = () => setReloadCount((count) => count + 1);
 
+  // Moves, renames and archivings are sent one at a time, in the order the coach made them:
+  // a move carries a position, which only means something after the moves before it.
+  // The list is read again once, when the last one is done.
+  const [writeQueue] = useState(() => createSerialQueue(reload));
+
   const reportWriteError = (error: ApiError) => {
     toast.error(ApiError.messageFrom(error, WRITE_ERROR));
 
@@ -79,17 +85,13 @@ export function MealTagsPage() {
       if (tagWrite.kind === "archive") {
         toast.success("Tag archiviato");
       }
-      reload();
     },
-    onError: (error, tagWrite) => {
-      reportWriteError(error);
-
-      // The order on screen moved before the answer: put it back.
-      if (tagWrite.kind === "move") {
-        reload();
-      }
-    },
+    // The read after the last write also puts back an order that moved before the answer, and
+    // shows what changed in another tab.
+    onError: (error) => toast.error(ApiError.messageFrom(error, WRITE_ERROR)),
   });
+
+  const sendWrite = (tagWrite: TagWrite) => writeQueue.add(() => write.mutateAsync(tagWrite));
 
   const create = useMutation({
     mutationFn: (name: string) => createCoachMealTag(name),
@@ -113,7 +115,7 @@ export function MealTagsPage() {
       mealTags: moveItemTo(current?.mealTags ?? [], fromIndex, toIndex),
       archivedMealTags: current?.archivedMealTags ?? [],
     }));
-    write.mutate({ kind: "move", tagId: movedTag.id, position: toIndex });
+    sendWrite({ kind: "move", tagId: movedTag.id, position: toIndex });
   };
 
   const handleCreate = (event: FormEvent) => {
@@ -127,7 +129,7 @@ export function MealTagsPage() {
 
   const confirmArchive = () => {
     if (archiving !== null) {
-      write.mutate({ kind: "archive", tagId: archiving.id });
+      sendWrite({ kind: "archive", tagId: archiving.id });
     }
     setArchiving(null);
   };
@@ -173,7 +175,7 @@ export function MealTagsPage() {
                     count={liveTags.length}
                     isRenaming={renamingTagId === tag.id}
                     onMove={handleMove}
-                    onRename={(name) => write.mutate({ kind: "rename", tagId: tag.id, name })}
+                    onRename={(name) => sendWrite({ kind: "rename", tagId: tag.id, name })}
                     onArchive={() => setArchiving(tag)}
                   />
                 ))}
