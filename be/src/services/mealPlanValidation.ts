@@ -1,3 +1,5 @@
+import { MEAL_LOG_STATUSES, type MealLogStatus } from "../db/schema/meallogs";
+import { isLoggableDate } from "./mealPlan";
 import { daysBetween } from "./subscription";
 import {
   isCalendarDate,
@@ -27,6 +29,7 @@ const MAX_QUANTITY_LENGTH = 60;
 const MAX_MEAL_PLAN_NOTES_LENGTH = 1000;
 const MAX_MEAL_NOTES_LENGTH = 500;
 const MAX_MEAL_LOG_RANGE_DAYS = 31;
+const MAX_MEAL_LOG_NOTE_LENGTH = 280;
 const TIME_OF_DAY_PATTERN = /^([01][0-9]|2[0-3]):[0-5][0-9]$/;
 
 const INVALID_BODY: Invalid = { ok: false, error: "Invalid request body" };
@@ -57,6 +60,20 @@ export type MealPlanInput = {
 export type MealLogsQuery = {
   from: string;
   to: string;
+};
+
+/** One meal of one Rome day, as the athlete marks it. */
+export type MealLogInput = {
+  mealId: number;
+  date: string;
+  status: MealLogStatus;
+  note: string | null;
+};
+
+/** Which log to undo: the meal and the day, the unique key of a log for the athlete. */
+export type MealLogKey = {
+  mealId: number;
+  date: string;
 };
 
 /** The meals stored in the plan, with their tag and the ids of their items. */
@@ -552,4 +569,115 @@ export const validateMealPlanTemplateInput = (
   }
 
   return { ok: true, value: { name: name.value, meals: meals.value } };
+};
+
+const DIGITS_PATTERN = /^\d+$/;
+
+const parseLogMealId: Parse<number> = (value) => {
+  if (value === undefined || value === null) {
+    return { ok: false, error: "mealId is required" };
+  }
+
+  if (!isDatabaseId(value)) {
+    return { ok: false, error: "Invalid meal id" };
+  }
+
+  return { ok: true, value };
+};
+
+/** A query value is a string: only plain digits become a number, so "1e3" or "12abc" stay invalid. */
+const parseQueryMealId: Parse<number> = (value) => {
+  if (value === undefined || value === "") {
+    return { ok: false, error: "mealId is required" };
+  }
+
+  const isDigits = typeof value === "string" && DIGITS_PATTERN.test(value);
+
+  if (!isDigits) {
+    return { ok: false, error: "Invalid meal id" };
+  }
+
+  return parseLogMealId(Number(value));
+};
+
+/** Today or yesterday as Rome days (H7): older days would let the history be rewritten. */
+const parseLoggableDate =
+  (now: Date): Parse<string> =>
+  (value) => {
+    if (!isCalendarDate(value)) {
+      return { ok: false, error: "date must be YYYY-MM-DD" };
+    }
+
+    if (!isLoggableDate(value, now)) {
+      return { ok: false, error: "date must be today or yesterday" };
+    }
+
+    return { ok: true, value };
+  };
+
+const parseMealLogStatus: Parse<MealLogStatus> = (value) => {
+  const status = MEAL_LOG_STATUSES.find((candidate) => candidate === value);
+
+  if (status === undefined) {
+    return { ok: false, error: "status must be done or other" };
+  }
+
+  return { ok: true, value: status };
+};
+
+const parseMealLogNote = optionalText("note", MAX_MEAL_LOG_NOTE_LENGTH);
+
+/** `now` decides which days count as today and yesterday. */
+export const validateMealLogInput = (body: unknown, now: Date): Valid<MealLogInput> | Invalid => {
+  if (!isJsonObject(body)) {
+    return INVALID_BODY;
+  }
+
+  const mealId = parseLogMealId(body.mealId);
+
+  if (!mealId.ok) {
+    return mealId;
+  }
+
+  const date = parseLoggableDate(now)(body.date);
+
+  if (!date.ok) {
+    return date;
+  }
+
+  const status = parseMealLogStatus(body.status);
+
+  if (!status.ok) {
+    return status;
+  }
+
+  const note = parseMealLogNote(body.note);
+
+  if (!note.ok) {
+    return note;
+  }
+
+  const input = { mealId: mealId.value, date: date.value, status: status.value, note: note.value };
+
+  return { ok: true, value: input };
+};
+
+/** The same day rule as the write: undoing an old log would rewrite the history too. */
+export const validateMealLogKey = (
+  query: Record<string, unknown>,
+  now: Date,
+): Valid<MealLogKey> | Invalid => {
+  const mealId = parseQueryMealId(query.mealId);
+
+  if (!mealId.ok) {
+    return mealId;
+  }
+
+  const date = parseLoggableDate(now)(query.date);
+
+  if (!date.ok) {
+    return date;
+  }
+
+  return { ok: true, value: { mealId: mealId.value, date: date.value } };
 };

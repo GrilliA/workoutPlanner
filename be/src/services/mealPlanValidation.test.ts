@@ -3,6 +3,8 @@ import { describe, it } from "node:test";
 import {
   findForeignMealPlanId,
   usesUnavailableMealTag,
+  validateMealLogInput,
+  validateMealLogKey,
   validateMealLogsQuery,
   validateMealPlanInput,
   validateMealPlanPatch,
@@ -361,5 +363,119 @@ describe("validateMealPlanTemplateInput", () => {
     );
     assert.deepEqual(validateMealPlanTemplateInput({ name: "T", meals: [5] }), invalid("Invalid request body"));
     assert.deepEqual(validateMealPlanTemplateInput("T"), invalid("Invalid request body"));
+  });
+});
+
+// 10:00 UTC on 2026-11-13 is 11:00 in Rome: today is the 13th, yesterday the 12th.
+const LOG_NOW = new Date("2026-11-13T10:00:00.000Z");
+// 23:30 UTC on 2026-11-13 is already 00:30 of the 14th in Rome.
+const AFTER_ROME_MIDNIGHT = new Date("2026-11-13T23:30:00.000Z");
+const logBody = (fields: Record<string, unknown> = {}) => ({
+  mealId: 11,
+  date: "2026-11-13",
+  status: "done",
+  ...fields,
+});
+
+describe("validateMealLogInput", () => {
+  it("accepts a log for today or yesterday, with or without a note", () => {
+    assert.deepEqual(validateMealLogInput(logBody(), LOG_NOW), {
+      ok: true,
+      value: { mealId: 11, date: "2026-11-13", status: "done", note: null },
+    });
+    assert.deepEqual(validateMealLogInput(logBody({ date: "2026-11-12", status: "other", note: "  Pizza  " }), LOG_NOW), {
+      ok: true,
+      value: { mealId: 11, date: "2026-11-12", status: "other", note: "Pizza" },
+    });
+  });
+
+  it("refuses a body that is not an object", () => {
+    for (const body of [undefined, null, [], "done", 3]) {
+      assert.deepEqual(validateMealLogInput(body, LOG_NOW), invalid("Invalid request body"));
+    }
+  });
+
+  it("refuses a missing or invalid meal id", () => {
+    assert.deepEqual(validateMealLogInput(logBody({ mealId: undefined }), LOG_NOW), invalid("mealId is required"));
+    assert.deepEqual(validateMealLogInput(logBody({ mealId: null }), LOG_NOW), invalid("mealId is required"));
+
+    for (const mealId of [0, -1, 1.5, "11", 2_147_483_648]) {
+      assert.deepEqual(validateMealLogInput(logBody({ mealId }), LOG_NOW), invalid("Invalid meal id"));
+    }
+  });
+
+  it("refuses a date that is not a calendar date", () => {
+    for (const date of [undefined, "2026-02-30", "13/11/2026", 20261113]) {
+      assert.deepEqual(validateMealLogInput(logBody({ date }), LOG_NOW), invalid("date must be YYYY-MM-DD"));
+    }
+  });
+
+  it("refuses the day before yesterday and tomorrow", () => {
+    for (const date of ["2026-11-11", "2026-11-14"]) {
+      assert.deepEqual(validateMealLogInput(logBody({ date }), LOG_NOW), invalid("date must be today or yesterday"));
+    }
+  });
+
+  it("counts days in Rome, after midnight there", () => {
+    assert.equal(validateMealLogInput(logBody({ date: "2026-11-14" }), AFTER_ROME_MIDNIGHT).ok, true);
+    assert.equal(validateMealLogInput(logBody({ date: "2026-11-13" }), AFTER_ROME_MIDNIGHT).ok, true);
+    assert.deepEqual(
+      validateMealLogInput(logBody({ date: "2026-11-12" }), AFTER_ROME_MIDNIGHT),
+      invalid("date must be today or yesterday"),
+    );
+  });
+
+  it("refuses an unknown status", () => {
+    for (const status of [undefined, "skipped", "DONE"]) {
+      assert.deepEqual(validateMealLogInput(logBody({ status }), LOG_NOW), invalid("status must be done or other"));
+    }
+  });
+
+  it("limits the note to 280 characters without NUL, blank as null", () => {
+    assert.equal(validateMealLogInput(logBody({ note: text(280) }), LOG_NOW).ok, true);
+    assert.deepEqual(validateMealLogInput(logBody({ note: text(281) }), LOG_NOW), invalid("note must be at most 280 characters"));
+    assert.deepEqual(validateMealLogInput(logBody({ note: "a\0b" }), LOG_NOW), invalid("note must not contain a NUL character"));
+    assert.deepEqual(validateMealLogInput(logBody({ note: 5 }), LOG_NOW), invalid("note must be a string or null"));
+    assert.deepEqual(validateMealLogInput(logBody({ note: "   " }), LOG_NOW), {
+      ok: true,
+      value: { mealId: 11, date: "2026-11-13", status: "done", note: null },
+    });
+  });
+
+  it("checks the fields in contract order: meal id, date, status, note", () => {
+    const allWrong = { mealId: 0, date: "x", status: "x", note: text(281) };
+
+    assert.deepEqual(validateMealLogInput(allWrong, LOG_NOW), invalid("Invalid meal id"));
+    assert.deepEqual(validateMealLogInput({ ...allWrong, mealId: 1 }, LOG_NOW), invalid("date must be YYYY-MM-DD"));
+    assert.deepEqual(
+      validateMealLogInput({ ...allWrong, mealId: 1, date: "2026-11-13" }, LOG_NOW),
+      invalid("status must be done or other"),
+    );
+  });
+});
+
+describe("validateMealLogKey", () => {
+  it("reads the meal id and the date from the query", () => {
+    assert.deepEqual(validateMealLogKey({ mealId: "11", date: "2026-11-12" }, LOG_NOW), {
+      ok: true,
+      value: { mealId: 11, date: "2026-11-12" },
+    });
+  });
+
+  it("refuses a missing or invalid meal id", () => {
+    assert.deepEqual(validateMealLogKey({ date: "2026-11-13" }, LOG_NOW), invalid("mealId is required"));
+    assert.deepEqual(validateMealLogKey({ mealId: "", date: "2026-11-13" }, LOG_NOW), invalid("mealId is required"));
+
+    for (const mealId of ["0", "-1", "1.5", "1e3", "12abc", "2147483648", ["1", "2"]]) {
+      assert.deepEqual(validateMealLogKey({ mealId, date: "2026-11-13" }, LOG_NOW), invalid("Invalid meal id"));
+    }
+  });
+
+  it("applies the same day rule as the write", () => {
+    assert.deepEqual(validateMealLogKey({ mealId: "11" }, LOG_NOW), invalid("date must be YYYY-MM-DD"));
+    assert.deepEqual(
+      validateMealLogKey({ mealId: "11", date: "2026-11-11" }, LOG_NOW),
+      invalid("date must be today or yesterday"),
+    );
   });
 });
