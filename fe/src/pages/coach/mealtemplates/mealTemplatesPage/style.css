@@ -1,0 +1,160 @@
+.meal-templates-page {
+  & .loading {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  & .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-6);
+    align-items: start;
+  }
+
+  & .list-card,
+  & .editor-card {
+    border-radius: var(--radius-xl);
+    background: var(--surface);
+    box-shadow: var(--shadow);
+  }
+
+  & .list-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding: var(--space-3);
+  }
+
+  & .editor-card {
+    padding: var(--space-5) var(--space-5) var(--space-5) var(--space-3);
+    min-inline-size: 0;
+  }
+
+  & .list-card__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-2) var(--space-1-5);
+  }
+
+  & .list-card__title {
+    margin: 0;
+    color: var(--text-h);
+    font-size: var(--text-lg);
+    font-weight: 700;
+  }
+
+  & .count {
+    color: var(--text);
+    font-size: var(--text-xs);
+    font-weight: 600;
+  }
+
+  & .empty,
+  & .full {
+    margin: 0;
+    padding: var(--space-2);
+    color: var(--text);
+    font-size: var(--text-sm);
+    text-wrap: pretty;
+  }
+
+  & .full {
+    color: var(--warning);
+    font-size: var(--text-xs);
+    font-weight: 600;
+  }
+
+  & .templates {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  & .template {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.125rem;
+    box-sizing: border-box;
+    inline-size: 100%;
+    min-block-size: 4rem;
+    padding: var(--space-3) var(--space-4);
+    border: 0;
+    border-radius: var(--radius-lg);
+    background: transparent;
+    color: var(--text-h);
+    font: inherit;
+    text-align: start;
+    cursor: pointer;
+
+    &:hover {
+      background: var(--hover-bg);
+    }
+
+    &:focus-visible {
+      outline: var(--focus-ring-width) solid var(--accent-text);
+      outline-offset: calc(-1 * var(--focus-ring-width));
+    }
+  }
+
+  & .template--selected,
+  & .template--selected:hover {
+    background: var(--accent-bg);
+  }
+
+  & .template__name {
+    font-weight: 700;
+    overflow-wrap: break-word;
+  }
+
+  & .template--selected .template__name {
+    color: var(--accent-text);
+    font-weight: 800;
+  }
+
+  & .template__meta {
+    color: var(--text);
+    font-size: var(--text-xs);
+    font-weight: 600;
+  }
+
+  & .new-template {
+    margin-top: var(--space-1-5);
+    min-block-size: 3rem;
+    border: 2px dashed var(--accent-border);
+    border-radius: var(--radius-lg);
+    background: transparent;
+    color: var(--accent-text);
+    font: inherit;
+    font-weight: 800;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: var(--focus-ring-width) solid var(--accent-text);
+      outline-offset: var(--focus-ring-offset);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+
+  & .new-template--selected {
+    border-style: solid;
+    background: var(--accent-bg);
+  }
+}
+
+/* List beside the editor once the page fits a 16rem list and a 28rem editor. */
+@container page (width >= 48rem) {
+  .meal-templates-page .layout {
+    grid-template-columns: minmax(14rem, 18rem) minmax(0, 1fr);
+  }
+}

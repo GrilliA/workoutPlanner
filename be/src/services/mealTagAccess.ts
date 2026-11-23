@@ -1,8 +1,9 @@
-import { and, asc, eq, inArray, isNull } from "drizzle-orm";
+import { and, asc, countDistinct, desc, eq, inArray, isNotNull, isNull } from "drizzle-orm";
 import { db, type Tx } from "../db";
 import { isUniqueViolation } from "../db/errors";
-import { mealTags } from "../db/schema";
+import { mealPlanMeals, mealPlans, mealPlanTemplateMeals, mealTags } from "../db/schema";
 import type { Failure, Result } from "./accessResult";
+import { withTagUsage } from "./mealPlan";
 import {
   MAX_MEAL_TAG_ROWS_PER_COACH,
   MAX_MEAL_TAGS_PER_COACH,
@@ -48,15 +49,52 @@ const ensureStarterMealTags = async (coachId: number) => {
   await db.insert(mealTags).values(starterTags).onConflictDoNothing();
 };
 
-/** The tags the coach can pick, in their order; the starter ones on the first read. */
-export const listMealTags = async (coachId: number): Promise<MealTag[]> => {
+/** How many of the coach's active plans use each tag (a plan counts once per tag). */
+const countActivePlansByTag = (coachId: number) =>
+  db
+    .select({ tagId: mealPlanMeals.tagId, count: countDistinct(mealPlanMeals.mealPlanId) })
+    .from(mealPlanMeals)
+    .innerJoin(mealPlans, eq(mealPlans.id, mealPlanMeals.mealPlanId))
+    .where(and(eq(mealPlanMeals.coachId, coachId), eq(mealPlans.isActive, true)))
+    .groupBy(mealPlanMeals.tagId);
+
+/** How many of the coach's templates use each tag (a template counts once per tag). */
+const countTemplatesByTag = (coachId: number) =>
+  db
+    .select({
+      tagId: mealPlanTemplateMeals.tagId,
+      count: countDistinct(mealPlanTemplateMeals.templateId),
+    })
+    .from(mealPlanTemplateMeals)
+    .where(eq(mealPlanTemplateMeals.coachId, coachId))
+    .groupBy(mealPlanTemplateMeals.tagId);
+
+/**
+ * The tags the coach can pick, in their order (the starter ones on the first read), and the
+ * archived ones, last archived first. Each with how many active plans and templates use it.
+ */
+export const listMealTags = async (coachId: number) => {
   await ensureStarterMealTags(coachId);
 
-  return db
-    .select(mealTagColumns)
-    .from(mealTags)
-    .where(isLiveTagOf(coachId))
-    .orderBy(asc(mealTags.position), asc(mealTags.id));
+  const [liveTags, archivedTags, planCounts, templateCounts] = await Promise.all([
+    db
+      .select(mealTagColumns)
+      .from(mealTags)
+      .where(isLiveTagOf(coachId))
+      .orderBy(asc(mealTags.position), asc(mealTags.id)),
+    db
+      .select(mealTagColumns)
+      .from(mealTags)
+      .where(and(eq(mealTags.coachId, coachId), isNotNull(mealTags.archivedAt)))
+      .orderBy(desc(mealTags.archivedAt), desc(mealTags.id)),
+    countActivePlansByTag(coachId),
+    countTemplatesByTag(coachId),
+  ]);
+
+  return {
+    mealTags: withTagUsage({ tags: liveTags, planCounts, templateCounts }),
+    archivedMealTags: withTagUsage({ tags: archivedTags, planCounts, templateCounts }),
+  };
 };
 
 /**

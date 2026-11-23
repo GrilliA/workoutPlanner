@@ -1,0 +1,127 @@
+.meal-tags-page {
+  & .loading {
+    display: flex;
+    flex-direction: column;
+  }
+
+  & .tags-card,
+  & .archived-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-4) var(--space-5) var(--space-5) var(--space-3);
+    border-radius: var(--radius-xl);
+    background: var(--surface);
+    box-shadow: var(--shadow);
+  }
+
+  & .archived-card {
+    margin-top: var(--space-5);
+    padding-inline-start: var(--space-5);
+  }
+
+  & .tags-card__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding-inline-start: var(--space-2);
+  }
+
+  & .tags-card__title {
+    margin: 0;
+    color: var(--text-h);
+    font-size: var(--text-lg);
+    font-weight: 700;
+  }
+
+  & .count {
+    color: var(--text);
+    font-size: var(--text-xs);
+    font-weight: 600;
+  }
+
+  & .intro,
+  & .empty {
+    margin: 0;
+    padding-inline-start: var(--space-2);
+    color: var(--text);
+    font-size: var(--text-sm);
+    text-wrap: pretty;
+  }
+
+  & .tags {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    container: meal-tags / inline-size;
+  }
+
+  & .add {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2-5);
+    padding: var(--space-4) 0 0 var(--space-2);
+
+    & .input-base {
+      flex: 1 1 14rem;
+      min-inline-size: 0;
+      min-block-size: var(--touch-target);
+      padding-block: 0;
+    }
+
+    & .button-base {
+      min-block-size: var(--touch-target);
+    }
+  }
+
+  & .new-tag-error {
+    flex-basis: 100%;
+  }
+
+  & .full {
+    flex-basis: 100%;
+    margin: 0;
+    color: var(--warning);
+    font-size: var(--text-xs);
+    font-weight: 600;
+  }
+
+  & summary {
+    display: flex;
+    align-items: center;
+    min-block-size: var(--touch-target);
+    color: var(--text-h);
+    font-weight: 700;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: var(--focus-ring-width) solid var(--accent-text);
+      outline-offset: var(--focus-ring-offset);
+      border-radius: var(--radius-sm);
+    }
+  }
+
+  & .archived {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  & .archived__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-1) var(--space-3);
+    min-block-size: 3.5rem;
+    border-top: 1px solid var(--border);
+  }
+
+  & .archived__name {
+    min-inline-size: 0;
+    color: var(--text);
+    font-weight: 700;
+    overflow-wrap: break-word;
+  }
+}

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { dailyAdherence, isLoggableDate, nextMealId } from "./mealPlan";
+import { dailyAdherence, isLoggableDate, nextMealId, withTagUsage } from "./mealPlan";
 
 const breakfast = { id: 11, position: 0 };
 const lunch = { id: 12, position: 1 };
@@ -235,5 +235,50 @@ describe("dailyAdherence", () => {
 
   it("is empty when the range is inverted", () => {
     assert.deepEqual(dailyAdherence({ from: "2026-11-13", to: "2026-11-12", mealIds, logs: [] }), []);
+  });
+});
+
+describe("withTagUsage", () => {
+  const tags = [
+    { id: 1, name: "Colazione" },
+    { id: 2, name: "Pranzo" },
+    { id: 3, name: "Merenda" },
+  ];
+
+  it("gives each tag its plan and template counts", () => {
+    const counted = withTagUsage({
+      tags,
+      planCounts: [
+        { tagId: 1, count: 4 },
+        { tagId: 2, count: 1 },
+      ],
+      templateCounts: [{ tagId: 2, count: 3 }],
+    });
+
+    assert.deepEqual(counted, [
+      { id: 1, name: "Colazione", planCount: 4, templateCount: 0 },
+      { id: 2, name: "Pranzo", planCount: 1, templateCount: 3 },
+      { id: 3, name: "Merenda", planCount: 0, templateCount: 0 },
+    ]);
+  });
+
+  it("ignores counts of tags that are not in the list", () => {
+    const counted = withTagUsage({
+      tags: [tags[0]],
+      planCounts: [{ tagId: 9, count: 2 }],
+      templateCounts: [{ tagId: 9, count: 1 }],
+    });
+
+    assert.deepEqual(counted, [{ id: 1, name: "Colazione", planCount: 0, templateCount: 0 }]);
+  });
+
+  it("keeps the order of the tags", () => {
+    const reversed = [...tags].reverse();
+    const counted = withTagUsage({ tags: reversed, planCounts: [], templateCounts: [] });
+
+    assert.deepEqual(
+      counted.map((tag) => tag.id),
+      [3, 2, 1],
+    );
   });
 });

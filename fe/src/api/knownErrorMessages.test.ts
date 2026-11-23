@@ -139,4 +139,20 @@ describe("translateApiErrorMessage", () => {
     assert.equal(translateApiErrorMessage("Email already registered"), null);
     assert.equal(translateApiErrorMessage("paidOn must be YYYY-MM-DD!"), null);
   });
+
+  it("translates the meal plan errors, NUL characters included", () => {
+    assert.equal(translateApiErrorMessage("Meal tag already exists"), "C'è già un tag con questo nome.");
+    assert.equal(
+      translateApiErrorMessage("Request body too large"),
+      "Il piano è troppo lungo: accorcia note o alimenti e salva di nuovo.",
+    );
+    assert.equal(
+      translateApiErrorMessage("Meal not found"),
+      translateApiErrorMessage("Meal plan already exists"),
+    );
+    assert.equal(
+      translateApiErrorMessage("meals.items.food must not contain a NUL character"),
+      "Il testo contiene un carattere non valido.",
+    );
+  });
 });

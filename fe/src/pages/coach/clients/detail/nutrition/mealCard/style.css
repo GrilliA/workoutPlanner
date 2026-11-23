@@ -1,0 +1,227 @@
+.meal-card {
+  display: flex;
+  /* With very large text the handle and the body no longer fit side by side: the body drops under it. */
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  padding: var(--space-4) var(--space-4) var(--space-3) var(--space-2);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  /* The food rows reflow on the card's own width, not the page's. */
+  container: meal-card / inline-size;
+
+  & .body {
+    flex: 1 1 11rem;
+    min-inline-size: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  & .head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-3);
+  }
+
+  /* Select wraps its trigger in a field div, which is the flex item: without this it keeps the
+     width of the longest tag label and pushes the card past the screen when the text is enlarged. */
+  & .head > .input {
+    min-inline-size: 0;
+    max-inline-size: 100%;
+  }
+
+  /* The tag is the meal's name: an orange pill, as in the AL3 boards. */
+  & .tag-select {
+    inline-size: auto;
+    min-inline-size: min(9rem, 100%);
+    max-inline-size: 100%;
+
+    & .select-base__trigger {
+      min-block-size: var(--touch-target);
+      padding-inline: var(--space-4) var(--space-3);
+      border-color: transparent;
+      border-radius: var(--radius-full);
+      background: var(--accent-bg);
+      color: var(--accent-text);
+      font-weight: 800;
+    }
+
+    /* The tag is the meal's name: it wraps instead of ending in an ellipsis. */
+    & .select-base__value {
+      overflow-wrap: anywhere;
+      text-overflow: clip;
+      white-space: normal;
+    }
+  }
+
+  &.meal-card--archived .tag-select .select-base__trigger {
+    border: 1.5px dashed var(--text);
+    background: var(--surface);
+    color: var(--text);
+  }
+
+  & .time {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    min-inline-size: 0;
+    max-inline-size: 100%;
+    color: var(--text);
+    font-size: var(--text-sm);
+    font-weight: 600;
+
+    & .input-base {
+      inline-size: auto;
+      min-inline-size: 0;
+      max-inline-size: 100%;
+      min-block-size: var(--touch-target);
+      padding-block: 0;
+    }
+  }
+
+  & .remove-meal {
+    margin-inline-start: auto;
+  }
+
+  & .button-base--icon {
+    inline-size: var(--touch-target);
+    block-size: var(--touch-target);
+    padding: 0;
+
+    & .button-icon svg {
+      inline-size: var(--space-5);
+      block-size: var(--space-5);
+    }
+  }
+
+  & .archived-note {
+    margin: 0;
+    color: var(--warning);
+    font-size: var(--text-sm);
+    font-weight: 600;
+  }
+
+  & .no-items {
+    margin: 0;
+    padding: var(--space-3);
+    border-radius: var(--radius-md);
+    background: var(--surface-elevated);
+    color: var(--text);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    text-wrap: pretty;
+  }
+
+  & .items {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* Narrow card: handle, food and remove on one line, the quantity under the food. */
+  & .item {
+    display: grid;
+    grid-template-columns: var(--touch-target) minmax(0, 1fr) var(--touch-target);
+    grid-template-areas:
+      "handle food remove"
+      ". quantity .";
+    gap: var(--space-1-5) var(--space-2);
+    align-items: center;
+
+    & .input-base {
+      min-block-size: var(--touch-target);
+      padding-block: 0;
+    }
+
+    & .reorder-handle {
+      grid-area: handle;
+    }
+
+    & .food {
+      grid-area: food;
+    }
+
+    & .quantity {
+      grid-area: quantity;
+    }
+
+    & .food-error {
+      grid-area: error;
+    }
+
+    & .remove-item {
+      grid-area: remove;
+    }
+  }
+
+  /* A row stopped on a missing food: its text sits under the field, not only a red border. */
+  & .item--invalid {
+    grid-template-areas:
+      "handle food remove"
+      ". error ."
+      ". quantity .";
+  }
+
+  & .foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-3);
+
+    & .button-base {
+      min-block-size: var(--touch-target);
+    }
+  }
+
+  & .limit {
+    color: var(--text);
+    font-size: var(--text-xs);
+    font-weight: 600;
+  }
+}
+
+/* Very narrow card (a phone with enlarged text): the food gets the whole row, the handle and the
+   remove button share the one under the quantity. */
+@container meal-card (width < 14rem) {
+  .meal-card .item {
+    grid-template-areas:
+      "food food food"
+      "quantity quantity quantity"
+      "handle . remove";
+  }
+
+  .meal-card .item--invalid {
+    grid-template-areas:
+      "food food food"
+      "error error error"
+      "quantity quantity quantity"
+      "handle . remove";
+  }
+}
+
+@container meal-card (width >= 28rem) {
+  .meal-card .item {
+    grid-template-columns: var(--touch-target) minmax(0, 1fr) minmax(0, 9rem) var(--touch-target);
+    grid-template-areas: "handle food quantity remove";
+  }
+
+  .meal-card .item--invalid {
+    grid-template-areas:
+      "handle food quantity remove"
+      ". error error .";
+  }
+}
+
+/* The tag list opens in the top layer but stays in this subtree: its options are thumb targets. */
+.meal-card .select-base__option {
+  display: flex;
+  align-items: center;
+  min-block-size: var(--touch-target);
+  box-sizing: border-box;
+}

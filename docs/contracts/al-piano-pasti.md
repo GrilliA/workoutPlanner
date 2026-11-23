@@ -2,7 +2,7 @@
 
 Stato: **proposta per il Contract Gate di AL2**, da approvare. La parte coach è implementata in AL2; la parte atleta è scritta qui perché il contratto sia uno solo, ed è marcata **AL4, non implementata**.
 Piano: `docs/plans/AL-alimentazione.md` (sezioni 4, 5, AL2, AL4). Schema AL1: `be/src/db/schema/{mealtags,mealplans,mealplanmeals,mealplanitems,meallogs,mealplantemplates,mealplantemplatemeals}.ts`. Logica pura: `be/src/services/mealPlan.ts`. Validazione: `be/src/services/mealPlanValidation.ts`. Accesso al DB: `be/src/services/mealPlanAccess.ts` (piano), `mealTagAccess.ts` (tag), `mealPlanTemplateAccess.ts` (template). Route coach: `be/src/routes/coachmealplan.ts`.
-Aggiornato il 2026-11-22 con le decisioni dell'utente: tag dei pasti, template di giornata, piano con almeno un pasto (sezione **Decisioni**).
+Aggiornato il 2026-11-22 con le decisioni dell'utente: tag dei pasti, template di giornata, piano con almeno un pasto (sezione **Decisioni**). Aggiornato il 2026-11-23 per AL3 (additivo): `GET /coach/meal-tags` dà anche i tag archiviati e, per ogni tag, quanti piani attivi e template lo usano.
 
 Lessico: nelle copy sempre "Alimentazione" o "Pasti", mai "Dieta". Gli identificatori dell'API sono in inglese (`meal-plan`, `meal-logs`).
 
@@ -25,7 +25,7 @@ Lessico: nelle copy sempre "Alimentazione" o "Pasti", mai "Dieta". Gli identific
 
 | Metodo | Path | Successo | Fase |
 | --- | --- | --- | --- |
-| GET | `/coach/meal-tags` | 200 `{ mealTags: MealTag[] }` | AL2 |
+| GET | `/coach/meal-tags` | 200 `{ mealTags: ListedMealTag[]; archivedMealTags: ListedMealTag[] }` | AL2, conteggi e archiviati AL3 |
 | POST | `/coach/meal-tags` | 201 `MealTag` | AL2 |
 | PATCH | `/coach/meal-tags/:id` | 200 `MealTag` | AL2 |
 | GET | `/coach/meal-plan-templates` | 200 `{ mealPlanTemplates: MealPlanTemplate[] }` | AL2 |
@@ -58,7 +58,13 @@ type MealTag = {
   id: number;
   name: string;              // 1..60 caratteri, unico tra i tag non archiviati del coach (maiuscole e minuscole uguali)
   position: number;          // ordine nella lista del coach; può avere buchi dopo un'archiviazione, conta solo l'ordine
-  archivedAt: string | null; // ISO timestamp; sempre null nella lista, valorizzato nella risposta dell'archiviazione
+  archivedAt: string | null; // ISO timestamp; null nei tag non archiviati, valorizzato in `archivedMealTags` e nella risposta dell'archiviazione
+};
+
+// Solo nella lista (GET /coach/meal-tags, AL3): POST e PATCH rispondono con MealTag.
+type ListedMealTag = MealTag & {
+  planCount: number;         // piani ATTIVI del coach con almeno un pasto con questo tag (un piano conta una volta)
+  templateCount: number;     // template del coach con almeno un pasto con questo tag (un template conta una volta)
 };
 
 type Meal = {
@@ -152,7 +158,13 @@ Ogni coach ha una lista di tag (Colazione, Pranzo, …). Un pasto del piano o di
 
 #### GET `/coach/meal-tags`
 
-200 `{ mealTags: MealTag[] }`: i tag non archiviati del coach, in ordine di `position` (a parità, di `id`). Crea i tag iniziali se il coach non ne ha mai avuti.
+200 `{ mealTags: ListedMealTag[]; archivedMealTags: ListedMealTag[] }`. Crea i tag iniziali se il coach non ne ha mai avuti.
+
+- `mealTags`: i tag non archiviati del coach, in ordine di `position` (a parità, di `id`): quelli che il pannello offre per un pasto nuovo.
+- `archivedMealTags` (AL3): i tag archiviati del coach, dall'ultimo archiviato (`archivedAt` decrescente, a parità `id` decrescente); al massimo 200 righe in tutto per il tetto sulle righe di tag. Servono alla sezione "Archiviati" della pagina Tag pasti; il pannello continua a riconoscere un tag archiviato in un pasto perché il suo `tagId` non è in `mealTags`.
+- `planCount` / `templateCount` (AL3): quanti piani **attivi** e quanti template del coach hanno almeno un pasto con quel tag (due "Spuntino" nello stesso piano contano un piano). Un piano disattivato non conta; un tag mai usato ha 0. Il pannello li mostra come "in N piani" e, per gli archiviati, "ancora in N piani e M template".
+
+Scelta della forma (AL3): un campo nella stessa risposta invece di `GET /coach/meal-tags?archived=true`. La pagina Tag pasti mostra le due liste insieme e le rilegge entrambe dopo ogni scrittura: una richiesta sola, nessun parametro da validare, una sola route. L'editor del piano legge anche gli archiviati e li ignora (sono pochi: il tetto è 200 righe).
 
 #### POST `/coach/meal-tags`
 

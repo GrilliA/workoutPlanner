@@ -89,3 +89,27 @@ export const dailyAdherence = (input: {
     return { date, mealCount, doneCount, otherCount, removedCount };
   });
 };
+
+type TagUseCount = {
+  tagId: number;
+  count: number;
+};
+
+/**
+ * Each tag with how many active plans and templates use it. A tag with no row in a count
+ * list is used by none: the counts come from grouped queries that skip unused tags.
+ */
+export const withTagUsage = <Tag extends { id: number }>(input: {
+  tags: Tag[];
+  planCounts: TagUseCount[];
+  templateCounts: TagUseCount[];
+}): (Tag & { planCount: number; templateCount: number })[] => {
+  const countOf = (counts: TagUseCount[], tagId: number): number =>
+    counts.find((row) => row.tagId === tagId)?.count ?? 0;
+
+  return input.tags.map((tag) => ({
+    ...tag,
+    planCount: countOf(input.planCounts, tag.id),
+    templateCount: countOf(input.templateCounts, tag.id),
+  }));
+};

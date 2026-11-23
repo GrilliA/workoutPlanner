@@ -1,0 +1,1 @@
+export { NutritionTab } from "./NutritionTab";

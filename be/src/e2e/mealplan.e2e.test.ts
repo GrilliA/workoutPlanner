@@ -37,6 +37,9 @@ const JSON_BODY_LIMIT_BYTES = 100 * 1024;
 const MEAL_PLAN_KEYS = ["athleteId", "createdAt", "id", "isActive", "meals", "notes", "updatedAt"];
 const MEAL_KEYS = ["id", "items", "name", "notes", "position", "tagId", "timeOfDay"];
 const TAG_KEYS = ["archivedAt", "id", "name", "position"];
+// The list adds how many active plans and templates use each tag.
+const LISTED_TAG_KEYS = [...TAG_KEYS, "planCount", "templateCount"].sort();
+const TAG_LIST_KEYS = ["archivedMealTags", "mealTags"];
 const TEMPLATE_KEYS = ["createdAt", "id", "meals", "name", "updatedAt"];
 const TEMPLATE_MEAL_KEYS = ["name", "tagId", "timeOfDay"];
 const STARTER_TAG_NAMES = ["Colazione", "Spuntino", "Pranzo", "Merenda", "Cena"];
@@ -758,8 +761,10 @@ describe("Meal plan coach API smoke", { concurrency: false }, () => {
 
       for (const read of reads) {
         assertStatus(read, 200);
+        assertKeys(read.body, TAG_LIST_KEYS);
         const tags = asList(asObject(read.body).mealTags);
-        tags.forEach((tag) => assertKeys(tag, TAG_KEYS));
+        tags.forEach((tag) => assertKeys(tag, LISTED_TAG_KEYS));
+        assert.deepEqual(asObject(read.body).archivedMealTags, []);
         assert.deepEqual(tags.map((tag) => tag.name), STARTER_TAG_NAMES, `round ${round}`);
         assert.deepEqual(tags.map((tag) => tag.archivedAt), [null, null, null, null, null]);
       }
@@ -1161,6 +1166,78 @@ describe("Meal plan coach API smoke", { concurrency: false }, () => {
       assertStatus(await postTemplate(coach, { name: `Giornata ${index}`, meals: [{ tagId: tags.Pranzo }] }), 201);
     }
     assertError(await postTemplate(coach, { name: "Di troppo", meals: [{ tagId: tags.Pranzo }] }), 409, "Too many meal plan templates");
+  });
+
+  it("counts the active plans and the templates that use each tag, archived ones too", async () => {
+    const { coach, inviteCode } = await newCoach("usage");
+    const other = await newCoach("usage-other");
+    const tags = await tagIdsOf(coach);
+    const otherTags = await tagIdsOf(other.coach);
+    const firstClient = await newClient("usage-first", inviteCode);
+    const secondClient = await newClient("usage-second", inviteCode);
+    const otherClient = await newClient("usage-other-client", other.inviteCode);
+    const usageOf = async (account: Account) => {
+      const listed = await getTags(account);
+      assertStatus(listed, 200);
+      const toUsage = (tag: JsonObject) => [tag.name, tag.planCount, tag.templateCount];
+      return {
+        live: asList(asObject(listed.body).mealTags).map(toUsage),
+        archived: asList(asObject(listed.body).archivedMealTags).map(toUsage),
+      };
+    };
+
+    // Two snacks in one plan count the plan once.
+    await createPlan(coach, firstClient, {
+      meals: [
+        { tagId: tags.Colazione, items: [] },
+        { tagId: tags.Spuntino, items: [] },
+        { tagId: tags.Spuntino, items: [] },
+      ],
+    });
+    await createPlan(coach, secondClient, breakfastAndLunch(tags));
+    await createPlan(other.coach, otherClient, breakfastAndLunch(otherTags));
+    assertStatus(
+      await postTemplate(coach, { name: "Standard", meals: [{ tagId: tags.Pranzo }, { tagId: tags.Pranzo }] }),
+      201,
+    );
+
+    assert.deepEqual(await usageOf(coach), {
+      live: [
+        ["Colazione", 2, 0],
+        ["Spuntino", 1, 0],
+        ["Pranzo", 1, 1],
+        ["Merenda", 0, 0],
+        ["Cena", 0, 0],
+      ],
+      archived: [],
+    });
+
+    // A plan turned off no longer counts; archived tags keep their counts.
+    assertStatus(await patchPlan(coach, secondClient, { isActive: false }), 200);
+    assertStatus(await patchTag(coach, tags.Pranzo, { archived: true }), 200);
+    assertStatus(await patchTag(coach, tags.Merenda, { archived: true }), 200);
+
+    const afterChanges = await usageOf(coach);
+    assert.deepEqual(afterChanges.live, [
+      ["Colazione", 1, 0],
+      ["Spuntino", 1, 0],
+      ["Cena", 0, 0],
+    ]);
+    assert.deepEqual(afterChanges.archived, [
+      ["Merenda", 0, 0],
+      ["Pranzo", 0, 1],
+    ], "last archived first");
+
+    const listed = asObject((await getTags(coach)).body);
+    asList(listed.archivedMealTags).forEach((tag) => {
+      assertKeys(tag, LISTED_TAG_KEYS);
+      assert.ok(tag.archivedAt !== null);
+    });
+    assert.deepEqual((await usageOf(other.coach)).live.slice(0, 3), [
+      ["Colazione", 1, 0],
+      ["Spuntino", 0, 0],
+      ["Pranzo", 1, 0],
+    ], "another coach's plans and templates are not counted");
   });
 
   // Schema: a used tag cannot be deleted, but deleting the coach removes everything.

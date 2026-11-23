@@ -1,0 +1,219 @@
+.template-editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-inline-size: 0;
+
+  & .input {
+    max-inline-size: 28rem;
+  }
+
+  & .name {
+    min-block-size: var(--touch-target);
+    padding-block: 0;
+    font-size: var(--text-lg);
+    font-weight: 800;
+  }
+
+  & .intro,
+  & .no-meals {
+    margin: 0;
+    color: var(--text);
+    font-size: var(--text-sm);
+    text-wrap: pretty;
+  }
+
+  & .no-meals {
+    padding: var(--space-3);
+    border-radius: var(--radius-md);
+    background: var(--surface-elevated);
+    font-weight: 600;
+  }
+
+  & .form-error {
+    margin: 0;
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-lg);
+    background: var(--error-bg);
+    color: var(--error);
+    font-size: var(--text-sm);
+    font-weight: 700;
+  }
+
+  & .meals {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    container: template-meals / inline-size;
+  }
+
+  /* Narrow: tag and remove on the first line, the time under the tag. */
+  & .meal-row {
+    display: grid;
+    grid-template-columns: var(--touch-target) minmax(0, 1fr) var(--touch-target);
+    grid-template-areas:
+      "handle tag remove"
+      ". time ."
+      ". note note";
+    align-items: center;
+    gap: var(--space-1-5) var(--space-2);
+    padding-block: var(--space-2);
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+
+    & > .reorder-handle {
+      grid-area: handle;
+    }
+
+    /* Select wraps its control in a column `.input`: size the wrapper, not the control. */
+    & > .input {
+      grid-area: tag;
+      justify-self: start;
+      min-inline-size: 0;
+      max-inline-size: 100%;
+    }
+
+    & > .time {
+      grid-area: time;
+      justify-self: start;
+    }
+
+    & > .remove {
+      grid-area: remove;
+    }
+
+    & > .archived-note {
+      grid-area: note;
+    }
+  }
+
+  & .meal-row--archived {
+    border-bottom-color: transparent;
+    border-radius: var(--radius-lg);
+    background: var(--surface-elevated);
+  }
+
+  & .tag-select {
+    inline-size: auto;
+    min-inline-size: min(8rem, 100%);
+
+    & .select-base__trigger {
+      min-block-size: var(--touch-target);
+      border-color: transparent;
+      border-radius: var(--radius-full);
+      background: var(--accent-bg);
+      color: var(--accent-text);
+      font-weight: 800;
+    }
+
+    /* The tag is the meal's name: it wraps instead of ending in an ellipsis. */
+    & .select-base__value {
+      overflow-wrap: anywhere;
+      text-overflow: clip;
+      white-space: normal;
+    }
+  }
+
+  & .meal-row--archived .tag-select .select-base__trigger {
+    border: 1.5px dashed var(--text);
+    background: var(--surface);
+    color: var(--text);
+  }
+
+  & .time {
+    inline-size: auto;
+    min-inline-size: 0;
+    max-inline-size: 100%;
+    justify-self: start;
+    min-block-size: var(--touch-target);
+    padding-block: 0;
+  }
+
+  & .remove {
+    inline-size: var(--touch-target);
+    block-size: var(--touch-target);
+    padding: 0;
+
+    & .button-icon svg {
+      inline-size: var(--space-4);
+      block-size: var(--space-4);
+    }
+  }
+
+  & .archived-note {
+    margin: 0;
+    color: var(--warning);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    text-wrap: pretty;
+  }
+
+  & .add-meal {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  & .add-meal__label {
+    margin-inline-end: var(--space-1);
+    color: var(--text-h);
+    font-size: var(--text-sm);
+    font-weight: 700;
+  }
+
+  & .limit {
+    color: var(--text);
+    font-size: var(--text-sm);
+    font-weight: 600;
+  }
+
+  & .footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2-5);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--border);
+  }
+
+  & .delete {
+    border-color: var(--error-bg);
+    background: var(--error-bg);
+    color: var(--error);
+  }
+
+  & .button-base:not(.button-base--icon) {
+    min-block-size: var(--touch-target);
+  }
+}
+
+/* Very narrow list (a phone with enlarged text): the tag gets the whole row, the handle and the
+   remove button share the one under the time. */
+@container template-meals (width < 14rem) {
+  .template-editor .meal-row {
+    grid-template-areas:
+      "tag tag tag"
+      "time time time"
+      "handle . remove"
+      "note note note";
+  }
+}
+
+@container template-meals (width >= 30rem) {
+  .template-editor .meal-row {
+    grid-template-columns: var(--touch-target) auto auto minmax(0, 1fr) var(--touch-target);
+    grid-template-areas:
+      "handle tag time . remove"
+      ". note note note note";
+  }
+}
+
+/* The tag list opens in the top layer but stays in this subtree: its options are thumb targets. */
+.template-editor .select-base__option {
+  display: flex;
+  align-items: center;
+  min-block-size: var(--touch-target);
+  box-sizing: border-box;
+}

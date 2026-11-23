@@ -1,0 +1,1 @@
+export { MealTagRow } from "./MealTagRow";

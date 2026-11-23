@@ -39,11 +39,13 @@
 }
 
 .input-base--error,
+.input-base[aria-invalid="true"],
 .input--error .input-base {
   border-color: var(--error);
 }
 
 .input-base--error:focus-visible,
+.input-base[aria-invalid="true"]:focus-visible,
 .input--error .input-base:focus-visible {
   outline-color: var(--error);
   border-color: var(--error);
