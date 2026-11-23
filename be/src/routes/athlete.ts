@@ -9,10 +9,12 @@ import {
   unlinkAthleteFromCoach,
 } from "../services/coachInvite";
 import { getAuthUser } from "../types/auth";
+import { athleteMealPlanRouter } from "./athletemealplan";
 
 export const athleteRouter = Router();
 
 athleteRouter.use(requireAuth, requireRole("athlete"));
+athleteRouter.use(athleteMealPlanRouter);
 
 athleteRouter.get("/home", async (req, res) => {
   const athlete = getAuthUser(req);

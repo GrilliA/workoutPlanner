@@ -70,6 +70,7 @@ const input = (overrides: Partial<AthleteHomeInput> = {}): AthleteHomeInput => (
   activeAssignment: null,
   hasLinkedCoach: false,
   coaching: null,
+  nutrition: null,
   daysByWorkout: [],
   schedules: [],
   completedSessions: [],
@@ -389,5 +390,30 @@ describe("buildAthleteHome coaching", () => {
 
     assert.deepEqual(buildAthleteHome(input({ hasLinkedCoach: true, coaching })).coaching, coaching);
     assert.equal(buildAthleteHome(input()).coaching, null);
+  });
+});
+
+describe("buildAthleteHome nutrition", () => {
+  it("passes the nutrition summary through next to coaching, null included", () => {
+    const coaching = {
+      coachName: "Luca Rossi",
+      status: "active" as const,
+      paidThrough: "2026-12-20",
+      daysLeft: 30,
+      pausedUntil: null,
+    };
+    const nutrition = {
+      mealPlanId: 7,
+      updatedAt: new Date("2026-09-20T08:00:00.000Z"),
+      mealCount: 3,
+      doneToday: 1,
+      otherToday: 0,
+      nextMeal: { id: 12, name: "Pranzo", timeOfDay: "13:00" },
+    };
+    const home = buildAthleteHome(input({ hasLinkedCoach: true, coaching, nutrition }));
+
+    assert.deepEqual(home.nutrition, nutrition);
+    assert.deepEqual(home.coaching, coaching);
+    assert.equal(buildAthleteHome(input()).nutrition, null);
   });
 });

@@ -14,6 +14,8 @@ import { dailyAdherence } from "./mealPlan";
 import {
   findForeignMealPlanId,
   type MealInput,
+  type MealLogInput,
+  type MealLogKey,
   type MealLogsQuery,
   type MealPlanInput,
   sentIds,
@@ -33,8 +35,11 @@ type MealRow = {
   position: number;
 };
 type ItemRow = typeof mealPlanItems.$inferSelect;
+type MealLogRow = typeof mealLogs.$inferSelect;
 
 const CLIENT_NOT_FOUND: Failure = { ok: false, status: 404, error: "Client not found" };
+const MEAL_PLAN_NOT_FOUND: Failure = { ok: false, status: 404, error: "Meal plan not found" };
+const MEAL_NOT_FOUND: Failure = { ok: false, status: 404, error: "Meal not found" };
 
 const isOfCoachAndAthlete = (coachId: number, athleteId: number) =>
   and(eq(mealPlans.coachId, coachId), eq(mealPlans.athleteId, athleteId));
@@ -369,3 +374,148 @@ export const loadMealDayAdherence = async (
     logs,
   });
 };
+
+// The ids of the plan and of the athlete stay inside: the athlete knows both already.
+const toMealLog = (log: MealLogRow) => ({
+  mealId: log.mealId,
+  mealName: log.mealName,
+  date: log.date,
+  status: log.status,
+  note: log.note,
+  updatedAt: log.updatedAt,
+});
+
+type MealLogResponse = ReturnType<typeof toMealLog>;
+
+/** The plan the athlete follows on `date`, with what they logged that day. */
+type MealPlanDay = { mealPlan: MealPlanResponse; logs: MealLogResponse[] };
+
+/**
+ * The plan of the pair (coach linked now, athlete), active or not, with the athlete's logs
+ * of `date`; null when the pair has no plan. The caller decides what an inactive plan shows.
+ */
+export const loadMealPlanDay = async (
+  coachId: number,
+  athleteId: number,
+  date: string,
+): Promise<MealPlanDay | null> => {
+  const [plan] = await db.select().from(mealPlans).where(isOfCoachAndAthlete(coachId, athleteId));
+
+  if (!plan) {
+    return null;
+  }
+
+  const [mealPlan, logs] = await Promise.all([
+    buildMealPlan(db, plan),
+    db
+      .select()
+      .from(mealLogs)
+      .where(
+        and(
+          eq(mealLogs.mealPlanId, plan.id),
+          eq(mealLogs.athleteId, athleteId),
+          eq(mealLogs.date, date),
+        ),
+      ),
+  ]);
+
+  return { mealPlan, logs: logs.map(toMealLog) };
+};
+
+/**
+ * The athlete's link, shared, then the plan of that coach, shared: the same order as the
+ * coach's save (link shared, plan exclusive) and as unlinking (link exclusive, then the
+ * cascade). So a log write waits for a save that removes its meal or turns the plan off,
+ * and for an unlink, and then sees their result: never a log for a meal already gone.
+ * Null when the athlete has no coach, no plan or an inactive plan: nothing to log against.
+ */
+const lockActiveMealPlanOfAthlete = async (tx: Tx, athleteId: number): Promise<MealPlanRow | null> => {
+  const [link] = await tx
+    .select({ coachId: coachAthletes.coachId })
+    .from(coachAthletes)
+    .where(eq(coachAthletes.athleteId, athleteId))
+    .for("share");
+
+  if (!link) {
+    return null;
+  }
+
+  const [plan] = await tx
+    .select()
+    .from(mealPlans)
+    .where(isOfCoachAndAthlete(link.coachId, athleteId))
+    .for("share");
+
+  if (!plan || !plan.isActive) {
+    return null;
+  }
+
+  return plan;
+};
+
+/**
+ * Writes the athlete's log for one meal and day, or replaces it: the unique
+ * (athlete, date, meal) turns a repeated or concurrent write into an update of the same row.
+ * The meal must be in the athlete's active plan; another plan's meal and a missing one get
+ * the same 404. The tag name is copied now, so a later rename leaves the log as it was.
+ */
+export const saveMealLog = async (
+  athleteId: number,
+  input: MealLogInput,
+): Promise<Result<MealLogResponse>> =>
+  db.transaction(async (tx): Promise<Result<MealLogResponse>> => {
+    const plan = await lockActiveMealPlanOfAthlete(tx, athleteId);
+
+    if (plan === null) {
+      return MEAL_PLAN_NOT_FOUND;
+    }
+
+    const [meal] = await tx
+      .select({ name: mealTags.name })
+      .from(mealPlanMeals)
+      .innerJoin(mealTags, eq(mealTags.id, mealPlanMeals.tagId))
+      .where(and(eq(mealPlanMeals.id, input.mealId), eq(mealPlanMeals.mealPlanId, plan.id)));
+
+    if (!meal) {
+      return MEAL_NOT_FOUND;
+    }
+
+    const writtenAt = new Date();
+    const fields = { mealName: meal.name, status: input.status, note: input.note, updatedAt: writtenAt };
+    const [log] = await tx
+      .insert(mealLogs)
+      .values({ athleteId, mealPlanId: plan.id, mealId: input.mealId, date: input.date, ...fields })
+      .onConflictDoUpdate({
+        target: [mealLogs.athleteId, mealLogs.date, mealLogs.mealId],
+        set: fields,
+      })
+      .returning();
+
+    return { ok: true, value: toMealLog(log) };
+  });
+
+/**
+ * Removes the athlete's log for one meal and day, if there is one: undoing twice is fine.
+ * Needs an active plan, like the write; a meal of another plan matches no log.
+ */
+export const deleteMealLog = async (athleteId: number, key: MealLogKey): Promise<Failure | null> =>
+  db.transaction(async (tx) => {
+    const plan = await lockActiveMealPlanOfAthlete(tx, athleteId);
+
+    if (plan === null) {
+      return MEAL_PLAN_NOT_FOUND;
+    }
+
+    await tx
+      .delete(mealLogs)
+      .where(
+        and(
+          eq(mealLogs.athleteId, athleteId),
+          eq(mealLogs.mealPlanId, plan.id),
+          eq(mealLogs.mealId, key.mealId),
+          eq(mealLogs.date, key.date),
+        ),
+      );
+
+    return null;
+  });
