@@ -280,7 +280,7 @@ Piano: [`docs/plans/AL-alimentazione.md`](docs/plans/AL-alimentazione.md). Ramo 
 - [x] AL1 Schema + migrazione + logica pura (prossimo pasto, giorno ammesso oggi o ieri, aderenza per giorno). Confluita in `main-diet` con #102
 - [x] AL2 API coach del piano pasti + contratto + e2e. Confluita in `main-diet` con #103
 - [x] AL3 Pannello: tab Alimentazione (`/clients/:id/nutrition`), editor dei pasti, attiva/disattiva, ultimi 7 giorni; pagine Template pasti e Tag pasti, menu "Altro" nella barra in basso
-- [ ] AL4 API atleta + `nutrition` in `/athlete/home` (dopo R6)
+- [x] AL4 API atleta (`/athlete/meal-plan/today`, `PUT`/`DELETE`/`GET /athlete/meal-logs`) + `nutrition` in `/athlete/home` + e2e. Branch `feat/AL4-athlete-meal-api`, da pubblicare
 - [ ] AL5 Mobile: switch Allenamento / Alimentazione e tab bar per modalità
 - [ ] AL6 Mobile: Oggi ("Adesso tocca a") e Piano pasti
 - [ ] AL7 Mobile: Progressi alimentazione + integrazione in `main`

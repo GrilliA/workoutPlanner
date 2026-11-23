@@ -33,6 +33,8 @@ type AthleteCoaching = {
 | Metodo | Path | Successo | Cambio |
 | --- | --- | --- | --- |
 | GET | `/athlete/home` | 200 `AthleteHome & { coaching: AthleteCoaching \| null }` | campo `coaching` in fondo |
+
+AL4 ha aggiunto a `GET /athlete/home`, dopo `coaching`, il campo `nutrition` (piano pasti): forma e regole in [`al-piano-pasti.md`](al-piano-pasti.md), sezione **Atleta (AL4)**. I due campi sono indipendenti.
 | GET | `/athlete/coach` | 200 `{ coach: AthleteCoach \| null; coaching: AthleteCoaching \| null }` | campo `coaching` accanto a `coach` |
 
 `AthleteCoach` resta `{ coachId, email, name, linkedAt }` come oggi. Le due route danno sempre lo stesso `coaching` per lo stesso atleta e lo stesso giorno.
