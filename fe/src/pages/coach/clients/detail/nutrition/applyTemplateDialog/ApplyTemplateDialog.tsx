@@ -78,7 +78,11 @@ export function ApplyTemplateDialog({
         dialog.close();
       }
 
-      if (document.activeElement === document.body) {
+      // Closing returns the focus to the opener; if that is gone it stays in the closed dialog.
+      const isFocusLost =
+        document.activeElement === document.body || dialog?.contains(document.activeElement);
+
+      if (isFocusLost) {
         returnFocusElement?.focus();
       }
     };
