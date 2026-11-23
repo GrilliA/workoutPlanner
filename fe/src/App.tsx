@@ -14,6 +14,7 @@ import CoachClientsPage from "@pages/coach/clients";
 import NewClientPage from "@pages/coach/clients/new";
 import ClientDetailPage from "@pages/coach/clients/detail";
 import ClientSubscriptionPage from "@pages/coach/clients/detail/subscription";
+import ClientNutritionPage from "@pages/coach/clients/detail/nutrition";
 import TemplatesPage from "@pages/coach/templates";
 import NewTemplatePage from "@pages/coach/templates/new";
 import EditTemplatePage from "@pages/coach/templates/edit";
@@ -21,6 +22,8 @@ import AssignmentsPage from "@pages/coach/assignments";
 import NewAssignmentPage from "@pages/coach/assignments/new";
 import EditClientProgramPage from "@pages/coach/programs/edit";
 import ViewClientProgramPage from "@pages/coach/programs/view";
+import MealTemplatesPage from "@pages/coach/mealtemplates";
+import MealTagsPage from "@pages/coach/mealtags";
 
 // Web is coach-only. Athletes use mobile/. Templates and client programs share pages/coach/programbuilder/.
 
@@ -54,6 +57,7 @@ function AppRoutes() {
                   component={ViewClientProgramPage}
                 />
                 <Route path="/clients/:id/subscription" component={ClientSubscriptionPage} />
+                <Route path="/clients/:id/nutrition" component={ClientNutritionPage} />
                 <Route path="/clients/:id" component={ClientDetailPage} />
                 <Route path="/clients" component={CoachClientsPage} />
                 <Route path="/templates/new" component={NewTemplatePage} />
@@ -61,6 +65,8 @@ function AppRoutes() {
                 <Route path="/templates" component={TemplatesPage} />
                 <Route path="/assignments/new" component={NewAssignmentPage} />
                 <Route path="/assignments" component={AssignmentsPage} />
+                <Route path="/meal-templates" component={MealTemplatesPage} />
+                <Route path="/meal-tags" component={MealTagsPage} />
                 <Route path="/settings/offers" component={OffersSettingsPage} />
                 <Route path="/settings" component={SettingsPage} />
                 <Route path="/profile" component={SettingsPage} />

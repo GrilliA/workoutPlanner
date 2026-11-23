@@ -1,0 +1,99 @@
+.adherence-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+
+  & .title {
+    margin: 0;
+    font-size: var(--text-lg);
+    color: var(--text-h);
+  }
+
+  & .unavailable {
+    margin: 0;
+    color: var(--text);
+    font-size: var(--text-sm);
+  }
+
+  & .percent {
+    margin: 0;
+    color: var(--data);
+    font-size: 2.125rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  & .percent-label {
+    display: block;
+    color: var(--text);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    letter-spacing: normal;
+  }
+
+  & .days {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  & .day {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-1);
+    min-inline-size: 0;
+  }
+
+  /* The track is the whole day (all meals); the fill is the share done. */
+  & .bar {
+    position: relative;
+    block-size: 6rem;
+    border-radius: var(--radius-sm);
+    background: var(--data-bg);
+    overflow: hidden;
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset-inline: 0;
+      inset-block-end: 0;
+      block-size: var(--done);
+      background: var(--data);
+    }
+  }
+
+  & .day--today .bar::after {
+    background: var(--accent);
+  }
+
+  & .weekday {
+    color: var(--text);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    text-align: center;
+  }
+
+  & .day--today .weekday {
+    color: var(--text-h);
+    font-weight: 800;
+  }
+
+  & .removed {
+    margin: 0;
+    padding: var(--space-2-5) var(--space-3);
+    border-radius: var(--radius-md);
+    background: var(--data-bg);
+    color: var(--data);
+    font-size: var(--text-xs);
+    font-weight: 700;
+  }
+}

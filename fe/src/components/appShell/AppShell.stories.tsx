@@ -5,10 +5,10 @@ import { memoryLocation } from "wouter/memory-location";
 import { AuthContext, type AuthContextValue } from "@auth/useAuth";
 import { AppShell } from "@components/appShell";
 
-function AppShellProviders({ children }: { children: ReactNode }) {
+function AppShellProviders({ children, path }: { children: ReactNode; path: string }) {
   const { hook } = useMemo(
-    () => memoryLocation({ path: "/today" }),
-    [],
+    () => memoryLocation({ path }),
+    [path],
   );
 
   const auth = useMemo<AuthContextValue>(
@@ -64,8 +64,8 @@ const meta = {
     children: <FakePage />,
   },
   decorators: [
-    (Story) => (
-      <AppShellProviders>
+    (Story, context) => (
+      <AppShellProviders path={String(context.parameters.path ?? "/today")}>
         <Story />
       </AppShellProviders>
     ),
@@ -87,4 +87,9 @@ export const HideBottomNav: Story = {
   args: {
     hideBottomNav: true,
   },
+};
+
+/** A page of the Alimentazione group: active in the sidebar, under "Altro" in the bottom bar. */
+export const PaginaAlimentazione: Story = {
+  parameters: { path: "/meal-tags" },
 };

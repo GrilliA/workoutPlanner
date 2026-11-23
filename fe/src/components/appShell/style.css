@@ -126,6 +126,21 @@
       }
     }
 
+    & .group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      margin-top: var(--space-3);
+    }
+
+    & .group-label {
+      margin: 0;
+      padding: 0 0.9rem var(--space-1);
+      color: var(--text);
+      font-size: var(--text-xs);
+      font-weight: 700;
+    }
+
     & .logout {
       width: 100%;
       margin-top: auto;
@@ -193,9 +208,84 @@
         overflow-wrap: anywhere;
       }
 
-      &[aria-current="page"] {
+      &[aria-current="page"],
+      &.item--active {
         color: var(--on-ink);
         background: var(--ink);
+      }
+    }
+
+    & .more {
+      border: 0;
+      background: transparent;
+      font: inherit;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+
+      &:focus-visible {
+        outline: var(--focus-ring-width) solid var(--accent-text);
+        outline-offset: calc(-1 * var(--focus-ring-width));
+      }
+    }
+  }
+
+  /* "Altro": a native popover (light dismiss, Esc, focus back to the button) above the bar's
+     right edge. Fixed coordinates: the bar is fixed too, so they never drift. */
+  & .more-menu {
+    position: fixed;
+    inset: auto;
+    inset-inline-end: calc(var(--space-2) + var(--safe-right));
+    inset-block-end: calc(var(--bottom-nav-offset) - var(--space-4));
+    box-sizing: border-box;
+    inline-size: min(16rem, calc(100vw - 2 * var(--space-2)));
+    margin: 0;
+    padding: var(--space-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    background: var(--surface);
+    color: var(--text-h);
+    box-shadow: var(--shadow-strong);
+
+    & ul {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-1);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    & .more-link {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      min-block-size: var(--touch-target);
+      padding: 0 var(--space-3);
+      border-radius: var(--radius-lg);
+      color: var(--text-h);
+      font-weight: 600;
+      text-decoration: none;
+
+      & .icon {
+        inline-size: var(--space-5);
+        block-size: var(--space-5);
+        flex: none;
+      }
+
+      &:hover {
+        background: var(--hover-bg);
+      }
+
+      &:focus-visible {
+        outline: var(--focus-ring-width) solid var(--accent-text);
+        outline-offset: calc(-1 * var(--focus-ring-width));
+      }
+
+      &[aria-current="page"] {
+        background: var(--ink);
+        color: var(--on-ink);
+        font-weight: 700;
       }
     }
   }

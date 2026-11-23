@@ -1,0 +1,1 @@
+export { NutritionEmpty } from "./NutritionEmpty";

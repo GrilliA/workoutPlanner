@@ -1,0 +1,113 @@
+.meal-tag-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-block: var(--space-2);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+
+  &[data-changed] {
+    padding-inline-end: var(--space-2);
+    border-bottom-color: transparent;
+    border-radius: var(--radius-lg);
+    background: var(--surface-elevated);
+  }
+
+  /* Narrow: name and Archivia on one line, the usage under the name. */
+  & .line {
+    display: grid;
+    grid-template-columns: var(--touch-target) minmax(0, 1fr) auto;
+    grid-template-areas:
+      "handle name archive"
+      ". usage usage";
+    align-items: center;
+    gap: var(--space-1) var(--space-2);
+
+    & > .reorder-handle {
+      grid-area: handle;
+    }
+
+    & > .rename {
+      grid-area: name;
+    }
+
+    & > .usage {
+      grid-area: usage;
+      padding-inline-start: var(--space-3);
+    }
+
+    & > .archive {
+      grid-area: archive;
+    }
+  }
+
+  /* While renaming the form takes the whole line: field, Annulla and Rinomina. */
+  &[data-changed] .line > .rename {
+    grid-column: 2 / -1;
+  }
+
+  & .rename {
+    min-inline-size: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  & .name {
+    flex: 1 1 10rem;
+    min-inline-size: 0;
+    min-block-size: var(--touch-target);
+    padding-block: 0;
+    border-color: transparent;
+    background: transparent;
+    font-weight: 700;
+
+    &:hover,
+    &:focus-visible {
+      border-color: var(--accent-border);
+      background: var(--surface);
+    }
+  }
+
+  &[data-changed] .name {
+    border-color: var(--accent-border);
+    background: var(--surface);
+  }
+
+  & .rename-actions {
+    display: flex;
+    gap: var(--space-2);
+  }
+
+  & .usage {
+    color: var(--text);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  & .button-base {
+    min-block-size: var(--touch-target);
+  }
+
+  & .note {
+    margin: 0;
+    padding-inline-start: calc(var(--touch-target) + var(--space-2));
+    color: var(--warning);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    text-wrap: pretty;
+  }
+}
+
+@container meal-tags (width >= 32rem) {
+  .meal-tag-row .line {
+    grid-template-columns: var(--touch-target) minmax(0, 1fr) auto auto;
+    grid-template-areas: "handle name usage archive";
+
+    & > .usage {
+      padding-inline-start: 0;
+    }
+  }
+}
