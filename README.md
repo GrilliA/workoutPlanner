@@ -3,12 +3,12 @@
 Coach panel on the web + athlete app on iOS/Android. Programs, sessions, and analytics.
 
 <p align="center">
-  <img src="docs/screenshots/web-dashboard.png" alt="Coach dashboard" />
+  <img src="docs/screenshots/web-today.png" alt="Coach: Oggi" />
 </p>
 
 ## Coach (web)
 
-Assign programs, build workouts, follow clients, and check analytics.
+Start from today’s list, assign programs, build workouts, follow clients, track payments, and check analytics.
 
 <p align="center">
   <img src="docs/screenshots/web-login.png" alt="Coach login" width="48%" />
@@ -18,6 +18,10 @@ Assign programs, build workouts, follow clients, and check analytics.
 <p align="center">
   <img src="docs/screenshots/web-clients.png" alt="Clients" width="48%" />
   <img src="docs/screenshots/web-create-workout.png" alt="Create workout" width="48%" />
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/web-business.png" alt="Business" width="48%" />
 </p>
 
 ## Athlete (mobile)
@@ -36,7 +40,7 @@ Open today’s program, start the workout, log sets, track progress.
   <img src="docs/screenshots/mobile-login.png" width="240" alt="Athlete login" />
 </p>
 
-Screenshots of the "Sole" design (M4), rendered from the Expo web build and the coach panel with sample data.
+Screenshots of the "Sole" design, rendered from the Expo web build and the coach panel with sample data (updated November 2026).
 
 ## Stack
 

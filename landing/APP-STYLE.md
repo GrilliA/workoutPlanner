@@ -7,7 +7,7 @@ Dopo la #83 su `main` c'è **un solo merge**: la **PR #84** "feat(mobile): anima
 - **Tab bar animata** (`GlassTabBar.tsx`): la tab attiva si allarga in 260 ms (easing cubic-out), la pill ink compare e appare l'etichetta. Cambiando tab lo schermo non sfuma più (`animation: "none"`).
 - **"Termina allenamento"** (`SessionActionBar.tsx`) non è più una fascia con bordo: è una **pill bianca flottante con l'ombra della tab bar**, alta 64px. Le azioni flottanti si nascondono quando la tastiera è aperta (`useKeyboardVisible.ts`).
 - **Builder scheda mobile** (`WorkoutExerciseSheet.tsx`, `SetPrescriptionEditor.tsx`, `WorkoutBuilder.tsx`): foglio "Nuovo/Modifica esercizio" con filtri per gruppo muscolare (Petto, Schiena, Gambe, Spalle, Braccia), prescrizione delle serie con selettori a rotella (verticali e orizzontali), bottoni "Salva esercizio", "Salva esercizi" e "Salva scheda". Ogni giorno viene validato da solo, prima di chiedere il nome della scheda.
-- Gli screenshot in `docs/screenshots/` **non sono stati rigenerati**: mostrano ancora il robot.
+- Gli screenshot in `docs/screenshots/` sono stati rigenerati il 25/11/2026: niente più robot. La home coach ora è "Oggi" (`web-today.png`) e c'è anche `web-business.png`.
 
 
 _Analisi del 17/10/2026 su `GrilliA/workoutPlanner`, branch `main`. Il tema Sole è entrato con la PR #83 "feat: Sole theme, set prescriptions, and coach builder (M4, W9)", mergiata il 17/10/2026 alle 14:10 (ora di Roma). Prima c'era un tema **scuro azzurro** (M3b), che il WORKBOOK definisce "freddo e tecnico" e che è stato sostituito._
