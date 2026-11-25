@@ -1,14 +1,26 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Animated, Easing, Pressable, StyleSheet, View } from "react-native";
 import type { BottomTabBarProps } from "expo-router/build/react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, radii, shadows, spacing } from "../../theme";
 import { AppText } from "../text";
+import {
+  BAR_PADDING,
+  CLOSED_FLEX,
+  ICON_SIZE,
+  LABEL_GAP,
+  OPEN_FLEX,
+  OPEN_TAB_PADDING,
+  TAB_GAP,
+  activeLabelFits,
+  activePillContentWidth,
+  isHiddenTabStyle,
+} from "./tabBarLayout";
 
 const TAB_WIDTH_MS = 260;
-const CLOSED_FLEX = 1;
-const OPEN_FLEX = 1.8;
 const LABEL_MAX_WIDTH = 104;
+/** Con il testo di sistema molto grande l'etichetta cresce al massimo del 30%. */
+const LABEL_MAX_FONT_SCALE = 1.3;
 /**
  * Colore della pill attiva: cacao in Allenamento, indaco in Alimentazione.
  * `clear` è lo stesso colore con alfa 0, così durante l'animazione la pill non vira di tinta.
@@ -46,6 +58,8 @@ type GlassTabBarProps = BottomTabBarProps & {
 type TabBarItemProps = {
   focused: boolean;
   activePillTone: ActivePillTone;
+  /** Spazio per icona + etichetta nella pill aperta; null finché la barra non è misurata. */
+  openContentWidth: number | null;
   label: string;
   closedIcon: ReactNode;
   openIcon: ReactNode;
@@ -58,6 +72,7 @@ type TabBarItemProps = {
 function TabBarItem({
   focused,
   activePillTone,
+  openContentWidth,
   label,
   closedIcon,
   openIcon,
@@ -79,6 +94,12 @@ function TabBarItem({
   }, [focused, openProgress]);
 
   const pillColors = ACTIVE_PILL_COLORS[activePillTone];
+  // Larghezza naturale dell'etichetta, misurata fuori schermo. Se non ci sta intera
+  // accanto all'icona, la pill aperta mostra solo l'icona (mai "O…" o "Pi…");
+  // il nome resta nell'etichetta di accessibilità.
+  const [labelWidth, setLabelWidth] = useState<number | null>(null);
+  const isMeasured = openContentWidth !== null && labelWidth !== null;
+  const showLabel = !isMeasured || activeLabelFits(openContentWidth, labelWidth);
   const pillStyle = {
     flexGrow: openProgress.interpolate({
       inputRange: [0, 1],
@@ -86,7 +107,7 @@ function TabBarItem({
     }),
     paddingHorizontal: openProgress.interpolate({
       inputRange: [0, 1],
-      outputRange: [0, spacing.md],
+      outputRange: [0, OPEN_TAB_PADDING],
     }),
     backgroundColor: openProgress.interpolate({
       inputRange: [0, 0.15, 1],
@@ -106,14 +127,14 @@ function TabBarItem({
     }),
   };
   const labelStyle = {
-    opacity: openProgress,
+    opacity: showLabel ? openProgress : 0,
     maxWidth: openProgress.interpolate({
       inputRange: [0, 1],
-      outputRange: [0, LABEL_MAX_WIDTH],
+      outputRange: [0, showLabel ? LABEL_MAX_WIDTH : 0],
     }),
     marginLeft: openProgress.interpolate({
       inputRange: [0, 1],
-      outputRange: [0, 6],
+      outputRange: [0, showLabel ? LABEL_GAP : 0],
     }),
   };
 
@@ -137,18 +158,33 @@ function TabBarItem({
           ) : null}
         </View>
         <Animated.View style={[styles.labelClip, labelStyle]}>
-          <AppText style={[styles.label, { color: pillColors.content }]} numberOfLines={1}>
+          <AppText
+            style={[styles.label, { color: pillColors.content }]}
+            numberOfLines={1}
+            maxFontSizeMultiplier={LABEL_MAX_FONT_SCALE}
+          >
             {label}
           </AppText>
         </Animated.View>
       </Pressable>
+      <View
+        style={styles.measureLayer}
+        pointerEvents="none"
+        aria-hidden
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      >
+        <AppText
+          style={styles.label}
+          numberOfLines={1}
+          maxFontSizeMultiplier={LABEL_MAX_FONT_SCALE}
+          onLayout={(event) => setLabelWidth(event.nativeEvent.layout.width)}
+        >
+          {label}
+        </AppText>
+      </View>
     </Animated.View>
   );
-}
-
-/** `href: null` di expo-router diventa `tabBarItemStyle: { display: "none" }`. */
-function isHiddenTab(options: BottomTabBarProps["descriptors"][string]["options"] | undefined) {
-  return StyleSheet.flatten(options?.tabBarItemStyle)?.display === "none";
 }
 
 /**
@@ -166,17 +202,23 @@ export function GlassTabBar({
 }: GlassTabBarProps) {
   const openContentColor = ACTIVE_PILL_COLORS[activePillTone].content;
   const bottomOffset = Math.max(insets.bottom, TAB_BAR_MIN_BOTTOM_OFFSET);
+  const [barWidth, setBarWidth] = useState<number | null>(null);
+  const visibleTabCount = state.routes.filter(
+    (route) => !isHiddenTabStyle(descriptors[route.key]?.options?.tabBarItemStyle),
+  ).length;
+  const openContentWidth =
+    barWidth === null ? null : activePillContentWidth(barWidth, visibleTabCount);
 
   return (
     <View
       style={[styles.wrap, { bottom: bottomOffset }]}
       pointerEvents="box-none"
     >
-      <View style={styles.bar}>
+      <View style={styles.bar} onLayout={(event) => setBarWidth(event.nativeEvent.layout.width)}>
         {state.routes.map((route, index) => {
           const focused = state.index === index;
           const options = descriptors[route.key]?.options;
-          if (isHiddenTab(options)) {
+          if (isHiddenTabStyle(options?.tabBarItemStyle)) {
             return null;
           }
           const label = (options?.title as string) ?? route.name;
@@ -201,6 +243,7 @@ export function GlassTabBar({
               key={route.key}
               focused={focused}
               activePillTone={activePillTone}
+              openContentWidth={openContentWidth}
               label={label}
               closedIcon={
                 renderIcon?.({ focused: false, color: colors.text, size: 23 }) ?? null
@@ -231,8 +274,8 @@ const styles = StyleSheet.create({
     borderRadius: radii.pill,
     flexDirection: "row",
     alignItems: "stretch",
-    gap: 4,
-    padding: 6,
+    gap: TAB_GAP,
+    padding: BAR_PADDING,
     backgroundColor: colors.surface,
     ...shadows.tabBar,
   },
@@ -251,14 +294,23 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   iconWrap: {
-    width: 23,
-    height: 23,
+    width: ICON_SIZE,
+    height: ICON_SIZE,
     position: "relative",
   },
   iconOpen: {
     position: "absolute",
     left: 0,
     top: 0,
+  },
+  measureLayer: {
+    position: "absolute",
+    left: -10000,
+    top: 0,
+    width: 1000,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    opacity: 0,
   },
   labelClip: {
     overflow: "hidden",
