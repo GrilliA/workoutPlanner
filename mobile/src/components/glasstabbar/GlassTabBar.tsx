@@ -9,8 +9,17 @@ const TAB_WIDTH_MS = 260;
 const CLOSED_FLEX = 1;
 const OPEN_FLEX = 1.8;
 const LABEL_MAX_WIDTH = 104;
-/** Stesso cacao di `colors.ink`, alfa 0, così la pill non vira di tinta. */
-const INK_CLEAR = "rgba(35, 26, 20, 0)";
+/**
+ * Colore della pill attiva: cacao in Allenamento, indaco in Alimentazione.
+ * `clear` è lo stesso colore con alfa 0, così durante l'animazione la pill non vira di tinta.
+ * Testo e icone sopra restano bianchi (`onInk` / `onData`, contrasto in `check-contrast`).
+ */
+const ACTIVE_PILL_COLORS = {
+  ink: { fill: colors.ink, clear: "rgba(35, 26, 20, 0)", content: colors.onInk },
+  data: { fill: colors.data, clear: "rgba(59, 63, 158, 0)", content: colors.onData },
+} as const;
+
+type ActivePillTone = keyof typeof ACTIVE_PILL_COLORS;
 
 /** Condivisi con le pill flottanti delle altre schermate (es. fine allenamento). */
 export const TAB_BAR_HEIGHT = 64;
@@ -30,10 +39,13 @@ export function useTabBarInset(): number {
 type GlassTabBarProps = BottomTabBarProps & {
   /** Badge "scheda nuova" sull'icona Schede — dati reali collegati in M3d. */
   hasUnseenAssignment?: boolean;
+  /** Colore della pill attiva per modalità (default cacao). */
+  activePillTone?: ActivePillTone;
 };
 
 type TabBarItemProps = {
   focused: boolean;
+  activePillTone: ActivePillTone;
   label: string;
   closedIcon: ReactNode;
   openIcon: ReactNode;
@@ -45,6 +57,7 @@ type TabBarItemProps = {
 /** La tab attiva si apre in larghezza, quella precedente si chiude. */
 function TabBarItem({
   focused,
+  activePillTone,
   label,
   closedIcon,
   openIcon,
@@ -65,6 +78,7 @@ function TabBarItem({
     return () => animation.stop();
   }, [focused, openProgress]);
 
+  const pillColors = ACTIVE_PILL_COLORS[activePillTone];
   const pillStyle = {
     flexGrow: openProgress.interpolate({
       inputRange: [0, 1],
@@ -76,7 +90,7 @@ function TabBarItem({
     }),
     backgroundColor: openProgress.interpolate({
       inputRange: [0, 0.15, 1],
-      outputRange: [INK_CLEAR, colors.ink, colors.ink],
+      outputRange: [pillColors.clear, pillColors.fill, pillColors.fill],
     }),
   };
   const closedIconStyle = {
@@ -123,7 +137,7 @@ function TabBarItem({
           ) : null}
         </View>
         <Animated.View style={[styles.labelClip, labelStyle]}>
-          <AppText style={styles.label} numberOfLines={1}>
+          <AppText style={[styles.label, { color: pillColors.content }]} numberOfLines={1}>
             {label}
           </AppText>
         </Animated.View>
@@ -132,9 +146,15 @@ function TabBarItem({
   );
 }
 
+/** `href: null` di expo-router diventa `tabBarItemStyle: { display: "none" }`. */
+function isHiddenTab(options: BottomTabBarProps["descriptors"][string]["options"] | undefined) {
+  return StyleSheet.flatten(options?.tabBarItemStyle)?.display === "none";
+}
+
 /**
  * Tab bar flottante "Sole", identica per Android/iOS/web: pill bianca con ombra;
- * la tab attiva è una pill ink con icona + etichetta, le altre solo icona.
+ * la tab attiva è una pill ink (indaco in Alimentazione) con icona + etichetta, le altre solo icona.
+ * Le route con `href: null` (l'altra modalità) non si disegnano.
  */
 export function GlassTabBar({
   state,
@@ -142,7 +162,9 @@ export function GlassTabBar({
   navigation,
   insets,
   hasUnseenAssignment = false,
+  activePillTone = "ink",
 }: GlassTabBarProps) {
+  const openContentColor = ACTIVE_PILL_COLORS[activePillTone].content;
   const bottomOffset = Math.max(insets.bottom, TAB_BAR_MIN_BOTTOM_OFFSET);
 
   return (
@@ -154,6 +176,9 @@ export function GlassTabBar({
         {state.routes.map((route, index) => {
           const focused = state.index === index;
           const options = descriptors[route.key]?.options;
+          if (isHiddenTab(options)) {
+            return null;
+          }
           const label = (options?.title as string) ?? route.name;
           const renderIcon =
             typeof options?.tabBarIcon === "function" ? options.tabBarIcon : null;
@@ -175,12 +200,13 @@ export function GlassTabBar({
             <TabBarItem
               key={route.key}
               focused={focused}
+              activePillTone={activePillTone}
               label={label}
               closedIcon={
                 renderIcon?.({ focused: false, color: colors.text, size: 23 }) ?? null
               }
               openIcon={
-                renderIcon?.({ focused: true, color: colors.onInk, size: 23 }) ?? null
+                renderIcon?.({ focused: true, color: openContentColor, size: 23 }) ?? null
               }
               showBadge={showBadge}
               onPress={onPress}
@@ -236,6 +262,8 @@ const styles = StyleSheet.create({
   },
   labelClip: {
     overflow: "hidden",
+    // Con il testo grande la pill è più stretta dell'etichetta: si accorcia l'etichetta, non l'icona.
+    flexShrink: 1,
   },
   badge: {
     position: "absolute",
@@ -261,6 +289,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 18,
     fontWeight: "700",
-    color: colors.onInk,
   },
 });
