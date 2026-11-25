@@ -37,6 +37,8 @@ type AthleteCoaching = {
 
 `AthleteCoach` resta `{ coachId, email, name, linkedAt }` come oggi. Le due route danno sempre lo stesso `coaching` per lo stesso atleta e lo stesso giorno.
 
+AL4 ha aggiunto a `GET /athlete/home`, dopo `coaching`, il campo `nutrition` (piano pasti): forma e regole in [`al-piano-pasti.md`](al-piano-pasti.md), sezione **Atleta (AL4)**. I due campi sono indipendenti.
+
 ## Quando `coaching` è `null`
 
 1. L'atleta non ha un coach collegato.

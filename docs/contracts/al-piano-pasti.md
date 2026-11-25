@@ -1,7 +1,7 @@
 # Contratto AL — Piano pasti (coach AL2, atleta AL4)
 
-Stato: **proposta per il Contract Gate di AL2**, da approvare. La parte coach è implementata in AL2; la parte atleta è scritta qui perché il contratto sia uno solo, ed è marcata **AL4, non implementata**.
-Piano: `docs/plans/AL-alimentazione.md` (sezioni 4, 5, AL2, AL4). Schema AL1: `be/src/db/schema/{mealtags,mealplans,mealplanmeals,mealplanitems,meallogs,mealplantemplates,mealplantemplatemeals}.ts`. Logica pura: `be/src/services/mealPlan.ts`. Validazione: `be/src/services/mealPlanValidation.ts`. Accesso al DB: `be/src/services/mealPlanAccess.ts` (piano), `mealTagAccess.ts` (tag), `mealPlanTemplateAccess.ts` (template). Route coach: `be/src/routes/coachmealplan.ts`.
+Stato (2026-11-23): **implementato** per il coach (AL2, con le aggiunte di AL3) e per l'atleta (AL4, sezione **Atleta (AL4)**), in un solo contratto. Nato come proposta per il Contract Gate di AL2.
+Piano: `docs/plans/AL-alimentazione.md` (sezioni 4, 5, AL2, AL4). Schema AL1: `be/src/db/schema/{mealtags,mealplans,mealplanmeals,mealplanitems,meallogs,mealplantemplates,mealplantemplatemeals}.ts`. Logica pura: `be/src/services/mealPlan.ts`. Validazione: `be/src/services/mealPlanValidation.ts`. Accesso al DB: `be/src/services/mealPlanAccess.ts` (piano), `mealTagAccess.ts` (tag), `mealPlanTemplateAccess.ts` (template). Route coach: `be/src/routes/coachmealplan.ts`; route atleta: `be/src/routes/athletemealplan.ts`, logica pura dell'atleta `be/src/services/athleteNutrition.ts`.
 Aggiornato il 2026-11-22 con le decisioni dell'utente: tag dei pasti, template di giornata, piano con almeno un pasto (sezione **Decisioni**). Aggiornato il 2026-11-23 per AL3 (additivo): `GET /coach/meal-tags` dà anche i tag archiviati e, per ogni tag, quanti piani attivi e template lo usano.
 
 Lessico: nelle copy sempre "Alimentazione" o "Pasti", mai "Dieta". Gli identificatori dell'API sono in inglese (`meal-plan`, `meal-logs`).
@@ -14,12 +14,12 @@ Lessico: nelle copy sempre "Alimentazione" o "Pasti", mai "Dieta". Gli identific
 - Un atleta ha al massimo un coach (`unique(athlete_id)` su `coach_athletes`): un coach che chiede il cliente di un altro coach riceve 404 `"Client not found"`, senza sapere se l'atleta esiste.
 - Body che non è un oggetto JSON (assente, `null`, array, primitivo) → 400 `"Invalid request body"`. I campi sconosciuti vengono ignorati. Il JSON malformato è tradotto in 400 `"Invalid request body"` dall'error handler globale, come nelle altre route.
 - Errori: sempre `{ "error": string }` in inglese, con testo fisso (senza indici di array), così il pannello li traduce con una tabella; la copy italiana sta nel client.
-- **Ordine dei controlli**: (body troppo grande 413, vedi sotto) → id 400 → `Client not found` 404 → body / query 400 → risorsa 404 (`Meal plan not found`, `Meal not found`, `Meal item not found`, poi `Meal tag not found`; `Meal plan template not found`) → conflitto 409.
+- **Ordine dei controlli** (coach; per l'atleta vedi la sezione **Atleta (AL4)**): (body troppo grande 413, vedi sotto) → id 400 → `Client not found` 404 → body / query 400 → risorsa 404 (`Meal plan not found`, `Meal not found`, `Meal item not found`, poi `Meal tag not found`; `Meal plan template not found`) → conflitto 409.
 - **Body troppo grande → 413 `"Request body too large"`**. Il limite è quello predefinito del parser JSON globale (`express.json()` in `be/src/app.ts`): 100 kB, cioè 102 400 byte di body UTF-8. Il parser gira prima di autenticazione e route, quindi il 413 arriva prima di ogni altro controllo (anche prima di 401 / 400 / 404); il testo viene da `CLIENT_ERROR_MESSAGES` in `be/src/middleware/errorResponse.ts`, sempre come `{ "error": string }`. Nulla viene salvato. Capita solo con il PUT del piano vicino ai tetti e con testo non ASCII: un piano con tutti i tetti pieni pesa circa 82 kB in ASCII e circa 155 kB con lettere accentate o emoji (ogni unità UTF-16 di questi caratteri costa 2 byte in UTF-8), quindi i tetti della tabella **Limiti** da soli non garantiscono di stare sotto il limite. Il pannello: non ritenta lo stesso body, tiene le modifiche locali e mostra un messaggio del tipo "Il piano è troppo lungo: accorcia note o voci e salva di nuovo". Il limite globale non cambia in AL2 (vale per tutte le route sotto `/api`, tranne `/api/waitlist` che ha un proprio parser da 2 kB).
 - Mai 500 per input: ogni valore che arriva al DB è già validato (id, lunghezze, formato dell'ora, date). Il testo con il carattere U+0000 è rifiutato (Postgres lo rifiuta con un 500): `"<campo> must not contain a NUL character"`.
 - **Testi**: si tolgono gli spazi iniziali e finali; un testo facoltativo vuoto dopo il taglio diventa `null`. Le lunghezze si contano dopo il taglio, in **unità UTF-16** (`String.length` di JavaScript, come nel pannello): una lettera accentata vale 1, la maggior parte delle emoji vale 2. Un contatore del pannello che conta i caratteri visibili (grafemi) sottostima la lunghezza.
 - **Date**: stringhe `YYYY-MM-DD` di calendario valide tra `2000-01-01` e `2099-12-31`; "oggi" è `todayInRome()`.
-- **Additivo**: nessuna route esistente cambia forma in AL2. `GET /athlete/home` cambia (in modo additivo) solo in AL4.
+- **Additivo**: nessuna route esistente cambia forma in AL2. `GET /athlete/home` cambia (in modo additivo) in AL4 con il campo `nutrition`.
 
 ## Endpoint
 
@@ -36,11 +36,11 @@ Lessico: nelle copy sempre "Alimentazione" o "Pasti", mai "Dieta". Gli identific
 | PUT | `/coach/clients/:athleteId/meal-plan` | 201 (creato) / 200 (aggiornato) `MealPlan` | AL2 |
 | PATCH | `/coach/clients/:athleteId/meal-plan` | 200 `MealPlan` | AL2 |
 | GET | `/coach/clients/:athleteId/meal-logs?from=&to=` | 200 `{ days: MealDayAdherence[] }` | AL2 |
-| GET | `/athlete/home` (campo `nutrition`) | 200 | AL4, non implementata |
-| GET | `/athlete/meal-plan/today` | 200 | AL4, non implementata |
-| PUT | `/athlete/meal-logs` | 200 `MealLog` | AL4, non implementata |
-| DELETE | `/athlete/meal-logs?mealId=&date=` | 204 | AL4, non implementata |
-| GET | `/athlete/meal-logs?from=&to=` | 200 `{ logs: MealLog[] }` | AL4, non implementata |
+| GET | `/athlete/home` (campo `nutrition`) | 200 `AthleteHome & { coaching; nutrition: AthleteNutrition \| null }` | AL4 |
+| GET | `/athlete/meal-plan/today` | 200 `MealPlanToday` | AL4 |
+| PUT | `/athlete/meal-logs` | 200 `MealLog` | AL4 |
+| DELETE | `/athlete/meal-logs?mealId=&date=` | 204 | AL4 |
+| GET | `/athlete/meal-logs?from=&to=` | 200 `{ days: MealDayAdherence[] }` | AL4 |
 
 Niente `DELETE` del piano in v1: il coach lo disattiva con `PATCH { isActive: false }`. Niente `DELETE` dei tag: un tag si archivia (sezione **Tag dei pasti**). Niente endpoint "applica template": il pannello legge il template e salva il piano con il normale PUT.
 
@@ -127,7 +127,7 @@ Le colonne interne (`coach_id`, `meal_plan_id`, `template_id`, `created_at` dei 
 
 ## Limiti
 
-Tetti di sicurezza, non regole di prodotto (confermati dall'utente; quelli di tag e template proposti il 2026-11-22, da confermare). Il minimo di 1 pasto invece è una regola di prodotto (decisione 2026-11-22). I tetti per coach (tag, righe di tag, template) dipendono da quello che il coach ha già salvato, quindi rispondono 409 e non 400. Costanti in `mealPlanValidation.ts`, tranne il 280 della nota di una registrazione, valore previsto per AL4: arriverà con la sua validazione e oggi non è nel codice. Le lunghezze sono in unità UTF-16 (vedi **Testi**).
+Tetti di sicurezza, non regole di prodotto (confermati dall'utente; quelli di tag e template proposti il 2026-11-22, da confermare). Il minimo di 1 pasto invece è una regola di prodotto (decisione 2026-11-22). I tetti per coach (tag, righe di tag, template) dipendono da quello che il coach ha già salvato, quindi rispondono 409 e non 400. Costanti in `mealPlanValidation.ts` (il 280 della nota di una registrazione è `MAX_MEAL_LOG_NOTE_LENGTH`, arrivato con AL4). Le lunghezze sono in unità UTF-16 (vedi **Testi**).
 
 | Limite | Valore | Errore 400 |
 | --- | --- | --- |
@@ -143,7 +143,7 @@ Tetti di sicurezza, non regole di prodotto (confermati dall'utente; quelli di ta
 | quantità | 60 | `"meals.items.quantity must be at most 60 characters"` |
 | note del piano | 1000 | `"notes must be at most 1000 characters"` |
 | note del pasto | 500 | `"meals.notes must be at most 500 characters"` |
-| intervallo di `meal-logs` | 31 giorni (estremi inclusi) | `"Range must be at most 31 days"` |
+| intervallo di `meal-logs` (coach e atleta) | 31 giorni (estremi inclusi) | `"Range must be at most 31 days"` |
 | nota di una registrazione (AL4) | 280 | `"note must be at most 280 characters"` |
 
 ## Coach (AL2)
@@ -280,17 +280,97 @@ Errori: 400 `"Invalid athlete id"`, 404 `"Client not found"`, 400 `"Invalid requ
 
 Errori: 400 `"Invalid athlete id"`, 404 `"Client not found"`, 400 `"from must be YYYY-MM-DD"`, 400 `"to must be YYYY-MM-DD"`, 400 `"to must be on or after from"`, 400 `"Range must be at most 31 days"`.
 
-## Atleta (AL4, non implementata)
+## Atleta (AL4)
 
-Questa parte è la proposta del piano (sezione 5) e verrà rivista al Contract Gate di AL4. Nessuna di queste route esiste dopo AL2.
+Implementata in AL4 (Contract Gate di AL4: questa sezione sostituisce la proposta scritta in AL2; le differenze sono in fondo, **Cambi rispetto alla proposta**). Route sotto `/api/athlete`, dietro `requireAuth` + `requireRole("athlete")`: senza token 401, con un token da coach 403. Router `athleteMealPlanRouter`, montato dentro `athleteRouter`.
 
-- `GET /athlete/home`, campo additivo `nutrition: { mealPlanId: number; updatedAt: string } | null`: `null` se l'atleta non ha coach o il piano non c'è o è disattivato (H1: modulo attivo = piano attivo). Con `null` l'app nasconde lo switch Allenamento / Alimentazione. Convive con `coaching` (R6) senza toccarlo.
-- `GET /athlete/meal-plan/today` → `{ date: string; mealPlan: (MealPlan & { meals: (Meal & { log: MealLog | null })[] }) | null; nextMealId: number | null }`. `date` è oggi di Roma; `nextMealId` è il primo pasto in ordine senza registrazione per `date` (`nextMealId` in `mealPlan.ts`); `mealPlan: null` senza piano attivo.
-- `PUT /athlete/meal-logs` body `{ mealId: number; date: string; status: MealLogStatus; note?: string | null }` → 200 `MealLog`. Idempotente: la unique `(athlete_id, date, meal_id)` tiene una riga sola, due PUT uguali danno lo stesso risultato. `date` deve essere oggi o ieri di Roma (H7, `isLoggableDate`). `mealName` è copiato dal nome del tag del pasto al momento della scrittura.
-- `DELETE /athlete/meal-logs?mealId=&date=` → 204, anche se la registrazione non c'era (idempotente). Stessa regola su `date`.
-- `GET /athlete/meal-logs?from=&to=` → `{ logs: MealLog[] }`, al massimo 31 giorni, per Progressi.
+**Quale piano.** L'atleta vede solo il piano della coppia (coach collegato adesso, atleta). Un atleta ha al massimo un coach e allo scollegamento piano e registrazioni sono cancellati a cascata (H8), quindi dopo uno scollegamento non resta nulla; dopo il collegamento a un altro coach si vede solo il piano del nuovo coach (finché non ne crea uno: nessun piano). **Piano attivo** = il piano della coppia con `isActive: true`. Le registrazioni si scrivono solo sul piano attivo.
 
-Errori proposti: 400 `"Invalid request body"`, 400 `"Invalid meal id"`, 400 `"date must be today or yesterday"`, 400 `"status must be done or other"`, 400 `"note must be at most 280 characters"`, 404 `"Meal plan not found"` (nessun piano attivo), 404 `"Meal not found"` (pasto non del piano attivo dell'atleta), più i 400 sull'intervallo come per il coach.
+### Tipi
+
+```ts
+// GET /athlete/home, campo additivo accanto a `coaching` (R6).
+type AthleteNutrition = {
+  mealPlanId: number;
+  updatedAt: string;          // ISO timestamp del piano: cambia quando il coach salva o attiva/disattiva; il client può usarlo per sapere che il piano in cache è vecchio
+  mealCount: number;          // pasti del piano adesso (>= 1)
+  doneToday: number;          // pasti del piano segnati "fatto" oggi (giorno di Roma)
+  otherToday: number;         // pasti del piano segnati "ho mangiato altro" oggi
+  nextMeal: { id: number; name: string; timeOfDay: string | null } | null; // primo pasto in ordine senza registrazione oggi; null se sono tutti segnati
+};
+
+// GET /athlete/meal-plan/today
+type MealPlanToday = {
+  date: string;               // oggi, YYYY-MM-DD di Roma
+  mealPlan: (MealPlan & { meals: (Meal & { log: MealLog | null })[] }) | null; // null senza piano attivo
+  nextMealId: number | null;  // = nutrition.nextMeal.id; null senza piano attivo o con tutti i pasti segnati
+};
+```
+
+`MealPlan`, `Meal`, `MealItem`, `MealLog` e `MealDayAdherence` sono quelli della sezione **Tipi di risposta**: stessi campi del coach (anche `athleteId`, `isActive`, che nell'atleta vale sempre `true`, e `tagId`). `doneToday + otherToday` non supera mai `mealCount`: come `MealDayAdherence`, si contano i pasti del piano attuale, e una registrazione di un pasto tolto non conta (si legge in `meal-logs` come `removedCount`).
+
+### GET `/athlete/home`: campo `nutrition`
+
+`nutrition: AthleteNutrition | null`, sempre presente, in fondo alla risposta, accanto a `coaching`; gli altri campi non cambiano. **`null` nasconde lo switch Allenamento / Alimentazione**, quando:
+1. l'atleta non ha un coach collegato;
+2. il coach collegato non ha un piano per l'atleta (anche se un ex coach ne aveva uno: è stato cancellato allo scollegamento);
+3. il piano è disattivato (H1);
+4. il piano non ha pasti (il PUT del coach lo rifiuta, ma un piano più vecchio potrebbe non averne).
+
+Il mobile già pubblicato ignora il campo (`z.object` scarta le chiavi sconosciute). Il mobile di AL5 lo legge con una via di fuga (`.catch(null)`): un `nutrition` malformato o assente (backend precedente ad AL4) diventa `null` e lo switch resta nascosto. `coaching` e `nutrition` sono letti in modo indipendente (`loadAthleteCoaching` / `loadAthleteNutrition` in `athleteHome.ts`) e non si toccano. Per la Home la lettura è leggera (`loadActiveMealPlanSummary`: piano, id / tag / ora dei pasti, registrazioni di oggi, senza le voci) ed esce subito senza piano attivo. Un errore del database in questa lettura fa fallire la Home (500), come per gli altri campi.
+
+### GET `/athlete/meal-plan/today`
+
+200 `MealPlanToday`. Pasti in ordine di `position` (a parità, di `id`), con il nome del tag, l'orario, le voci in ordine e le note del piano e del pasto; per ogni pasto la registrazione di oggi (`log`), o `null`. Senza piano attivo (nessun coach, nessun piano, piano disattivato): `{ date, mealPlan: null, nextMealId: null }`, non un 404, così l'app ha una sola forma da leggere. Nessun errore oltre a 401 / 403. Lettura completa: `loadActiveMealPlanDay`.
+
+**Letture senza snapshot.** `today` e `nutrition` leggono piano, pasti e registrazioni con query separate, fuori da una transazione. Se il coach salva il piano proprio in mezzo, la risposta può avere un `updatedAt` più vecchio dei pasti che mostra: è innocuo, perché alla prossima lettura il client vede un `updatedAt` diverso e rilegge.
+
+### PUT `/athlete/meal-logs`
+
+```ts
+type MealLogInput = {
+  mealId: number;             // un pasto del piano attivo dell'atleta
+  date: string;               // YYYY-MM-DD, oggi o ieri (giorno di Roma, H7)
+  status: "done" | "other";
+  note?: string | null;       // assente, null o vuoto dopo il taglio → null; 1..280 caratteri
+};
+```
+
+→ 200 `MealLog`. Sempre 200, anche alla prima scrittura: il client non deve distinguere creato da aggiornato.
+
+- **Idempotente**: la unique `(athlete_id, date, meal_id)` tiene una riga per pasto e giorno; la scrittura è un upsert (`INSERT … ON CONFLICT DO UPDATE`). Due PUT uguali danno lo stesso `MealLog` (cambia solo `updatedAt`) e una riga sola, anche se arrivano insieme. Un PUT con un altro `status` o un'altra `note` sostituisce i due campi (la nota assente diventa `null`: il body è la registrazione come deve essere).
+- `mealName` è il nome del tag del pasto **al momento della scrittura** (anche quando il PUT aggiorna una registrazione esistente). Rinominare il tag dopo non lo cambia.
+- Senza piano attivo (nessun coach, nessun piano, piano disattivato) → 404 `"Meal plan not found"`: l'app torna in modalità Allenamento. Con un piano attivo, un `mealId` che non è un pasto di quel piano (inesistente, tolto dal coach, di un altro piano, di un altro atleta o di un altro coach) → 404 `"Meal not found"`, la stessa risposta in tutti i casi.
+- H6: segnare un pasto richiede la rete; l'app non mette in coda le scritture. Dopo un errore di rete può ritentare lo stesso body: è idempotente.
+
+Errori, in quest'ordine: 400 `"Invalid request body"` (body non oggetto); 400 `"mealId is required"` (assente o `null`), `"Invalid meal id"` (non intero, `< 1` o oltre il massimo di un `integer` di Postgres); 400 `"date must be YYYY-MM-DD"` (non una data di calendario tra `2000-01-01` e `2099-12-31`), `"date must be today or yesterday"`; 400 `"status must be done or other"`; 400 `"note must be a string or null"`, `"note must not contain a NUL character"`, `"note must be at most 280 characters"`; 404 `"Meal plan not found"`; 404 `"Meal not found"`. Prima di tutti, 413 `"Request body too large"` (vedi **Regole comuni**).
+
+### DELETE `/athlete/meal-logs?mealId=&date=`
+
+Annulla la registrazione dell'atleta per quel pasto e quel giorno → 204, **anche se non c'era** (idempotente: due DELETE danno due 204). Stessa regola su `date` del PUT (oggi o ieri): annullare un giorno più vecchio riscriverebbe lo storico. Serve un piano attivo, come per scrivere; un `mealId` che non è del piano attivo non trova nessuna registrazione dell'atleta → 204, senza toccare nulla di altri.
+
+Errori, in quest'ordine: 400 `"mealId is required"` (assente o vuoto), `"Invalid meal id"` (non solo cifre, `< 1` o troppo grande; un parametro ripetuto è non valido); 400 `"date must be YYYY-MM-DD"`, `"date must be today or yesterday"`; 404 `"Meal plan not found"`.
+
+### GET `/athlete/meal-logs?from=YYYY-MM-DD&to=YYYY-MM-DD`
+
+200 `{ days: MealDayAdherence[] }`: **la stessa risposta** di `GET /coach/clients/:athleteId/meal-logs` per la coppia (stessa funzione, `loadMealDayAdherence`): una riga per giorno da `from` a `to` inclusi, anche senza registrazioni, contata sui pasti del piano attuale (attivo o no). Senza coach o senza piano: una riga per giorno con tutti i conteggi a 0. Per la griglia degli ultimi 14 giorni di Progressi (AL7): `from = oggi - 13`, `to = oggi`; "saltati" = `mealCount - doneCount - otherCount` per i giorni passati.
+
+Errori: 400 `"from must be YYYY-MM-DD"`, `"to must be YYYY-MM-DD"`, `"to must be on or after from"`, `"Range must be at most 31 days"` (gli stessi del coach).
+
+### Concorrenza e scollegamento
+
+PUT e DELETE girano in una transazione che legge il collegamento dell'atleta (`coach_athletes`) `FOR SHARE` e poi il piano di quel coach `FOR SHARE`: lo stesso ordine (collegamento, poi piano) del PUT del coach, che prende il piano `FOR UPDATE`, e dello scollegamento, che prende il collegamento `FOR UPDATE` e cancella il piano a cascata. I tag non si bloccano (si legge solo il nome). Quindi:
+- **Due PUT insieme** sullo stesso pasto e giorno: entrambi 200, una riga (l'upsert non dà mai un errore di unique).
+- **PUT in corsa con il coach che salva il piano togliendo quel pasto**: se il PUT arriva prima, 200, poi il salvataggio toglie il pasto e la registrazione resta con `mealId: null` e il suo `mealName` (la registrazione orfana prevista per ogni pasto tolto, P2); se arriva dopo, 404 `"Meal not found"`. Mai un 500 per la FK sul pasto.
+- **PUT in corsa con la disattivazione** (PATCH del coach): prima → 200; dopo → 404 `"Meal plan not found"`.
+- **PUT in corsa con lo scollegamento**: prima → 200, poi la cascata cancella piano e registrazioni; dopo → 404 `"Meal plan not found"`. In nessun caso resta una registrazione per un ex coach.
+
+### Cambi rispetto alla proposta di AL2
+
+- `nutrition` era `{ mealPlanId, updatedAt } | null`: aggiunti `mealCount`, `doneToday`, `otherToday`, `nextMeal`, così la Home mostra "Adesso tocca a …" senza una seconda richiesta; `null` anche per un piano senza pasti.
+- `GET /athlete/meal-logs` dava `{ logs: MealLog[] }`: ora `{ days: MealDayAdherence[] }`, la forma del coach. Progressi (AL7) mostra conteggi per giorno, non le singole registrazioni: con la lista grezza il client dovrebbe rifare i conteggi e conoscere i pasti del piano per i "saltati", e coach e atleta potrebbero vedere numeri diversi. Le note e i nomi delle singole registrazioni restano in `today` (per oggi); uno storico dettagliato, se servirà, sarà una route nuova.
+- Errori nuovi rispetto alla lista proposta: `"mealId is required"`, `"date must be YYYY-MM-DD"` (distinto da `"date must be today or yesterday"`), `"note must be a string or null"`, `"note must not contain a NUL character"`.
+- `"Meal plan not found"` vale per PUT e DELETE (nessun piano attivo); `today` risponde 200 con `mealPlan: null`.
 
 ## Decisioni (2026-11-22)
 

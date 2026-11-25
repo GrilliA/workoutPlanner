@@ -117,6 +117,16 @@ export const getAthleteCoach = async (athleteId: number) => {
   return row ?? null;
 };
 
+/** Only the link: for callers that need the coach's id and not their name or email. */
+export const findLinkedCoachId = async (athleteId: number): Promise<number | null> => {
+  const [link] = await db
+    .select({ coachId: coachAthletes.coachId })
+    .from(coachAthletes)
+    .where(eq(coachAthletes.athleteId, athleteId));
+
+  return link?.coachId ?? null;
+};
+
 export const linkAthleteToCoachByCode = async (
   athleteId: number,
   rawCode: string,

@@ -2,6 +2,7 @@ import { and, desc, eq, gte, inArray, isNotNull } from "drizzle-orm";
 import { db } from "../db";
 import { loggedSets, workoutDays, workoutSessions, workouts } from "../db/schema";
 import { athleteCoachingFrom, type AthleteCoaching } from "./athleteCoaching";
+import { athleteNutritionFrom, type AthleteNutrition } from "./athleteNutrition";
 import { getActiveAssignmentForAthlete } from "./coachDashboard";
 import { getAthleteCoach } from "./coachInvite";
 import {
@@ -10,6 +11,7 @@ import {
   groupLoggedSetsBySession,
   isWithinRollingWindow,
 } from "./stats";
+import { loadActiveMealPlanSummary } from "./mealPlanAccess";
 import { loadSubscriptionDetail } from "./subscriptionAccess";
 import {
   listEnrichedWorkoutDays,
@@ -81,6 +83,7 @@ export type AthleteHomeInput = {
   schedules: AthleteHomeSchedule[];
   completedSessions: AthleteHomeSession[];
   coaching: AthleteCoaching | null;
+  nutrition: AthleteNutrition | null;
 };
 
 export type AthleteHome = {
@@ -114,6 +117,7 @@ export type AthleteHome = {
   } | null;
   hasUnseenAssignment: boolean;
   coaching: AthleteCoaching | null;
+  nutrition: AthleteNutrition | null;
 };
 
 export const selectHomePrograms = <T extends AthleteHomeWorkout>(
@@ -239,6 +243,7 @@ export const buildAthleteHome = (input: AthleteHomeInput): AthleteHome => {
       : null,
     hasUnseenAssignment: input.activeAssignment !== null && input.activeAssignment.seenAt === null,
     coaching: input.coaching,
+    nutrition: input.nutrition,
   };
 };
 
@@ -258,6 +263,23 @@ export const loadAthleteCoaching = async (
 
   const detail = await loadSubscriptionDetail(coach.coachId, athleteId, todayKey, false);
   return athleteCoachingFrom(coach, detail);
+};
+
+/**
+ * Only the plan of the pair (current coach, athlete), as for `coaching`: a plan always belongs
+ * to a live link (it is deleted on unlink), and reading by pair says so without relying on it.
+ */
+const loadAthleteNutrition = async (
+  athleteId: number,
+  coach: { coachId: number } | null,
+  todayKey: string,
+): Promise<AthleteNutrition | null> => {
+  if (coach === null) {
+    return null;
+  }
+
+  const day = await loadActiveMealPlanSummary(coach.coachId, athleteId, todayKey);
+  return athleteNutritionFrom(day, todayKey);
 };
 
 const loadRecentCompletedSessions = async (
@@ -351,7 +373,7 @@ export const loadAthleteHome = async (
     userId,
   );
 
-  const [daysByWorkout, schedules, coaching] = await Promise.all([
+  const [daysByWorkout, schedules, coaching, nutrition] = await Promise.all([
     Promise.all(
       programs.map(async (program) => ({
         workoutId: program.id,
@@ -370,6 +392,7 @@ export const loadAthleteHome = async (
       }),
     ),
     loadAthleteCoaching(userId, coach, todayKey),
+    loadAthleteNutrition(userId, coach, todayKey),
   ]);
 
   return buildAthleteHome({
@@ -384,5 +407,6 @@ export const loadAthleteHome = async (
     schedules,
     completedSessions,
     coaching,
+    nutrition,
   });
 };
