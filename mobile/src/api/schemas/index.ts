@@ -123,4 +123,5 @@ export {
   type AthleteHome,
   type AthleteCoaching,
   type AthleteCoachingStatus,
+  type AthleteNutrition,
 } from "./athletehome";
