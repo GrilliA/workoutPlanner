@@ -15,6 +15,27 @@ const athleteCoachingSchema = z.object({
  */
 export const optionalAthleteCoachingSchema = athleteCoachingSchema.nullable().catch(null);
 
+const athleteNutritionSchema = z.object({
+  mealPlanId: z.number(),
+  updatedAt: z.string(),
+  mealCount: z.number(),
+  doneToday: z.number(),
+  otherToday: z.number(),
+  nextMeal: z
+    .object({
+      id: z.number(),
+      name: z.string(),
+      timeOfDay: z.string().nullable(),
+    })
+    .nullable(),
+});
+
+/**
+ * Piano pasti attivo (AL4). Assente (backend prima di AL4) o malformato diventa null:
+ * lo switch Allenamento / Alimentazione resta nascosto, il resto della Home si carica.
+ */
+const optionalAthleteNutritionSchema = athleteNutritionSchema.nullable().catch(null);
+
 export const athleteHomeSchema = z.object({
   noProgramReason: z
     .enum(["no-coach", "coach-pending", "coach-program-inactive"])
@@ -68,8 +89,10 @@ export const athleteHomeSchema = z.object({
     .nullable(),
   hasUnseenAssignment: z.boolean(),
   coaching: optionalAthleteCoachingSchema,
+  nutrition: optionalAthleteNutritionSchema,
 });
 
 export type AthleteHome = z.infer<typeof athleteHomeSchema>;
 export type AthleteCoaching = z.infer<typeof athleteCoachingSchema>;
 export type AthleteCoachingStatus = AthleteCoaching["status"];
+export type AthleteNutrition = z.infer<typeof athleteNutritionSchema>;

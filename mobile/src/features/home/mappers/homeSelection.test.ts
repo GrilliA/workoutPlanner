@@ -43,6 +43,7 @@ const makeHome = (overrides: Partial<AthleteHome> = {}): AthleteHome => ({
   lastSession: null,
   hasUnseenAssignment: false,
   coaching: null,
+  nutrition: null,
   ...overrides,
 });
 

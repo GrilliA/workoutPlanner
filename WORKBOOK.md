@@ -281,7 +281,7 @@ Piano: [`docs/plans/AL-alimentazione.md`](docs/plans/AL-alimentazione.md). Ramo 
 - [x] AL2 API coach del piano pasti + contratto + e2e. Confluita in `main-diet` con #103
 - [x] AL3 Pannello: tab Alimentazione (`/clients/:id/nutrition`), editor dei pasti, attiva/disattiva, ultimi 7 giorni; pagine Template pasti e Tag pasti, menu "Altro" nella barra in basso
 - [x] AL4 API atleta (`/athlete/meal-plan/today`, `PUT`/`DELETE`/`GET /athlete/meal-logs`) + `nutrition` in `/athlete/home` + e2e. Branch `feat/AL4-athlete-meal-api`, da pubblicare
-- [ ] AL5 Mobile: switch Allenamento / Alimentazione e tab bar per modalità
+- [x] AL5 Mobile: switch Allenamento / Alimentazione e tab bar per modalità (opzione A: un solo `Tabs`, `href: null` per modalità). `AppModeProvider` / `useAppMode` (scelta per utente in SecureStore, Alimentazione solo con `nutrition` non null), `ModeSwitch` in Home, route `meals` (Piano pasti), pill attiva indaco; Oggi, Piano pasti e Progressi alimentazione sono segnaposto fino ad AL6/AL7. Un link a una tab dell'altra modalità cambia modalità. Branch `feat/AL5-mode-switch`, da pubblicare
 - [ ] AL6 Mobile: Oggi ("Adesso tocca a") e Piano pasti
 - [ ] AL7 Mobile: Progressi alimentazione + integrazione in `main`
 

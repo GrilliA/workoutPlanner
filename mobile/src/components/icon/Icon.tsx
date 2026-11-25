@@ -5,6 +5,7 @@ import { colors } from "../../theme";
 export type IconName =
   | "home"
   | "workout"
+  | "meals"
   | "stats"
   | "history"
   | "settings"
@@ -36,6 +37,16 @@ export function Icon({ name, size = 22, color = colors.text }: IconProps) {
           stroke={color}
           strokeWidth={1.8}
           strokeLinecap="round"
+        />
+      ) : null}
+      {name === "meals" ? (
+        <Path
+          d="M7 3v18M4 3v5a3 3 0 0 0 6 0V3M17 21V3c-2 2-3 4-3 8h3"
+          fill="none"
+          stroke={color}
+          strokeWidth={1.8}
+          strokeLinecap="round"
+          strokeLinejoin="round"
         />
       ) : null}
       {name === "stats" ? (

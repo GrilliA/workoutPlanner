@@ -55,3 +55,55 @@ describe("optionalAthleteCoachingSchema", () => {
     assert.deepEqual(parsed, COACHING);
   });
 });
+
+const NUTRITION = {
+  mealPlanId: 7,
+  updatedAt: "2026-11-24T08:30:00.000Z",
+  mealCount: 5,
+  doneToday: 2,
+  otherToday: 1,
+  nextMeal: { id: 31, name: "Merenda", timeOfDay: "16:30" },
+};
+
+describe("athleteHomeSchema nutrition", () => {
+  it("reads the nutrition of the home", () => {
+    const home = athleteHomeSchema.parse({ ...HOME_WITHOUT_COACHING, nutrition: NUTRITION });
+    assert.deepEqual(home.nutrition, NUTRITION);
+  });
+
+  it("keeps null as null (switch hidden)", () => {
+    const home = athleteHomeSchema.parse({ ...HOME_WITHOUT_COACHING, nutrition: null });
+    assert.equal(home.nutrition, null);
+  });
+
+  it("reads a backend without the field as null", () => {
+    assert.equal(athleteHomeSchema.parse(HOME_WITHOUT_COACHING).nutrition, null);
+  });
+
+  it("reads a next meal without time and a day with every meal logged", () => {
+    const withoutTime = { ...NUTRITION, nextMeal: { id: 31, name: "Cena", timeOfDay: null } };
+    const allLogged = { ...NUTRITION, doneToday: 5, otherToday: 0, nextMeal: null };
+    const parsedWithoutTime = athleteHomeSchema.parse({ ...HOME_WITHOUT_COACHING, nutrition: withoutTime });
+    const parsedAllLogged = athleteHomeSchema.parse({ ...HOME_WITHOUT_COACHING, nutrition: allLogged });
+    assert.deepEqual(parsedWithoutTime.nutrition, withoutTime);
+    assert.deepEqual(parsedAllLogged.nutrition, allLogged);
+  });
+
+  it("turns a malformed nutrition into null and still reads the rest of the home", () => {
+    const home = athleteHomeSchema.parse({
+      ...HOME_WITHOUT_COACHING,
+      coaching: COACHING,
+      nutrition: { ...NUTRITION, mealCount: "5" },
+    });
+    assert.equal(home.nutrition, null);
+    assert.deepEqual(home.coaching, COACHING);
+  });
+
+  it("drops fields the contract does not have", () => {
+    const home = athleteHomeSchema.parse({
+      ...HOME_WITHOUT_COACHING,
+      nutrition: { ...NUTRITION, calories: 2000 },
+    });
+    assert.deepEqual(home.nutrition, NUTRITION);
+  });
+});

@@ -33,6 +33,8 @@ const MOBILE_PAIRS = [
   { text: "text", background: "surface" },
   { text: "text", background: "surfaceElevated" },
   { text: "text", background: "accentBg" },
+  // Opzione non scelta dello switch Allenamento / Alimentazione (AL5).
+  { text: "text", background: "border" },
   { text: "onAccent", background: "accent" },
   { text: "accentText", background: "bg" },
   { text: "accentText", background: "surface" },
