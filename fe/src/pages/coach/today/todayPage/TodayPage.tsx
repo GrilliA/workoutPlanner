@@ -39,7 +39,7 @@ export function TodayPage() {
     );
 
   const headerAction = (
-    <div className="coach-dashboard__actions">
+    <div className="coach-page__actions">
       <Link href="/clients/new" className="coach-btn-link coach-btn-link--secondary">
         Invita cliente
       </Link>
@@ -61,12 +61,12 @@ export function TodayPage() {
       {coachToday === undefined ? <CoachCardListSkeleton /> : null}
 
       {hasNoClients ? (
-        <section className="coach-dashboard__empty">
+        <section className="coach-page__empty">
           <h2>Invita il primo cliente</h2>
           <p className="coach-empty">
             Condividi il codice invito: l&apos;atleta si registra sull&apos;app e si collega a te.
           </p>
-          <div className="coach-dashboard__actions">
+          <div className="coach-page__actions">
             <Link href="/clients/new" className="coach-btn-link coach-btn-link--primary">
               Invita cliente
             </Link>

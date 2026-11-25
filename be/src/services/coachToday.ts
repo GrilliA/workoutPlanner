@@ -218,27 +218,16 @@ const sessionBestsOf = (sets: ScoredSet[]): SessionBest[] => {
 /**
  * A session beats every earlier one, strictly. The first time an exercise appears is not a
  * record (unlike `countPersonalRecords`): every new program would make one on each exercise.
- * The best so far only grows on a record, so one walk compares each session with all earlier ones.
  */
-const recordSessionsOf = (sessionBests: SessionBest[]): SessionBest[] => {
-  const [firstSession, ...laterSessions] = sessionBests;
+const recordSessionsOf = (sessionBests: SessionBest[]): SessionBest[] =>
+  sessionBests.filter((session, index) => {
+    const isFirstSession = index === 0;
+    const beatsEveryEarlierSession = sessionBests
+      .slice(0, index)
+      .every((earlierSession) => session.bestE1RM > earlierSession.bestE1RM);
 
-  if (firstSession === undefined) {
-    return [];
-  }
-
-  let bestSoFar = firstSession.bestE1RM;
-  const records: SessionBest[] = [];
-
-  for (const session of laterSessions) {
-    if (session.bestE1RM > bestSoFar) {
-      records.push(session);
-      bestSoFar = session.bestE1RM;
-    }
-  }
-
-  return records;
-};
+    return !isFirstSession && beatsEveryEarlierSession;
+  });
 
 /**
  * Exercises with a record in the last 7 Rome days, today included, named as in the latest
@@ -263,7 +252,8 @@ export const recentPersonalRecords = (input: { sets: RecordSet[]; today: string 
       },
     ];
   });
-  // Grouped in one pass, in order of first appearance: filtering once per exercise is quadratic.
+  // Grouped in one pass, in order of first appearance: filtering once per exercise is quadratic,
+  // and programs have no cap on the exercises.
   const setsByExercise = new Map<string, ScoredSet[]>();
 
   for (const set of scoredSets) {

@@ -17,8 +17,7 @@ export type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 export const isWeekday = (value: number): value is Weekday =>
   Number.isInteger(value) && value >= 0 && value <= 6;
 
-export const toRomeDateKey = (date: Date): string =>
-  date.toLocaleDateString("en-CA", { timeZone: ROME_TIME_ZONE });
+export { toRomeDateKey } from "./stats";
 
 /** 0 = Monday … 6 = Sunday */
 export const getRomeWeekday = (date: Date): Weekday => {

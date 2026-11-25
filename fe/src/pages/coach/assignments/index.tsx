@@ -51,12 +51,12 @@ export default function AssignmentsPage() {
       ) : null}
 
       {!loading && assignments.length === 0 ? (
-        <section className="coach-dashboard__empty">
+        <section className="coach-page__empty">
           <h2>Nessuna assegnazione</h2>
           <p className="coach-empty">
             Condividi il codice invito, oppure assegna una scheda a un cliente già collegato.
           </p>
-          <div className="coach-dashboard__actions">
+          <div className="coach-page__actions">
             <Link
               href="/clients/new"
               className="coach-btn-link coach-btn-link--primary"

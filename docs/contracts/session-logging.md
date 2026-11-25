@@ -69,13 +69,13 @@ Il pannello web e il builder del mobile bloccano già nel form: "+ Aggiungi seri
 
 | `error` | Mobile (`mobile/src/api/client.ts`) |
 | --- | --- |
-| `setNumber must be an integer between 1 and 30` | Puoi registrare al massimo 30 serie per esercizio. |
-| `Session already has 200 sets` | Hai raggiunto il massimo di 200 serie in questa sessione. |
 | `setPrescriptions must have at most 30 sets` | Un esercizio può avere al massimo 30 serie. |
 | `sets must be an integer between 1 and 30` | Un esercizio può avere al massimo 30 serie. |
 | `Too many sessions started. Try again later` | Hai avviato troppi allenamenti nelle ultime 24 ore. Riprova più tardi. |
 
-Web: `fe/src/api/knownErrorMessages.ts` arriva con R3 (non è ancora su `main`). Il pannello non registra serie e non avvia sessioni. Gli errori sulle prescrizioni li ferma prima il form. Quando R3 sarà su `main`, si aggiunge la riga `setPrescriptions must have at most 30 sets`.
+Il mobile non chiama `POST` e `PUT` sulle serie: le salva tutte alla chiusura. Per questo `setNumber must be an integer between 1 and 30` e `Session already has 200 sets` non hanno una traduzione.
+
+Web: `fe/src/api/knownErrorMessages.ts` traduce `setPrescriptions must have at most 30 sets` con lo stesso testo del mobile. Il pannello non registra serie e non avvia sessioni. Gli altri errori sulle prescrizioni li ferma prima il form.
 
 ## Rilascio
 

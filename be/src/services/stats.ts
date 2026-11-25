@@ -141,8 +141,11 @@ export const computeSessionDurationMin = (
   return Math.max(1, Math.round(elapsedMs / MS_PER_MINUTE));
 };
 
-export const toRomeDateKey = (date: Date): string =>
-  date.toLocaleDateString("en-CA", { timeZone: ROME_TIME_ZONE });
+// One shared instance: `toLocaleDateString` is tens of times slower on each call, and the
+// personal records call this once per record over a whole history.
+const ROME_DATE_FORMATTER = new Intl.DateTimeFormat("en-CA", { timeZone: ROME_TIME_ZONE });
+
+export const toRomeDateKey = (date: Date): string => ROME_DATE_FORMATTER.format(date);
 
 export const addRomeDays = (dateKey: string, days: number): string => {
   const [year, month, day] = dateKey.split("-").map(Number);

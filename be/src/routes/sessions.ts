@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { and, count, desc, eq, ne, or } from "drizzle-orm";
-import { db } from "../db";
+import { db, type Tx } from "../db";
 import { isUniqueViolation } from "../db/errors";
 import { loggedSets, workoutSessions, workouts } from "../db/schema";
 import { requireAuth } from "../middleware/requireAuth";
@@ -76,6 +76,17 @@ async function loadSessionWithSets(sessionId: number, userId: number) {
     .orderBy(loggedSets.exerciseId, loggedSets.setNumber);
 
   return { ...session, sets };
+}
+
+// Locks the session: a close or another set write waits, so status and count stay true.
+async function isSessionInProgressUnderLock(tx: Tx, sessionId: number) {
+  const [locked] = await tx
+    .select({ status: workoutSessions.status })
+    .from(workoutSessions)
+    .where(eq(workoutSessions.id, sessionId))
+    .for("update");
+
+  return locked?.status === "in_progress";
 }
 
 export const workoutSessionsRouter = Router({ mergeParams: true });
@@ -435,14 +446,9 @@ sessionSetsRouter.post("/", async (req, res) => {
 
   try {
     const saved = await db.transaction(async (tx) => {
-      // Lock the session: a close or another set write waits, so status and count stay true.
-      const [locked] = await tx
-        .select({ status: workoutSessions.status })
-        .from(workoutSessions)
-        .where(eq(workoutSessions.id, sessionId))
-        .for("update");
+      const isInProgress = await isSessionInProgressUnderLock(tx, sessionId);
 
-      if (locked?.status !== "in_progress") {
+      if (!isInProgress) {
         return { ok: false as const, error: "Session is not in progress" };
       }
 
@@ -629,14 +635,9 @@ sessionSetsRouter.put("/:exerciseId/:setNumber", async (req, res) => {
   const { exerciseId, setNumber, ...values } = parsed.value;
 
   const saved = await db.transaction(async (tx) => {
-    // Lock the session: a close or another set write waits, so status and count stay true.
-    const [locked] = await tx
-      .select({ status: workoutSessions.status })
-      .from(workoutSessions)
-      .where(eq(workoutSessions.id, sessionId))
-      .for("update");
+    const isInProgress = await isSessionInProgressUnderLock(tx, sessionId);
 
-    if (locked?.status !== "in_progress") {
+    if (!isInProgress) {
       return { ok: false as const, error: "Session is not in progress" };
     }
 

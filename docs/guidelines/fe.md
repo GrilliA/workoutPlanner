@@ -2,20 +2,21 @@
 
 React + Vite. UI copy is **Italian**. Style: functions, immutable data, pure mappers.
 
-A feature (e.g. dashboard) lives **under its page**, not in `components/`. `components/` is shared UI primitives only (`button/`, `input/`, `card/`, `skeleton/`, `appShell/`, `pageHeader/`, `pageError/`, `confirmDialog/`).
+A feature (e.g. Oggi) lives **under its page**, not in `components/`. `components/` is shared UI primitives only (`button/`, `input/`, `card/`, `skeleton/`, `appShell/`, `pageHeader/`, `pageError/`, `confirmDialog/`).
 
 Authenticated chrome (`AppShell`) lives once in the router (`App.tsx`), around the inner `Switch` of coach routes. Public routes (`/login`, `/register`, `/`) stay outside. A page `index.tsx` is the feature entry, not a layout wrapper.
 
 ```
-pages/coach/dashboard/
+pages/coach/today/
 ├── index.tsx              # page entry: render the feature
-└── dashboard/             # the whole feature
-    ├── api/
-    │   └── useDashboard.ts  # GET + loading; on failure throw to ErrorBoundary
-    ├── types.ts
-    ├── mappers/mapDashboard.ts
-    ├── dashboard/
-    └── athletestable/
+├── api/
+│   └── useCoachToday.ts   # GET + writes; on GET failure throw to ErrorBoundary
+├── types.ts
+├── mappers/today.ts
+├── todayPage/
+├── inbox/
+├── handledNotice/
+└── activityFeed/
 ```
 
 Thin page entries have no business logic.
@@ -27,42 +28,46 @@ Thin page entries have no business logic.
 **Route segments** stay lowercase: `pages/coach/clients/`.  
 No kebab-case. No PascalCase folders (`ErrorBoundary/` is wrong). Single-word names stay as they are (`button/`, `card/`, `toast/`).
 
-Existing **page** feature folders (`athletestable/`, …) still use concatenated lowercase. Leave them until a dedicated rename; do not mix that into unrelated work. (`coachpageheader/` was promoted to the shared `components/pageHeader/`.)
+Existing **page** feature folders (`programbuilder/`, `periodfilter/`, …) still use concatenated lowercase. Leave them until a dedicated rename; do not mix that into unrelated work. (`coachpageheader/` was promoted to the shared `components/pageHeader/`.)
 
 ```
-todayCard/
-├── TodayCard.tsx    # only the React file is PascalCase
+activityFeed/
+├── ActivityFeed.tsx # only the React file is PascalCase
 ├── style.css
 └── index.tsx        # public API
 ```
 
 | Kind | Naming | Example |
 | --- | --- | --- |
-| Component folder | camelCase | `errorBoundary/`, `todayCard/` |
+| Component folder | camelCase | `errorBoundary/`, `activityFeed/` |
 | Other folder | lowercase | `mappers/`, `primitives/` |
-| Component file | PascalCase `.tsx` | `TodayCard.tsx` |
-| Hook, types, api, mapper | lowercase `.ts` | `useDashboard.ts` |
+| Component file | PascalCase `.tsx` | `ActivityFeed.tsx` |
+| Hook, types, api, mapper | lowercase `.ts` | `useCoachToday.ts` |
 | Component CSS | `style.css` | imported only in the `.tsx` |
 
 Identifiers: components/types PascalCase; functions/hooks camelCase; constants `UPPER_SNAKE_CASE`. CSS class names: kebab-case is fine (DOM convention).
 
-Imports **inside** a feature: relative paths (`../types`, `../todayCard`).  
-Imports **from outside**: aliases (`@dashboard/dashboard`, `@components/button`, `@api`).
+Imports **inside** a feature: relative paths (`../types`, `../activityFeed`).  
+Imports **from outside**: aliases (`@pages/coach/today`, `@components/button`, `@api`).
 
-Aliases: `@api`, `@components/*`, `@dashboard` → `pages/home/dashboard/`, `@pages/*`, `@utils/*`.
+Aliases: `@api`, `@api/*`, `@auth`, `@auth/*`, `@components/*`, `@pages/*`, `@utils/*`.
 
 ## React / functions
 
 - Pure mappers for data transforms (no I/O, no mutation)
-- Thin hooks live under the feature `api/` folder when they add something beyond `useQuery` (`useDashboard` mapping, analytics range, 404 + `setData`). One-resource GET: call `useQuery` in the page. Mapping lives in `mappers/`. Page-level GET failure throws `ApiError` so `ErrorBoundary` shows `PageError` once (other throws stay generic); empty data is for empty success; 404 stays a not-found empty state. Section fetches toast via `useQuery({ throwOnError: false, onError })` and do not take down the page.
+- Thin hooks live under the feature `api/` folder when they add something beyond `useQuery` (`useCoachToday` writes and reload, analytics range, 404 + `setData`). One-resource GET: call `useQuery` in the page. Mapping lives in `mappers/`. Page-level GET failure throws `ApiError` so `ErrorBoundary` shows `PageError` once (other throws stay generic); empty data is for empty success; 404 stays a not-found empty state. Section fetches toast via `useQuery({ throwOnError: false, onError })` and do not take down the page.
 - Separate components, not `StatCard.Skeleton = …`
 - No business logic in JSX or large `useEffect` blocks
 - Fields that always move together = **one state object**, not N `useState`s
 - No default `useCallback` / `useMemo`. Use them only when a `memo()` child or a hook dependency array needs a stable identity. A handler passed to `Button`, `onClick`, or any unmemoized component does not. Cheap derived values (query parse, small map) stay inline.
 
 ```ts
-export function mapRecentWorkouts(workouts: Workout[]): RecentWorkout[] {
-  return sortByNewest(workouts).map(toRecentWorkout);
+export function mapRecentActivity(items: CoachDashboardActivityItem[]): ActivityFeedItem[] {
+  return items.map((item) => ({
+    sessionId: item.sessionId,
+    athleteLabel: athleteLabel(item.athleteName, item.athleteEmail),
+    // …
+  }));
 }
 ```
 
@@ -73,7 +78,7 @@ export function mapRecentWorkouts(workouts: Workout[]): RecentWorkout[] {
 - **Token-only in components**: colors, spacing, radii, durations come from `src/styles/tokens.css` via `var(--…)` — no hex/`rgba()`/magic px in shared component CSS; no `var(--x, #fallback)` (tokens are always loaded)
 - Mobile-first: viewport queries only for AppShell chrome (`--bp-lg` / `64rem`)
 - Feature reflow uses `@container page` on `.page-container` plus `auto-fit` / `minmax`
-- A component inside a card can be its own container (`container-type: inline-size`), because `page` does not see the card padding (`athletestable`, `setprescriptioneditor`)
+- A component inside a card can be its own container (`container-type: inline-size`), because `page` does not see the card padding (`setprescriptioneditor`)
 - Do not copy `64rem` into feature styles; `var(--bp-*)` cannot be used in `@media` or `@container` conditions
 - Page width: `.page-container` / `--wide`, not copied `max-width`s
 - Page inset: AppShell `.content` (`--page-padding-*` + `--bottom-nav-offset`); do not pad `.coach-page`
@@ -91,6 +96,6 @@ export function mapRecentWorkouts(workouts: Workout[]): RecentWorkout[] {
 
 All requests go through `@api` (`apiRequest` + Zod). Shapes live in `api/schemas/`. No raw `fetch` in components.
 
-GET state lives in `useQuery` (`queryFn({ signal })`, `queryKey` as effect deps — no cache). Unmount and `queryKey` change abort the in-flight request (`apiRequest` forwards `signal` to `fetch`; abort is not a page/toast error). Page GET keeps the default `throwOnError: true` (ErrorBoundary). Section GET sets `throwOnError: false` and toasts in `onError` (`onError` does not run if the query throws). 404-as-empty is handled in that page's `queryFn`. Feature `api/useX.ts` stays only when the GET is more than one call + fallback (`useDashboard`, analytics range, client detail `setData`).
+GET state lives in `useQuery` (`queryFn({ signal })`, `queryKey` as effect deps — no cache). Unmount and `queryKey` change abort the in-flight request (`apiRequest` forwards `signal` to `fetch`; abort is not a page/toast error). Page GET keeps the default `throwOnError: true` (ErrorBoundary). Section GET sets `throwOnError: false` and toasts in `onError` (`onError` does not run if the query throws). 404-as-empty is handled in that page's `queryFn`. Feature `api/useX.ts` stays only when the GET is more than one call + fallback (`useCoachToday`, analytics range, client detail `setData`).
 
 POST/PATCH/DELETE use `useMutation` (`mutate` / `isPending` / `onSuccess` / `onError` toast). Login/register stay inline form errors. Do not copy `useEffect` + `cancelled` into a new page hook.
