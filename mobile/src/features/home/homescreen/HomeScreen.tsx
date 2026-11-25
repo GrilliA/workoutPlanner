@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Alert,
   Pressable,
@@ -24,6 +24,7 @@ import {
 } from "../../../components";
 import { colors, radii, spacing } from "../../../theme";
 import { formatInitials } from "../../../utils/initials";
+import { ModeSwitch, useAppMode } from "../../nutrition";
 import { toRomeDateKey } from "../../../utils/romeCalendar";
 import { ChangeWorkoutSheet } from "../changeworkoutsheet";
 import { CoachingStatusRow } from "../coachingstatus";
@@ -95,10 +96,18 @@ export function HomeScreen({ offlineSessionBanner }: HomeScreenProps) {
   const { user } = useAuth();
   const tabBarInset = useTabBarInset();
   const { home, loading, refreshing, error, refresh, retry } = useHomeData();
+  const { reportNutrition } = useAppMode();
   const [chosen, setChosen] = useState<ChosenDay | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
+
+  // Pull-to-refresh e ritorno sulla tab: lo switch segue la Home appena caricata.
+  useEffect(() => {
+    if (home) {
+      reportNutrition(home.nutrition);
+    }
+  }, [home]);
 
   if (loading && !home) {
     return <LoadingBlock />;
@@ -150,6 +159,7 @@ export function HomeScreen({ offlineSessionBanner }: HomeScreenProps) {
           />
         }
       >
+        <ModeSwitch />
         <View style={styles.header}>
           <View style={styles.headerText}>
             <Title numberOfLines={1}>{formatGreeting(user?.name)}</Title>
